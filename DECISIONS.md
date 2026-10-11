@@ -1,5 +1,7 @@
 # V1 Decisions
 
+> Access model: the whole application is allowlist-only (see section E).
+
 Resolves the 22 gaps found in review of the product spec and execution playbook.
 Status: **PROPOSED**. Each item is a concrete default so agents never invent product behavior. Items marked **OWNER** need a human confirmation before launch.
 When this file conflicts with the two .docx files, this file wins until the docs are revised.
@@ -14,7 +16,7 @@ One authoritative sequence replaces both existing lists. The ledger now lands be
 |---|-------|-----------|
 | 0 | Foundation: monorepo, strict TS, lint, CI, env validation, tokens, deploy skeleton | CI green, preview deploys |
 | 1 | Static UX proof: fake video grid 2-8, 100dvh, blue cards, overlays, banker mock | Screenshots approved, no scroll, anti-AI review passes |
-| 2 | Identity + Rooms: guest tokens, invite links, room lifecycle, host controls | Join/reconnect/kick tests pass |
+| 2 | Accounts, allowlist + Rooms: allowlisted sign-in, sessions, room lifecycle, host controls | Non-allowlisted refused, session reconnect, kick tests pass |
 | 3 | Database + Ledger: migrations, accounts, immutable transactions, idempotency | Conservation + concurrency tests pass |
 | 4 | Live video: LiveKit, media gate, presence, active speaker, media-failure states | 6+ participants stable |
 | 5 | Realtime protocol: versioned events, snapshots, resync | Stale/reconnect/duplicate tests pass |
@@ -72,16 +74,17 @@ Deviation from the pasted plan: Phase 1 (static UX proof) is kept. It is the che
 - Reserve exhausted: borrow is rejected with a banker message. Host may top up the reserve.
 - Forgiveness: a lender may forgive a debt. It is a ledger entry type with no chip movement.
 - **Mid-hand rule:** a player still in an active hand cannot send, receive, borrow, repay or accept requests. The server rejects with "after this hand". Folded players and non-participants may transact.
-- Leaving with debt: debt stays attached to the guest identity for the life of the room. When the room closes, outstanding debts void; the ledger remains as history. Chips do not carry across rooms in V1.
+- Leaving with debt: debt stays attached to the user for the life of the room. When the room closes, outstanding debts void; the ledger remains as history. Chips do not carry across rooms in V1.
 - Compensating transactions only; never delete or edit ledger rows. Idempotency key on every transfer.
 
 ## E. Identity and security (items 10-12)
 
-- Guest identity: on first join the server issues a 256-bit random token in an httpOnly, secure, same-site cookie, bound to one participant in one room. Display name is never identity. Reconnect requires the token. Kick revokes the token and blocks that guest for 10 minutes.
-- Invite-only, per person: the host creates one invite per person (max 8 per room). Each invite is a single-use link with a 128-bit token. The first device to claim it is bound to that person's guest token; later claims fail, so forwarding a link does not let someone else in. The host can see who has claimed, revoke an unclaimed or claimed invite, and re-issue it (re-issuing unbinds the old device). No public room list, no short codes, no open join. The invited-name list is part of the room, and kicked guests are blocked per invite.
+- **Application access is allowlist-only.** The owner (admin) maintains a list of approved people, identified by email. Nobody outside the list can sign in, see any room, or reach the game server; unlisted sign-in attempts get a generic refusal and are rate limited. The owner can add, suspend or remove people at any time; removal ends their sessions immediately.
+- Identity: real accounts, one per approved person. Sign-in by Google OAuth restricted to allowlisted emails (email magic link as fallback). Server-side sessions in an httpOnly secure same-site cookie; a session is bound to a user, not a display name. Reconnect uses the session. Display name is chosen per user and shown in rooms.
+- Rooms: any approved user can create a room (max 8 people). Others join from inside the app or via a room link, but the link only works for signed-in approved users; the host may additionally restrict a room to named users. Kick blocks that user from that room for 10 minutes.
 - Host: creator holds host role. After 60 s disconnected, host migrates to the longest-connected player. The original host does not auto-reclaim; the current host can hand it back.
 - Hard cap: 8 people per room in total. Spectators, if enabled, count inside the 8 (a spectator occupies a slot a player could use), so players + spectators never exceed 8.
-- Spectators: off by default. A spectator also needs a personal invite. When enabled, up to 4 of those 8 slots. They see the grid (receive only), publish nothing, see no private cards, and cannot transact. They take a seat when one opens. Spectator is a participant role in the data model.
+- Spectators: off by default. Spectators are approved users too. When enabled, up to 4 of those 8 slots.
 - **Non-goals (explicit):** preventing players from sharing cards by voice or a second device; preventing screen recording by participants. Platform never records video.
 
 ## F. Media (items 13, 14, 15, 22)
@@ -109,7 +112,7 @@ Deviation from the pasted plan: Phase 1 (static UX proof) is kept. It is the che
 
 ## I. Legal (item 20)
 
-- 18+ self-attestation before create/join; play-money disclaimer in room and footer; terms and privacy pages before public launch. No real-money path. No geo-blocking in V1 (invite-only rooms). **OWNER:** have counsel confirm before any public launch.
+- 18+ self-attestation at first sign-in (allowlist implies the owner knows the people); play-money disclaimer in room and footer; terms and privacy pages before public launch. No real-money path. No geo-blocking in V1 (allowlist-only app). **OWNER:** have counsel confirm before any public launch.
 
 ## J. Non-functional targets (item 21)
 

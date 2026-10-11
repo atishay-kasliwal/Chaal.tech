@@ -42,10 +42,10 @@ Tasks: layout engine for 2-8 tiles (desktop, mobile portrait, mobile landscape),
 Gate: screenshots at 2/4/6/8 players on desktop and mobile approved by owner; zero scroll; anti-AI review table passes.
 Risk: layout takes longer than estimated (see R1). Owner approval is the real gate, so schedule it.
 
-## Phase 2: Identity + Rooms (M)
+## Phase 2: Accounts, Allowlist + Rooms (M)
 
-Tasks: create/join API, guest token issue and verify, per-person single-use invites (claim binds device, revoke, re-issue; no short codes, no open join) with rate limits, join flow UI (name, device preview, consent, 18+ attestation), room lifecycle (created, active, closed, expired), host controls, spectator role, kick with 10-minute block, host migration after 60 s.
-Gate: tests for reconnect with token, kick, wrong-token rejection, host migration, spectator cap (players + spectators <= 8).
+Tasks: allowlist table and admin tooling (add, suspend, remove, end sessions), Google OAuth sign-in restricted to allowlisted emails (magic link fallback), session handling, create/join room API, room link that only works for signed-in approved users, optional host-named-user restriction, join flow UI (display name, device preview, consent, 18+ attestation once), room lifecycle (created, active, closed, expired), host controls, spectator role, kick with 10-minute block, host migration after 60 s.
+Gate: tests for non-allowlisted sign-in refused, removed user's sessions end, reconnect via session, kick, host migration, cap (players + spectators <= 8).
 
 ## Phase 3: Database + Ledger (L)
 
@@ -59,7 +59,7 @@ Gate: 6+ real or synthetic participants stable for 30 minutes on desktop and mob
 
 ## Phase 5: Realtime protocol (M)
 
-Tasks: shared versioned event schemas (runtime-validated), WebSocket gateway, connection identity from guest token, snapshot on connect, sequence numbers and resync, duplicate and stale event handling, per-connection private channel for private state.
+Tasks: shared versioned event schemas (runtime-validated), WebSocket gateway, connection identity from the authenticated session, snapshot on connect, sequence numbers and resync, duplicate and stale event handling, per-connection private channel for private state.
 Gate: stale client, duplicate event, reconnect and out-of-order tests pass before any game rules.
 
 ## Phase 6: Card core (M)
