@@ -44,8 +44,8 @@ Risk: layout takes longer than estimated (see R1). Owner approval is the real ga
 
 ## Phase 2: Identity + Rooms (M)
 
-Tasks: create/join API, guest token issue and verify, invite link and short code with rate limits, join flow UI (name, device preview, consent, 18+ attestation), room lifecycle (created, active, closed, expired), host controls, spectator role, kick with 10-minute block, host migration after 60 s.
-Gate: tests for reconnect with token, kick, wrong-token rejection, host migration, spectator cap.
+Tasks: create/join API, guest token issue and verify, invite link only (no short codes) with rate limits and revoke/regenerate, join flow UI (name, device preview, consent, 18+ attestation), room lifecycle (created, active, closed, expired), host controls, spectator role, kick with 10-minute block, host migration after 60 s.
+Gate: tests for reconnect with token, kick, wrong-token rejection, host migration, spectator cap (players + spectators <= 8).
 
 ## Phase 3: Database + Ledger (L)
 
@@ -102,7 +102,7 @@ Gate: each variant passes its own rule tests; Classic unchanged.
 
 ## Phase 12: Polish + hardening (L)
 
-Tasks: audio cues with ducking, chip and card motion, folded-state treatment, winner moment, host-migration and timeout edge cases, rate limits, accessibility pass, performance budget, load test (50 rooms / 400 participants), failure injection (kill game server mid-hand, drop DB).
+Tasks: audio cues with ducking, chip and card motion, folded-state treatment, winner moment, host-migration and timeout edge cases, rate limits, accessibility pass, performance budget, load test (10 rooms / 80 participants), failure injection (kill game server mid-hand, drop DB).
 Gate: load and failure tests pass; a11y checks pass; budgets in DECISIONS.md section J met.
 
 ## Phase 13: Production release (M)
