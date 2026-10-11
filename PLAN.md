@@ -44,7 +44,7 @@ Risk: layout takes longer than estimated (see R1). Owner approval is the real ga
 
 ## Phase 2: Identity + Rooms (M)
 
-Tasks: create/join API, guest token issue and verify, invite link only (no short codes) with rate limits and revoke/regenerate, join flow UI (name, device preview, consent, 18+ attestation), room lifecycle (created, active, closed, expired), host controls, spectator role, kick with 10-minute block, host migration after 60 s.
+Tasks: create/join API, guest token issue and verify, per-person single-use invites (claim binds device, revoke, re-issue; no short codes, no open join) with rate limits, join flow UI (name, device preview, consent, 18+ attestation), room lifecycle (created, active, closed, expired), host controls, spectator role, kick with 10-minute block, host migration after 60 s.
 Gate: tests for reconnect with token, kick, wrong-token rejection, host migration, spectator cap (players + spectators <= 8).
 
 ## Phase 3: Database + Ledger (L)
