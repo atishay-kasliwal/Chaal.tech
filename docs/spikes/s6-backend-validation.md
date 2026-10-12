@@ -106,6 +106,23 @@ How to read it:
 - **Browser runs overlapped in time** with each other and with the Node runs on the same connection, which may inflate them.
 - **Known limitation:** the Node script's reused-connection summary printed null (a bug in my summarizing code), so steady state for reused connections comes from the browser data only.
 
+### Cleaner rerun on network 1 (browser, custom host, started after the Node runs finished)
+
+Network label "home wifi" (same site as the laptop), so still **not** a second network.
+
+| Phase | Result (ms) |
+|---|---|
+| HTTP, Worker only, reused connection, time to first byte | about 350 to 650 (p50 about 490) vs about 1,060 when other tests overlapped |
+| HTTP through the Durable Object, reused connection, total | about 270 to 700 after the first (1,230) |
+| Server: Worker to Durable Object and back | about 25 to 27 (first request 261) |
+| Server: Durable Object processing / SQLite | 0 / 0 |
+| WebSocket connection establishment | p50 1,195, range 390 to 2,050 |
+| WS message round trip, no database | p50 974, p95 1,384, p99 3,230 |
+| WS round trip with SQLite read | p50 808, p95 1,575 |
+| WS round trip with ledger write | p50 740, p95 1,318 |
+
+Reading: with less overlapping traffic, HTTP on a reused connection improved from about 1 s to about 0.35 to 0.65 s, so some of the earlier slowness was contention on the home connection. WebSocket messages on an established socket are still about 0.7 to 1.0 s at the median, above the 250 ms target. A WebSocket message is slower than a plain HTTP request on a reused connection on the same network, which was not expected and is not explained yet.
+
 ### Control experiments (same network, same session)
 
 | Test | Result |
@@ -127,6 +144,6 @@ How to read it:
 ### Remaining steps before a conclusion
 
 1. Second network: run `https://s6.chaal.tech/test` and `https://s6-backend-spike.s6-backend-spike.workers.dev/test` from a different network (for example a phone hotspot) with nothing else running, naming the network in the box.
-2. Clean rerun on this network with nothing else running.
+2. ~~Clean rerun on this network~~ Done once (browser, custom host); WebSocket messages still about 0.7 to 1.0 s. A fully idle rerun of the workers.dev host has not been done.
 3. If the second network is fast: conclusion is PASS or PASS WITH KNOWN CONNECTION SETUP LATENCY depending on the setup numbers. If it is equally slow: RETEST REQUIRED with a look at Cloudflare plan and routing, and only then a decision about the backend.
 4. Delete the throwaway deployment and the `s6.chaal.tech` record when finished.

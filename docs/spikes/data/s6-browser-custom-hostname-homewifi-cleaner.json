@@ -1,0 +1,8 @@
+{"host":"s6.chaal.tech","network":"home wifi","userAgent":"Chrome/154 on macOS","startedAt":"2026-10-12T02:08:01.333Z","finishedAt":"2026-10-12T02:12:17.284Z",
+"httpWorkerOnly_ttfbMs":[494.2,646.2,412.9,512.6,422.9,346.4,478.9,504.7,486.5,487.7,571.4,627.5],
+"httpThroughDurableObject":{"totalMs":[1230.1,698.4,664.9,598.7,660.6,431.4,267,277,277.2,348.8,351.9,436.4],"workerToDoRoundTripMs":[261,26,27,25,24,26,27,26,25,26,26,26],"doMs":0,"sqlReadMs":0,"sqlWriteMs":0,"colo":"ATL"},
+"websocketConnectMs":{"samples":[637.3,389.8,1898.6,1195.1,2049.9],"p50":1195.1,"p95":2049.9,"max":2049.9},
+"wsEcho":{"roundTripMs":{"n":100,"p50":973.5,"p95":1384.4,"p99":3229.6,"max":3229.6}},
+"wsSqlRead":{"roundTripMs":{"n":100,"p50":807.8,"p95":1574.8,"p99":3036,"max":3036}},
+"wsSqlWrite":{"roundTripMs":{"n":60,"p50":740.3,"p95":1317.8,"p99":1493.4,"max":1493.4}},
+"_note":"Started after the Node latency runs finished, so it overlapped less with other tests on the same connection. Network is labeled 'home wifi', the same site as the laptop, so this is NOT a second network."}
