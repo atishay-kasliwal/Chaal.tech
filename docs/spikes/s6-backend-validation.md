@@ -55,8 +55,8 @@ Script: `spikes/s6-backend/scripts/measure.mjs` (8 concurrent WebSocket clients 
 | 8 concurrent clients, 2,460 messages | All applied; ledger `verify` ok: balances 40,001 = minted 40,001, no mismatches |
 | Real usage counters | 2,531 messages received, 12,362 row writes (identical to the local simulation), 64,701 row reads (higher than local because the script polls balances once per hand). Against daily free limits: 2.5%, 12.4%, 1.3% |
 | Alarm | Requested 5 s, observed 6.5 s (includes 500 ms polling and about 1 s message latency) |
-| Hibernation | After 30 s idle the same socket worked and its sequence number continued (301 then 302). Whether the object actually hibernated was not observed |
-| Point-in-time recovery | **Works.** After a bookmark, 5 transfers changed balances; restore via `onNextSessionRestoreBookmark` + `ctx.abort()` returned balances exactly to the bookmark state and `verify` stayed ok. The restore acknowledgement never reached the client (the abort cuts the connection), so the script reported a timeout. The undo bookmark was not exercised |
+| Hibernation | **Inconclusive.** The connection survived 30 s of idle and the sequence state continued (301 then 302), but we did not prove the Durable Object actually hibernated (no eviction or wake observed). The local eviction test shows the restore path works in the simulator only |
+| Point-in-time recovery | **State restoration succeeded.** After a bookmark, 5 transfers changed balances; restore via `onNextSessionRestoreBookmark` + `ctx.abort()` returned balances exactly to the bookmark state and `verify` stayed ok. The initiating client's response timed out because the restoration restarted the object and its connection. The undo bookmark was not exercised |
 | Cloudflare dashboard usage | **Not checked.** Counters above are the object's own; the dashboard figures were not read |
 | **Latency** | **p50 913 ms, p95 1,534 ms, p99 2,946 ms, max 4,308 ms per message, against our 250 ms target. Unresolved, see below** |
 
@@ -66,7 +66,7 @@ Script: `spikes/s6-backend/scripts/measure.mjs` (8 concurrent WebSocket clients 
 - The deployed Worker, **even on a route that never touches the Durable Object** (`/nope`, immediate 404), takes about 0.9 to 1.1 s per request on a reused connection. Routes that do reach the object take about the same (0.8 to 1.0 s on the same object). So the delay is not the room object or the ledger.
 - Served from Atlanta (cf-ray ends ATL), TCP connect 25 ms, but TLS handshake takes 0.9 to 1.3 s and time to first byte another 0.8 to 1.1 s. Server-side work in the Worker is nil.
 - One other site (example.com) also showed a slow TLS handshake (0.97 s) in an earlier check, so this machine's path may be a factor, but www.cloudflare.com and github.com were fast.
-- Hypotheses, not confirmed: (1) `workers.dev` hostnames on a brand-new account subdomain are slower to serve than custom domains; (2) a network issue specific to this laptop's path to that hostname; (3) something about the free plan. Not tested: a custom domain on `chaal.tech`, a second network or device, and a browser.
+- Hypotheses, not confirmed (investigation continues in the next section): (1) `workers.dev` hostnames on a brand-new account subdomain are slower to serve than custom domains; (2) a network issue specific to this laptop's path to that hostname; (3) something about the free plan. Not tested: a custom domain on `chaal.tech`, a second network or device, and a browser.
 
 ### Next for S6
 

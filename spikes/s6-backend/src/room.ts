@@ -55,7 +55,30 @@ export class Room extends DurableObject<Cloudflare.Env> {
   }
 
   // ---- hibernating WebSockets ----
+  /** Server-side timing helper: Date.now() only advances on I/O in Workers, so values are coarse (ms). */
+  private async latencyProbe(kind: 'echo' | 'sqlread' | 'sqlwrite'): Promise<{ doMs: number; sqlMs: number }> {
+    const t0 = Date.now();
+    let sqlMs = 0;
+    if (kind !== 'echo') {
+      const s0 = Date.now();
+      if (kind === 'sqlread') this.ctx.storage.sql.exec('SELECT COUNT(*) AS n FROM accounts').toArray();
+      else {
+        this.ledger.mint('lat-seed-a', 'lat-a', 1_000_000);
+        this.ledger.mint('lat-seed-b', 'lat-b', 1_000_000);
+        this.ledger.transfer(`lat-${crypto.randomUUID()}`, 'GIFT', 'lat-a', 'lat-b', 1);
+      }
+      sqlMs = Date.now() - s0;
+    }
+    return { doMs: Date.now() - t0, sqlMs };
+  }
+
   async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    if (url.pathname.endsWith('/ping') && request.headers.get('Upgrade') !== 'websocket') {
+      const read = await this.latencyProbe('sqlread');
+      const write = await this.latencyProbe('sqlwrite');
+      return Response.json({ srv: { doMs: read.doMs + write.doMs, sqlReadMs: read.sqlMs, sqlWriteMs: write.sqlMs } });
+    }
     if (request.headers.get('Upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 });
     const playerId = new URL(request.url).searchParams.get('player') ?? 'anon';
     const pair = new WebSocketPair();
@@ -75,6 +98,7 @@ export class Room extends DurableObject<Cloudflare.Env> {
     let direct = false; // reply only to the sender instead of broadcasting
     if (msg.t === 'transfer') result = this.ledger.transfer(msg.op, msg.type, msg.from, msg.to, msg.amount);
     else if (msg.t === 'ping') result = { pong: true };
+    else if (msg.t === 'echo' || msg.t === 'sqlread' || msg.t === 'sqlwrite') { result = { srv: await this.latencyProbe(msg.t) }; direct = true; }
     // ---- spike-only controls used by the deployed measurement script ----
     else if (msg.t === 'mint') result = this.ledger.mint(msg.op, msg.to, msg.amount);
     else if (msg.t === 'balances') { result = this.ledger.balances(); direct = true; }
