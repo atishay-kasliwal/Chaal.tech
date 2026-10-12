@@ -49,8 +49,8 @@ Deviation from the pasted plan: Phase 1 (static UX proof) is kept. It is the che
 - Pack: forfeits everything contributed. Folded player stays in the call.
 - Side show: seen player only; target must be the previous active player and also seen; only while 3+ players remain. Requester first pays the chaal cost. Target accepts or rejects within 15 s (timeout = reject). On accept the server compares privately and the lower hand is packed; **tie: requester packs**. Neither hand is shown to the table.
 - Show: only when exactly 2 players remain. A blind player may not call Show against a seen player (host toggle, default on). Requester pays the chaal cost. **Tie: requester loses.**
-- Pot limit: default 100 × boot. When reached, all remaining players reveal and the best hand wins. A tie splits the pot equally.
-- Last player standing wins without showing. Cards stay hidden unless the host enables "reveal winner cards" (default off).
+- Pot limit: default 100 × boot. When reached, the server compares all remaining hands and the best hand wins; a tie splits the pot equally. Cards are not displayed unless players choose to show them after settlement.
+- **Showing cards is voluntary (owner decision).** The server always evaluates hands and settles the pot; no player is forced to display cards to the table at the end of a hand. After settlement, any player in the hand, including the winner and players who packed, may choose to show their cards; default is hidden. This replaces the host toggle "reveal winner cards".
 - Short stack: a player who cannot afford the required bet may go all-in only to call Show when 2 remain (uncalled excess returns). With 3+ remaining they must pack. No side pots in Teen Patti V1.
 - Rake: none. Odd chips: remainder goes to the first winner left of the dealer.
 

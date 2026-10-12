@@ -16,7 +16,7 @@ Items marked **OWNER** need a decision. Everything else is a proposed default.
 | F6 | **Players with fewer chips than the boot** | Not dealt in; moved to sit-out until they can afford it |
 | F7 | **Raise limits and cap interplay.** Raise only allowed if 2S <= maxStake. A seen raise may cost up to 4 x (maxStake/2) | State legal-action rule: server returns raise only if the new stake <= maxStake and the player can afford the cost; otherwise chaal only |
 | F8 | **Tie handling differs across paths**: Show and side show tie goes against the requester; pot-limit forced reveal ties split | Intentional. Document in the engine and test it |
-| F9 | **Winner-by-pack hand reveal** default off, but history shows cards after the hand | Reveal only after hand completion, per DECISIONS section H |
+| F9 | **End-of-hand reveal** | **OWNER DECIDED: voluntary.** Server always settles; each player chooses whether to show cards after the hand (default hidden). History shows cards after the hand per DECISIONS section H only for cards players chose to show, plus the audit record |
 | F10 | **Fewer than 3 players** after a start: 2 can finish the hand; with 2 seated and ready, hands do not start | Matches DECISIONS. Add UI copy "Need 3 players to start" |
 | F11 | **Timeout on a pending side-show target** | Auto-reject after 15 s; the side-show timer is separate from the 30 s turn timer |
 | F12 | **Blind players and Show**: blind may not Show against seen (toggle default on). If both remaining are blind, either may Show | Test both |
@@ -67,6 +67,9 @@ Items marked **OWNER** need a decision. Everything else is a proposed default.
 31. Hand needs 3 ready players to start; 2 can finish a hand in progress.
 
 ## Owner decisions from this review
+
+- **Decided 2026-10-11:** showing cards at the end of a hand is voluntary (F9).
+- **Still open:** F1 (short-stack Show settlement) and F3 (do side-show participants see each other's cards). The F9 decision does not settle them. Working default stays: F1 uses the excess-return rule, F3 is server-only compare with the result told to both players, and a side-show participant may choose to show afterwards.
 
 - F1 short-stack Show settlement (proposed rule above).
 - F3 whether side-show participants see each other's cards.

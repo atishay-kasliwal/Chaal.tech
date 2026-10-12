@@ -31,7 +31,9 @@ function call(c, msg, timeoutMs = 10000) {
 const pct = (a, p) => [...a].sort((x, y) => x - y)[Math.min(a.length - 1, Math.floor(a.length * p))];
 const out = { room, base };
 
+const log = (...a) => console.error(new Date().toISOString().slice(11, 19), ...a);
 const clients = await Promise.all(players.map(open));
+log('connected 8');
 const [c0] = clients;
 for (const c of clients) await call(c, { t: 'mint', op: `seed-${c.player}`, to: c.player, amount: 5000 });
 await call(c0, { t: 'mint', op: 'seed-pot', to: 'pot', amount: 1 });
@@ -40,6 +42,7 @@ await call(c0, { t: 'mint', op: 'seed-pot', to: 'pot', amount: 1 });
 const lat = [];
 const t0 = performance.now();
 for (let h = 0; h < 60; h++) {
+  if (h % 10 === 0) log('hand', h);
   await Promise.all(clients.map(async (c) => {
     let r = await call(c, { t: 'transfer', op: `boot-${h}-${c.player}`, type: 'BOOT', from: c.player, to: 'pot', amount: 10 }); lat.push(r.ms);
     for (let k = 0; k < 4; k++) { r = await call(c, { t: 'transfer', op: `bet-${h}-${c.player}-${k}`, type: 'BET', from: c.player, to: 'pot', amount: 5 }); lat.push(r.ms); }
@@ -53,6 +56,7 @@ const v1 = (await call(c0, { t: 'verify' })).m.result;
 out.verifyAfterSession = v1;
 out.usageAfterSession = (await call(c0, { t: 'usage' })).m.result;
 
+log('session done');
 // ---- alarm timer: 5 s ----
 const ta = performance.now();
 await call(c0, { t: 'timer', player: 'p3', ms: 5000 });
@@ -64,12 +68,14 @@ for (let i = 0; i < 40; i++) {
 }
 out.alarm = { requestedMs: 5000, observedMs: fired === null ? null : Math.round(fired) };
 
+log('alarm done');
 // ---- hibernation: idle 30 s then the same sockets must still work with seq continuing ----
 const before = clients[1].seqs.at(-1);
 await new Promise((r) => setTimeout(r, 30000));
 const after = (await call(clients[1], { t: 'ping' })).m;
 out.hibernation = { idleSeconds: 30, seqBefore: before, seqAfter: after.seq, continuous: after.seq === before + 1 };
 
+log('hibernation done');
 // ---- point-in-time recovery ----
 const balBefore = (await call(c0, { t: 'balances' })).m.result;
 const bookmark = (await call(c0, { t: 'bookmark' })).m.result.bookmark;
