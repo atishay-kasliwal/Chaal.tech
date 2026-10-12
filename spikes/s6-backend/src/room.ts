@@ -65,17 +65,33 @@ export class Room extends DurableObject<Cloudflare.Env> {
     return new Response(null, { status: 101, webSocket: client });
   }
 
-  webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): void {
+  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
     this.messagesReceived += 1;
     const att = ws.deserializeAttachment() as Attachment;
     const next: Attachment = { ...att, seq: att.seq + 1 };
     ws.serializeAttachment(next);
     const msg = JSON.parse(typeof message === 'string' ? message : new TextDecoder().decode(message));
     let result: unknown = { error: 'unknown message' };
+    let direct = false; // reply only to the sender instead of broadcasting
     if (msg.t === 'transfer') result = this.ledger.transfer(msg.op, msg.type, msg.from, msg.to, msg.amount);
     else if (msg.t === 'ping') result = { pong: true };
-    const reply = JSON.stringify({ seq: next.seq, player: att.playerId, result });
-    for (const peer of this.ctx.getWebSockets()) peer.send(reply); // broadcast like a room would
+    // ---- spike-only controls used by the deployed measurement script ----
+    else if (msg.t === 'mint') result = this.ledger.mint(msg.op, msg.to, msg.amount);
+    else if (msg.t === 'balances') { result = this.ledger.balances(); direct = true; }
+    else if (msg.t === 'verify') { result = this.ledger.verify(); direct = true; }
+    else if (msg.t === 'usage') { result = this.usage(); direct = true; }
+    else if (msg.t === 'timer') { await this.startTurnTimer(msg.player, msg.ms); result = { ok: true }; direct = true; }
+    else if (msg.t === 'timeouts') { result = this.timeouts(); direct = true; }
+    else if (msg.t === 'bookmark') { result = { bookmark: await this.ctx.storage.getCurrentBookmark() }; direct = true; }
+    else if (msg.t === 'restore') {
+      const undo = await this.ctx.storage.onNextSessionRestoreBookmark(msg.bookmark);
+      ws.send(JSON.stringify({ seq: next.seq, player: att.playerId, result: { restoring: true, undoBookmark: undo } }));
+      this.ctx.abort('restore requested');
+      return;
+    }
+    const reply = JSON.stringify({ seq: next.seq, player: att.playerId, id: msg.id, result });
+    if (direct) ws.send(reply);
+    else for (const peer of this.ctx.getWebSockets()) peer.send(reply); // broadcast like a room would
   }
 
   webSocketClose(ws: WebSocket, code: number): void {
