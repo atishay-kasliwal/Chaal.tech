@@ -1,0 +1,244 @@
+{
+ "label": "workersdev-network1",
+ "host": "s6-backend-spike.s6-backend-spike.workers.dev",
+ "startedAt": "2026-10-12T01:59:59.225Z",
+ "dnsServerAnswers": {
+  "A": [
+   "104.21.76.55",
+   "172.67.188.176"
+  ]
+ },
+ "httpWorkerOnly_freshConnections": {
+  "dns": {
+   "n": 10,
+   "p50": 3.5,
+   "p95": 90.2,
+   "p99": 90.2,
+   "max": 90.2
+  },
+  "tcp": {
+   "n": 10,
+   "p50": 24.2,
+   "p95": 110.5,
+   "p99": 110.5,
+   "max": 110.5
+  },
+  "tls": {
+   "n": 10,
+   "p50": 1385.4,
+   "p95": 1543.2,
+   "p99": 1543.2,
+   "max": 1543.2
+  },
+  "timeToFirstByteAfterTls": {
+   "n": 10,
+   "p50": 1412.2,
+   "p95": 1566.1,
+   "p99": 1566.1,
+   "max": 1566.1
+  },
+  "total": {
+   "n": 10,
+   "p50": 2833.6,
+   "p95": 3126.3,
+   "p99": 3126.3,
+   "max": 3126.3
+  }
+ },
+ "httpWorkerOnly_reusedConnection": {
+  "firstRequestMs": 150.4,
+  "laterRequests": {
+   "n": 11,
+   "p50": null,
+   "p95": null,
+   "p99": null,
+   "max": null
+  }
+ },
+ "httpThroughDurableObject_freshConnections": {
+  "dns": {
+   "n": 10,
+   "p50": 2.8,
+   "p95": 3.7,
+   "p99": 3.7,
+   "max": 3.7
+  },
+  "tcp": {
+   "n": 10,
+   "p50": 25.2,
+   "p95": 108.9,
+   "p99": 108.9,
+   "max": 108.9
+  },
+  "tls": {
+   "n": 10,
+   "p50": 990.2,
+   "p95": 2987.8,
+   "p99": 2987.8,
+   "max": 2987.8
+  },
+  "timeToFirstByteAfterTls": {
+   "n": 10,
+   "p50": 1110.3,
+   "p95": 1571.9,
+   "p99": 1571.9,
+   "max": 1571.9
+  },
+  "total": {
+   "n": 10,
+   "p50": 2032.4,
+   "p95": 4425,
+   "p99": 4425,
+   "max": 4425
+  }
+ },
+ "httpThroughDurableObject_reusedConnection": {
+  "firstRequestMs": 1877.8,
+  "laterRequests": {
+   "n": 11,
+   "p50": null,
+   "p95": null,
+   "p99": null,
+   "max": null
+  }
+ },
+ "serverTimingWorkerOnly": {
+  "colo": "ATL",
+  "workerMs": {
+   "n": 10,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  }
+ },
+ "serverTimingThroughDurableObject": {
+  "colo": "ATL",
+  "doMs": {
+   "n": 12,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  },
+  "sqlReadMs": {
+   "n": 12,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  },
+  "sqlWriteMs": {
+   "n": 12,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  },
+  "workerToDoRoundTripMs": {
+   "n": 12,
+   "p50": 26,
+   "p95": 27,
+   "p99": 27,
+   "max": 27
+  },
+  "routingMs": {
+   "n": 12,
+   "p50": 26,
+   "p95": 27,
+   "p99": 27,
+   "max": 27
+  },
+  "workerMs": {
+   "n": 12,
+   "p50": 26,
+   "p95": 27,
+   "p99": 27,
+   "max": 27
+  }
+ },
+ "websocketConnect": {
+  "samplesMs": [
+   889.9,
+   2075.4,
+   2103.1,
+   2864.2,
+   496.8
+  ],
+  "n": 5,
+  "p50": 2075.4,
+  "p95": 2864.2,
+  "p99": 2864.2,
+  "max": 2864.2
+ },
+ "wsEcho_noSql": {
+  "clientRoundTripMs": {
+   "n": 100,
+   "p50": 1363.4,
+   "p95": 3449.9,
+   "p99": 3697.1,
+   "max": 3697.1
+  },
+  "durableObjectProcessingMs": {
+   "n": 100,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  },
+  "sqliteMs": {
+   "n": 100,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  }
+ },
+ "wsSqlRead": {
+  "clientRoundTripMs": {
+   "n": 100,
+   "p50": 1326.6,
+   "p95": 2948.9,
+   "p99": 3309,
+   "max": 3309
+  },
+  "durableObjectProcessingMs": {
+   "n": 100,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  },
+  "sqliteMs": {
+   "n": 100,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  }
+ },
+ "wsSqlWrite_ledgerTransfer": {
+  "clientRoundTripMs": {
+   "n": 60,
+   "p50": 1276.3,
+   "p95": 1572.4,
+   "p99": 3352.7,
+   "max": 3352.7
+  },
+  "durableObjectProcessingMs": {
+   "n": 60,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  },
+  "sqliteMs": {
+   "n": 60,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0
+  }
+ },
+ "finishedAt": "2026-10-12T02:07:35.819Z"
+}

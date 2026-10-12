@@ -74,3 +74,59 @@ Script: `spikes/s6-backend/scripts/measure.mjs` (8 concurrent WebSocket clients 
 2. If latency stays near 1 s on a custom domain from several networks, treat it as a real problem and look at the Worker and object placement; if it drops, close S6 latency.
 3. Read the Cloudflare dashboard usage and compare with the counters above.
 4. Delete the throwaway deployment when done.
+
+
+## Latency investigation, round 2 (2026-10-12): breakdown, network 1 only
+
+**Conclusion: not yet recorded.** A second-network run (phone hotspot or similar) has not been received, so none of PASS, PASS WITH KNOWN CONNECTION SETUP LATENCY, RETEST REQUIRED or FAIL is assigned. The 250 ms p95 game-action target is unchanged. S6 stays open. No backend change decided.
+
+Setup: `s6.chaal.tech` was added as a Worker custom domain (only that DNS record was created; apex, www, MX and nameservers unchanged, verified by lookup). The Worker and room object were instrumented with server timings (Date.now(), 1 ms resolution, so sub-millisecond work shows as 0). All runs below are from the same home network in North Carolina, served from Cloudflare Atlanta (ATL). Raw data: `docs/spikes/data/`.
+
+All values are p50 in ms unless noted. "Node" = `scripts/latency.mjs` (curl for HTTP phases, built-in WebSocket); "Browser" = Chrome via the `/test` page (connection already open, so DNS/TCP/TLS read 0).
+
+| Phase | Custom host, Node | workers.dev, Node | Custom host, Browser | workers.dev, Browser ("home") |
+|---|---|---|---|---|
+| DNS lookup | 2.3 | 3.5 | n/a (reused) | n/a (reused) |
+| TCP connect | 25 | 24 | n/a | n/a |
+| TLS handshake | 873 (p95 1,242) | 1,385 (p95 1,543) | n/a | n/a |
+| Time to first byte after TLS | 913 | 1,412 | about 1,060 (reused connection) | about 1,385 (reused connection) |
+| Total HTTP request, fresh connection | 1,805 (p95 2,589) | 2,834 (p95 3,126) | n/a | n/a |
+| WebSocket connection establishment | 2,194 (range 315 to 3,313) | 2,075 (range 497 to 2,864) | 2,080 (range 1,035 to 3,265) | 1,861 (range 370 to 3,583) |
+| WS message round trip, no database (echo) | 1,078 (p95 1,370) | 1,363 (p95 3,450) | 704 (p95 1,323) | 1,243 (p95 3,144) |
+| WS round trip with SQLite read | 948 (p95 1,227) | 1,327 (p95 2,949) | 726 (p95 1,371) | 1,246 (p95 1,442) |
+| WS round trip with ledger write | 1,040 (p95 1,289) | 1,276 (p95 1,572) | 1,088 (p95 1,459) | 1,288 (p95 1,513) |
+| Server: Worker to Durable Object and back | 26 | 26 | about 25 | about 40 |
+| Server: Durable Object processing | 0 | 0 | 0 | 0 |
+| Server: SQLite operation | 0 | 0 | 0 | 0 |
+
+How to read it:
+- **WebSocket message latency is measured on an already-established socket and is kept separate from HTTP setup,** as required. It is still 0.7 to 1.4 s at the median, so the slowness is not only connection setup.
+- **Server-side work is near zero.** Worker-to-object routing is about 25 to 45 ms; object and SQLite time are below the 1 ms clock resolution. The delay therefore sits between the client and Cloudflare's edge, before the request reaches our code.
+- **Two clients (curl/Node and Chrome) show the same pattern,** so it is not an artifact of my tooling.
+- **Browser runs overlapped in time** with each other and with the Node runs on the same connection, which may inflate them.
+- **Known limitation:** the Node script's reused-connection summary printed null (a bug in my summarizing code), so steady state for reused connections comes from the browser data only.
+
+### Control experiments (same network, same session)
+
+| Test | Result |
+|---|---|
+| Same Cloudflare edge IP, SNI `s6.chaal.tech` | TLS 0.6 to 1.3 s |
+| Same edge IP, SNI `www.cloudflare.com` | TLS about 0.05 s, total 0.08 s |
+| Same edge IP, SNI `discord.com` (a Cloudflare customer) | TLS 0.05 to 0.14 s |
+| Cloudflare-owned `workers.cloudflare.com`, `pages.dev`, `cloudflare-dns.com` | Total 0.09 to 0.18 s |
+| Owner's older Cloudflare zone `atishaykasliwal.com` | TLS 0.7 to 1.5 s, total up to 6.5 s: **also slow** |
+| Plain HTTP (no TLS) to `s6.chaal.tech` | 1.09 s, then 0.17 s, then 0.07 s |
+| TLS 1.2 only, HTTP/1.1 vs HTTP/2, the second edge IP | No improvement |
+| Ping to Cloudflare | about 22 ms |
+
+### What this does and does not show
+
+- Shows: our Worker, Durable Object and ledger are not the source of the delay; it depends on the hostname and the path from this network, not on the TLS version, HTTP version or edge address.
+- Does not show: whether the cause is this home network (a filter or router treating some hostnames differently) or Cloudflare's handling of free-plan customer hostnames for everyone. The owner's unrelated older zone being slow points toward the network or the free-plan path generally, not toward anything specific to the spike.
+
+### Remaining steps before a conclusion
+
+1. Second network: run `https://s6.chaal.tech/test` and `https://s6-backend-spike.s6-backend-spike.workers.dev/test` from a different network (for example a phone hotspot) with nothing else running, naming the network in the box.
+2. Clean rerun on this network with nothing else running.
+3. If the second network is fast: conclusion is PASS or PASS WITH KNOWN CONNECTION SETUP LATENCY depending on the setup numbers. If it is equally slow: RETEST REQUIRED with a look at Cloudflare plan and routing, and only then a decision about the backend.
+4. Delete the throwaway deployment and the `s6.chaal.tech` record when finished.
