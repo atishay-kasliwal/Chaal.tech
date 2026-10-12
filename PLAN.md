@@ -6,7 +6,7 @@ Sizes are relative effort for a small team or agent pairs: **S** under 2 days, *
 ## Assumptions (correct me if wrong)
 
 - Small team or solo owner working with coding agents; one phase in flight at a time.
-- Stack as in STACK.md: all Cloudflare (Pages, Workers, Durable Objects, D1, Realtime SFU, TURN).
+- Stack as in STACK.md: all Cloudflare (Pages, Workers, Durable Objects, D1) plus LiveKit for video/audio.
 - V1 goal: six friends play in a private room (spec section 20). No public launch in V1.
 - Teen Patti is the lead game; Hold'em follows.
 
@@ -26,13 +26,13 @@ Docs and throwaway code only. Nothing here ships. Output goes to `docs/spikes/`.
 | S1 poker-engine-ts evaluation | Does it satisfy DECISIONS.md section C (min-raise, short all-in, side pots, odd chip, heads-up blinds)? Can it sit behind our `CardGame` contract? | M | Written verdict plus a test table of pass/fail per rule |
 | S2 Teen Patti engine shape | Can poker-engine-ts's rules-as-data express Teen Patti? If not, what do we copy (event log, reducer, replay)? | S | Decision recorded: reuse descriptor, or own reducer using its pattern |
 | S3 Teen Patti test spec | Every rule in DECISIONS.md section B as a named test case with inputs and expected outcome | M | Reviewed by owner against how the group really plays |
-| S4 Cloudflare Realtime SFU proof of concept | **Built, not researched.** See the S4 acceptance list below. | L | All 13 criteria demonstrated and recorded; usage measured from the Cloudflare dashboard |
+| S4 LiveKit proof of concept | **Built, not researched.** See the S4 acceptance list below. | L | All 13 criteria demonstrated and recorded; usage measured from the LiveKit dashboard |
 | S6 Cloudflare backend validation | Durable Object room ownership, WebSocket messaging, SQLite persistence, ledger atomicity, chip conservation, idempotency, turn timers, alarms, hibernation and restoration, engine compatibility with Workers, backup and recovery options, expected free-tier consumption. See the S6 acceptance list below. | L | Every item passes or has a written, owner-reviewed finding |
 | S5 Layout feasibility | Can 8 tiles fit 360x640 with action tray and overlays? | S | One HTML fixture, screenshots |
 
 ### S4 acceptance (real proof of concept)
 
-Build a throwaway app in `spikes/s4-video/` on Cloudflare (Pages + Worker + Durable Object for signaling) using the real `MediaProvider` interface. It must demonstrate, with measured evidence in `docs/spikes/s4.md`:
+Build a throwaway app in `spikes/s4-video/` using LiveKit (with Cloudflare Pages for hosting and Durable Objects for signaling) using the real `MediaProvider` interface. It must demonstrate, with measured evidence in `docs/spikes/s4.md`:
 
 1. Eight participants can join one room.
 2. Every participant publishes camera and microphone.
@@ -46,7 +46,7 @@ Build a throwaway app in `spikes/s4-video/` on Cloudflare (Pages + Worker + Dura
 10. Laptop and mobile browsers both work (at least one desktop browser, iOS Safari and Android Chrome).
 11. The video grid stays inside 100dvh with no scrolling.
 12. Cards, balances, player states and game overlays render over the video tiles.
-13. Actual Cloudflare usage (egress, requests) is measured during the test, not estimated.
+13. Actual LiveKit usage (egress, requests) is measured during the test, not estimated.
 
 If S4 fails: evaluate Daily as the fallback behind `MediaProvider`. The room UI and game engines must not change.
 
@@ -67,7 +67,7 @@ If S6 fails: use Node.js plus PostgreSQL for the backend, keeping the same game 
 
 ### Gate
 
-Do not begin the complete application (Phase 0 onward) until S1-S3 are reviewed and S4 and S6 establish that the Cloudflare architecture is viable. Phase 4 stays in place; real video is built in it, not deferred. If S1 fails on core rules, Hold'em becomes an in-house engine and Phase 8 grows from L to XL.
+Do not begin the complete application (Phase 0 onward) until S1-S3 are reviewed and S4 and S6 establish that the Cloudflare+LiveKit architecture is viable. Phase 4 stays in place; real video is built in it, not deferred. If S1 fails on core rules, Hold'em becomes an in-house engine and Phase 8 grows from L to XL.
 
 ## Phase 0: Foundation (M)
 
@@ -96,7 +96,7 @@ Gate: conservation property test (thousands of random transfers), concurrent tra
 
 Built on the S4 proof of concept, behind `MediaProvider`. Video is a core product feature and is not deferred.
 
-Tasks: Cloudflare Realtime SFU sessions and tracks behind `MediaProvider`, signaling via the room object, TURN fallback, active speaker from audio levels, session auth tied to the signed-in user, camera/mic gate and permission-denied states, presence, active speaker, simulcast and adaptive subscription, track-loss handling (20 s grace, sit-out at hand boundary), spectator receive-only, reconnect UI naming what is reconnecting.
+Tasks: LiveKit sessions and tracks behind `MediaProvider`, signaling via the room object, TURN fallback, active speaker from audio levels, session auth tied to the signed-in user, camera/mic gate and permission-denied states, presence, active speaker, simulcast and adaptive subscription, track-loss handling (20 s grace, sit-out at hand boundary), spectator receive-only, reconnect UI naming what is reconnecting.
 Gate: 6+ real or synthetic participants stable for 30 minutes on desktop and mobile; permission denial and device change handled.
 
 ## Phase 5: Realtime protocol (M)
@@ -191,7 +191,7 @@ Never cut: ledger invariants, private-card separation, reconnect handling, the o
 - Confirm Teen Patti rules (S3) against how the group plays.
 - Prioritize Teen Patti variants for Phase 11.
 - Infrastructure monthly budget ceiling.
-- Confirm Cloudflare Realtime SFU after S4 (fallback Daily or peer-to-peer).
+- Confirm LiveKit after S4 (fallback to Daily or peer-to-peer).
 - Counsel review timing, if V1 ever goes beyond friends.
 
 ## First ten tasks
@@ -200,7 +200,7 @@ Never cut: ledger invariants, private-card separation, reconnect handling, the o
 2. S1: run poker-engine-ts tests and our rule cases in an isolated folder.
 3. S2: record the engine-shape decision.
 4. S5: one HTML fixture for 8 tiles at 360x640.
-5. S4: Cloudflare Realtime SFU spike.
+5. S4: LiveKit spike.
 5b. S6: Cloudflare backend feasibility (gate for the whole stack).
 6. Phase 0: monorepo scaffold and CI.
 7. Phase 0: tokens package and spacing/radius scales.

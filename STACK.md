@@ -10,7 +10,7 @@ Status: **CHOSEN by owner.** Supersedes the Node/Fastify/PostgreSQL/Redis/LiveKi
 | Game rooms | Durable Objects (one per room) |
 | Game state and per-room ledger | Durable Object SQLite |
 | Global data (allowlist, users, sessions, room index) | D1 |
-| Video and audio | Cloudflare Realtime SFU |
+| Video and audio | LiveKit |
 | NAT fallback | Cloudflare TURN |
 | Teen Patti | Custom TypeScript engine |
 | Poker | TypeScript engine (candidate: wrap poker-engine-ts, subject to spike S1) |
@@ -37,11 +37,11 @@ Not used in V1: Postgres, Redis, Socket.IO, Fastify, Node server.
 | History across rooms | Room object writes a summary row to D1 when a hand or room completes |
 | RNG | Web Crypto (`crypto.getRandomValues`) with unbiased Fisher-Yates; seeded PRNG in tests only |
 
-## Video: Cloudflare Realtime SFU
+## Video: LiveKit
 
-- It is a raw SFU, not a room product. We build: session and track management through its API, signaling through the room Durable Object, active speaker detection (audio levels), media reconnect handling and the tile UI.
+- LiveKit provides SDKs for client-side integration and servers for managing rooms and participants. We use LiveKit Cloud or self-hosted LiveKit servers for SFU functionality, with signaling through our room Durable Object, active speaker detection (audio levels), media reconnect handling and the tile UI.
 - Keep it behind our own `MediaProvider` interface so game code never calls it directly.
-- Free allowance reported as 1,000 GB egress a month, shared with TURN. The pricing pages disagreed on the free-tier wording, so confirm on the dedicated pricing page before relying on it.
+- LiveKit offers a free tier for development and testing, with production pricing based on usage. Confirm current pricing on the LiveKit website before relying on it.
 - Fallbacks if the spike fails: Daily, or peer-to-peer for laptop-only groups.
 
 ## Known risks and the spikes that answer them

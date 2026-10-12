@@ -19,7 +19,7 @@ One authoritative sequence replaces both existing lists. The ledger now lands be
 | 1 | Static UX proof: fake video grid 2-8, 100dvh, blue cards, overlays, banker mock | Screenshots approved, no scroll, anti-AI review passes |
 | 2 | Accounts, allowlist + Rooms: allowlisted sign-in, sessions, room lifecycle, host controls | Non-allowlisted refused, session reconnect, kick tests pass |
 | 3 | Database + Ledger: migrations, accounts, immutable transactions, idempotency | Conservation + concurrency tests pass |
-| 4 | Live video (built on S4 proof of concept): Cloudflare Realtime SFU, media gate, presence, active speaker, media-failure states | 6+ participants stable |
+| 4 | Live video (built on S4 proof of concept): LiveKit, media gate, presence, active speaker, media-failure states | 6+ participants stable |
 | 5 | Realtime protocol: versioned events, snapshots, resync | Stale/reconnect/duplicate tests pass |
 | 6 | Card core: secure shuffle, public/private state split, deal animation | No private-card leak; deterministic tests pass |
 | 7 | Teen Patti Classic | Simulation + E2E hands complete; ledger-backed settlement |
@@ -47,12 +47,14 @@ Deviation from the pasted plan: Phase 1 (static UX proof) is kept. It is the che
   - A raise may only double the stake. `S` is capped at `maxStake` (default 16 × boot).
 - Seen: a blind player may look at cards at any time. They become seen immediately and cannot go back.
 - Pack: forfeits everything contributed. Folded player stays in the call.
-- Side show: seen player only; target must be the previous active player and also seen; only while 3+ players remain. Requester first pays the chaal cost. Target accepts or rejects within 15 s (timeout = reject). On accept the server compares privately and the lower hand is packed; **tie: requester packs**. Neither hand is shown to the table.
+- Side show: seen player only; target must be the previous active player and also seen; only while 3+ players remain. Requester first pays the chaal cost. Target accepts or rejects within 15 s (timeout = reject). On accept the server compares privately and the lower hand is packed; **tie: requester packs**. Neither hand is shown to the table. During the side show, the cards are compared privately by the server and are not revealed to either player. After the comparison, the losing player packs and may choose to show their cards.
 - Show: only when exactly 2 players remain. A blind player may not call Show against a seen player (host toggle, default on). Requester pays the chaal cost. **Tie: requester loses.**
 - Pot limit: default 100 × boot. When reached, the server compares all remaining hands and the best hand wins; a tie splits the pot equally. Cards are not displayed unless players choose to show them after settlement.
 - **Showing cards is voluntary (owner decision).** The server always evaluates hands and settles the pot; no player is forced to display cards to the table at the end of a hand. After settlement, any player in the hand, including the winner and players who packed, may choose to show their cards; default is hidden. This replaces the host toggle "reveal winner cards".
-- Short stack: a player who cannot afford the required bet may go all-in only to call Show when 2 remain (uncalled excess returns). With 3+ remaining they must pack. No side pots in Teen Patti V1.
+- Short stack: a player who cannot afford the required bet may go all-in only to call Show when 2 remain (uncalled excess returns to the opponent before comparison). With 3+ remaining they must pack. No side pots in Teen Patti V1.
 - Rake: none. Odd chips: remainder goes to the first winner left of the dealer.
+
+---
 
 ## C. Texas Hold'em (items 2, 3)
 
@@ -78,6 +80,8 @@ Deviation from the pasted plan: Phase 1 (static UX proof) is kept. It is the che
 - Leaving with debt: debt stays attached to the user for the life of the room. When the room closes, outstanding debts void; the ledger remains as history. Chips do not carry across rooms in V1.
 - Compensating transactions only; never delete or edit ledger rows. Idempotency key on every transfer.
 
+---
+
 ## E. Identity and security (items 10-12)
 
 - **Application access is allowlist-only.** The owner (admin) maintains a list of approved people, identified by email. Nobody outside the list can sign in, see any room, or reach the game server; unlisted sign-in attempts get a generic refusal and are rate limited. The owner can add, suspend or remove people at any time; removal ends their sessions immediately.
@@ -88,6 +92,8 @@ Deviation from the pasted plan: Phase 1 (static UX proof) is kept. It is the che
 - Spectators: off by default. Spectators are approved users too. When enabled, up to 4 of those 8 slots.
 - **Non-goals (explicit):** preventing players from sharing cards by voice or a second device; preventing screen recording by participants. Platform never records video.
 
+---
+
 ## F. Media (items 13, 14, 15, 22)
 
 - Camera and mic are required to hold a seat. There are no mute or camera-off controls in a seat.
@@ -97,11 +103,15 @@ Deviation from the pasted plan: Phase 1 (static UX proof) is kept. It is the che
 - Minimum supported viewport: 360 × 640 portrait, 640 × 360 landscape. Below that, show an "enlarge or rotate" notice. Minimum mobile tile 88 × 66 px.
 - Audio: game sounds are short local assets (not a media track), low volume, ducked while anyone speaks, mutable in settings. Echo cancellation and noise suppression on; recommend headphones in the join flow.
 
+---
+
 ## G. Layout consistency (item 18)
 
 - Video tiles occupy at least 80% of the viewport at all times. Pot and community cards sit in a reserved band between tile rows (desktop) or above the action tray (mobile), and may overlap tile edges, never faces' centers.
 - Revised statement: "video dominates; overlays are lightweight" replaces the fixed 85-95% number.
 - The external "UX/UI Design Taste" and similar skills are **optional references only**. The Project UI Constitution in the playbook is authoritative. No mandatory third-party skill.
+
+---
 
 ## H. Host controls, timers, data (item 19)
 
@@ -111,9 +121,13 @@ Deviation from the pasted plan: Phase 1 (static UX proof) is kept. It is the che
 - Retention: hand history and ledger kept 30 days after the room closes; rooms expire 24 h after last activity. Card-level audit records live in a restricted store, 30 days, never in ordinary logs.
 - Folded players' cards become visible in history only after the hand completes.
 
+---
+
 ## I. Legal (item 20)
 
 - 18+ self-attestation at first sign-in (allowlist implies the owner knows the people); play-money disclaimer in room and footer; terms and privacy pages before public launch. No real-money path. No geo-blocking in V1 (allowlist-only app). **OWNER:** have counsel confirm before any public launch.
+
+---
 
 ## J. Non-functional targets (item 21)
 

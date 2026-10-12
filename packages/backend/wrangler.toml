@@ -1,0 +1,26 @@
+name = "teenpatti-backend"
+compatibility_date = "2024-10-01"
+
+# Environment variables for LiveKit integration
+# These must be set as secrets via `wrangler secret put` or in .dev.vars for local development
+[vars]
+LIVEKIT_URL = ""  # e.g., "wss://my-project.livekit.io"
+LIVEKIT_API_KEY = ""  # LiveKit API key
+LIVEKIT_API_SECRET = ""  # LiveKit API secret
+
+[durable_objects]
+bindings = [
+  { name = "ROOM", class_name = "Room" }
+]
+
+# Enable SQLite storage for Durable Objects
+[durable_objects.sqlite]
+# This enables SQLite storage for the DO class; no further config needed.
+
+[upload]
+# Directory to upload as static assets (if any)
+dir = "public"
+
+[build]
+# Build command (if using a bundler)
+command = "npm run build"
