@@ -1,0 +1,8 @@
+{"host":"s6-backend-spike.s6-backend-spike.workers.dev","network":"home","userAgent":"Chrome/154 on macOS","startedAt":"2026-10-12T01:57:45.512Z","finishedAt":"2026-10-12T02:03:55.015Z",
+"httpWorkerOnly_ttfbMs":[1441.8,1353,1458.1,1380.1,1122.7,1113.8,1435.9,5211,1415.7,1278.6,1384.8,1148.6],
+"httpThroughDurableObject":{"totalMs":[1161.4,1340.6,1372,1281.3,1388.2,4589.1,1113.9,985,1214.3,1435,1417.6,1282.5],"workerToDoRoundTripMs":[223,40,43,43,37,39,39,49,38,38,41,44],"doMs":0,"sqlReadMs":0,"sqlWriteMs":0,"colo":"ATL"},
+"websocketConnectMs":{"samples":[1861.4,3582.9,611.1,2252.2,370.1],"p50":1861.4,"max":3582.9},
+"wsEcho":{"roundTripMs":{"n":100,"p50":1243.4,"p95":3143.9,"p99":3582.3,"max":3582.3},"durableObjectMs":0,"sqliteMs":0},
+"wsSqlRead":{"roundTripMs":{"n":100,"p50":1245.5,"p95":1442.4,"p99":2950,"max":2950},"durableObjectMs":0,"sqliteMs":0},
+"wsSqlWrite":{"roundTripMs":{"n":60,"p50":1287.5,"p95":1512.8,"p99":1528.2,"max":1528.2},"durableObjectMs":0,"sqliteMs":0},
+"_note":"Compacted from the pasted result; DNS/TCP/TLS fields were 0 because the browser reused a connection. This run overlapped in time with the other browser run and with the Node latency runs on the same network."}
