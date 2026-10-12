@@ -6,7 +6,7 @@ Sizes are relative effort for a small team or agent pairs: **S** under 2 days, *
 ## Assumptions (correct me if wrong)
 
 - Small team or solo owner working with coding agents; one phase in flight at a time.
-- Stack as in the spec: TypeScript monorepo, React/Vite, Node game server, PostgreSQL, LiveKit.
+- Stack as in STACK.md: all Cloudflare (Pages, Workers, Durable Objects, D1, Realtime SFU, TURN).
 - V1 goal: six friends play in a private room (spec section 20). No public launch in V1.
 - Teen Patti is the lead game; Hold'em follows.
 
@@ -152,7 +152,7 @@ Never cut: ledger invariants, private-card separation, reconnect handling, the o
 - Confirm Teen Patti rules (S3) against how the group plays.
 - Prioritize Teen Patti variants for Phase 11.
 - Infrastructure monthly budget ceiling.
-- Hosted vs self-hosted LiveKit (after S4).
+- Confirm Cloudflare Realtime SFU after S4 (fallback Daily or peer-to-peer).
 - Counsel review timing, if V1 ever goes beyond friends.
 
 ## First ten tasks
@@ -161,7 +161,8 @@ Never cut: ledger invariants, private-card separation, reconnect handling, the o
 2. S1: run poker-engine-ts tests and our rule cases in an isolated folder.
 3. S2: record the engine-shape decision.
 4. S5: one HTML fixture for 8 tiles at 360x640.
-5. S4: LiveKit sizing note.
+5. S4: Cloudflare Realtime SFU spike.
+5b. S6: Cloudflare backend feasibility (gate for the whole stack).
 6. Phase 0: monorepo scaffold and CI.
 7. Phase 0: tokens package and spacing/radius scales.
 8. Phase 0: preview deployment.
