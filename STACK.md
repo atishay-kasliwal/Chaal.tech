@@ -64,6 +64,6 @@ Not used in V1: Postgres, Redis, Socket.IO, Fastify, Node server.
 
 ## Account and domain
 
-- The Cloudflare account that owns the app and its domain is **katishay45@gmail.com**. The domain will be bought for this account.
+- The Cloudflare account that owns the app and its domain is **katishay45@gmail.com**. Domain: **chaal.tech** (bought 2026-10-11; nameservers being moved to Cloudflare).
 - Free-tier limits (Workers, Durable Objects, D1, Pages Functions) are per account, not per domain, so one account and one domain is the plan. Do not split the app across accounts to multiply limits.
 - Before any deployment (S4, S6 or later), confirm `wrangler whoami` shows this account. The wrangler login found on the build machine on 2026-10-11 was a different account (katishay@gmail.com) and must not be used.
