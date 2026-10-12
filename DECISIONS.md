@@ -19,7 +19,7 @@ One authoritative sequence replaces both existing lists. The ledger now lands be
 | 1 | Static UX proof: fake video grid 2-8, 100dvh, blue cards, overlays, banker mock | Screenshots approved, no scroll, anti-AI review passes |
 | 2 | Accounts, allowlist + Rooms: allowlisted sign-in, sessions, room lifecycle, host controls | Non-allowlisted refused, session reconnect, kick tests pass |
 | 3 | Database + Ledger: migrations, accounts, immutable transactions, idempotency | Conservation + concurrency tests pass |
-| 4 | Live video: Cloudflare Realtime SFU, media gate, presence, active speaker, media-failure states | 6+ participants stable |
+| 4 | Live video (built on S4 proof of concept): Cloudflare Realtime SFU, media gate, presence, active speaker, media-failure states | 6+ participants stable |
 | 5 | Realtime protocol: versioned events, snapshots, resync | Stale/reconnect/duplicate tests pass |
 | 6 | Card core: secure shuffle, public/private state split, deal animation | No private-card leak; deterministic tests pass |
 | 7 | Teen Patti Classic | Simulation + E2E hands complete; ledger-backed settlement |

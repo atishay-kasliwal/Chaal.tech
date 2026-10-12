@@ -26,11 +26,48 @@ Docs and throwaway code only. Nothing here ships. Output goes to `docs/spikes/`.
 | S1 poker-engine-ts evaluation | Does it satisfy DECISIONS.md section C (min-raise, short all-in, side pots, odd chip, heads-up blinds)? Can it sit behind our `CardGame` contract? | M | Written verdict plus a test table of pass/fail per rule |
 | S2 Teen Patti engine shape | Can poker-engine-ts's rules-as-data express Teen Patti? If not, what do we copy (event log, reducer, replay)? | S | Decision recorded: reuse descriptor, or own reducer using its pattern |
 | S3 Teen Patti test spec | Every rule in DECISIONS.md section B as a named test case with inputs and expected outcome | M | Reviewed by owner against how the group really plays |
-| S4 Cloudflare Realtime SFU spike | 8 simulated publishers, signaling through a Durable Object, active speaker, 360p tiles on phones, iOS Safari behavior, TURN fallback, bandwidth measured against the free allowance | M | Working demo plus go/no-go; fallback Daily or peer-to-peer |
-| S6 Cloudflare backend feasibility | One room Durable Object with hibernating WebSockets, alarms for timers, SQLite ledger with idempotency; load of a simulated 2-hour 8-player session vs daily free limits; engine runs in Workers runtime; backup/restore options | M | Conservation test passes in-object; request and write counts well under limits; written verdict |
+| S4 Cloudflare Realtime SFU proof of concept | **Built, not researched.** See the S4 acceptance list below. | L | All 13 criteria demonstrated and recorded; usage measured from the Cloudflare dashboard |
+| S6 Cloudflare backend validation | Durable Object room ownership, WebSocket messaging, SQLite persistence, ledger atomicity, chip conservation, idempotency, turn timers, alarms, hibernation and restoration, engine compatibility with Workers, backup and recovery options, expected free-tier consumption. See the S6 acceptance list below. | L | Every item passes or has a written, owner-reviewed finding |
 | S5 Layout feasibility | Can 8 tiles fit 360x640 with action tray and overlays? | S | One HTML fixture, screenshots |
 
-Gate: owner signs off S1-S3 and S6 results; S4 result decides video provider. If S1 fails on core rules, Hold'em becomes an in-house engine and Phase 8 grows from L to XL.
+### S4 acceptance (real proof of concept)
+
+Build a throwaway app in `spikes/s4-video/` on Cloudflare (Pages + Worker + Durable Object for signaling) using the real `MediaProvider` interface. It must demonstrate, with measured evidence in `docs/spikes/s4.md`:
+
+1. Eight participants can join one room.
+2. Every participant publishes camera and microphone.
+3. Every participant receives the other seven.
+4. Custom video tiles render inside our React interface.
+5. Active speaker detection works.
+6. Participant join and leave work.
+7. A temporary network interruption reconnects correctly.
+8. Camera or microphone interruption does not corrupt game state (tested against a stub room state).
+9. Video quality adapts for an eight-tile layout.
+10. Laptop and mobile browsers both work (at least one desktop browser, iOS Safari and Android Chrome).
+11. The video grid stays inside 100dvh with no scrolling.
+12. Cards, balances, player states and game overlays render over the video tiles.
+13. Actual Cloudflare usage (egress, requests) is measured during the test, not estimated.
+
+If S4 fails: evaluate Daily as the fallback behind `MediaProvider`. The room UI and game engines must not change.
+
+### S6 acceptance (backend validation)
+
+Build a throwaway room object in `spikes/s6-backend/` and record results in `docs/spikes/s6.md`:
+
+- Durable Object room ownership (one object per room, no cross-room state).
+- WebSocket messaging with hibernation and state restoration.
+- SQLite persistence and restart recovery.
+- Ledger atomicity, chip conservation (property test) and idempotency keys.
+- Turn timers using Durable Object alarms, including after hibernation.
+- Pure TypeScript engines run unchanged in the Workers runtime.
+- Backup and recovery options, as documented by Cloudflare and as tested.
+- Expected free-tier consumption for a simulated 2-hour, 8-player session, measured.
+
+If S6 fails: use Node.js plus PostgreSQL for the backend, keeping the same game engines and protocol packages.
+
+### Gate
+
+Do not begin the complete application (Phase 0 onward) until S1-S3 are reviewed and S4 and S6 establish that the Cloudflare architecture is viable. Phase 4 stays in place; real video is built in it, not deferred. If S1 fails on core rules, Hold'em becomes an in-house engine and Phase 8 grows from L to XL.
 
 ## Phase 0: Foundation (M)
 
@@ -56,6 +93,8 @@ Tasks: migration tooling and first schema (rooms, participants, accounts, transa
 Gate: conservation property test (thousands of random transfers), concurrent transfer test, duplicate key test, negative balance rejected, fresh and upgrade migrations pass.
 
 ## Phase 4: Live video (L)
+
+Built on the S4 proof of concept, behind `MediaProvider`. Video is a core product feature and is not deferred.
 
 Tasks: Cloudflare Realtime SFU sessions and tracks behind `MediaProvider`, signaling via the room object, TURN fallback, active speaker from audio levels, session auth tied to the signed-in user, camera/mic gate and permission-denied states, presence, active speaker, simulcast and adaptive subscription, track-loss handling (20 s grace, sit-out at hand boundary), spectator receive-only, reconnect UI naming what is reconnecting.
 Gate: 6+ real or synthetic participants stable for 30 minutes on desktop and mobile; permission denial and device change handled.

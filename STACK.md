@@ -55,4 +55,9 @@ Not used in V1: Postgres, Redis, Socket.IO, Fastify, Node server.
 | Engines and libraries must run in the Workers runtime (no Node-only APIs) | S6 |
 | Lock-in to Cloudflare | Keep engines and protocol in pure packages; storage behind an interface |
 
-Fallback stack if S6 fails: small Node server with Postgres on a low-cost host, using the same pure engines and protocol packages.
+## Gates and fallbacks
+
+- S4 (video proof of concept) and S6 (backend validation) must both pass before the complete application begins. Acceptance lists are in PLAN.md.
+- If S4 fails: Daily behind `MediaProvider`. Room UI and engines are unchanged.
+- If S6 fails: Node.js plus PostgreSQL for the backend, using the same pure engines and protocol packages.
+- `MediaProvider` stays in place regardless, so the SFU can be replaced without touching the room UI or game engines.
