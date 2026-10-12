@@ -1,0 +1,15 @@
+{
+  "name": "s1-poker-spike",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "poker-engine-ts": "0.1.3"
+  }
+}

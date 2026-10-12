@@ -122,7 +122,7 @@ Sub-slices, each its own PR chain:
 8. UI wiring: action tray legality from server, private cards, animations.
 Gate: seeded simulation of thousands of hands with chip conservation; every S3 test passes; E2E hand completes in the UI.
 
-## Phase 8: Texas Hold'em (L, XL if S1 fails)
+## Phase 8: Texas Hold'em (L to XL; S1 found two live-path defects in poker-engine-ts, see docs/spikes/s1-poker-engine-evaluation.md)
 
 Tasks: wrap or build the engine behind `CardGame`; blinds and button; streets; legal actions; all-in; side pots; showdown; odd-chip rule; UI.
 Gate: side-pot and showdown matrix passes; simulation with chip conservation.

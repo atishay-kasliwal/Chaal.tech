@@ -3,9 +3,39 @@
 Repo: Ge-limin/poker-engine-ts, v0.1.3, MIT, one runtime dependency (@noble/hashes). Evaluated at the commit cloned on 2026-10-11.
 Method: read the source, installed with `pnpm install --frozen-lockfile --ignore-scripts` in an isolated folder, ran its own suite (**30 files, 192 tests, all pass**). I did **not** yet run our own rule cases against its public API, and did **not** run it inside the Workers runtime. Those are listed under "Still unproven".
 
-## Verdict
+## Verdict (updated after running our own cases)
 
-**Promising; conditionally adopt behind our `CardGame` wrapper.** On every Hold'em rule in DECISIONS.md section C that I could check, its existing tests or code already match. Do not commit to it until the "Still unproven" items pass.
+**Not adoptable as-is. Two defects found on the live `SessionManager` path; the pure parts (side pots, odd chip, short all-in reopen logic, conservation) look sound.** Options: (a) vendor a pinned copy and patch the two defects, (b) report upstream and wait, (c) build our own engine reusing its settlement and evaluation ideas. Decide after the two checks listed under "Next".
+
+## Results of our own cases (spikes/s1-poker, engine 0.1.3 from npm, 15 tests: 14 pass, 1 skipped)
+
+| Case | Result |
+|---|---|
+| 3-handed: blinds left of button, button acts first | Pass |
+| Heads-up: button posts small blind and acts first | Pass |
+| Raise below minimum rejected | Pass |
+| Short all-in does not reopen betting for players who already acted | Pass |
+| Full all-in raise reopens betting | Pass |
+| 8 seats: blinds and first actor correct | Pass |
+| Unequal all-ins (100/300/1000): layered side pots, chips conserved | Pass |
+| Chips conserved across folds and calls | Pass |
+| Duplicate intent id not applied twice; stale snapshot version rejected | Pass |
+| Public table view contains no hole cards (server snapshot does) | Pass |
+| **Defect 1: preflop min re-raise** after an open to 30 over a 10 big blind is offered as 60; standard no-limit (and our rule) gives 50 | **Fail** (recorded with `test.fails`) |
+| **Defect 2: blind credit.** Heads-up small blind calling the big blind is charged 10 more on top of the 5 posted: contribution 15, pot 25 instead of 20; the big blind is then offered call 10 with no check option | **Fail** (recorded with `test.fails`) |
+| Postflop min raise (bet 30, min raise-to 60) | Skipped: cannot reach the flop through normal play because of Defect 2 |
+
+Root-cause notes (read from source, not patched):
+- Defect 1: `analyzeTurns` in `round-context.ts` starts `highestContribution` at 0 and blind posts are not in the round's `turns` on the live path (they live in `round.highestBet` and the pot), so an open raise to 30 counts as a raise of 30, not 20.
+- Defect 2: the same cause: the call amount is derived from turn contributions only, so blinds posted at session creation are not credited.
+- The engine's own 192 tests mostly build snapshots by hand with blinds as turn events, which is why they pass. I used the documented entry point (`SessionManager.create`), so these may affect real use. I have not confirmed whether another start path (for example `advanceHand`) posts blinds differently.
+
+## Next
+
+1. Try the other hand-start path (`advanceHand` / `bootstrapSession` with posted blind turns) to see whether the defects are specific to `SessionManager.create`.
+2. If they are, try the one-line fix in a vendored copy (start round contributions from `round.highestBet` and credit posted blinds) and rerun our suite plus the engine's 192 tests.
+3. Then decide (a), (b) or (c). Until then Phase 8 stays sized L-to-XL, not L.
+
 
 ## Rule-by-rule (DECISIONS.md section C)
 
@@ -41,4 +71,4 @@ Method: read the source, installed with `pnpm install --frozen-lockfile --ignore
 
 ## Decision
 
-Keep Phase 8 sized **L** (not XL). Re-evaluate after step 2. If step 2 shows the wrapper is large or the engine leaks private state in ways we cannot contain, fall back to an in-house engine using the same patterns (Phase 8 becomes XL).
+Phase 8 sizing is **L to XL** until the defects are resolved (see Next). Private-state separation remains our wrapper's job.
