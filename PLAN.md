@@ -26,10 +26,11 @@ Docs and throwaway code only. Nothing here ships. Output goes to `docs/spikes/`.
 | S1 poker-engine-ts evaluation | Does it satisfy DECISIONS.md section C (min-raise, short all-in, side pots, odd chip, heads-up blinds)? Can it sit behind our `CardGame` contract? | M | Written verdict plus a test table of pass/fail per rule |
 | S2 Teen Patti engine shape | Can poker-engine-ts's rules-as-data express Teen Patti? If not, what do we copy (event log, reducer, replay)? | S | Decision recorded: reuse descriptor, or own reducer using its pattern |
 | S3 Teen Patti test spec | Every rule in DECISIONS.md section B as a named test case with inputs and expected outcome | M | Reviewed by owner against how the group really plays |
-| S4 LiveKit sizing | Cost and limits for 8 publishers, simulcast, mobile; iOS Safari behavior | S | Numbers plus a go/no-go on hosted vs self-hosted |
+| S4 Cloudflare Realtime SFU spike | 8 simulated publishers, signaling through a Durable Object, active speaker, 360p tiles on phones, iOS Safari behavior, TURN fallback, bandwidth measured against the free allowance | M | Working demo plus go/no-go; fallback Daily or peer-to-peer |
+| S6 Cloudflare backend feasibility | One room Durable Object with hibernating WebSockets, alarms for timers, SQLite ledger with idempotency; load of a simulated 2-hour 8-player session vs daily free limits; engine runs in Workers runtime; backup/restore options | M | Conservation test passes in-object; request and write counts well under limits; written verdict |
 | S5 Layout feasibility | Can 8 tiles fit 360x640 with action tray and overlays? | S | One HTML fixture, screenshots |
 
-Gate: owner signs off S1-S3 results. If S1 fails on core rules, Hold'em becomes an in-house engine and Phase 8 grows from L to XL.
+Gate: owner signs off S1-S3 and S6 results; S4 result decides video provider. If S1 fails on core rules, Hold'em becomes an in-house engine and Phase 8 grows from L to XL.
 
 ## Phase 0: Foundation (M)
 
@@ -47,14 +48,16 @@ Risk: layout takes longer than estimated (see R1). Owner approval is the real ga
 Tasks: allowlist table and admin tooling (add, suspend, remove, end sessions), Google OAuth sign-in restricted to allowlisted emails (magic link fallback), session handling, create/join room API, room link that only works for signed-in approved users, optional host-named-user restriction, join flow UI (display name, device preview, consent, 18+ attestation once), room lifecycle (created, active, closed, expired), host controls, spectator role, kick with 10-minute block, host migration after 60 s.
 Gate: tests for non-allowlisted sign-in refused, removed user's sessions end, reconnect via session, kick, host migration, cap (players + spectators <= 8).
 
-## Phase 3: Database + Ledger (L)
+## Phase 3: Storage + Ledger (L)
+
+Storage is Durable Object SQLite per room plus D1 (see STACK.md). Task wording below that says Postgres, row locking or migration tooling maps per the STACK.md table.
 
 Tasks: migration tooling and first schema (rooms, participants, accounts, transactions, debts, chip_requests, hands, game_actions), transfer service with row locking and idempotency keys, pot escrow accounts, mint events, balance-vs-ledger invariant checker, history queries.
 Gate: conservation property test (thousands of random transfers), concurrent transfer test, duplicate key test, negative balance rejected, fresh and upgrade migrations pass.
 
 ## Phase 4: Live video (L)
 
-Tasks: LiveKit server setup, token service tied to participant identity, camera/mic gate and permission-denied states, presence, active speaker, simulcast and adaptive subscription, track-loss handling (20 s grace, sit-out at hand boundary), spectator receive-only, reconnect UI naming what is reconnecting.
+Tasks: Cloudflare Realtime SFU sessions and tracks behind `MediaProvider`, signaling via the room object, TURN fallback, active speaker from audio levels, session auth tied to the signed-in user, camera/mic gate and permission-denied states, presence, active speaker, simulcast and adaptive subscription, track-loss handling (20 s grace, sit-out at hand boundary), spectator receive-only, reconnect UI naming what is reconnecting.
 Gate: 6+ real or synthetic participants stable for 30 minutes on desktop and mobile; permission denial and device change handled.
 
 ## Phase 5: Realtime protocol (M)

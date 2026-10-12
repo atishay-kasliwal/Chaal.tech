@@ -1,6 +1,7 @@
 # V1 Decisions
 
 > Access model: the whole application is allowlist-only (see section E).
+> Stack: see STACK.md. Wherever this file or the specs say PostgreSQL, Redis, row locking or a Node game server, read the mapping table in STACK.md (Durable Object SQLite, D1, single-threaded room objects).
 
 Resolves the 22 gaps found in review of the product spec and execution playbook.
 Status: **PROPOSED**. Each item is a concrete default so agents never invent product behavior. Items marked **OWNER** need a human confirmation before launch.
