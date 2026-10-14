@@ -55,12 +55,7 @@
 			display: block;
 			width: min(calc(100% - 1rem), 34rem);
 			margin-inline: auto;
-			padding: 0.5rem 0.75rem;
-			border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
-			border-radius: var(--radius-box);
-			background: color-mix(in srgb, var(--color-base-100) 94%, transparent);
-			box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 0.45);
-			backdrop-filter: blur(12px);
+			padding: 0.5rem 0;
 		}
 		.mobile-action-bar :global([data-testid='game-actions']) {
 			min-height: 0;

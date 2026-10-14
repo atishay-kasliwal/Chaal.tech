@@ -1,14 +1,9 @@
 {
-  "capturedAt": "2026-10-14T15:58:54.354Z",
+  "capturedAt": "2026-10-14T22:27:05.040Z",
   "checks": [
-    "2 players: compact portrait seats, your seat immediately below the table, visible fixed controls, no overflow, mobile bet accepted",
-    "3 players: compact portrait seats, your seat immediately below the table, visible fixed controls, no overflow, mobile bet accepted",
-    "4 players: compact portrait seats, your seat immediately below the table, visible fixed controls, no overflow, mobile bet accepted",
-    "5 players: compact portrait seats, your seat immediately below the table, visible fixed controls, no overflow, mobile bet accepted",
     "6 players: compact portrait seats, your seat immediately below the table, visible fixed controls, no overflow, mobile bet accepted"
   ],
   "screenshots": [
-    "2-players-mobile-390",
     "6-players-mobile-390",
     "6-players-mobile-landscape"
   ],

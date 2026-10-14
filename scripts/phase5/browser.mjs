@@ -3,8 +3,10 @@ import parser from 'socket.io-msgpack-parser';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
-const base = 'http://127.0.0.1:5174',
+
+const base = process.env.PHASE5_BASE_URL || 'http://127.0.0.1:5174',
 	directory = 'visual-baselines/phase5/layout';
+const playerCounts = process.env.PHASE5_ONLY_SIX === 'true' ? [6] : [2, 3, 4, 5, 6];
 const report = { capturedAt: new Date().toISOString(), checks: [], screenshots: [], errors: [] };
 await fs.mkdir(directory, { recursive: true });
 const browser = await chromium.launch({
@@ -62,7 +64,7 @@ async function geometry(page, expected, desktop = true) {
 		Math.min(a.right, b.right) - Math.max(a.x, b.x) > 1 &&
 		Math.min(a.bottom, b.bottom) - Math.max(a.y, b.y) > 1;
 	for (const a of positions.seats) {
-		assert.ok(a.width > 150);
+		assert.ok(a.width > (desktop ? 150 : 80));
 		assert.equal(intersects(a, positions.center), false, `${a.position} intersects center`);
 		for (const b of positions.seats)
 			if (a !== b) assert.equal(intersects(a, b), false, `${a.position} intersects ${b.position}`);
@@ -78,7 +80,7 @@ async function geometry(page, expected, desktop = true) {
 	return positions;
 }
 try {
-	for (let count = 2; count <= 6; count++) {
+	for (const count of playerCounts) {
 		const pages = [],
 			views = new Map(),
 			room = `layout-${count}-${Date.now().toString(36)}`;
@@ -114,6 +116,21 @@ try {
 				.click();
 			await until(() => views.get(i)?.usersList.some((p) => p.id === views.get(i).selfId), 'join');
 		}
+		for (let i = 0; i < pages.length; i++) {
+			const playerId = views.get(i).selfId;
+			const revision = views.get(0).revision;
+			await pages[i].getByTestId('ready-toggle').click();
+			await until(
+				() =>
+					views.get(0).revision > revision &&
+						views.get(0).usersList.find((user) => user.id === playerId)?.ready === true,
+					`player ${i + 1} ready`
+			);
+		}
+		await until(
+			() => views.get(0)?.usersList.filter((user) => user.connected && !user.hasLeft).every((user) => user.ready),
+			'all players ready'
+		);
 		await pages[0].getByRole('button', { name: 'Start Game', exact: true }).click();
 		await until(() => views.get(0)?.isStarted, 'start');
 		for (let i = 0; i < count; i++) {

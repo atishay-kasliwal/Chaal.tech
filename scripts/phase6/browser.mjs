@@ -30,6 +30,7 @@ async function capture(page, name) {
 		.waitFor({ state: 'detached', timeout: 5000 })
 		.catch(() => {});
 	await page.evaluate(() => window.scrollTo(0, 0));
+	await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 	await page.screenshot({ path: `${directory}/${name}.png` });
 	report.screenshots.push(name);
 	console.log(`Captured ${name}`);
@@ -54,8 +55,13 @@ async function mobileGeometry(page, count) {
 				height: r.height
 			};
 		});
+		const ownedCards = [...document.querySelectorAll('.table-seat.self [data-testid="card-fan"] playing-card')].map((card) => {
+			const r = card.getBoundingClientRect();
+			return { top: r.top, bottom: r.bottom };
+		});
 		const bar = rect('[data-testid="mobile-action-bar"]');
 		const center = rect('[data-testid="table-center"]');
+		const focal = rect('[data-testid="table-center"] .bg-base-200');
 		const scene = rect('[data-testid="table-scene"]');
 		return {
 			width: innerWidth,
@@ -65,8 +71,10 @@ async function mobileGeometry(page, count) {
 				document.documentElement.scrollHeight > document.documentElement.clientHeight + 1,
 			scrollHeight: document.documentElement.scrollHeight,
 			seats,
+			ownedCards,
 			bar,
 			center,
+			focal,
 			scene,
 			verticalOffenders: [...document.querySelectorAll('body *')]
 				.map((el) => ({ el, rect: el.getBoundingClientRect() }))
@@ -92,11 +100,21 @@ async function mobileGeometry(page, count) {
 	const self = data.seats.find((seat) => seat.self);
 	assert.ok(self);
 	assert.ok(
-		self.y >= data.center.bottom - 1,
-		`your seat should follow the central table: ${JSON.stringify({ self, center: data.center, scene: data.scene })}`
+		self.y >= data.focal.bottom - 1,
+		`your seat should follow the central pot: ${JSON.stringify({ self, center: data.center, focal: data.focal, scene: data.scene, bar: data.bar })}`
 	);
 	assert.equal(data.bar.width > 0, true);
 	assert.ok(data.bar.y >= 0 && data.bar.bottom <= data.height);
+	assert.ok(
+		self.bottom <= data.bar.y + 1,
+		`fixed actions must not cover your seat: ${JSON.stringify({ self, bar: data.bar, scene: data.scene })}`
+	);
+	if (data.ownedCards.length) {
+		assert.ok(
+			Math.max(...data.ownedCards.map((card) => card.bottom)) <= data.bar.y + 1,
+			`fixed actions must not cover your cards: ${JSON.stringify({ cards: data.ownedCards, bar: data.bar })}`
+		);
+	}
 	for (const seat of data.seats) assert.ok(seat.width > 80);
 	return data;
 }
@@ -147,9 +165,13 @@ try {
 		for (let index = 0; index < count; index++) {
 			await pages[index].getByTestId('mobile-action-bar').waitFor({ state: 'visible' });
 			const geometry = await mobileGeometry(pages[index], count);
-			assert.ok(geometry.seats.find((seat) => seat.self).y >= geometry.center.bottom - 1);
+		assert.ok(geometry.seats.find((seat) => seat.self).y >= geometry.focal.bottom - 1);
 			assert.equal(
 				await pages[index].locator('.table-seat.self [data-testid="game-actions"]').isVisible(),
+				false
+			);
+			assert.equal(
+				await pages[index].locator('.table-center [data-game-action="teen-patti"]').isVisible(),
 				false
 			);
 		}

@@ -597,7 +597,7 @@
 	{/if}
 {/if}
 
-{#if roomData?.isStarted && roomData.gameType === 'teen-patti'}
+{#if roomData?.isStarted && (roomData.gameType ?? 'teen-patti') === 'teen-patti'}
 	{@const me = roomData.usersList.find((user) => user.id === socket.playerId)}
 	{#if me && !me.isPacked}
 		<MobileActionBar
@@ -800,6 +800,8 @@
 	}
 	@media (max-width: 959px) and (max-height: 500px) {
 		.room-header {
+			position: relative;
+			top: auto;
 			gap: 0.2rem;
 			padding-block: 0.25rem;
 		}

@@ -103,4 +103,78 @@
 			display: none;
 		}
 	}
+	.rummy-seat > :global(.card) {
+		overflow: visible;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+	.rummy-seat[data-active='true'] > :global(.card) {
+		border: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+	.rummy-seat :global(.card-body) {
+		gap: 0.2rem;
+		padding: 0.2rem;
+	}
+	.rummy-seat .card-body > div:last-child {
+		position: relative;
+		display: block;
+		margin-top: 0.25rem;
+	}
+	.rummy-seat .card-body > div:last-child > :global([data-testid='seat-video']) {
+		width: 100%;
+		border: 0;
+		border-radius: 0.8rem;
+		background: #111a17;
+	}
+	.rummy-seat .card-body > div:last-child > div:last-child {
+		position: absolute;
+		top: 0.35rem;
+		right: 0.4rem;
+		flex-direction: row;
+		gap: 0.25rem;
+		border: 0;
+		background: rgb(5 10 8 / 70%);
+		padding: 0.25rem 0.45rem;
+		color: #f1d897;
+	}
+	.rummy-seat :global([data-testid='seat-video'] > div:first-child),
+	.rummy-seat :global(video) {
+		height: 100%;
+	}
+	@media (max-width: 1099px) {
+		.rummy-seat :global(.card-body) {
+			gap: 0.15rem;
+			padding: 0.1rem;
+		}
+		.rummy-seat .card-body > div:last-child > div:last-child {
+			top: 0.2rem;
+			right: 0.2rem;
+			padding: 0.1rem 0.25rem;
+		}
+	}
+	@media (max-width: 639px) {
+		.rummy-seat .card-body > div:first-child {
+			font-size: 0.58rem;
+		}
+	}
+	@media (max-width: 959px) and (max-height: 500px) {
+		.rummy-seat :global(.card-body) {
+			gap: 0;
+			padding: 0.05rem;
+		}
+		.rummy-seat .card-body > div:first-child {
+			font-size: 0.5rem;
+			line-height: 1;
+		}
+		.rummy-seat .card-body > div:last-child {
+			margin-top: 0;
+		}
+		.rummy-seat :global([data-testid='seat-video']) {
+			aspect-ratio: 3.2 / 1;
+		}
+	}
 </style>

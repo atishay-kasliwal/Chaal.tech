@@ -43,52 +43,52 @@
 </script>
 
 <div
-	class="room-media-panel border-primary/20 bg-base-100 rounded-box mt-4 border p-3"
+	class="room-media-panel mt-1 flex flex-wrap items-center justify-end gap-1.5 px-3 py-1"
 	data-testid="room-media"
 >
-	<div class="flex flex-wrap items-center gap-2">
-		<span class="room-media-title text-primary mr-auto text-sm font-semibold"
-			>Friends at the table</span
-		>
-		<span class="room-media-status text-base-content/60 text-xs" role="status"
+	<div class="flex w-full flex-wrap items-center justify-end gap-1.5">
+		{#if preview}<span class="room-media-title text-base-content/50 mr-auto text-xs"
+			>Camera preview</span
+		>{/if}
+		<span class="room-media-status text-base-content/50 mr-auto text-[0.65rem]" role="status"
 			>{view?.status === 'connected'
 				? 'Media connected'
 				: view?.status === 'reconnecting'
 					? 'Media reconnecting…'
 					: view?.status === 'connecting'
 						? 'Connecting media…'
-						: 'Camera and audio optional'}</span
+						: 'Camera and audio off'}</span
 		>
 		{#if view?.status === 'connected' || view?.status === 'reconnecting'}
 			<button
-				class="btn btn-sm btn-outline"
+				class="btn btn-xs btn-outline"
 				disabled={!connected || view.status !== 'connected' || view.cameraBusy}
 				onclick={() => controller?.setDevice('camera', !view?.cameraOn)}
 				>{view.cameraOn ? 'Camera off' : 'Camera on'}</button
 			>
 			<button
-				class="btn btn-sm btn-outline"
+				class="btn btn-xs btn-outline"
 				disabled={!connected || view.status !== 'connected' || view.microphoneBusy}
 				onclick={() => controller?.setDevice('microphone', !view?.microphoneOn)}
 				>{view.microphoneOn ? 'Mute mic' : 'Unmute mic'}</button
 			>
 			<button
-				class="btn btn-sm btn-outline"
+				class="btn btn-xs btn-outline"
 				disabled={view.status !== 'connected' || view.cameraBusy || view.microphoneBusy}
 				onclick={() => controller?.audioOnly()}>Audio only</button
 			>
-			<button class="btn btn-sm btn-ghost" onclick={() => controller?.disconnect()}
+			<button class="btn btn-xs btn-ghost" onclick={() => controller?.disconnect()}
 				>Leave media</button
 			>
 		{:else}
 			<button
-				class="btn btn-sm btn-outline btn-primary"
+				class="btn btn-xs btn-outline btn-primary"
 				disabled={!connected || view?.status === 'connecting'}
 				onclick={() => controller?.connect()}>Join camera/audio</button
 			>
 		{/if}
 		{#if view?.audioBlocked}<button
-				class="btn btn-sm btn-primary"
+				class="btn btn-xs btn-primary"
 				onclick={() => controller?.startAudio()}>Enable sound</button
 			>{/if}
 	</div>
@@ -96,7 +96,7 @@
 		<p class="text-warning mt-2 text-xs" role="status">{message}</p>
 	{/each}
 	{#if preview && view?.participants.length}
-		<div class="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">
+		<div class="mt-2 grid w-full grid-cols-2 gap-2 md:grid-cols-3">
 			{#each admitted as member (member.id)}
 				<SeatVideo
 					participant={view.participants.find((p) => p.identity === member.id)}

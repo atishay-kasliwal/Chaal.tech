@@ -27,7 +27,7 @@
 </script>
 
 <div
-	class="player-seat indicator w-full"
+	class="player-seat poker-seat indicator w-full"
 	data-testid="player-seat"
 	data-player-id={user.id}
 	data-active={active}
@@ -219,6 +219,127 @@
 		.poker-hand-media [data-testid='hole-card'] :global(playing-card) {
 			height: 1.55rem !important;
 			width: 1.05rem !important;
+		}
+	}
+
+	.poker-seat > :global(.card) {
+		overflow: visible;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+	.poker-seat[data-active='true'] > :global(.card) {
+		border: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+	.poker-seat :global(.card-body) {
+		gap: 0.2rem;
+		padding: 0.2rem;
+	}
+	.poker-seat .border-b {
+		border: 0;
+		padding-bottom: 0;
+	}
+	.poker-seat .bg-base-300.rounded-md {
+		border: 0;
+		background: transparent;
+		padding: 0.1rem 0.25rem;
+		color: #f1d897;
+	}
+	.poker-hand-media {
+		position: relative;
+		display: block;
+		min-width: 0;
+		margin-top: 0.25rem;
+	}
+	.poker-seat :global([data-testid='seat-video']) {
+		width: 100%;
+		border: 0;
+		border-radius: 0.8rem;
+		background: #111a17;
+	}
+	.poker-seat :global([data-testid='seat-video'] > div:first-child),
+	.poker-seat :global(video) {
+		height: 100%;
+		object-fit: cover;
+	}
+	.poker-seat :global(.seat-video-status) {
+		min-height: 0;
+		padding: 0;
+		background: transparent;
+	}
+	.poker-seat :global([data-testid='hole-cards']) {
+		position: absolute;
+		right: 0.5rem;
+		bottom: 0.35rem;
+		z-index: 5;
+		max-height: none;
+		flex-wrap: nowrap;
+		overflow: visible;
+		gap: 0.2rem;
+		border: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+	.poker-hand-media [data-testid='hole-card'] :global(playing-card) {
+		height: 5.5rem !important;
+		width: 3.7rem !important;
+	}
+	@media (max-width: 1099px) {
+		.poker-seat :global(.card-body) {
+			gap: 0.15rem;
+			padding: 0.1rem;
+		}
+		.poker-seat :global([data-testid='hole-cards']) {
+			right: 0.25rem;
+			bottom: 0.2rem;
+			gap: 0.1rem;
+		}
+		.poker-hand-media [data-testid='hole-card'] :global(playing-card) {
+			height: 3.7rem !important;
+			width: 2.5rem !important;
+		}
+	}
+	@media (max-width: 639px) {
+		.poker-seat :global(.card-title) {
+			font-size: 0.58rem;
+		}
+		.poker-seat :global(.card-title .truncate) {
+			max-width: 4.5rem;
+		}
+		.poker-seat :global(.bg-base-300.rounded-md) {
+			font-size: 0.58rem;
+		}
+		.poker-hand-media [data-testid='hole-card'] :global(playing-card) {
+			height: 2.8rem !important;
+			width: 1.9rem !important;
+		}
+	}
+	@media (max-width: 959px) and (max-height: 500px) {
+		.poker-seat :global(.card-body) {
+			gap: 0;
+			padding: 0.05rem;
+		}
+		.poker-seat :global(.card-title),
+		.poker-seat .bg-base-300.rounded-md {
+			font-size: 0.5rem;
+			line-height: 1;
+		}
+		.poker-seat .border-b {
+			padding-bottom: 0;
+		}
+		.poker-seat :global([data-testid='seat-video']) {
+			aspect-ratio: 3.2 / 1;
+		}
+		.poker-seat :global([data-testid='hole-cards']) {
+			right: 0.15rem;
+			bottom: 0.05rem;
+		}
+		.poker-hand-media [data-testid='hole-card'] :global(playing-card) {
+			height: 2.25rem !important;
+			width: 1.5rem !important;
 		}
 	}
 </style>
