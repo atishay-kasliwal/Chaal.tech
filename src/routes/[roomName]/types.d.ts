@@ -1,6 +1,7 @@
 interface Card {
 	rank: number;
 	suit: string;
+	copy?: number;
 }
 interface User {
 	/** Stable server-issued player ID, independent of the Socket.IO connection. */
@@ -19,6 +20,10 @@ interface User {
 	folded?: boolean;
 	isAllIn?: boolean;
 	streetBet?: number;
+	cardCount?: number;
+	status?: string;
+	wager?: number;
+	blackjackOutcome?: string | null;
 }
 interface RoomData {
 	name: string;
@@ -27,10 +32,17 @@ interface RoomData {
 	revision: number;
 	handId: string | null;
 	rulesVersion: string;
-	gameType?: 'teen-patti' | 'texas-holdem';
+	gameType?: 'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy';
 	variantState?: { wildRank: number; indicator: Card };
 	stage?: string;
 	board?: Card[];
+	dealerCards?: Card[];
+	dealerTotal?: number | null;
+	wildRank?: number;
+	indicator?: Card | null;
+	discardPile?: Card[];
+	stockCount?: number;
+	hasDrawn?: boolean;
 	buttonSeat?: number | null;
 	smallBlind?: number;
 	bigBlind?: number;
@@ -68,5 +80,13 @@ interface RoomData {
 		toCall?: number;
 		minRaiseTo?: number;
 		maxRaiseTo?: number;
+		hit?: boolean;
+		stand?: boolean;
+		double?: boolean;
+		setBet?: boolean;
+		drawStock?: boolean;
+		drawDiscard?: boolean;
+		discard?: boolean;
+		declare?: boolean;
 	};
 }

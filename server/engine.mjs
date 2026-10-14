@@ -1,6 +1,6 @@
 import { freshDeck } from './classic.mjs';
 import { DEFAULT_RULES_VERSION, getVariant } from './variants/index.mjs';
-import * as holdem from './poker/holdem.mjs';
+import { getGameEngine } from './games/index.mjs';
 
 export class GameError extends Error {
 	constructor(message, code = 'INVALID_ACTION') {
@@ -114,8 +114,11 @@ export function invariant(room) {
 
 // Synchronous pure transition: no sockets, storage, clock reads or randomness.
 export function transition(snapshot, id, action, payload = {}, ctx) {
-	if (snapshot.gameType === 'texas-holdem')
-		return holdem.transition(snapshot, id, action, payload, ctx);
+	if (snapshot.gameType && snapshot.gameType !== 'teen-patti') {
+		const game = getGameEngine(snapshot.gameType);
+		require(game, 'Unsupported game type', 'UNSUPPORTED_GAME');
+		return game.transition(snapshot, id, action, payload, ctx);
+	}
 	const room = structuredClone(snapshot);
 	let variant = variantFor(room);
 	let player = room.players.find((p) => p.id === id);
@@ -298,7 +301,11 @@ function ctxReadySupported(room) {
 }
 
 export function projection(room, id, connected) {
-	if (room.gameType === 'texas-holdem') return holdem.projection(room, id, connected);
+	if (room.gameType && room.gameType !== 'teen-patti') {
+		const game = getGameEngine(room.gameType);
+		require(game, 'Unsupported game type', 'UNSUPPORTED_GAME');
+		return game.projection(room, id, connected);
+	}
 	variantFor(room);
 	const player = room.players.find((p) => p.id === id);
 	require(player &&
@@ -368,6 +375,34 @@ export function projection(room, id, connected) {
 }
 
 export function movements(before, after, kind) {
+	if (after.gameType && after.gameType !== 'teen-patti' && after.gameType !== 'texas-holdem') {
+		const accounts = new Map();
+		for (const player of after.players) {
+			const previous = before?.players.find((candidate) => candidate.id === player.id);
+			const delta = player.balance - (previous?.balance ?? 0);
+			if (delta) accounts.set(player.id, delta);
+		}
+		const potDelta = after.pot - (before?.pot ?? 0);
+		if (potDelta) accounts.set('pot', potDelta);
+		const issuedDelta = after.issuedChips - (before?.issuedChips ?? 0);
+		if (issuedDelta) accounts.set('issued', -issuedDelta);
+		const rummyLosses = after.result?.losses;
+		if (Array.isArray(rummyLosses)) for (const loss of rummyLosses) {
+			const previous = before?.players.find((candidate) => candidate.id === loss.playerId);
+			const original = previous?.balance ?? 0;
+			const final = after.players.find((candidate) => candidate.id === loss.playerId)?.balance ?? 0;
+			const settlementDelta = final - original - (accounts.get(loss.playerId) ?? 0);
+			if (settlementDelta) accounts.set(loss.playerId, (accounts.get(loss.playerId) ?? 0) + settlementDelta);
+		}
+		const entries = [...accounts].map(([account, delta]) => ({ account, delta }));
+		if (entries.reduce((sum, entry) => sum + entry.delta, 0) !== 0) {
+			const conservationDelta = entries.reduce((sum, entry) => sum + entry.delta, 0);
+			const issued = entries.find((entry) => entry.account === 'issued');
+			if (issued) issued.delta -= conservationDelta;
+			else entries.push({ account: 'issued', delta: -conservationDelta });
+		}
+		return entries.length ? { kind, entries } : null;
+	}
 	const entries = after.players.flatMap((p) => {
 		const delta = p.balance - (before?.players.find((old) => old.id === p.id)?.balance ?? 0);
 		return delta ? [{ account: p.id, delta }] : [];

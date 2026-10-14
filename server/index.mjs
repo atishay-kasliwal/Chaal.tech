@@ -15,11 +15,21 @@ import {
 } from './engine.mjs';
 import { shuffledDeck } from './classic.mjs';
 import { createMediaService } from './media.mjs';
-import { newRoom as newHoldemRoom } from './poker/holdem.mjs';
+import { createGameRoom, listGameTypes } from './games/index.mjs';
+import { freshRummyDeck } from './rummy/rummy.mjs';
 import { getVariant, listVariants } from './variants/index.mjs';
 
 const hash = (token) => createHash('sha256').update(token).digest('hex');
 const uuid = (value) => typeof value === 'string' && /^[a-f0-9-]{36}$/.test(value);
+const shuffle = (cards) => {
+	const deck = structuredClone(cards);
+	for (let i = deck.length - 1; i > 0; i--) {
+		const j = randomInt(i + 1);
+		[deck[i], deck[j]] = [deck[j], deck[i]];
+	}
+	return deck;
+};
+const productionDeck = (gameType) => gameType === 'rummy' ? shuffle(freshRummyDeck()) : shuffledDeck();
 
 export function createGameServer({
 	database = 'data/teen-patti.sqlite',
@@ -30,7 +40,7 @@ export function createGameServer({
 		'http://localhost:5174'
 	],
 	turnMs = 60000,
-	deckFactory = shuffledDeck,
+	deckFactory = productionDeck,
 	variantRandomInt = randomInt,
 	clock = Date.now,
 	media = createMediaService()
@@ -222,7 +232,7 @@ export function createGameServer({
 		if (event === 'createRoom') {
 			const [name, table, rulesVersion, requestedGameType] = args;
 			const gameType = requestedGameType ?? 'teen-patti';
-			if (gameType !== 'teen-patti' && gameType !== 'texas-holdem')
+			if (!listGameTypes().includes(gameType))
 				throw new GameError('Unsupported game type', 'UNSUPPORTED_GAME');
 			if (socket.data.roomName)
 				throw new GameError('Leave your current room before creating another');
@@ -230,10 +240,9 @@ export function createGameServer({
 			if (store.room(name)) throw new GameError('Room already exists');
 			if (store.db.prepare('SELECT count(*) AS count FROM rooms').get().count >= 1000)
 				throw new GameError('Room capacity reached');
-			room =
-				gameType === 'texas-holdem'
-					? newHoldemRoom(name, table, id)
-					: newRoom(name, table, id, rulesVersion);
+			room = gameType === 'teen-patti'
+				? newRoom(name, table, id, rulesVersion)
+				: createGameRoom(gameType, name, table, id);
 			room.revision = 1;
 			text = `A new Room is created :- "${name}"`;
 		} else {
@@ -246,7 +255,7 @@ export function createGameServer({
 					throw new GameError('Leave your current room first');
 				action = 'join';
 				payload = { username: args[0] };
-				text = before.gameType === 'texas-holdem' ? null : `${args[0]} has joined the Game`;
+				text = before.gameType && before.gameType !== 'teen-patti' ? null : `${args[0]} has joined the Game`;
 			} else {
 				if ((event === 'start' || event === 'show') && args[0] !== name)
 					throw new GameError('Wrong room', 'FORBIDDEN');
@@ -259,7 +268,7 @@ export function createGameServer({
 					action = 'start';
 					if (before.gameType === 'texas-holdem') {
 						payload = { cutAt: args[1], cardsToDeal: args[2], rulesVersion: args[3] };
-					} else {
+					} else if (!before.gameType || before.gameType === 'teen-patti') {
 						const mode = args[4] ?? 'selected';
 						if (mode !== 'selected' && mode !== 'random')
 							throw new GameError('Choose a variant or random mode', 'INVALID_ACTION');
@@ -276,13 +285,13 @@ export function createGameServer({
 							cardsToDeal: variant.cardsPerPlayer ?? 3,
 							rulesVersion
 						};
-					}
+					} else payload = {};
 					text = 'Game started';
 				} else if (event === 'ready') {
 					action = 'ready';
 					payload = { ready: args[0] };
 					text =
-						before.gameType === 'texas-holdem'
+						before.gameType && before.gameType !== 'teen-patti'
 							? null
 							: args[0]
 								? 'Player is ready'
@@ -307,6 +316,21 @@ export function createGameServer({
 					action = args[0];
 					payload = { amount: args[1] };
 					text = null;
+				} else if (event === 'blackjackBet') {
+					if (before.gameType !== 'blackjack') throw new GameError('Blackjack wager sent to another game', 'INVALID_ACTION');
+					action = 'bet';
+					payload = { amount: args[0] };
+					text = null;
+				} else if (event === 'blackjackAction') {
+					if (before.gameType !== 'blackjack' || !['hit', 'stand', 'double'].includes(args[0])) throw new GameError('Invalid Blackjack action', 'INVALID_ACTION');
+					action = args[0];
+					payload = {};
+					text = null;
+				} else if (event === 'rummyAction') {
+					if (before.gameType !== 'rummy' || !['draw-stock', 'draw-discard', 'discard', 'declare'].includes(args[0])) throw new GameError('Invalid Rummy action', 'INVALID_ACTION');
+					action = args[0];
+					payload = { index: args[1] };
+					text = null;
 				} else if (event === 'leaveRoom') {
 					action = 'leave';
 					payload = {};
@@ -317,7 +341,10 @@ export function createGameServer({
 				now: clock(),
 				turnMs,
 				handId: randomUUID(),
-				deck: action === 'start' ? deckFactory() : undefined,
+				deck: action === 'start' ? deckFactory(before?.gameType ?? 'teen-patti') : undefined,
+				recycledDeck: before?.gameType === 'rummy' && before.deck.length === 0 && before.discardPile.length > 1
+					? shuffle(before.discardPile.slice(0, -1))
+					: undefined,
 				connected: connected(name),
 				requireReady: true
 			});
@@ -414,6 +441,9 @@ export function createGameServer({
 			'seeCards',
 			'play',
 			'pokerAction',
+			'blackjackBet',
+			'blackjackAction',
+			'rummyAction',
 			'show',
 			'leaveRoom'
 		]) {
@@ -488,7 +518,14 @@ export function createGameServer({
 						before.currentPlayerId,
 						'timeout',
 						{},
-						{ now: clock(), turnMs, connected: connected(before.name) }
+						{
+							now: clock(),
+							turnMs,
+							connected: connected(before.name),
+							recycledDeck: before.gameType === 'rummy' && before.deck.length === 0 && before.discardPile.length > 1
+								? shuffle(before.discardPile.slice(0, -1))
+								: undefined
+						}
 					);
 					store.commit(
 						room,

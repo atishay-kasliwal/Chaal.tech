@@ -12,6 +12,9 @@
 	import TableScene from '#lib/components/TableScene.svelte';
 	import MobileActionBar from '#lib/components/MobileActionBar.svelte';
 	import PokerActionBar from '#lib/components/PokerActionBar.svelte';
+	import BlackjackActionBar from '#lib/components/BlackjackActionBar.svelte';
+	import RummyActionBar from '#lib/components/RummyActionBar.svelte';
+	import RummySeat from '#lib/components/RummySeat.svelte';
 	import { VARIANT_BY_VERSION, VARIANT_CATALOG, type RulesVersion } from '#lib/variant-catalog.js';
 	import RoomMedia from '#lib/components/RoomMedia.svelte';
 	import type { MediaState } from '#lib/media/controller.js';
@@ -38,6 +41,7 @@
 	/** Number of cards to deal to each player */
 	let cardsToDeal = $derived(VARIANT_BY_VERSION[nextRulesVersion]?.cardsPerPlayer ?? 3);
 	let raiseTo = $state(4);
+	let blackjackWager = $state(2);
 	let self = $derived(roomData?.usersList.find((user) => user.id === socket.playerId));
 	let selfReady = $derived(self?.ready === true);
 	let readyPlayers = $derived(
@@ -107,6 +111,15 @@
 	function pokerAction(action: 'fold' | 'check' | 'call' | 'raise') {
 		void sendAction('pokerAction', action === 'raise' ? [action, raiseTo] : [action]);
 	}
+	function blackjackAction(action: 'hit' | 'stand' | 'double') {
+		void sendAction('blackjackAction', [action]);
+	}
+	function rummyAction(action: 'draw-stock' | 'draw-discard' | 'discard' | 'declare', index?: number) {
+		return sendAction('rummyAction', [action, ...(index === undefined ? [] : [index])]);
+	}
+	function setBlackjackWager() {
+		void sendAction('blackjackBet', [blackjackWager]);
+	}
 	let lastRevision = -1;
 	$effect(() => {
 		const snapshot = socket.roomData;
@@ -125,6 +138,7 @@
 				snapshot.legalActions.minRaiseTo ?? 4,
 				snapshot.legalActions.maxRaiseTo ?? 4
 			);
+			blackjackWager = me?.wager ?? 2;
 			lastRevision = snapshot.revision;
 		}
 	});
@@ -151,7 +165,11 @@
 			<p class="text-primary/80 mt-1 text-xs" data-testid="variant-label">
 				{roomData.gameType === 'texas-holdem'
 					? 'Texas Hold’em Poker'
-					: (currentVariant?.tableLabel ?? 'Unsupported variant')}
+					: roomData.gameType === 'blackjack'
+						? 'Blackjack · S17 · 3:2'
+						: roomData.gameType === 'rummy'
+							? '13-card Indian Rummy'
+							: (currentVariant?.tableLabel ?? 'Unsupported variant')}
 			</p>
 			{#if roomData.variantState?.indicator}
 				<p class="text-primary/70 mt-1 text-xs" data-testid="joker-indicator">
@@ -226,9 +244,9 @@
 				class="text-primary text-2xl font-extrabold tracking-tight"
 				class:sr-only={!!table.result}
 			>
-				{table.gameType === 'texas-holdem' ? 'Texas Hold’em' : 'Teen Patti'}
+				{table.gameType === 'texas-holdem' ? 'Texas Hold’em' : table.gameType === 'blackjack' ? 'Blackjack' : table.gameType === 'rummy' ? 'Indian Rummy' : 'Teen Patti'}
 			</h2>
-			{#if table.gameType === 'texas-holdem'}
+				{#if table.gameType === 'texas-holdem'}
 				{#if !table.result}<p class="text-base-content/60 mb-2 text-sm capitalize">
 						{table.stage} · Blinds {table.smallBlind}/{table.bigBlind}
 					</p>{/if}
@@ -306,6 +324,36 @@
 							>
 						{/if}
 					</div>
+				{/if}
+			{:else if table.gameType === 'blackjack'}
+				<p class="text-base-content/60 mb-2 text-sm capitalize">
+					{table.stage === 'players' ? 'Players’ turn' : table.stage === 'dealer' ? 'Dealer’s turn' : 'Dealer stands on soft 17'}
+				</p>
+				<div class="flex flex-wrap items-center justify-center gap-2" aria-label="Dealer hand" data-testid="dealer-cards">
+					{#each table.dealerCards ?? [] as card, index (`${card.rank}-${card.suit}-${index}`)}
+						<PlayingCard rank={card.rank} suit={card.suit} faceDown={card.rank === 0} class="!h-20 !w-14 sm:!h-24 sm:!w-16" />
+					{/each}
+				</div>
+				<p class="mt-1 text-sm">Dealer total: {table.dealerTotal ?? '—'} <span class="text-base-content/50">· Pot: {table.pot}</span></p>
+				{#if table.result}
+					<div class="alert alert-info mx-auto mt-3 max-w-sm" role="status">
+						{table.result.winnerName === 'Dealer' ? 'Dealer wins this round' : table.result.winnerName === 'Push' ? 'Push — bets returned' : `${table.result.winnerName} wins`}
+					</div>
+					<div class="mt-2 flex justify-center gap-2">
+						<button class="btn btn-ghost btn-xs" onclick={toggleReady}>{selfReady ? 'Ready ✓' : 'I’m ready'}</button>
+						{#if table.hostId === socket.playerId}<button class="btn btn-primary btn-sm" onclick={startGameHandler} disabled={!table.legalActions.start || !allReadyToStart}>Deal again</button>{/if}
+					</div>
+				{/if}
+			{:else if table.gameType === 'rummy'}
+				<div class="flex items-center justify-center gap-4">
+					<div class="text-center"><p class="text-base-content/50 mb-1 text-[10px] uppercase">Wild rank</p><span class="badge badge-primary">{rankLabel(table.wildRank ?? 0)}</span></div>
+					<div class="text-center"><p class="text-base-content/50 mb-1 text-[10px] uppercase">Stock</p><span class="badge badge-outline">{table.stockCount ?? 0}</span></div>
+					<div class="text-center"><p class="text-base-content/50 mb-1 text-[10px] uppercase">Discard</p>{#if table.discardPile?.[0]}<PlayingCard rank={table.discardPile[0].rank} suit={table.discardPile[0].suit} class="!h-14 !w-10" />{:else}<span>—</span>{/if}</div>
+				</div>
+				<p class="mt-2 text-xs">{table.usersList[table.currentPlayer]?.username ?? 'Waiting'}’s turn</p>
+				{#if table.result}
+					<div class="alert alert-success mx-auto mt-2 max-w-sm" role="status">{table.result.winnerName} wins · {table.result.reason}</div>
+					<div class="mt-2 flex justify-center gap-2"><button class="btn btn-ghost btn-xs" onclick={toggleReady}>{selfReady ? 'Ready ✓' : 'I’m ready'}</button>{#if table.hostId === socket.playerId}<button class="btn btn-primary btn-sm" onclick={startGameHandler} disabled={!table.legalActions.start || !allReadyToStart}>New round</button>{/if}</div>
 				{/if}
 			{:else}
 				{#if table.variantState?.indicator}
@@ -407,8 +455,17 @@
 			{/if}
 		{/snippet}
 		{#snippet seat(user)}
-			{#if table.gameType === 'texas-holdem'}
+			{#if table.gameType === 'texas-holdem' || table.gameType === 'blackjack'}
 				<PokerSeat
+					{user}
+					selfId={socket.playerId}
+					active={user.id === table.usersList[table.currentPlayer]?.id}
+					game={table.gameType === 'blackjack' ? 'blackjack' : 'poker'}
+					showMedia={!!mediaState && ['connected', 'reconnecting'].includes(mediaState.status)}
+					mediaParticipant={mediaState?.participants.find((p) => p.identity === user.id)}
+				/>
+			{:else if table.gameType === 'rummy'}
+				<RummySeat
 					{user}
 					selfId={socket.playerId}
 					active={user.id === table.usersList[table.currentPlayer]?.id}
@@ -438,7 +495,18 @@
 	<PokerActionBar legalActions={roomData.legalActions} bind:raiseTo action={pokerAction} />
 {/if}
 
-{#if roomData?.isStarted && roomData.gameType !== 'texas-holdem'}
+{#if roomData?.isStarted && roomData.gameType === 'blackjack' && roomData.currentPlayer === roomData.usersList.findIndex((user) => user.id === socket.playerId)}
+	<BlackjackActionBar legalActions={roomData.legalActions} action={blackjackAction} />
+{/if}
+
+{#if roomData?.isStarted && roomData.gameType === 'rummy'}
+	{@const me = roomData.usersList.find((user) => user.id === socket.playerId)}
+	{#if me}
+		<RummyActionBar user={me} stockCount={roomData.stockCount ?? 0} legalActions={roomData.legalActions} connected={socket.connected} action={rummyAction} />
+	{/if}
+{/if}
+
+{#if roomData?.isStarted && roomData.gameType === 'teen-patti'}
 	{@const me = roomData.usersList.find((user) => user.id === socket.playerId)}
 	{#if me && !me.isPacked}
 		<MobileActionBar
@@ -484,7 +552,7 @@
 				</div>
 			{/if}
 			<form class="flex flex-col gap-4">
-				{#if roomData.gameType !== 'texas-holdem'}
+				{#if roomData.gameType === 'teen-patti'}
 					<div class="form-control w-full" data-testid="variant-settings">
 						<div class="label" id="next-hand-label">
 							<span class="label-text font-semibold">Next hand</span>
@@ -533,7 +601,7 @@
 						</p>
 					</div>
 				{/if}
-				{#if roomData.gameType !== 'texas-holdem' && nextVariantMode === 'selected'}
+				{#if roomData.gameType === 'teen-patti' && nextVariantMode === 'selected'}
 					<div class="form-control w-full">
 						<label class="label" for="cardsToDeal">
 							<span class="label-text font-semibold"
@@ -551,12 +619,12 @@
 						/>
 					</div>
 				{/if}
-				{#if roomData.gameType !== 'texas-holdem' && nextVariantMode === 'random'}
+				{#if roomData.gameType === 'teen-patti' && nextVariantMode === 'random'}
 					<p class="text-base-content/60 text-center text-xs">
 						Cards per player are set by the randomly selected variant.
 					</p>
 				{/if}
-				{#if roomData.gameType !== 'texas-holdem'}
+				{#if roomData.gameType === 'teen-patti'}
 					<div class="form-control w-full">
 						<label class="label" for="cutAt">
 							<span class="label-text font-semibold"
@@ -573,6 +641,19 @@
 							class="range range-primary"
 						/>
 					</div>
+				{/if}
+				{#if roomData.gameType === 'blackjack'}
+					<div class="form-control w-full">
+						<label class="label" for="blackjack-wager"><span class="label-text font-semibold">Your even wager</span></label>
+						<div class="join w-full">
+							<input id="blackjack-wager" class="input join-item w-full" type="number" min="2" step="2" max={self?.balance ?? 2} bind:value={blackjackWager} disabled={!roomData.legalActions.setBet || !self || !socket.connected} />
+							<button type="button" class="btn btn-secondary join-item" onclick={setBlackjackWager} disabled={!roomData.legalActions.setBet || !socket.connected}>Set wager · {self?.wager ?? 2}</button>
+						</div>
+						<p class="text-base-content/50 mt-1 text-xs">Dealer stands on soft 17. Natural blackjack pays 3:2.</p>
+					</div>
+				{/if}
+				{#if roomData.gameType === 'rummy'}
+					<p class="text-base-content/60 text-center text-sm">13 cards · two sequences required · one pure sequence required · maximum 6 players</p>
 				{/if}
 				<button
 					class="btn btn-primary mt-4 w-full font-bold tracking-widest uppercase"

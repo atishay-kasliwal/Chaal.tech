@@ -7,12 +7,14 @@
 		user,
 		selfId,
 		active,
+		game = 'poker',
 		showMedia,
 		mediaParticipant
 	}: {
 		user: User;
 		selfId: string;
 		active: boolean;
+		game?: 'poker' | 'blackjack';
 		showMedia: boolean;
 		mediaParticipant?: MediaParticipant;
 	} = $props();
@@ -38,7 +40,9 @@
 				<div class="card-title min-w-0 gap-1 text-sm">
 					<span class="truncate">{user.username}</span>
 					{#if user.id === selfId}<span class="badge badge-sm badge-outline">You</span>{/if}
-					{#if user.folded}<span class="badge badge-sm badge-error">Folded</span>{/if}
+					{#if game === 'blackjack' && user.status === 'bust'}<span class="badge badge-sm badge-error">Bust</span>{/if}
+					{#if game === 'blackjack' && user.blackjackOutcome}<span class="badge badge-sm badge-success">{user.blackjackOutcome}</span>{/if}
+					{#if game === 'poker' && user.folded}<span class="badge badge-sm badge-error">Folded</span>{/if}
 					{#if user.isAllIn}<span class="badge badge-sm badge-warning">All in</span>{/if}
 					{#if user.hasLeft || !user.connected}<span class="badge badge-sm badge-outline"
 							>{user.hasLeft ? 'Left' : 'Disconnected'}</span
@@ -59,10 +63,10 @@
 				/>
 				<div
 					class="flex justify-center gap-1"
-					aria-label={`${user.username} hole cards`}
+					aria-label={`${user.username} ${game === 'blackjack' ? 'hand' : 'hole cards'}`}
 					data-testid="hole-cards"
 				>
-					{#each user.cardsInHand.slice(0, 2) as card, index (`${card.rank}-${card.suit}-${index}`)}
+					{#each user.cardsInHand.slice(0, game === 'blackjack' ? user.cardsInHand.length : 2) as card, index (`${card.rank}-${card.suit}-${index}`)}
 						<div
 							data-testid="hole-card"
 							data-face-down={card.rank === 0}

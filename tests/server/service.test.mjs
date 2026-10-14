@@ -9,6 +9,7 @@ import parser from 'socket.io-msgpack-parser';
 import { createGameServer } from '../../server/index.mjs';
 import { freshDeck } from '../../server/classic.mjs';
 import { getVariant } from '../../server/variants/index.mjs';
+import { freshRummyDeck } from '../../server/rummy/rummy.mjs';
 
 const cardsPerPlayer = (rulesVersion) =>
 	rulesVersion === '2-card-1' ? 2 : rulesVersion === '4-card-1' ? 4 : 3;
@@ -98,6 +99,40 @@ test('Texas Hold’em uses the shared room transport while keeping opponent hole
 	);
 	for (const c of clients)
 		assert.ok(c.view.usersList.find((p) => p.id === c.id).cardsInHand.length === 2);
+});
+
+test('Blackjack and Indian Rummy use the shared room transport and keep private cards isolated', async (t) => {
+	const blackjack = await setup(t, 2, { gameType: 'blackjack' });
+	assert.equal((await blackjack.clients[0].send('start', ['test-room'])).ok, true);
+	await pause();
+	for (const c of blackjack.clients) {
+		const opponent = c.view.usersList.find((player) => player.id !== c.id);
+		assert.ok(opponent.cardsInHand.every((card) => card.rank === 0));
+		assert.equal(c.view.dealerCards[1].rank, 0);
+	}
+	const actor = blackjack.clients.find((c) => c.id === blackjack.app.store.room('test-room').currentPlayerId);
+	assert.equal((await actor.send('blackjackAction', ['stand'])).ok, true);
+	const blackjackLedger = blackjack.app.store.db.prepare("SELECT entries FROM ledger WHERE room='test-room' ORDER BY id DESC LIMIT 1").get();
+	assert.equal(JSON.parse(blackjackLedger.entries).reduce((sum, entry) => sum + entry.delta, 0), 0);
+
+	const rummy = await setup(t, 2, {
+		gameType: 'rummy',
+		deckFactory: (gameType) => gameType === 'rummy' ? freshRummyDeck() : freshDeck()
+	});
+	assert.equal((await rummy.clients[0].send('start', ['test-room'])).ok, true);
+	await pause();
+	for (const c of rummy.clients) {
+		const opponent = c.view.usersList.find((player) => player.id !== c.id);
+		assert.equal(opponent.cardsInHand.length, 13);
+		assert.ok(opponent.cardsInHand.every((card) => card.rank === 0));
+	}
+	const rummyRoom = rummy.app.store.room('test-room');
+	const turn = rummy.clients.find((c) => c.id === rummyRoom.currentPlayerId);
+	assert.equal((await turn.send('rummyAction', ['draw-stock'])).ok, true);
+	await pause();
+	assert.equal(turn.view.usersList.find((player) => player.id === turn.id).cardsInHand.length, 14);
+	const rummyLedger = rummy.app.store.db.prepare("SELECT entries FROM ledger WHERE room='test-room' ORDER BY id DESC LIMIT 1").get();
+	assert.equal(JSON.parse(rummyLedger.entries).reduce((sum, entry) => sum + entry.delta, 0), 0);
 });
 
 test('Lobby cannot be started by the host until all connected players have confirmed readiness', async (t) => {

@@ -24,7 +24,7 @@
 	let table = $state<number>(50);
 	// Every Teen Patti room opens with Classic. Variant choice belongs between hands.
 	let rulesVersion: RulesVersion = 'classic-1';
-	let gameType = $state<'teen-patti' | 'texas-holdem'>('teen-patti');
+	let gameType = $state<'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy'>('teen-patti');
 
 	onMount(() => {
 		// Connect here so the "Create Room" button becomes visible once connected.
@@ -131,11 +131,17 @@
 					<select id="gameType" class="select w-full" bind:value={gameType}>
 						<option value="teen-patti">Teen Patti</option>
 						<option value="texas-holdem">Texas Hold’em Poker</option>
+						<option value="blackjack">Blackjack</option>
+						<option value="rummy">13-card Indian Rummy</option>
 					</select>
 					<p class="text-base-content/50 text-sm">
 						{gameType === 'texas-holdem'
 							? 'Poker rooms use standard Texas Hold’em rules.'
-							: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
+							: gameType === 'blackjack'
+								? 'Play Blackjack with a dealer who stands on soft 17. Natural blackjack pays 3:2.'
+								: gameType === 'rummy'
+									? 'Play 13-card Indian Points Rummy. Make two sequences, including one pure sequence.'
+									: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
 					</p>
 				</fieldset>
 
@@ -197,6 +203,13 @@
 				{#if gameType === 'texas-holdem'}
 					<p class="text-base-content/50 text-sm">
 						Texas Hold’em uses two private cards, community cards, and standard poker hand rankings.
+					</p>
+				{/if}
+				{#if gameType === 'blackjack' || gameType === 'rummy'}
+					<p class="text-base-content/50 text-sm">
+						{gameType === 'blackjack'
+							? 'Blackjack uses standard 52-card decks, dealer stands on soft 17, and a natural pays 3:2.'
+							: 'Indian Rummy deals 13 cards. Draw and discard to form valid sequences and sets.'}
 					</p>
 				{/if}
 
