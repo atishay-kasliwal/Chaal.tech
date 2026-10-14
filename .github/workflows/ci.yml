@@ -22,3 +22,24 @@ jobs:
       - run: npm run build
         env:
           VITE_SERVER_URL: https://api.chaal.tech
+      - name: Build game server container
+        run: docker build --tag chaal-game-server:test .
+      - name: Smoke test game server container
+        run: |
+          docker run --detach --name chaal-game-server-test \
+            --publish 127.0.0.1:8080:10000 \
+            --env HOST=0.0.0.0 \
+            --env PORT=10000 \
+            --env GAME_DATABASE=/tmp/chaal.sqlite \
+            --env ALLOWED_ORIGINS=http://127.0.0.1:5173 \
+            chaal-game-server:test
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8080/ready; then
+              docker rm --force chaal-game-server-test
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs chaal-game-server-test
+          docker rm --force chaal-game-server-test
+          exit 1
