@@ -34,7 +34,10 @@ test('Preserved landing, theme, waiting table, toast and original asset files re
 				bytes
 					.toString()
 					.replace('width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width')
-					.replace('Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.', 'Create room and play teen patti with your friends')
+					.replace(
+						'Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.',
+						'Create room and play teen patti with your friends'
+					)
 					.replace('Chaal.tech — Social Card Games', 'Teen Patti Multiplayer')
 			);
 		if (entry.path === 'static/site.webmanifest')
@@ -45,7 +48,64 @@ test('Preserved landing, theme, waiting table, toast and original asset files re
 					.replace('"short_name": "Chaal.tech"', '"short_name": ""')
 			);
 		if (entry.path === 'src/routes/+page.svelte')
-			bytes = Buffer.from(bytes.toString().replace('Chaal.tech', 'Teen Patti'));
+			bytes = Buffer.from(
+				bytes
+					.toString()
+					.replace('Chaal.tech', 'Teen Patti')
+					.replace(
+						"import { EyeOff, Eye, Swords, Sparkles, Coins } from '@lucide/svelte';",
+						"import { Info, EyeOff, Eye, Swords, Sparkles, Trophy, Coins } from '@lucide/svelte';"
+					)
+					.replace(
+						"import { onMount } from 'svelte';",
+						"import { onMount, onDestroy } from 'svelte';"
+					)
+					.replace(
+						`\n\tfunction activateMechanic(index: number, event: KeyboardEvent) {\n\t\tif (event.key !== 'Enter' && event.key !== ' ') return;\n\t\tevent.preventDefault();\n\t\tactiveMechanic = index;\n\t}\n`,
+						''
+					)
+					.replace(/\n\t\t\t\tonkeydown=\{\(event\) => activateMechanic\(\d, event\)\}/g, '')
+					.replace('{#each hands as hand (hand.rank)}', '{#each hands as hand}')
+					.replace(
+						'{#each hand.cards as card, j (`${card.r}-${card.s}`)}',
+						'{#each hand.cards as card, j}'
+					)
+					.replace(
+						'class="group border-base-300 bg-base-200/30 hover:bg-base-200 relative rounded-xl border p-6 transition-all hover:shadow-lg"',
+						'class="group border-base-300 bg-base-200/30 hover:bg-base-200 focus:bg-base-200 relative rounded-xl border p-6 transition-all hover:shadow-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"\n\t\t\t\t\t\t\ttabindex="0"\n\t\t\t\t\t\t\trole="button"'
+					)
+			);
+		if (entry.path === 'src/lib/components/Toasts/Toasts.svelte')
+			bytes = Buffer.from(
+				bytes
+					.toString()
+					.replace(
+						'{#each toastQueue as toast (toast.id)}',
+						'{#each toastQueue as { message, type }}'
+					)
+					.replace("toast.type === 'error'", "type === 'error'")
+					.replace("toast.type === 'info'", "type === 'info'")
+					.replace("toast.type === 'success'", "type === 'success'")
+					.replace('{toast.message}', '{message}')
+			);
+		if (entry.path === 'src/lib/components/Toasts/stores.svelte.ts')
+			bytes = Buffer.from(
+				bytes
+					.toString()
+					.replace('\tid: number;\n', '')
+					.replace('let nextToastId = 1;\n', '')
+					.replace(
+						'toastQueue.push({ id: nextToastId++, message, type });',
+						'toastQueue.push({ message, type });'
+					)
+			);
+		if (entry.path === 'src/routes/test-cards/+page.svelte')
+			bytes = Buffer.from(
+				bytes
+					.toString()
+					.replace('{#each suits as suit (suit)}', '{#each suits as suit}')
+					.replace('{#each ranks as rank (rank)}', '{#each ranks as rank}')
+			);
 		assert.equal(digest(bytes), entry.upstreamSha256, entry.path);
 	}
 });

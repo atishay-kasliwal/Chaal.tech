@@ -24,7 +24,14 @@ test('Blackjack hand values count aces high when possible and soft when appropri
 });
 test('Blackjack keeps private hands and the dealer hole card hidden until settlement', () => {
 	let room = readyRoom();
-	const deck = arrangedDeck([card(10), card(9, 'hearts'), card(6, 'clubs'), card(7), card(8, 'diamonds'), card(10, 'hearts')]);
+	const deck = arrangedDeck([
+		card(10),
+		card(9, 'hearts'),
+		card(6, 'clubs'),
+		card(7),
+		card(8, 'diamonds'),
+		card(10, 'hearts')
+	]);
 	room = transition(room, 'a', 'start', {}, { ...ctx, deck });
 	const a = projection(room, 'a', connected);
 	const b = projection(room, 'b', connected);
@@ -36,7 +43,15 @@ test('Blackjack keeps private hands and the dealer hole card hidden until settle
 test('Blackjack stands on soft 17, settles a dealer bust, and pays a natural at 3:2', () => {
 	let room = readyRoom();
 	// a has A+K; b has 10+7; dealer shows 6 and has a hidden 10, then draws a 9.
-	const deck = arrangedDeck([card(14), card(10, 'hearts'), card(6, 'clubs'), card(13), card(7, 'diamonds'), card(10, 'clubs'), card(9, 'hearts')]);
+	const deck = arrangedDeck([
+		card(14),
+		card(10, 'hearts'),
+		card(6, 'clubs'),
+		card(13),
+		card(7, 'diamonds'),
+		card(10, 'clubs'),
+		card(9, 'hearts')
+	]);
 	room = transition(room, 'a', 'start', {}, { ...ctx, deck });
 	assert.equal(room.currentPlayerId, 'b');
 	room = transition(room, 'b', 'stand', {}, ctx);
@@ -45,7 +60,47 @@ test('Blackjack stands on soft 17, settles a dealer bust, and pays a natural at 
 	assert.equal(room.players.find((player) => player.id === 'a').blackjackOutcome, 'blackjack');
 	assert.equal(room.players.find((player) => player.id === 'a').balance, 103);
 	assert.equal(room.players.find((player) => player.id === 'b').blackjackOutcome, 'win');
-	assert.equal(room.players.reduce((sum, player) => sum + player.balance, 0), room.issuedChips);
+	assert.equal(
+		room.players.reduce((sum, player) => sum + player.balance, 0),
+		room.issuedChips
+	);
+});
+
+test('Blackjack never settles a seated player who did not wager in the current hand', () => {
+	let room = newRoom('blackjack-nonparticipant', 50, 'a');
+	const threePlayerContext = { ...ctx, connected: new Set(['a', 'b']) };
+	for (const id of ['a', 'b', 'c'])
+		room = transition(room, id, 'join', { username: id }, threePlayerContext);
+	for (const id of ['a', 'b'])
+		room = transition(room, id, 'ready', { ready: true }, threePlayerContext);
+	const deck = arrangedDeck([
+		card(2, 'hearts'),
+		card(4, 'hearts'),
+		card(10, 'hearts'),
+		card(3, 'hearts'),
+		card(5, 'hearts'),
+		card(6, 'hearts'),
+		card(10, 'spades')
+	]);
+	room = transition(room, 'a', 'start', {}, { ...threePlayerContext, deck });
+	assert.equal(room.players.find((player) => player.id === 'c').status, 'waiting');
+	assert.equal(room.players.find((player) => player.id === 'c').balance, 50);
+
+	room = transition(room, 'a', 'stand', {}, threePlayerContext);
+	room = transition(room, 'b', 'stand', {}, threePlayerContext);
+
+	assert.equal(room.gameShow, true);
+	assert.equal(room.players.find((player) => player.id === 'c').balance, 50);
+	assert.equal(room.players.find((player) => player.id === 'c').blackjackOutcome, undefined);
+	assert.equal(
+		room.result.payouts.some((payout) => payout.playerId === 'c'),
+		false
+	);
+	assert.equal(room.issuedChips, 154);
+	assert.equal(
+		room.players.reduce((sum, player) => sum + player.balance, 0),
+		room.issuedChips
+	);
 });
 
 test('Blackjack rejects invalid wagers, out-of-turn actions, and doubling after a hit without mutating state', () => {
@@ -58,7 +113,10 @@ test('Blackjack rejects invalid wagers, out-of-turn actions, and doubling after 
 	assert.deepEqual(room, before);
 	const actor = room.currentPlayerId;
 	room = transition(room, actor, 'hit', {}, ctx);
-	if (room.currentPlayerId === actor && room.players.find((player) => player.id === actor).status === 'playing') {
+	if (
+		room.currentPlayerId === actor &&
+		room.players.find((player) => player.id === actor).status === 'playing'
+	) {
 		const hitRoom = structuredClone(room);
 		assert.throws(() => transition(room, actor, 'double', {}, ctx), /first two cards/i);
 		assert.deepEqual(room, hitRoom);

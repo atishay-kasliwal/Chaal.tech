@@ -1,9 +1,11 @@
 import { AccessToken, RoomServiceClient, TrackSource } from 'livekit-server-sdk';
 
 // Media has no access to cards, chips, turns or rule evaluation.
-export function createMediaService({ url, apiKey, apiSecret } = {}, client) {
+export function createMediaService({ url, apiKey, apiSecret, revokeTokens = false } = {}, client) {
 	if (!url && !apiKey && !apiSecret) return null;
 	if (!url || !apiKey || !apiSecret) throw new Error('Configure all three LIVEKIT settings');
+	if (typeof revokeTokens !== 'boolean')
+		throw new Error('LIVEKIT_REVOKE_TOKENS must be true or false');
 	const endpoint = new URL(url);
 	if (
 		!['ws:', 'wss:'].includes(endpoint.protocol) ||
@@ -13,6 +15,8 @@ export function createMediaService({ url, apiKey, apiSecret } = {}, client) {
 		endpoint.hash
 	)
 		throw new Error('LIVEKIT_URL must be a ws:// or wss:// server URL');
+	const revokeIssuedTokens =
+		revokeTokens || endpoint.hostname.toLowerCase().endsWith('.livekit.cloud');
 	const apiURL = new URL(endpoint);
 	apiURL.protocol = endpoint.protocol === 'wss:' ? 'https:' : 'http:';
 	const rooms =
@@ -44,7 +48,10 @@ export function createMediaService({ url, apiKey, apiSecret } = {}, client) {
 		},
 		async remove(roomName, playerId) {
 			try {
-				await rooms.removeParticipant(roomName, playerId);
+				const options = revokeIssuedTokens
+					? { revokeTokenTs: BigInt(Math.floor(Date.now() / 1000)) }
+					: undefined;
+				await rooms.removeParticipant(roomName, playerId, options);
 			} catch (error) {
 				if (error.status !== 404 && error.code !== 'not_found') throw error;
 			}

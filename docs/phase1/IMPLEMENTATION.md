@@ -65,7 +65,7 @@ The authenticated session binds commands to a player; client-supplied player IDs
 
 Public room HTTP metadata allows the Svelte route to load during a hand. Socket membership determines whether the person may resume, join, or receives an admission error. Nonmembers cannot join a hand already in progress. Sessions preserve seats, balances and private seen/blind state across refresh and service restart.
 
-A network disconnect reserves the player's seat; its current turn still expires. Explicit Leave packs an active player, preserves their existing room balance and transfers host privileges to another seated member. Joining again does not mint a fresh bankroll. Departed seats are released at a safe hand boundary. A disconnected player must resume before being included in a new hand.
+A network disconnect reserves the player's seat; its current turn still expires. A host who does not resume within the configurable 30-second grace period transfers host privileges to the next connected seated player clockwise. Explicit Leave packs an active player, preserves their existing room balance and transfers host privileges immediately. Joining again does not mint a fresh bankroll. Departed seats are released at a safe hand boundary. A disconnected player must resume before being included in a new hand.
 
 ## Privacy and authority
 

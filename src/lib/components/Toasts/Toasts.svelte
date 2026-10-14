@@ -3,15 +3,15 @@
 </script>
 
 <div class="toast">
-	{#each toastQueue as { message, type }}
+	{#each toastQueue as toast (toast.id)}
 		<div
 			class="alert"
-			class:alert-error={type === 'error'}
-			class:alert-info={type === 'info'}
-			class:alert-success={type === 'success'}
+			class:alert-error={toast.type === 'error'}
+			class:alert-info={toast.type === 'info'}
+			class:alert-success={toast.type === 'success'}
 		>
 			<div>
-				<span>{message}</span>
+				<span>{toast.message}</span>
 			</div>
 		</div>
 	{/each}

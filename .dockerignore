@@ -1,0 +1,13 @@
+.git
+.github
+.svelte-kit
+.netlify
+.wrangler
+node_modules
+.env
+.env.*
+!.env.example
+data
+coverage
+playwright-report
+.DS_Store

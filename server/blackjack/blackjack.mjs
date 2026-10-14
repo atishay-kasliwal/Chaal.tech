@@ -50,7 +50,10 @@ function dealerPlay(room) {
 	const winners = [];
 	const payouts = [];
 	for (const player of room.players) {
-		if (!player.blackjackBet) continue;
+		// `blackjackBet` is the player's next-hand setting and remains populated
+		// for seated or previously departed players. `handBet` is cleared at
+		// hand start and only set when this hand actually collects a wager.
+		if (!player.handBet) continue;
 		const bet = player.blackjackBet;
 		const value = handValue(player.cards).total;
 		let payout = 0;

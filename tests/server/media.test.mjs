@@ -10,7 +10,7 @@ test('Signed media grant is room/identity scoped, short lived and camera/microph
 	const created = [],
 		removed = [];
 	const service = createMediaService(
-		{ url: 'wss://example.livekit.cloud', apiKey: 'test-key', apiSecret: 'test-secret' },
+		{ url: 'wss://media.example.test', apiKey: 'test-key', apiSecret: 'test-secret' },
 		{
 			async createRoom(options) {
 				created.push(options);
@@ -45,7 +45,45 @@ test('Signed media grant is room/identity scoped, short lived and camera/microph
 	assert.equal(issued.identity, 'server-player-id');
 	assert.equal(issued.roomName, 'test-room');
 	await service.remove('test-room', 'server-player-id');
-	assert.deepEqual(removed, [['test-room', 'server-player-id']]);
+	assert.deepEqual(removed, [['test-room', 'server-player-id', undefined]]);
+});
+
+test('Cloud removal can revoke tokens issued before the room membership ended', async () => {
+	let removed;
+	const service = createMediaService(
+		{
+			url: 'wss://example.livekit.cloud',
+			apiKey: 'test-key',
+			apiSecret: 'test-secret',
+			revokeTokens: true
+		},
+		{
+			async createRoom() {},
+			async removeParticipant(...args) {
+				removed = args;
+			}
+		}
+	);
+	await service.remove('private-room', 'departed-player');
+	assert.equal(removed[0], 'private-room');
+	assert.equal(removed[1], 'departed-player');
+	assert.equal(typeof removed[2].revokeTokenTs, 'bigint');
+	assert.ok(removed[2].revokeTokenTs <= BigInt(Math.floor(Date.now() / 1000)));
+});
+
+test('LiveKit Cloud automatically enables revocation even if the optional flag is omitted', async () => {
+	let removed;
+	const service = createMediaService(
+		{ url: 'wss://project.livekit.cloud', apiKey: 'test-key', apiSecret: 'test-secret' },
+		{
+			async createRoom() {},
+			async removeParticipant(...args) {
+				removed = args;
+			}
+		}
+	);
+	await service.remove('private-room', 'departed-player');
+	assert.equal(typeof removed[2].revokeTokenTs, 'bigint');
 });
 
 test('Media is optional and incomplete or unsafe configuration fails explicitly', () => {
@@ -56,6 +94,16 @@ test('Media is optional and incomplete or unsafe configuration fails explicitly'
 		{ url: 'wss://user:password@example.com', apiKey: 'key', apiSecret: 'secret' }
 	])
 		assert.throws(() => createMediaService(options));
+	assert.throws(
+		() =>
+			createMediaService({
+				url: 'wss://example.com',
+				apiKey: 'key',
+				apiSecret: 'secret',
+				revokeTokens: 'true'
+			}),
+		/LIVEKIT_REVOKE_TOKENS/
+	);
 });
 
 function fakeSDK({ cameraDenied = false, microphoneDenied = false, connectGate } = {}) {

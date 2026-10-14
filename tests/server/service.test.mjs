@@ -46,7 +46,12 @@ async function client(url, token) {
 }
 async function setup(t, count = 2, options = {}, rulesVersion = 'classic-1') {
 	const { autoReady = true, gameType = 'teen-patti', ...serverOptions } = options;
-	const app = createGameServer({ database: ':memory:', turnMs: 600000, ...serverOptions });
+	const app = createGameServer({
+		database: ':memory:',
+		turnMs: 600000,
+		roomCodeFactory: (requestedName) => requestedName,
+		...serverOptions
+	});
 	const address = await app.listen(0);
 	const url = `http://127.0.0.1:${address.port}`;
 	const clients = [];
@@ -69,6 +74,13 @@ async function setup(t, count = 2, options = {}, rulesVersion = 'classic-1') {
 	return { app, url, clients };
 }
 const pause = () => new Promise((r) => setTimeout(r, 30));
+async function waitFor(predicate, timeoutMs = 2000) {
+	const deadline = Date.now() + timeoutMs;
+	while (!predicate()) {
+		if (Date.now() >= deadline) throw new Error('Timed out waiting for condition');
+		await new Promise((resolve) => setTimeout(resolve, 10));
+	}
+}
 
 test('Texas Hold’em uses the shared room transport while keeping opponent hole cards private', async (t) => {
 	const { app, clients } = await setup(t, 2, { gameType: 'texas-holdem' });
@@ -110,14 +122,21 @@ test('Blackjack and Indian Rummy use the shared room transport and keep private 
 		assert.ok(opponent.cardsInHand.every((card) => card.rank === 0));
 		assert.equal(c.view.dealerCards[1].rank, 0);
 	}
-	const actor = blackjack.clients.find((c) => c.id === blackjack.app.store.room('test-room').currentPlayerId);
+	const actor = blackjack.clients.find(
+		(c) => c.id === blackjack.app.store.room('test-room').currentPlayerId
+	);
 	assert.equal((await actor.send('blackjackAction', ['stand'])).ok, true);
-	const blackjackLedger = blackjack.app.store.db.prepare("SELECT entries FROM ledger WHERE room='test-room' ORDER BY id DESC LIMIT 1").get();
-	assert.equal(JSON.parse(blackjackLedger.entries).reduce((sum, entry) => sum + entry.delta, 0), 0);
+	const blackjackLedger = blackjack.app.store.db
+		.prepare("SELECT entries FROM ledger WHERE room='test-room' ORDER BY id DESC LIMIT 1")
+		.get();
+	assert.equal(
+		JSON.parse(blackjackLedger.entries).reduce((sum, entry) => sum + entry.delta, 0),
+		0
+	);
 
 	const rummy = await setup(t, 2, {
 		gameType: 'rummy',
-		deckFactory: (gameType) => gameType === 'rummy' ? freshRummyDeck() : freshDeck()
+		deckFactory: (gameType) => (gameType === 'rummy' ? freshRummyDeck() : freshDeck())
 	});
 	assert.equal((await rummy.clients[0].send('start', ['test-room'])).ok, true);
 	await pause();
@@ -131,8 +150,13 @@ test('Blackjack and Indian Rummy use the shared room transport and keep private 
 	assert.equal((await turn.send('rummyAction', ['draw-stock'])).ok, true);
 	await pause();
 	assert.equal(turn.view.usersList.find((player) => player.id === turn.id).cardsInHand.length, 14);
-	const rummyLedger = rummy.app.store.db.prepare("SELECT entries FROM ledger WHERE room='test-room' ORDER BY id DESC LIMIT 1").get();
-	assert.equal(JSON.parse(rummyLedger.entries).reduce((sum, entry) => sum + entry.delta, 0), 0);
+	const rummyLedger = rummy.app.store.db
+		.prepare("SELECT entries FROM ledger WHERE room='test-room' ORDER BY id DESC LIMIT 1")
+		.get();
+	assert.equal(
+		JSON.parse(rummyLedger.entries).reduce((sum, entry) => sum + entry.delta, 0),
+		0
+	);
 });
 
 test('Lobby cannot be started by the host until all connected players have confirmed readiness', async (t) => {
@@ -379,6 +403,29 @@ test('Room variant is validated, creation retries are idempotent and joins canno
 	assert.equal(app.store.room('muflis-room').rulesVersion, 'muflis-1');
 });
 
+test('Production room creation issues a private random invite code and ignores the requested name', async (t) => {
+	const app = createGameServer({ database: ':memory:', turnMs: 600000 });
+	const address = await app.listen(0);
+	const url = `http://127.0.0.1:${address.port}`;
+	const host = await client(url);
+	const guest = await client(url);
+	t.after(async () => {
+		host.socket.disconnect();
+		guest.socket.disconnect();
+		await app.close();
+	});
+
+	const created = await host.send('createRoom', ['guessable-name', 50]);
+	assert.equal(created.ok, true);
+	assert.match(created.roomName, /^[a-f0-9]{32}$/);
+	assert.notEqual(created.roomName, 'guessable-name');
+	assert.ok(app.store.room(created.roomName));
+	assert.equal((await guest.send('joinRoom', ['Uninvited', 'guessable-name'])).ok, false);
+	assert.equal(app.store.room('guessable-name'), null);
+	const response = await fetch(`${url}/room/guessable-name`);
+	assert.equal(response.status, 404);
+});
+
 for (const rulesVersion of [
 	'classic-1',
 	'muflis-1',
@@ -505,6 +552,39 @@ test('Session takeover fences old socket; resume keeps player, seat and private 
 	);
 });
 
+test('A host who resumes during the grace period keeps ownership', async (t) => {
+	const { app, url, clients } = await setup(t, 3, { hostGraceMs: 100 });
+	const [host] = clients;
+	host.socket.disconnect();
+	await pause();
+	const recovered = await client(url, host.token);
+	t.after(() => recovered.socket.disconnect());
+	const resumed = await recovered.socket.timeout(1000).emitWithAck('resumeRoom', 'test-room');
+	assert.equal(resumed.ok, true);
+	await new Promise((resolve) => setTimeout(resolve, 120));
+	assert.equal(app.store.room('test-room').hostId, host.id);
+});
+
+test('A permanently disconnected host passes ownership clockwise to a connected seated player', async (t) => {
+	const { app, clients } = await setup(t, 3, { hostGraceMs: 60 });
+	const [host, next] = clients;
+	host.socket.disconnect();
+	await waitFor(() => app.store.room('test-room').hostId === next.id);
+	assert.equal(app.store.room('test-room').hostId, next.id);
+	assert.equal(next.view.hostId, next.id);
+	assert.equal(next.view.legalActions.start, true);
+});
+
+test('An explicit host leave during a hand transfers ownership immediately and keeps the hand running', async (t) => {
+	const { app, clients } = await setup(t, 3);
+	const [host, next] = clients;
+	assert.equal((await host.send('start', ['test-room', 0, 3])).ok, true);
+	await pause();
+	assert.equal((await host.send('leaveRoom')).ok, true);
+	assert.equal(app.store.room('test-room').hostId, next.id);
+	assert.equal(app.store.room('test-room').isStarted, true);
+});
+
 for (const rulesVersion of [
 	'classic-1',
 	'muflis-1',
@@ -518,7 +598,11 @@ for (const rulesVersion of [
 	test(`Durable restart restores same hand/session and an unacknowledged command cannot debit twice (${rulesVersion})`, async (t) => {
 		const dir = await mkdtemp(path.join(tmpdir(), 'teenpatti-restart-'));
 		const database = path.join(dir, 'game.sqlite');
-		let app = createGameServer({ database, turnMs: 600000 });
+		let app = createGameServer({
+			database,
+			turnMs: 600000,
+			roomCodeFactory: (requestedName) => requestedName
+		});
 		let address = await app.listen(0);
 		let url = `http://127.0.0.1:${address.port}`;
 		const clients = [];
@@ -549,7 +633,11 @@ for (const rulesVersion of [
 		a.socket.disconnect();
 		b.socket.disconnect();
 		await app.close();
-		app = createGameServer({ database, turnMs: 600000 });
+		app = createGameServer({
+			database,
+			turnMs: 600000,
+			roomCodeFactory: (requestedName) => requestedName
+		});
 		address = await app.listen(0);
 		url = `http://127.0.0.1:${address.port}`;
 		const restored = await client(url, b.token);

@@ -1,12 +1,18 @@
 <script lang="ts">
-	import { Info, EyeOff, Eye, Swords, Sparkles, Trophy, Coins } from '@lucide/svelte';
+	import { EyeOff, Eye, Swords, Sparkles, Coins } from '@lucide/svelte';
 	import PlayingCard from '#lib/components/PlayingCard.svelte';
 	import { fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 
 	let mounted = $state(false);
 	let activeMechanic = $state(-1);
+
+	function activateMechanic(index: number, event: KeyboardEvent) {
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		event.preventDefault();
+		activeMechanic = index;
+	}
 	
 	onMount(() => {
 		mounted = true;
@@ -157,6 +163,7 @@
 				tabindex="0"
 				role="button"
 				onclick={() => activeMechanic = 0}
+				onkeydown={(event) => activateMechanic(0, event)}
 				onfocus={() => activeMechanic = 0}
 			>
 				<div class="card-body items-center text-center">
@@ -211,6 +218,7 @@
 				tabindex="0"
 				role="button"
 				onclick={() => activeMechanic = 1}
+				onkeydown={(event) => activateMechanic(1, event)}
 				onfocus={() => activeMechanic = 1}
 			>
 				<div class="card-body items-center text-center">
@@ -274,6 +282,7 @@
 				tabindex="0"
 				role="button"
 				onclick={() => activeMechanic = 2}
+				onkeydown={(event) => activateMechanic(2, event)}
 				onfocus={() => activeMechanic = 2}
 			>
 				<div class="card-body items-center text-center">
@@ -328,11 +337,9 @@
 				<div class="divider">Visual Guide</div>
 
 				<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{#each hands as hand}
+					{#each hands as hand (hand.rank)}
 						<div
-							class="group border-base-300 bg-base-200/30 hover:bg-base-200 focus:bg-base-200 relative rounded-xl border p-6 transition-all hover:shadow-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-							tabindex="0"
-							role="button"
+							class="group border-base-300 bg-base-200/30 hover:bg-base-200 relative rounded-xl border p-6 transition-all hover:shadow-lg"
 						>
 							<div
 								class="bg-primary text-primary-content absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full font-bold shadow-sm"
@@ -344,7 +351,7 @@
 
 							<div class="flex justify-center pt-2 pb-4">
 								<div class="relative flex h-32 w-full justify-center">
-									{#each hand.cards as card, j}
+									{#each hand.cards as card, j (`${card.r}-${card.s}`)}
 										<div
 											class="absolute origin-bottom drop-shadow-lg transition-all duration-500 ease-out
 											{j === 0

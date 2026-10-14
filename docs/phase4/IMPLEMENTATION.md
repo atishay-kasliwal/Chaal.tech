@@ -83,6 +83,8 @@ The media endpoint is the authenticated Socket.IO `mediaToken(roomName, acknowle
 
 **Self-hosted token-replay limitation:** removing a participant from self-hosted LiveKit does not revoke an already issued token. Its 60-second initial-admission expiry is a mitigation, not a guarantee that an adversarial cached-token reconnect cannot occur. LiveKit can refresh tokens during a media session; an accepted unauthorized reconnect must not be described as automatically ending after 60 seconds. For production, use LiveKit Cloud's revocation support and validate its behavior during admission/removal races, or design and verify an equivalent self-hosted admission/revocation mechanism before launch. This local development server is not that production security boundary. See the official [token lifecycle and self-hosted limitations](https://docs.livekit.io/frontends/reference/tokens-grants/).
 
+The server now supports LiveKit Cloud's explicit token cutoff during participant removal. Set `LIVEKIT_REVOKE_TOKENS=true` only when the configured provider supports revocation; the server passes the current Unix timestamp so tokens issued before leave/takeover are rejected on reconnect. This remains disabled for local and self-hosted development. Verify revocation against the actual production project before enabling public media.
+
 Participant removal failures are logged without credentials and do not roll back completed game actions. Production monitoring, retry/reconciliation, webhook handling and cross-server recovery remain hardening work; a media outage must not freeze chip accounting.
 
 ## Failure behavior

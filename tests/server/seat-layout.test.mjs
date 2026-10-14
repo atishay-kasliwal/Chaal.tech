@@ -45,10 +45,14 @@ test('Sparse seats and turn/pack/presence changes never assign different identit
 	assert.deepEqual(arrangeSeats([], 'absent'), []);
 });
 
-	test('Phase 5 module baselines remain intact except approved room layout and variant changes', async () => {
+test('Phase 5 module baselines remain intact except approved room layout and variant changes', async () => {
 	const baseline = JSON.parse(await readFile('tests/fixtures/phase4-preservation.json', 'utf8'));
 	for (const [file, hash] of Object.entries(baseline)) {
 		if (
+			file === 'src/lib/config.ts' ||
+			file === 'src/lib/utils/room.ts' ||
+			file === 'src/lib/stores/socket-store.svelte.ts' ||
+			file === 'src/routes/+page.svelte' ||
 			file === 'src/routes/[roomName]/+page.svelte' ||
 			file === 'src/routes/+layout.svelte' ||
 			file === 'src/lib/components/SeatVideo.svelte' ||
@@ -60,6 +64,7 @@ test('Sparse seats and turn/pack/presence changes never assign different identit
 			file === 'src/routes/[roomName]/UsersTable.svelte' ||
 			file === 'src/routes/[roomName]/types.d.ts' ||
 			file === 'server/index.mjs' ||
+			file === 'server/media.mjs' ||
 			file === 'server/store.mjs' ||
 			file === 'server/variants/index.mjs'
 		)
@@ -71,7 +76,10 @@ test('Sparse seats and turn/pack/presence changes never assign different identit
 				bytes
 					.toString()
 					.replace('width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width')
-					.replace('Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.', 'Create room and play teen patti with your friends')
+					.replace(
+						'Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.',
+						'Create room and play teen patti with your friends'
+					)
 					.replace('Chaal.tech — Social Card Games', 'Teen Patti Multiplayer')
 			);
 		if (file === 'src/routes/+page.svelte')
@@ -102,9 +110,9 @@ test('Sparse seats and turn/pack/presence changes never assign different identit
 	);
 	const seatVideo = await readFile('src/lib/components/SeatVideo.svelte', 'utf8');
 	assert.match(seatVideo, /use:attachTrack=\{participant\.video\}/);
-	assert.match(seatVideo, /object-contain/);
+	assert.match(seatVideo, /object-cover/);
 	const createRoom = await readFile('src/routes/create-room/+page.svelte', 'utf8');
-	assert.match(createRoom, /\[roomName, table, rulesVersion, gameType\]/);
+	assert.match(createRoom, /\['', table, rulesVersion, gameType\]/);
 	assert.match(createRoom, /Start with Classic Teen Patti/);
 	assert.doesNotMatch(createRoom, /Game Variant/);
 	const catalog = await readFile('src/lib/variant-catalog.ts', 'utf8');

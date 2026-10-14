@@ -36,17 +36,13 @@
 
 	async function createRoomHanlder(e: MouseEvent) {
 		e.preventDefault();
-		if (!roomName) {
-			displayToast('Could not Create Room: Please enter valid room name', 'error');
-			return;
-		}
 		const result = await socket.command(
 			'createRoom',
-			[roomName, table, rulesVersion, gameType],
+			['', table, rulesVersion, gameType],
 			false
 		);
-		if (result.ok) {
-			goto('/' + roomName);
+		if (result.ok && result.roomName) {
+			goto('/' + result.roomName);
 		} else displayToast(result.error || 'Could not create room', 'error');
 	}
 
@@ -149,7 +145,7 @@
 					<legend
 						class="fieldset-legend text-primary/80 flex items-center gap-1 text-xs font-semibold tracking-widest uppercase"
 					>
-						<House class="h-3 w-3" /> Room Name
+						<House class="h-3 w-3" /> Join with Room Code
 					</legend>
 					<div class="join w-full">
 						<input
@@ -159,7 +155,7 @@
 							}}
 							id="roomName"
 							type="text"
-							placeholder="e.g. lucky-aces"
+							placeholder="Paste a room code"
 							class="input join-item w-full"
 							autocomplete="off"
 							spellcheck="false"
@@ -223,6 +219,13 @@
 						>
 							<Sparkles class="h-4 w-4" /> Create Room
 						</button>
+			{:else if socket.error}
+				<div class="space-y-3" role="alert">
+					<p class="text-error text-center text-sm">{socket.error}</p>
+					<button class="btn btn-outline w-full" onclick={() => socket.connect()} type="button">
+						Retry connection
+					</button>
+				</div>
 					{:else}
 						<div class="btn btn-disabled w-full" aria-busy="true" aria-label="Connecting...">
 							<span class="loading loading-spinner loading-sm"></span>
@@ -236,7 +239,7 @@
 			<p
 				class="text-base-content/25 mt-1 flex items-center justify-center gap-1 text-center text-xs"
 			>
-				<Users class="h-3 w-3" /> Share the room name with friends after creating
+			<Users class="h-3 w-3" /> New rooms get a private invite code you can share with friends
 			</p>
 		</div>
 	</div>

@@ -1,9 +1,14 @@
 import { browser } from '$app/env';
 import { io } from 'socket.io-client';
 import customParser from 'socket.io-msgpack-parser';
-import { serverURL } from '#lib/config.js';
+import { serverConfigError, serverURL } from '#lib/config.js';
 
-interface Reply { ok: boolean; error?: string; code?: string; roomName?: string }
+interface Reply {
+	ok: boolean;
+	error?: string;
+	code?: string;
+	roomName?: string;
+}
 const sessionKey = 'teen-patti-session-v1';
 
 class SocketStore {
@@ -23,12 +28,20 @@ class SocketStore {
 
 	constructor() {
 		if (browser) {
-			try { this.token = localStorage.getItem(sessionKey) || undefined; } catch { /* Memory-only session if storage is unavailable. */ }
+			try {
+				this.token = localStorage.getItem(sessionKey) || undefined;
+			} catch {
+				/* Memory-only session if storage is unavailable. */
+			}
 		}
 		this.socket.on('session', ({ token, playerId }: { token: string; playerId: string }) => {
 			this.token = token;
 			this.playerId = playerId;
-			try { localStorage.setItem(sessionKey, token); } catch { /* Refresh recovery requires browser storage. */ }
+			try {
+				localStorage.setItem(sessionKey, token);
+			} catch {
+				/* Refresh recovery requires browser storage. */
+			}
 		});
 		this.socket.on('connect', () => {
 			this.connected = true;
@@ -41,16 +54,42 @@ class SocketStore {
 			this.roomData = snapshot;
 			this.playerId = snapshot.selfId;
 		});
-		this.socket.on('disconnect', () => { this.connected = false; });
-		this.socket.on('connect_error', (error: Error) => { this.error = error.message; });
+		this.socket.on('disconnect', () => {
+			this.connected = false;
+		});
+		this.socket.on('connect_error', (error: Error) => {
+			const code = (error as Error & { data?: { code?: string } }).data?.code;
+			if (code === 'INVALID_SESSION' && this.token) {
+				this.token = undefined;
+				this.playerId = '';
+				try {
+					localStorage.removeItem(sessionKey);
+				} catch {
+					/* Continue with a fresh in-memory identity. */
+				}
+				this.error = 'Your saved player session expired. Starting a new session.';
+				this.socket.connect();
+				return;
+			}
+			this.error = error.message;
+		});
 		this.socket.on('sessionReplaced', () => {
 			this.error = 'This player is connected in another tab. Reconnect here to take over.';
 			this.connected = false;
 		});
 	}
 
-	connect() { if (!this.socket.connected) this.socket.connect(); }
-	disconnect() { this.socket.disconnect(); this.connected = false; }
+	connect() {
+		if (!serverURL) {
+			this.error = serverConfigError;
+			return;
+		}
+		if (!this.socket.connected) this.socket.connect();
+	}
+	disconnect() {
+		this.socket.disconnect();
+		this.connected = false;
+	}
 
 	enterRoom(name: string) {
 		if (this.roomName !== name) this.roomData = null;
@@ -60,10 +99,13 @@ class SocketStore {
 	}
 
 	private resume() {
-		this.socket.timeout(8000).emit('resumeRoom', this.roomName, (error: Error | null, reply: Reply) => {
-			if (error) this.error = 'Could not restore the room. Reconnect to try again.';
-			else if (!reply.ok && reply.code !== 'NOT_MEMBER') this.error = reply.error || 'Could not restore the room';
-		});
+		this.socket
+			.timeout(8000)
+			.emit('resumeRoom', this.roomName, (error: Error | null, reply: Reply) => {
+				if (error) this.error = 'Could not restore the room. Reconnect to try again.';
+				else if (!reply.ok && reply.code !== 'NOT_MEMBER')
+					this.error = reply.error || 'Could not restore the room';
+			});
 	}
 
 	async command(event: string, args: unknown[] = [], needsState = true): Promise<Reply> {
@@ -78,14 +120,20 @@ class SocketStore {
 		// Retry only the same command ID. A lost acknowledgement cannot double a bet.
 		for (let attempt = 0; attempt < 2; attempt++) {
 			try {
-				const reply = await this.socket.timeout(8000).emitWithAck(event, ...args, meta) as Reply;
-				if (reply.ok && event === 'leaveRoom') { this.roomName = ''; this.roomData = null; }
+				const reply = (await this.socket.timeout(8000).emitWithAck(event, ...args, meta)) as Reply;
+				if (reply.ok && event === 'leaveRoom') {
+					this.roomName = '';
+					this.roomData = null;
+				}
 				return reply;
 			} catch {
 				if (!this.connected) break;
 			}
 		}
-		return { ok: false, error: 'No acknowledgement. Reconnect and review the current state before playing.' };
+		return {
+			ok: false,
+			error: 'No acknowledgement. Reconnect and review the current state before playing.'
+		};
 	}
 }
 

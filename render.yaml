@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: chaal-game-server
+    runtime: docker
+    region: ohio
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /ready
+    autoDeploy: true
+    disk:
+      name: chaal-game-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: GAME_DATABASE
+        value: /var/data/chaal.sqlite
+      - key: ALLOWED_ORIGINS
+        value: https://chaal-tech.pages.dev,https://chaal.tech,https://www.chaal.tech
+      - key: TURN_TIMEOUT_MS
+        value: '60000'
+      - key: HOST_GRACE_MS
+        value: '30000'
+      - key: RETENTION_SWEEP_MS
+        value: '86400000'

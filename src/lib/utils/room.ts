@@ -1,8 +1,10 @@
-import { serverURL } from '#lib/config.js';
+import { serverConfigError, serverURL } from '#lib/config.js';
 
 export async function validateRoomAccess(
 	roomName: string
 ): Promise<{ status: 200 | 400 | 404 | 500; error?: string }> {
+	if (!serverURL) return { status: 500, error: serverConfigError };
+
 	try {
 		const response = await fetch(`${serverURL}/room/${roomName}`);
 

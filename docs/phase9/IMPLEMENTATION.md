@@ -26,5 +26,6 @@ For local service checks, `curl http://127.0.0.1:8080/health` tests liveness and
 - Production still needs a durable mounted database volume, an encrypted and tested backup/restore procedure, TLS, configured origin allowlists, secrets management and a rollback plan.
 - The repository has deterministic local six-player tests and prior six-browser localhost checks, but not WAN soak testing, real-device network degradation, SFU restart testing, production latency targets or deployment rollback evidence.
 - `PRAGMA quick_check(1)` is a readiness signal, not a full integrity audit or backup guarantee. Run deeper integrity checks and restore drills on a scheduled operational path.
+- Room retention is enabled through schema v2: small rooms expire after 30 inactive days, larger rooms after 365 days, receipts after 30 days, and ledger rows after 365 days. Connected or in-progress rooms are not deleted. Existing rows get new activity timestamps on migration before the daily sweep can remove anything.
 
 Those activities depend on choosing and accessing the production host and storage. They should be completed before calling the platform production-ready.

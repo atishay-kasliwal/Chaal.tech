@@ -29,7 +29,8 @@ const shuffle = (cards) => {
 	}
 	return deck;
 };
-const productionDeck = (gameType) => gameType === 'rummy' ? shuffle(freshRummyDeck()) : shuffledDeck();
+const productionDeck = (gameType) =>
+	gameType === 'rummy' ? shuffle(freshRummyDeck()) : shuffledDeck();
 
 export function createGameServer({
 	database = 'data/teen-patti.sqlite',
@@ -40,24 +41,37 @@ export function createGameServer({
 		'http://localhost:5174'
 	],
 	turnMs = 60000,
+	hostGraceMs = 30000,
+	retentionSweepMs = 24 * 60 * 60 * 1000,
 	deckFactory = productionDeck,
 	variantRandomInt = randomInt,
+	roomCodeFactory = () => randomBytes(16).toString('hex'),
 	clock = Date.now,
 	media = createMediaService()
 } = {}) {
 	if (!Number.isSafeInteger(turnMs) || turnMs < 100 || turnMs > 3600000)
 		throw new Error('TURN_TIMEOUT_MS must be an integer from 100 to 3600000');
+	if (!Number.isSafeInteger(hostGraceMs) || hostGraceMs < 1 || hostGraceMs > 3600000)
+		throw new Error('HOST_GRACE_MS must be an integer from 1 to 3600000');
+	if (
+		!Number.isSafeInteger(retentionSweepMs) ||
+		retentionSweepMs < 1000 ||
+		retentionSweepMs > 30 * 24 * 60 * 60 * 1000
+	)
+		throw new Error('RETENTION_SWEEP_MS must be an integer from 1000 to 2592000000');
 	if (
 		!Array.isArray(origins) ||
 		!origins.length ||
 		origins.some((origin) => new URL(origin).origin !== origin)
 	)
 		throw new Error('Configure explicit allowed origins');
-	const store = new Store(database);
+	const store = new Store(database, { clock });
 	let closePromise;
+	let closing = false;
 	const connections = new Map();
 	const admission = new Map();
 	const mediaCleanup = new Map();
+	const hostRecoveryTimers = new Map();
 	function removeMedia(name, id) {
 		if (!media || !name) return;
 		const previous = mediaCleanup.get(id) || Promise.resolve();
@@ -195,6 +209,69 @@ export function createGameServer({
 		new Set(
 			[...connections].filter(([, socket]) => socket.data.roomName === name).map(([id]) => id)
 		);
+	function cleanupRetention() {
+		const connectedRooms = new Set(
+			[...connections.values()].map((socket) => socket.data.roomName).filter(Boolean)
+		);
+		return store.cleanupRetention({ now: clock(), connectedRooms });
+	}
+	function cancelHostRecovery(name, hostId) {
+		const recovery = hostRecoveryTimers.get(name);
+		if (recovery && (hostId === undefined || recovery.hostId === hostId)) {
+			clearTimeout(recovery.timer);
+			hostRecoveryTimers.delete(name);
+		}
+	}
+	function scheduleHostRecovery(room) {
+		if (closing || !room.hostId) return;
+		const existing = hostRecoveryTimers.get(room.name);
+		if (existing?.hostId === room.hostId) return;
+		cancelHostRecovery(room.name);
+		const hostId = room.hostId;
+		const timer = setTimeout(() => {
+			if (closing) return;
+			if (hostRecoveryTimers.get(room.name)?.timer !== timer) return;
+			hostRecoveryTimers.delete(room.name);
+			try {
+				const before = store.room(room.name);
+				if (!before || before.hostId !== hostId || connected(room.name).has(hostId)) return;
+				const seatedPlayers = before.players
+					.filter((player) => player.seatNumber !== null && !player.departed)
+					.sort((a, b) => a.seatNumber - b.seatNumber);
+				const hostSeat = seatedPlayers.find((player) => player.id === hostId)?.seatNumber ?? -1;
+				const activeConnections = connected(room.name);
+				const candidates = seatedPlayers.filter(
+					(player) => player.id !== hostId && activeConnections.has(player.id)
+				);
+				const nextHost = candidates.find((player) => player.seatNumber > hostSeat) ?? candidates[0];
+				if (!nextHost) return;
+
+				const next = { ...before, hostId: nextHost.id, revision: before.revision + 1 };
+				const commandId = randomUUID();
+				store.commit(
+					next,
+					hostId,
+					commandId,
+					hash(
+						JSON.stringify({
+							event: 'hostRecovery',
+							room: room.name,
+							hostId,
+							nextHost: nextHost.id
+						})
+					),
+					{ ok: true, roomName: room.name, revision: next.revision, handId: next.handId },
+					null,
+					before.revision
+				);
+				publish(room.name, `${nextHost.username} is now the room host`);
+			} catch (error) {
+				console.error('Host recovery failed:', error.code || error.name);
+			}
+		}, hostGraceMs);
+		timer.unref();
+		hostRecoveryTimers.set(room.name, { hostId, timer });
+	}
 	function emitView(socket, name) {
 		try {
 			const room = store.room(name);
@@ -230,19 +307,22 @@ export function createGameServer({
 		}
 		let room, before, action, payload, text;
 		if (event === 'createRoom') {
-			const [name, table, rulesVersion, requestedGameType] = args;
+			const [requestedName, table, rulesVersion, requestedGameType] = args;
 			const gameType = requestedGameType ?? 'teen-patti';
 			if (!listGameTypes().includes(gameType))
 				throw new GameError('Unsupported game type', 'UNSUPPORTED_GAME');
 			if (socket.data.roomName)
 				throw new GameError('Leave your current room before creating another');
+			// Room IDs are invite secrets. Never let a client choose a short or guessable ID.
+			const name = roomCodeFactory(requestedName);
 			roomName(name);
 			if (store.room(name)) throw new GameError('Room already exists');
 			if (store.db.prepare('SELECT count(*) AS count FROM rooms').get().count >= 1000)
 				throw new GameError('Room capacity reached');
-			room = gameType === 'teen-patti'
-				? newRoom(name, table, id, rulesVersion)
-				: createGameRoom(gameType, name, table, id);
+			room =
+				gameType === 'teen-patti'
+					? newRoom(name, table, id, rulesVersion)
+					: createGameRoom(gameType, name, table, id);
 			room.revision = 1;
 			text = `A new Room is created :- "${name}"`;
 		} else {
@@ -255,7 +335,10 @@ export function createGameServer({
 					throw new GameError('Leave your current room first');
 				action = 'join';
 				payload = { username: args[0] };
-				text = before.gameType && before.gameType !== 'teen-patti' ? null : `${args[0]} has joined the Game`;
+				text =
+					before.gameType && before.gameType !== 'teen-patti'
+						? null
+						: `${args[0]} has joined the Game`;
 			} else {
 				if ((event === 'start' || event === 'show') && args[0] !== name)
 					throw new GameError('Wrong room', 'FORBIDDEN');
@@ -317,17 +400,23 @@ export function createGameServer({
 					payload = { amount: args[1] };
 					text = null;
 				} else if (event === 'blackjackBet') {
-					if (before.gameType !== 'blackjack') throw new GameError('Blackjack wager sent to another game', 'INVALID_ACTION');
+					if (before.gameType !== 'blackjack')
+						throw new GameError('Blackjack wager sent to another game', 'INVALID_ACTION');
 					action = 'bet';
 					payload = { amount: args[0] };
 					text = null;
 				} else if (event === 'blackjackAction') {
-					if (before.gameType !== 'blackjack' || !['hit', 'stand', 'double'].includes(args[0])) throw new GameError('Invalid Blackjack action', 'INVALID_ACTION');
+					if (before.gameType !== 'blackjack' || !['hit', 'stand', 'double'].includes(args[0]))
+						throw new GameError('Invalid Blackjack action', 'INVALID_ACTION');
 					action = args[0];
 					payload = {};
 					text = null;
 				} else if (event === 'rummyAction') {
-					if (before.gameType !== 'rummy' || !['draw-stock', 'draw-discard', 'discard', 'declare'].includes(args[0])) throw new GameError('Invalid Rummy action', 'INVALID_ACTION');
+					if (
+						before.gameType !== 'rummy' ||
+						!['draw-stock', 'draw-discard', 'discard', 'declare'].includes(args[0])
+					)
+						throw new GameError('Invalid Rummy action', 'INVALID_ACTION');
 					action = args[0];
 					payload = { index: args[1] };
 					text = null;
@@ -342,9 +431,10 @@ export function createGameServer({
 				turnMs,
 				handId: randomUUID(),
 				deck: action === 'start' ? deckFactory(before?.gameType ?? 'teen-patti') : undefined,
-				recycledDeck: before?.gameType === 'rummy' && before.deck.length === 0 && before.discardPile.length > 1
-					? shuffle(before.discardPile.slice(0, -1))
-					: undefined,
+				recycledDeck:
+					before?.gameType === 'rummy' && before.deck.length === 0 && before.discardPile.length > 1
+						? shuffle(before.discardPile.slice(0, -1))
+						: undefined,
 				connected: connected(name),
 				requireReady: true
 			});
@@ -488,6 +578,8 @@ export function createGameServer({
 				if (socket.data.roomName && socket.data.roomName !== name)
 					throw new GameError('Leave your current room first');
 				socket.data.roomName = name;
+				if (room.hostId === id) cancelHostRecovery(name, id);
+				else if (room.hostId && !connected(name).has(room.hostId)) scheduleHostRecovery(room);
 				socket.emit('roomData', view);
 				publish(name);
 				ack({ ok: true });
@@ -504,9 +596,20 @@ export function createGameServer({
 			if (connections.get(id) !== socket) return;
 			removeMedia(socket.data.roomName, id);
 			connections.delete(id);
-			if (socket.data.roomName) publish(socket.data.roomName);
+			if (socket.data.roomName) {
+				const room = store.room(socket.data.roomName);
+				if (room?.hostId === id) scheduleHostRecovery(room);
+				publish(socket.data.roomName);
+			}
 		});
 	});
+	try {
+		const removed = cleanupRetention();
+		if (Object.values(removed).some((count) => count > 0))
+			console.info('Retention cleanup completed', removed);
+	} catch (error) {
+		console.error('Retention cleanup failed:', error.code || error.name);
+	}
 	const timer = setInterval(() => {
 		try {
 			for (const before of store.rooms()) {
@@ -522,9 +625,12 @@ export function createGameServer({
 							now: clock(),
 							turnMs,
 							connected: connected(before.name),
-							recycledDeck: before.gameType === 'rummy' && before.deck.length === 0 && before.discardPile.length > 1
-								? shuffle(before.discardPile.slice(0, -1))
-								: undefined
+							recycledDeck:
+								before.gameType === 'rummy' &&
+								before.deck.length === 0 &&
+								before.discardPile.length > 1
+									? shuffle(before.discardPile.slice(0, -1))
+									: undefined
 						}
 					);
 					store.commit(
@@ -552,10 +658,21 @@ export function createGameServer({
 		}
 	}, 250);
 	timer.unref();
+	const retentionTimer = setInterval(() => {
+		try {
+			const removed = cleanupRetention();
+			if (Object.values(removed).some((count) => count > 0))
+				console.info('Retention cleanup completed', removed);
+		} catch (error) {
+			console.error('Retention cleanup failed:', error.code || error.name);
+		}
+	}, retentionSweepMs);
+	retentionTimer.unref();
 	return {
 		server,
 		io,
 		store,
+		cleanupRetention,
 		async listen(port = 8080, host = '127.0.0.1') {
 			await new Promise((resolve, reject) => {
 				server.once('error', reject);
@@ -565,7 +682,11 @@ export function createGameServer({
 		},
 		close() {
 			if (!closePromise) {
+				closing = true;
 				clearInterval(timer);
+				clearInterval(retentionTimer);
+				for (const recovery of hostRecoveryTimers.values()) clearTimeout(recovery.timer);
+				hostRecoveryTimers.clear();
 				closePromise = new Promise((resolve, reject) => {
 					io.close(() => {
 						Promise.all([...mediaCleanup.values()]).then(() => {
@@ -590,10 +711,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 		database: process.env.GAME_DATABASE || 'data/teen-patti.sqlite',
 		origins: process.env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()),
 		turnMs: Number(process.env.TURN_TIMEOUT_MS || 60000),
+		hostGraceMs: Number(process.env.HOST_GRACE_MS || 30000),
+		retentionSweepMs: Number(process.env.RETENTION_SWEEP_MS || 86400000),
 		media: createMediaService({
 			url: process.env.LIVEKIT_URL,
 			apiKey: process.env.LIVEKIT_API_KEY,
-			apiSecret: process.env.LIVEKIT_API_SECRET
+			apiSecret: process.env.LIVEKIT_API_SECRET,
+			revokeTokens: process.env.LIVEKIT_REVOKE_TOKENS === 'true'
 		})
 	});
 	const address = await app.listen(
