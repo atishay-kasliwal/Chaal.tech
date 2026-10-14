@@ -109,6 +109,17 @@ test('Existing frontend outside the extracted room template retains the original
 				source
 					.toString()
 					.replace('width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width')
+					.replace('Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.', 'Create room and play teen patti with your friends')
+					.replace('Chaal.tech — Social Card Games', 'Teen Patti Multiplayer')
+			);
+		if (file === 'src/routes/+page.svelte')
+			source = Buffer.from(source.toString().replace('Chaal.tech', 'Teen Patti'));
+		if (file === 'static/site.webmanifest')
+			source = Buffer.from(
+				source
+					.toString()
+					.replace('"name": "Chaal.tech — Social Card Games"', '"name": ""')
+					.replace('"short_name": "Chaal.tech"', '"short_name": ""')
 			);
 		if (
 			file === 'src/routes/[roomName]/types.d.ts' ||
@@ -155,7 +166,19 @@ test('Phase 4 preservation checks account for the additive media and Phase 7 var
 				bytes
 					.toString()
 					.replace('width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width')
+					.replace('Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.', 'Create room and play teen patti with your friends')
+					.replace('Chaal.tech — Social Card Games', 'Teen Patti Multiplayer')
 			);
+		if (file === 'static/site.webmanifest') {
+			bytes = Buffer.from(
+				bytes
+					.toString()
+					.replace('"name": "Chaal.tech — Social Card Games"', '"name": ""')
+					.replace('"short_name": "Chaal.tech"', '"short_name": ""')
+			);
+		}
+		if (file === 'src/routes/+page.svelte')
+			bytes = Buffer.from(bytes.toString().replace('Chaal.tech', 'Teen Patti'));
 		assert.equal(digest(bytes), sha, file);
 	}
 	const roomTypes = await readFile('src/routes/[roomName]/types.d.ts', 'utf8');

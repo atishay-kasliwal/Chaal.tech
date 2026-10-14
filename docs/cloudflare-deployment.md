@@ -9,14 +9,17 @@ The current production shape keeps the existing SvelteKit frontend and Node game
 
 The game server uses Node's HTTP/Socket.IO stack and `node:sqlite`; it is not deployed as a Pages Function or a basic Worker. Media remains optional. Configure LiveKit secrets only on the game server if media is enabled.
 
-## Connect this repository to Pages
+## Deploy the Pages project
 
-1. In Cloudflare, open **Workers & Pages → Create application → Pages → Connect to Git**.
-2. Select `atishay-kasliwal/teenpatti` and the `main` production branch.
-3. Set the build command to `npm run build` and the build output directory to `.svelte-kit/cloudflare`.
-4. Set the production environment variable `VITE_SERVER_URL` to the eventual public game-server origin (for example, `https://api.chaal.tech`). Add the same variable to the Preview environment if preview builds should connect to a test server.
-5. Set the Node.js version to 24 or newer if the build environment offers a version setting.
-6. Start the first deployment. After it succeeds, add `chaal.tech` from the project's **Custom domains** page and follow Cloudflare's DNS prompts.
+The `chaal-tech` Pages project was created with Wrangler Direct Upload. Deploy updates from the repository with `npm run deploy:pages -- --project-name=chaal-tech --branch=main`. This uploads the build from the current checkout; it does not automatically deploy GitHub commits.
+
+Before the game server is online, the Pages build can be published without a production `VITE_SERVER_URL`, but room connections will still use the local development default and will not work for visitors. Once the Node game server has a stable public URL, build with `VITE_SERVER_URL` set to that origin and deploy again. For example:
+
+```sh
+VITE_SERVER_URL=https://api.chaal.tech npm run deploy:pages -- --project-name=chaal-tech --branch=main
+```
+
+If you want Cloudflare to deploy automatically from GitHub, create a separate Git-integrated Pages project for this repository; the existing project is Direct Upload.
 
 The repository also has a `wrangler.toml` and `npm run deploy:pages` for a CLI deployment. Git-connected Pages deployment is preferred so pushes to `main` deploy automatically.
 

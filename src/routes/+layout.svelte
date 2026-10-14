@@ -12,7 +12,7 @@
 	class:room-route={page.route.id === '/[roomName]'}
 >
 	<div class="navbar-start">
-		<a class="text-xl normal-case" href="/">Teen Patti</a>
+		<a class="text-xl normal-case" href="/">Chaal.tech</a>
 	</div>
 	<div class="navbar-end">
 		<a

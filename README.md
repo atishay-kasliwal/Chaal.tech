@@ -1,4 +1,4 @@
-# Teen Patti Multiplayer
+# Chaal.tech
 
 ## Owned local Classic service
 

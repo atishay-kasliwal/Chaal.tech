@@ -71,6 +71,17 @@ test('Sparse seats and turn/pack/presence changes never assign different identit
 				bytes
 					.toString()
 					.replace('width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width')
+					.replace('Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.', 'Create room and play teen patti with your friends')
+					.replace('Chaal.tech — Social Card Games', 'Teen Patti Multiplayer')
+			);
+		if (file === 'src/routes/+page.svelte')
+			bytes = Buffer.from(bytes.toString().replace('Chaal.tech', 'Teen Patti'));
+		if (file === 'static/site.webmanifest')
+			bytes = Buffer.from(
+				bytes
+					.toString()
+					.replace('"name": "Chaal.tech — Social Card Games"', '"name": ""')
+					.replace('"short_name": "Chaal.tech"', '"short_name": ""')
 			);
 		assert.equal(createHash('sha256').update(bytes).digest('hex'), hash, file);
 	}

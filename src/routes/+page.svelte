@@ -102,7 +102,7 @@
 						<Sparkles class="mr-2 h-4 w-4" /> The Ultimate Card Game
 					</div>
 					<h1 class="mb-4 text-5xl font-extrabold tracking-tight text-white md:text-7xl">
-						Teen Patti
+						Chaal.tech
 					</h1>
 					<p class="mb-6 text-lg text-white/90 md:text-xl">
 						Experience the thrill of India's favorite card game. Master the art of playing blind,

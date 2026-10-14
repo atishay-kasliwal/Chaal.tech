@@ -115,7 +115,7 @@
 				>
 					Join the Table
 				</h1>
-				<p class="text-base-content/50 text-sm">Enter a room to play Teen Patti with friends</p>
+				<p class="text-base-content/50 text-sm">Enter a room to play with friends on Chaal.tech</p>
 			</div>
 
 			<!-- Gold divider -->
