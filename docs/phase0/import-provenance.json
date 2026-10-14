@@ -1,0 +1,251 @@
+{
+  "repository": "https://github.com/mustafa-kapadia1483/teen-patti",
+  "commit": "3f0cb69a71d922557f9b17a08a78f413b2e90774",
+  "files": [
+    {
+      "path": ".eslintignore",
+      "upstreamSha256": "1908f13ae1ae1ef8d5a2b02efbf5aa74e67fe3efc9a20c517a4c4a6f4e0ef690",
+      "currentSha256": "1908f13ae1ae1ef8d5a2b02efbf5aa74e67fe3efc9a20c517a4c4a6f4e0ef690",
+      "unchanged": true
+    },
+    {
+      "path": ".gitignore",
+      "upstreamSha256": "67d64503d867623110ebe2ee3e6e5130be623a6dfba92c356decd75d7777c2f7",
+      "currentSha256": "864fb41cbd21733dd65a3436ab581a1f0cd816c572ea98d9ba88c4678240e4fd",
+      "unchanged": false
+    },
+    {
+      "path": ".npmrc",
+      "upstreamSha256": "7151cf397def0c2cb0ab65643701d27d335a72c90f775675b5f826bc7005818a",
+      "currentSha256": "7151cf397def0c2cb0ab65643701d27d335a72c90f775675b5f826bc7005818a",
+      "unchanged": true
+    },
+    {
+      "path": ".prettierignore",
+      "upstreamSha256": "1908f13ae1ae1ef8d5a2b02efbf5aa74e67fe3efc9a20c517a4c4a6f4e0ef690",
+      "currentSha256": "1908f13ae1ae1ef8d5a2b02efbf5aa74e67fe3efc9a20c517a4c4a6f4e0ef690",
+      "unchanged": true
+    },
+    {
+      "path": ".prettierrc",
+      "upstreamSha256": "a9e65aec6e93dae1aca12a5fad9aaa5a26a27611ae3154d105d26d936b3bbba9",
+      "currentSha256": "a9e65aec6e93dae1aca12a5fad9aaa5a26a27611ae3154d105d26d936b3bbba9",
+      "unchanged": true
+    },
+    {
+      "path": "README.md",
+      "upstreamSha256": "b688fa6aa1978decbbd86120bfc0ab5cabd48158239bf585e1685c3f4265d987",
+      "currentSha256": "b688fa6aa1978decbbd86120bfc0ab5cabd48158239bf585e1685c3f4265d987",
+      "unchanged": true
+    },
+    {
+      "path": "eslint.config.js",
+      "upstreamSha256": "7be0014f2a241917baf6f3ca290ad67bbfbf14c189e8515755d37db22f3e673d",
+      "currentSha256": "7be0014f2a241917baf6f3ca290ad67bbfbf14c189e8515755d37db22f3e673d",
+      "unchanged": true
+    },
+    {
+      "path": "package-lock.json",
+      "upstreamSha256": "e37657713f73629ce8f921e414da383d05cf70e880c8578fecae7e83b275fc9b",
+      "currentSha256": "1433bbb2744a1ddd068889053cb3133646bdd52b08ba0f1da90d6fb449108036",
+      "unchanged": false
+    },
+    {
+      "path": "package.json",
+      "upstreamSha256": "8650acd66abee29d3152c53229ab67de3fd3b686b546bf3d3bfa92c933883dd6",
+      "currentSha256": "e8261876162a6bbfef8e3e4edb202bfa174b730af158651158a7d98c439d116b",
+      "unchanged": false
+    },
+    {
+      "path": "src/app.css",
+      "upstreamSha256": "87051cd5fe1430e0bcd9572799cc7a90bbbd3f25e989dfbe59b45a0296cfee1d",
+      "currentSha256": "87051cd5fe1430e0bcd9572799cc7a90bbbd3f25e989dfbe59b45a0296cfee1d",
+      "unchanged": true
+    },
+    {
+      "path": "src/app.d.ts",
+      "upstreamSha256": "3d450fc2fc7b0f10b6a9493a682769aac34f8b612f0f5d1bc4845a7b0bfe9f0a",
+      "currentSha256": "3d450fc2fc7b0f10b6a9493a682769aac34f8b612f0f5d1bc4845a7b0bfe9f0a",
+      "unchanged": true
+    },
+    {
+      "path": "src/app.html",
+      "upstreamSha256": "9da119ff72d24f51d27e544f303ac7d874b9b04f383fce444b2fa4f1b6012a12",
+      "currentSha256": "9da119ff72d24f51d27e544f303ac7d874b9b04f383fce444b2fa4f1b6012a12",
+      "unchanged": true
+    },
+    {
+      "path": "src/lib/components/GoogleAnalytics.svelte",
+      "upstreamSha256": "ed2b4ab367e2b62d1bd4657207cd018ca3c4a202d25659a9adc1f9661e50a648",
+      "currentSha256": "ed2b4ab367e2b62d1bd4657207cd018ca3c4a202d25659a9adc1f9661e50a648",
+      "unchanged": true
+    },
+    {
+      "path": "src/lib/components/PlayingCard.svelte",
+      "upstreamSha256": "0a49476c55a4669f8d0b38ebf1c667cd0cb59bd092c1cff6346de9f267408cca",
+      "currentSha256": "0a49476c55a4669f8d0b38ebf1c667cd0cb59bd092c1cff6346de9f267408cca",
+      "unchanged": true
+    },
+    {
+      "path": "src/lib/components/Toasts/Toasts.svelte",
+      "upstreamSha256": "2c9d281d34c4550561735b68eb106e46d4adedfd679e3121593585fcf2885d0b",
+      "currentSha256": "2c9d281d34c4550561735b68eb106e46d4adedfd679e3121593585fcf2885d0b",
+      "unchanged": true
+    },
+    {
+      "path": "src/lib/components/Toasts/index.ts",
+      "upstreamSha256": "e1c945c5d8f6b18b9cff64f218e64350e73f9d8e5a4371dffd7967b5c3a5f445",
+      "currentSha256": "e1c945c5d8f6b18b9cff64f218e64350e73f9d8e5a4371dffd7967b5c3a5f445",
+      "unchanged": true
+    },
+    {
+      "path": "src/lib/components/Toasts/stores.svelte.ts",
+      "upstreamSha256": "6b83069dfbb41aee08aa094f49d7549c4087561f6d82e71fbf2732751dce8d15",
+      "currentSha256": "6b83069dfbb41aee08aa094f49d7549c4087561f6d82e71fbf2732751dce8d15",
+      "unchanged": true
+    },
+    {
+      "path": "src/lib/config.ts",
+      "upstreamSha256": "1c3e7f5d163c79dc0221252704d9eb4bdf9583bac5393d218574ebd9d65199ec",
+      "currentSha256": "1c3e7f5d163c79dc0221252704d9eb4bdf9583bac5393d218574ebd9d65199ec",
+      "unchanged": true
+    },
+    {
+      "path": "src/lib/stores/socket-store.svelte.ts",
+      "upstreamSha256": "2b1cf1e941b1c0773d34e1d1c68d2db26144b3b02cfbe8eb05f982fd92947376",
+      "currentSha256": "2b1cf1e941b1c0773d34e1d1c68d2db26144b3b02cfbe8eb05f982fd92947376",
+      "unchanged": true
+    },
+    {
+      "path": "src/lib/utils/room.ts",
+      "upstreamSha256": "e0d7f7f98b6f530383d2ece2c9720c34cd9245962fcae7eb201bbb497cbaf262",
+      "currentSha256": "e0d7f7f98b6f530383d2ece2c9720c34cd9245962fcae7eb201bbb497cbaf262",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/+layout.svelte",
+      "upstreamSha256": "d4cba037446d08c33b1babc158afaccb061b2ab2ec54fd96ed85a2184e03a375",
+      "currentSha256": "d4cba037446d08c33b1babc158afaccb061b2ab2ec54fd96ed85a2184e03a375",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/+page.svelte",
+      "upstreamSha256": "0a470ae47b1f78554c3157ff8182752e2f8811fcf8462d632a2fd465351a56bb",
+      "currentSha256": "0a470ae47b1f78554c3157ff8182752e2f8811fcf8462d632a2fd465351a56bb",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/[roomName]/+error.svelte",
+      "upstreamSha256": "0c0004cb092b60384fd99606b3f100260a84ac6e3133d8abb76c792393dd6876",
+      "currentSha256": "0c0004cb092b60384fd99606b3f100260a84ac6e3133d8abb76c792393dd6876",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/[roomName]/+page.server.ts",
+      "upstreamSha256": "783eab50d26580a192815d2ac7916acb798128e409c745bcec1c0f12e92330fb",
+      "currentSha256": "783eab50d26580a192815d2ac7916acb798128e409c745bcec1c0f12e92330fb",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/[roomName]/+page.svelte",
+      "upstreamSha256": "b8fc9eb39b233bdd48ed7c177fdbc6615291c9b0518a1d33927077de987d7018",
+      "currentSha256": "b8fc9eb39b233bdd48ed7c177fdbc6615291c9b0518a1d33927077de987d7018",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/[roomName]/DeclareWinner.svelte",
+      "upstreamSha256": "07930b3e2de9d2464749116e94fbb6d510a99a24c340f9a09034603e73b4e7f3",
+      "currentSha256": "07930b3e2de9d2464749116e94fbb6d510a99a24c340f9a09034603e73b4e7f3",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/[roomName]/UsernameForm.svelte",
+      "upstreamSha256": "b78e55742200cf5b18513cde4394e04d02c2974438be10d749c25a04af515fad",
+      "currentSha256": "b78e55742200cf5b18513cde4394e04d02c2974438be10d749c25a04af515fad",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/[roomName]/UsersTable.svelte",
+      "upstreamSha256": "6d236a41410915a5de15901bb7a64c6c6432c5d13432a8e4140794dec8a42c83",
+      "currentSha256": "6d236a41410915a5de15901bb7a64c6c6432c5d13432a8e4140794dec8a42c83",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/[roomName]/types.d.ts",
+      "upstreamSha256": "6f9ec115c2282607665129ff8cf2aecf1ddd943b1206a2ee9eece1179851c6b5",
+      "currentSha256": "6f9ec115c2282607665129ff8cf2aecf1ddd943b1206a2ee9eece1179851c6b5",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/create-room/+page.svelte",
+      "upstreamSha256": "13a88f4fd8802b4f46dc03b86da0a8961330b77b1e23d7ac7a7ed98aea024beb",
+      "currentSha256": "13a88f4fd8802b4f46dc03b86da0a8961330b77b1e23d7ac7a7ed98aea024beb",
+      "unchanged": true
+    },
+    {
+      "path": "src/routes/test-cards/+page.svelte",
+      "upstreamSha256": "6b5f3d330f0c05c45c8e1fed95aacf98fdcd86ca851e2502e841ec9841d9c521",
+      "currentSha256": "6b5f3d330f0c05c45c8e1fed95aacf98fdcd86ca851e2502e841ec9841d9c521",
+      "unchanged": true
+    },
+    {
+      "path": "static/android-chrome-192x192.png",
+      "upstreamSha256": "4790c6d5a9520f075a89288db4ef90dfba0206b8d23b697eef0b26e75aa6a485",
+      "currentSha256": "4790c6d5a9520f075a89288db4ef90dfba0206b8d23b697eef0b26e75aa6a485",
+      "unchanged": true
+    },
+    {
+      "path": "static/android-chrome-512x512.png",
+      "upstreamSha256": "9c8863be66e2a10400a0b4fbf0254fad24964c4e750100a9e82d8c44637e24ae",
+      "currentSha256": "9c8863be66e2a10400a0b4fbf0254fad24964c4e750100a9e82d8c44637e24ae",
+      "unchanged": true
+    },
+    {
+      "path": "static/apple-touch-icon.png",
+      "upstreamSha256": "868485087dbd0384abca162fdd0fe0e48c68d100b2d11520db85595937991d62",
+      "currentSha256": "868485087dbd0384abca162fdd0fe0e48c68d100b2d11520db85595937991d62",
+      "unchanged": true
+    },
+    {
+      "path": "static/favicon-16x16.png",
+      "upstreamSha256": "d899c7b2536de84826db00373d9f194ee08ed83834b10b8c7aa2b291f75e3c3d",
+      "currentSha256": "d899c7b2536de84826db00373d9f194ee08ed83834b10b8c7aa2b291f75e3c3d",
+      "unchanged": true
+    },
+    {
+      "path": "static/favicon-32x32.png",
+      "upstreamSha256": "fcdfd77c983d34f6b04bd13a4d406e779c63dd69e52ef1fa5d2ab81482b5c152",
+      "currentSha256": "fcdfd77c983d34f6b04bd13a4d406e779c63dd69e52ef1fa5d2ab81482b5c152",
+      "unchanged": true
+    },
+    {
+      "path": "static/favicon.ico",
+      "upstreamSha256": "6358aa42487a22981f1c4860eeb29faecee3cc49e27c0f4ed1d15f46b40eb6a3",
+      "currentSha256": "6358aa42487a22981f1c4860eeb29faecee3cc49e27c0f4ed1d15f46b40eb6a3",
+      "unchanged": true
+    },
+    {
+      "path": "static/site.webmanifest",
+      "upstreamSha256": "ca919585fb512b5980c48a6cc6b97fbfaecac483af492e18e528e9f73bae091f",
+      "currentSha256": "ca919585fb512b5980c48a6cc6b97fbfaecac483af492e18e528e9f73bae091f",
+      "unchanged": true
+    },
+    {
+      "path": "tsconfig.json",
+      "upstreamSha256": "0da92d6cbb1a2a33d77a8a9aada837d8f9c3e56f7ef1772c10f0332ab235d7a8",
+      "currentSha256": "0da92d6cbb1a2a33d77a8a9aada837d8f9c3e56f7ef1772c10f0332ab235d7a8",
+      "unchanged": true
+    },
+    {
+      "path": "vite.config.js",
+      "upstreamSha256": "32d1c65159e3b40ade8bb93adb8c393b0f7e6f32d3629ab341baae5ae54847f8",
+      "currentSha256": "32d1c65159e3b40ade8bb93adb8c393b0f7e6f32d3629ab341baae5ae54847f8",
+      "unchanged": true
+    }
+  ],
+  "intentionalDifferences": {
+    ".gitignore": "Merged existing ignore rules and generated .netlify output.",
+    "package.json": "Pinned Playwright development dependency for capture tooling.",
+    "package-lock.json": "Lockfile updated only for capture tooling."
+  }
+}

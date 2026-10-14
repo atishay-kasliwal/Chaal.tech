@@ -1,0 +1,33 @@
+{
+  "capturedAt": "2026-10-13T23:56:05.924Z",
+  "room": "phase1-mv7cadrs",
+  "screenshots": [
+    "01-home",
+    "02-card-deck",
+    "03-create-join",
+    "04-six-player-waiting",
+    "05-six-player-blind",
+    "06-seen",
+    "07-refresh-resumed",
+    "08-bet",
+    "09-packed",
+    "10-server-winner",
+    "11-mobile",
+    "12-host-transfer"
+  ],
+  "checks": [
+    "six isolated browser participants",
+    "host-only start",
+    "blind and opponent hands hidden in wire views",
+    "See reveals only owned hand",
+    "refresh resumes same identity, seat and hand",
+    "bet and Pack controls",
+    "automatic Show winner without selector",
+    "chip conservation",
+    "new hand",
+    "mobile original styling",
+    "explicit leave and host transfer",
+    "no third-party runtime requests"
+  ],
+  "errors": []
+}

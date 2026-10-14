@@ -1,0 +1,431 @@
+{
+  "description": "Captured from the working Phase 1 implementation BEFORE variant extraction. Replay covers join/start/bet/see/pack/show/settlement/timeout/departure. Post-departure rejoin is a separately tested Phase 1 bug correction, not an equivalence assertion.",
+  "rulesVersion": "classic-1",
+  "phase1EngineSha256": "391472a235e2ac31c86657ad0ac09ea3e183eac1ff1bb332c7e09d1af1c5a711",
+  "classicModuleSha256": "78a377fcdd8cce855bab90068d996640841275cc8c4a6a3e3cb45fe3917e39e1",
+  "frontend": {
+    "src/app.css": "87051cd5fe1430e0bcd9572799cc7a90bbbd3f25e989dfbe59b45a0296cfee1d",
+    "src/app.d.ts": "3d450fc2fc7b0f10b6a9493a682769aac34f8b612f0f5d1bc4845a7b0bfe9f0a",
+    "src/app.html": "9da119ff72d24f51d27e544f303ac7d874b9b04f383fce444b2fa4f1b6012a12",
+    "src/lib/components/GoogleAnalytics.svelte": "ed2b4ab367e2b62d1bd4657207cd018ca3c4a202d25659a9adc1f9661e50a648",
+    "src/lib/components/PlayingCard.svelte": "e9f9fa90e5cae105725e57b5a8e39bab0178644d9e15080128c1882fceb068ec",
+    "src/lib/components/Toasts/Toasts.svelte": "2c9d281d34c4550561735b68eb106e46d4adedfd679e3121593585fcf2885d0b",
+    "src/lib/components/Toasts/index.ts": "e1c945c5d8f6b18b9cff64f218e64350e73f9d8e5a4371dffd7967b5c3a5f445",
+    "src/lib/components/Toasts/stores.svelte.ts": "6b83069dfbb41aee08aa094f49d7549c4087561f6d82e71fbf2732751dce8d15",
+    "src/lib/config.ts": "d88b366d56318980ac63adf00c087f42be7cd4a7ea680a7804849d7ae3f390b9",
+    "src/lib/stores/socket-store.svelte.ts": "28f87b92531795a24323ea193c51414338ca9d72665edd96b80a8a51247f7bc8",
+    "src/lib/utils/room.ts": "02f8953fd999e86116a20cfc17c43ba603a0ca7da52663a3e1802280d7431c4e",
+    "src/routes/+layout.svelte": "5d6bbddcfe15a6e7fc8fa2fc1d5c8f6ebff63cfca9e813c0c0bc043b833a3c2f",
+    "src/routes/+page.svelte": "0a470ae47b1f78554c3157ff8182752e2f8811fcf8462d632a2fd465351a56bb",
+    "src/routes/[roomName]/+error.svelte": "6668d0620a5eb59fb5e8745fca288389bb5c9af607fca8fece5d50c909db6792",
+    "src/routes/[roomName]/+page.server.ts": "783eab50d26580a192815d2ac7916acb798128e409c745bcec1c0f12e92330fb",
+    "src/routes/[roomName]/+page.svelte": "36c445abef90598a225c6edfe6113b0eb60392f975d096465ffb47f4fa4ce95c",
+    "src/routes/[roomName]/DeclareWinner.svelte": "bcbb6cf4c0846b776365dd845bf967beba3edb5ced4f1b4b755454ad5b0d29e0",
+    "src/routes/[roomName]/UsernameForm.svelte": "432d2433763587725cfc49f29424208448178a4b552e53c0550698128dc6dc58",
+    "src/routes/[roomName]/UsersTable.svelte": "6d236a41410915a5de15901bb7a64c6c6432c5d13432a8e4140794dec8a42c83",
+    "src/routes/[roomName]/types.d.ts": "fc2fdc203e03d7c6459945a483ee81f04c82782eb10e56eeeefa1cd9152db702",
+    "src/routes/create-room/+page.svelte": "1f6b69d957d87ebd51bec8745174e8b1efe829a0ba22b46bead345cd956a28ab",
+    "src/routes/test-cards/+page.svelte": "6b5f3d330f0c05c45c8e1fed95aacf98fdcd86ca851e2502e841ec9841d9c521",
+    "static/android-chrome-192x192.png": "4790c6d5a9520f075a89288db4ef90dfba0206b8d23b697eef0b26e75aa6a485",
+    "static/android-chrome-512x512.png": "9c8863be66e2a10400a0b4fbf0254fad24964c4e750100a9e82d8c44637e24ae",
+    "static/apple-touch-icon.png": "868485087dbd0384abca162fdd0fe0e48c68d100b2d11520db85595937991d62",
+    "static/favicon-16x16.png": "d899c7b2536de84826db00373d9f194ee08ed83834b10b8c7aa2b291f75e3c3d",
+    "static/favicon-32x32.png": "fcdfd77c983d34f6b04bd13a4d406e779c63dd69e52ef1fa5d2ab81482b5c152",
+    "static/favicon.ico": "6358aa42487a22981f1c4860eeb29faecee3cc49e27c0f4ed1d15f46b40eb6a3",
+    "static/site.webmanifest": "ca919585fb512b5980c48a6cc6b97fbfaecac483af492e18e528e9f73bae091f",
+    "static/vendor/cardmeister.js": "750e7c110b947d37037a6e72aa1f302e74378451617b8c76dc3ba05f8779dd14"
+  },
+  "cases": [
+    {
+      "count": 2,
+      "pattern": "standard",
+      "expected": {
+        "transitions": 10,
+        "trace": "1e07f36756f6d66cb341b56160d8e910bbf067c49e4efa2619641dc94933a357",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 5,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "25cc9e9217f54d2c04b110a539bcdb54f777f3dc2a502708c1e252b2bd170aaf"
+      }
+    },
+    {
+      "count": 2,
+      "pattern": "reverse",
+      "expected": {
+        "transitions": 10,
+        "trace": "321490f97ab0314ae6b96cadfa13e914471c1324febb4e6e22a48e09ba36b644",
+        "firstResult": {
+          "winnerId": "a",
+          "winnerName": "player a",
+          "amount": 5,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "a14a46d019075a2b42e4a7f31e218af885bc28b2b65d3063248b9ef11b457435"
+      }
+    },
+    {
+      "count": 2,
+      "pattern": "rotate",
+      "expected": {
+        "transitions": 10,
+        "trace": "a98908c4a20005123ae80f6bf171ebc430425b8eca4db5584643fc878d0ab5a4",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 5,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "fecf94177f58526770db510459a1cce6ab606cdd54219bc757664153956a4f6f"
+      }
+    },
+    {
+      "count": 3,
+      "pattern": "standard",
+      "expected": {
+        "transitions": 12,
+        "trace": "fabd2bebf05a60c96bda94e5cb87110b3ca9c48b4d185362af2a9f6e966c4b10",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 6,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "f661576c43c8a4a240456a22889fec8cd1c0e03504c79f02255568b1b3a86ec3"
+      }
+    },
+    {
+      "count": 3,
+      "pattern": "reverse",
+      "expected": {
+        "transitions": 12,
+        "trace": "b0bc6204cc6648229c438e6a1d651c0bdc0d6dd10d77d475d138588df995d4d9",
+        "firstResult": {
+          "winnerId": "a",
+          "winnerName": "player a",
+          "amount": 6,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "40cefc3c86dd161c4df6258eec492f9aa145c9a5b47fbe72b656a88a7412adb4"
+      }
+    },
+    {
+      "count": 3,
+      "pattern": "rotate",
+      "expected": {
+        "transitions": 12,
+        "trace": "af578336cbc2971f04140fc267ceeb0b3c91bbf3ba98436bef026947b36aa64e",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 6,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "220d462595369e52e346fff782f721ecb8d934a7de61080be7f60e1abc28354d"
+      }
+    },
+    {
+      "count": 4,
+      "pattern": "standard",
+      "expected": {
+        "transitions": 15,
+        "trace": "3936c72467882503dcaa35481cac7054737d9dca0dab65f5f42e1b5fc9f6caa5",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 7,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "7d3bec04447c0bcf86062caea57d870718f261a4da8d150c1862c69f30533149"
+      }
+    },
+    {
+      "count": 4,
+      "pattern": "reverse",
+      "expected": {
+        "transitions": 15,
+        "trace": "dd57ffdc30a220d653889267e91e7bdbbf0ab0dcc17c20d1de9d875b2572cd8c",
+        "firstResult": {
+          "winnerId": "a",
+          "winnerName": "player a",
+          "amount": 7,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "886cc637176166a163a93416eaed3af3f8522887910916548069fdc5d5d41887"
+      }
+    },
+    {
+      "count": 4,
+      "pattern": "rotate",
+      "expected": {
+        "transitions": 15,
+        "trace": "486de3190ade9a99d04c99802eba5cc0b5b5981b1825d9ab5c8174a78119aed3",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 7,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "cea74d415ea630de3bd7d888207b2460526a76fe21e14ff227e5888b1eb8bc24"
+      }
+    },
+    {
+      "count": 5,
+      "pattern": "standard",
+      "expected": {
+        "transitions": 18,
+        "trace": "2fff8fc58b86fc4368783a3d26543bad09500f073686594735fd5135186b62d8",
+        "firstResult": {
+          "winnerId": "a",
+          "winnerName": "player a",
+          "amount": 8,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "c5b5dfcb7498ace620d49b97e146a9b36898bd2499549afe6604796baeaac32b"
+      }
+    },
+    {
+      "count": 5,
+      "pattern": "reverse",
+      "expected": {
+        "transitions": 18,
+        "trace": "36c69432fe68510ba2f616f2f5c5e0c1d26e6dca0687192fb087d3f30c6814f3",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 8,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "52803ed7a50b25a23f55735613edb4146ca7ff7ede19b4693ee663569d0044cf"
+      }
+    },
+    {
+      "count": 5,
+      "pattern": "rotate",
+      "expected": {
+        "transitions": 18,
+        "trace": "13e3f3ca5acd5c319f6db4a23fc73d0d8cb1ef162e8a9f8aedf57e33947f9ca2",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 8,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "b81afda645d60cffd4d0e0530e8fe074b2b62571794a382bce5d82c206794df0"
+      }
+    },
+    {
+      "count": 6,
+      "pattern": "standard",
+      "expected": {
+        "transitions": 21,
+        "trace": "66807ce52a6509c8dc63172ddc2aa57dcb942af10564a74d43aecc7c496da786",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 9,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "a3cfd7ecff25b3a0c8f725998923334dce591f90e773f293d92d40fc116ee2f2"
+      }
+    },
+    {
+      "count": 6,
+      "pattern": "reverse",
+      "expected": {
+        "transitions": 21,
+        "trace": "447df809a8d7824ac01d41ff47ef0f133ce7c20f5e7396b92046bc96c8be0ff3",
+        "firstResult": {
+          "winnerId": "a",
+          "winnerName": "player a",
+          "amount": 9,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "4d448fe449c5408d1910b7aa03694b1cb63aa757a1b1d6bdaf36a6a05d15e2b6"
+      }
+    },
+    {
+      "count": 6,
+      "pattern": "rotate",
+      "expected": {
+        "transitions": 21,
+        "trace": "b35f57f882fc6efe7254aaf6edf627bdf313db7efc17c889c475375a39c80a40",
+        "firstResult": {
+          "winnerId": "b",
+          "winnerName": "player b",
+          "amount": 9,
+          "reason": "show",
+          "revealedPlayerIds": [
+            "a",
+            "b"
+          ],
+          "handId": "characterized-hand-1"
+        },
+        "final": "f57e61d71c648d18bb91c856249d1534b2d9c02615c28c2322fc9d6bec34f8e2"
+      }
+    }
+  ],
+  "evaluator": {
+    "hands": 22100,
+    "anchors": [
+      [
+        {
+          "rank": 14,
+          "suit": "hearts"
+        },
+        {
+          "rank": 14,
+          "suit": "spades"
+        },
+        {
+          "rank": 14,
+          "suit": "clubs"
+        }
+      ],
+      [
+        {
+          "rank": 14,
+          "suit": "hearts"
+        },
+        {
+          "rank": 13,
+          "suit": "hearts"
+        },
+        {
+          "rank": 12,
+          "suit": "hearts"
+        }
+      ],
+      [
+        {
+          "rank": 14,
+          "suit": "hearts"
+        },
+        {
+          "rank": 2,
+          "suit": "spades"
+        },
+        {
+          "rank": 3,
+          "suit": "clubs"
+        }
+      ],
+      [
+        {
+          "rank": 14,
+          "suit": "spades"
+        },
+        {
+          "rank": 10,
+          "suit": "spades"
+        },
+        {
+          "rank": 4,
+          "suit": "spades"
+        }
+      ],
+      [
+        {
+          "rank": 10,
+          "suit": "hearts"
+        },
+        {
+          "rank": 10,
+          "suit": "spades"
+        },
+        {
+          "rank": 4,
+          "suit": "clubs"
+        }
+      ],
+      [
+        {
+          "rank": 14,
+          "suit": "hearts"
+        },
+        {
+          "rank": 10,
+          "suit": "spades"
+        },
+        {
+          "rank": 4,
+          "suit": "clubs"
+        }
+      ]
+    ],
+    "evaluation": "6d4ef7364a0a2f33cbaef6fc8d71b43a59fba38b5a8203ef2fd2cab6d59e8655",
+    "comparison": "1bdb04a7e1eedb6375c6156a25e57b29ca1b535b49e700152ee5a43be5bf458d"
+  }
+}

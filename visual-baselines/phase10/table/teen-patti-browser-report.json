@@ -1,0 +1,10 @@
+{
+  "capturedAt": "2026-10-14T16:07:59.487Z",
+  "checks": [
+    "Created a Classic room without variant selection, completed a hand, chose Random variant, and server started 2-card-1 with the correct card count. The owner revealed and saw all cards while seat identities stayed unchanged."
+  ],
+  "screenshots": [
+    "teen-patti-random-next-hand-desktop"
+  ],
+  "errors": []
+}

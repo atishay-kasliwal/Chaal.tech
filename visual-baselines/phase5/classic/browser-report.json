@@ -1,0 +1,39 @@
+{
+  "capturedAt": "2026-10-14T05:01:18.466Z",
+  "room": "phase1-mv7n6vy5",
+  "rulesVersion": "classic-1",
+  "screenshots": [
+    "01-home",
+    "02-card-deck",
+    "03-create-join",
+    "03-mobile-create",
+    "04-six-player-waiting",
+    "05-six-player-blind",
+    "06-seen",
+    "07-refresh-resumed",
+    "08-bet",
+    "09-packed",
+    "10-server-winner",
+    "13-variant-switched",
+    "11-mobile",
+    "12-host-transfer"
+  ],
+  "checks": [
+    "create-room variant choice and room rules retained on refresh",
+    "six isolated browser participants",
+    "host-only start",
+    "blind and opponent hands hidden in wire views",
+    "See reveals only owned hand",
+    "refresh resumes same identity, seat and hand",
+    "bet and Pack controls",
+    "automatic Show winner without selector",
+    "revealed Show winner matches selected variant comparison",
+    "chip conservation",
+    "new hand",
+    "host switches variant for next hand in same room with same seats and identities",
+    "mobile original styling",
+    "explicit leave and host transfer",
+    "no third-party runtime requests"
+  ],
+  "errors": []
+}

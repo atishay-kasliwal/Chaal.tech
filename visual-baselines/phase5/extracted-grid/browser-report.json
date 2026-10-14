@@ -1,0 +1,31 @@
+{
+  "capturedAt": "2026-10-14T00:35:48.760Z",
+  "room": "media-mv7dpgns",
+  "checks": [
+    "six real LiveKit identities match game seats",
+    "six camera and microphone publishers",
+    "six decoded videos and five unique remote audio elements per browser",
+    "camera denial with working microphone",
+    "microphone denial with working camera",
+    "no capture before explicit device actions",
+    "audio-only/camera-off/mute",
+    "refresh keeps game identity/hand and requires fresh media consent",
+    "media interruption and reconnect while game bets continue",
+    "leave media stops capture without leaving game",
+    "server-owned Muflis Show and chip conservation with media",
+    "mobile uses existing grid",
+    "leaving game stops capture and removes media participant"
+  ],
+  "screenshots": [
+    "01-camera-denied-audio-works",
+    "02-microphone-denied-video-works",
+    "03-six-media-lobby",
+    "04-six-video-game",
+    "05-audio-only",
+    "06-refresh-media-rejoined",
+    "07-media-interrupted-game-bet",
+    "08-winner-with-media",
+    "09-mobile-existing-grid"
+  ],
+  "errors": []
+}

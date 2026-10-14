@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-10-14T16:06:35.587Z",
+  "checks": [
+    "Six independent browsers created a Hold’em room, readied, played all streets, preserved private hole cards, verified six stable seats, mobile controls, and reached showdown."
+  ],
+  "screenshots": [
+    "six-players-desktop",
+    "six-players-mobile-active-seat",
+    "six-players-showdown"
+  ],
+  "errors": []
+}

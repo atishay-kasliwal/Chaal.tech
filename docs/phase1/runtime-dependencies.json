@@ -1,0 +1,19 @@
+{
+  "scope": "npm audit --omit=dev",
+  "vulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "securityOverrides": {
+    "socket.io-parser": "4.2.7",
+    "ws": "8.21.3"
+  },
+  "advisories": [
+    "https://github.com/advisories/GHSA-2m8v-j782-fhvr",
+    "https://github.com/advisories/GHSA-96hv-2xvq-fx4p"
+  ]
+}

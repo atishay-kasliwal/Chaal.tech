@@ -1,0 +1,292 @@
+{
+  "sourceCommit": "3f0cb69a71d922557f9b17a08a78f413b2e90774",
+  "capturedAt": "2026-10-13T23:34:37.682Z",
+  "baseURL": "http://127.0.0.1:5174",
+  "browser": "155.0.8059.40",
+  "room": "baseline-mv7birrk",
+  "screenshots": [
+    {
+      "name": "01-home-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/"
+    },
+    {
+      "name": "02-card-deck-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/test-cards"
+    },
+    {
+      "name": "03-create-connecting-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/create-room"
+    },
+    {
+      "name": "04-create-join-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/create-room"
+    },
+    {
+      "name": "05-join-name-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "06-waiting-one-player-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "07-waiting-2-players-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "07-waiting-3-players-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "07-waiting-4-players-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "07-waiting-5-players-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "07-waiting-6-players-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "08-six-player-blind-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "09-six-player-seen-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "10-bet-and-turn-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "11-packed-and-two-active-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "12-show-and-manual-winner-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "13-after-manual-settlement-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "14-waiting-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "15-six-player-game-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    },
+    {
+      "name": "16-refresh-during-hand",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:5174/baseline-mv7birrk"
+    }
+  ],
+  "checks": [
+    {
+      "label": "card-assets-and-font",
+      "registered": true,
+      "font": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+    },
+    {
+      "label": "six-members",
+      "count": 6
+    },
+    {
+      "label": "bet",
+      "before": {
+        "pot": 6,
+        "balance": 49
+      },
+      "after": {
+        "pot": 7
+      }
+    },
+    {
+      "label": "show",
+      "gameShow": true,
+      "activeCount": 2
+    },
+    {
+      "label": "manual-settlement",
+      "isStarted": false,
+      "balances": [
+        {
+          "name": "baseline 1",
+          "balance": 56
+        },
+        {
+          "name": "baseline 2",
+          "balance": 48
+        },
+        {
+          "name": "baseline 3",
+          "balance": 49
+        },
+        {
+          "name": "baseline 4",
+          "balance": 49
+        },
+        {
+          "name": "baseline 5",
+          "balance": 49
+        },
+        {
+          "name": "baseline 6",
+          "balance": 49
+        }
+      ]
+    },
+    {
+      "label": "refresh-during-hand",
+      "visibleText": "Teen Patti\nGithub\nJoin / Create Room\nRoom already has a game in process"
+    }
+  ],
+  "privacy": [
+    {
+      "started": false,
+      "show": false,
+      "ownBlind": true,
+      "ownCardIdentities": 0,
+      "opponentCardIdentities": 0
+    },
+    {
+      "started": true,
+      "show": false,
+      "ownBlind": true,
+      "ownCardIdentities": 3,
+      "opponentCardIdentities": 15
+    },
+    {
+      "source": "unauthenticated-HTTP-audit-room",
+      "started": true,
+      "fields": [
+        "name",
+        "table",
+        "numCards",
+        "currentPlayer",
+        "gameShow",
+        "initiator",
+        "isStarted",
+        "pot",
+        "maxStake",
+        "cardsRemaining"
+      ],
+      "hasUsersList": false,
+      "remainingDeckIdentities": 34
+    },
+    {
+      "started": true,
+      "show": false,
+      "ownBlind": false,
+      "ownCardIdentities": 3,
+      "opponentCardIdentities": 15
+    },
+    {
+      "started": true,
+      "show": true,
+      "ownBlind": false,
+      "ownCardIdentities": 3,
+      "opponentCardIdentities": 15
+    },
+    {
+      "started": false,
+      "show": false,
+      "ownBlind": false,
+      "ownCardIdentities": 3,
+      "opponentCardIdentities": 15
+    },
+    {
+      "started": true,
+      "show": false,
+      "ownBlind": true,
+      "ownCardIdentities": 3,
+      "opponentCardIdentities": 15
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,24 @@
+{
+  "capturedAt": "2026-10-14T04:59:02.095Z",
+  "checks": [
+    "2 players: every viewer bottom, no overlapping seats/center, long names, keyboard bet, stable positions on Pack, widths 1440/1280/1100/800/390",
+    "3 players: every viewer bottom, no overlapping seats/center, long names, keyboard bet, stable positions on Pack, widths 1440/1280/1100/800/390",
+    "4 players: every viewer bottom, no overlapping seats/center, long names, keyboard bet, stable positions on Pack, widths 1440/1280/1100/800/390",
+    "5 players: every viewer bottom, no overlapping seats/center, long names, keyboard bet, stable positions on Pack, widths 1440/1280/1100/800/390",
+    "6 players: every viewer bottom, no overlapping seats/center, long names, keyboard bet, stable positions on Pack, widths 1440/1280/1100/800/390"
+  ],
+  "screenshots": [
+    "2-players-desktop",
+    "2-players-narrow-fallback",
+    "3-players-desktop",
+    "3-players-narrow-fallback",
+    "4-players-desktop",
+    "4-players-narrow-fallback",
+    "5-players-desktop",
+    "5-players-narrow-fallback",
+    "6-players-desktop",
+    "6-players-packed-refresh",
+    "6-players-narrow-fallback"
+  ],
+  "errors": []
+}

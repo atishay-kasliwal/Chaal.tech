@@ -1,0 +1,68 @@
+{
+	"name": "teen-patti",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"lint": "eslint .",
+		"format": "prettier --write .",
+		"phase0:capture": "node scripts/phase0/capture.mjs",
+		"server": "node --env-file-if-exists=.env server/index.mjs",
+		"test": "node --test tests/server/*.test.mjs",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"typecheck": "npm run check",
+		"format:check": "prettier --check .",
+		"phase1:browser": "node scripts/phase1/browser.mjs",
+		"phase4:browser": "node scripts/phase4/browser.mjs",
+		"phase5:browser": "node scripts/phase5/browser.mjs",
+		"phase6:browser": "node scripts/phase6/browser.mjs"
+	},
+	"devDependencies": {
+		"@eslint/compat": "^2.1.1",
+		"@eslint/js": "10.0.1",
+		"@sveltejs/adapter-netlify": "^7.0.1",
+		"@sveltejs/kit": "^3.0.1",
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@tailwindcss/vite": "^4.3.3",
+		"daisyui": "^5.7.47",
+		"eslint": "^10.12.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-svelte": "^3.23.0",
+		"globals": "^17.13.0",
+		"playwright": "1.64.0",
+		"prettier": "^3.9.9",
+		"prettier-plugin-svelte": "^4.1.1",
+		"prettier-plugin-tailwindcss": "^0.8.1",
+		"svelte": "^5.57.1",
+		"svelte-check": "^4.7.6",
+		"tailwindcss": "^4.3.3",
+		"typescript": "^6.0.0",
+		"typescript-eslint": "8.71.2",
+		"vite": "^8.3.3"
+	},
+	"type": "module",
+	"dependencies": {
+		"@lucide/svelte": "^1.52.0",
+		"livekit-client": "2.22.4",
+		"livekit-server-sdk": "2.19.1",
+		"socket.io": "4.8.4",
+		"socket.io-client": "^4.8.4",
+		"socket.io-msgpack-parser": "^3.0.2"
+	},
+	"optionalDependencies": {
+		"@rollup/rollup-linux-x64-gnu": "4.64.0"
+	},
+	"imports": {
+		"#lib": "./src/lib/index.js",
+		"#lib/*": "./src/lib/*"
+	},
+	"engines": {
+		"node": ">=24"
+	},
+	"overrides": {
+		"socket.io-parser": "4.2.7",
+		"ws": "8.21.3"
+	}
+}
