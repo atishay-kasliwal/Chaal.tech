@@ -41,6 +41,9 @@
 	class="player-seat indicator w-full"
 	data-testid="player-seat"
 	data-player-id={user.id}
+	data-active={active}
+	data-self={user.id === selfId}
+	data-connected={user.connected && !user.hasLeft}
 	data-showdown={gameShow}
 	aria-label={`${user.username}${user.id === selfId ? ', you' : ''}${active ? ', active turn' : ''}`}
 >
@@ -111,6 +114,44 @@
 	.turn-marker {
 		right: 0.75rem;
 		translate: 0 -50%;
+		border: 1px solid rgb(255 255 255 / 36%);
+		background: linear-gradient(135deg, #f7df9d, #bd842e);
+		color: #25190d;
+		box-shadow: 0 0.2rem 0.6rem rgb(0 0 0 / 44%);
+	}
+	.player-seat :global(.card) {
+		border-color: rgb(229 198 134 / 18%);
+		background: linear-gradient(150deg, rgb(20 31 27 / 97%), rgb(10 19 17 / 96%));
+		backdrop-filter: blur(8px);
+	}
+	.player-seat[data-active='true'] :global(.card) {
+		border-color: rgb(244 210 139 / 80%);
+		box-shadow:
+			0 0 0 1px rgb(244 210 139 / 24%),
+			0 0 1.3rem rgb(220 173 87 / 25%),
+			0 0.6rem 1.3rem #0008;
+	}
+	.player-seat[data-self='true'] :global(.card) {
+		background: linear-gradient(150deg, rgb(29 39 33 / 98%), rgb(12 23 18 / 97%));
+	}
+	.player-seat .border-b {
+		border-color: rgb(229 198 134 / 18%);
+	}
+	.player-seat :global(.card-title) {
+		color: #f3eee1;
+	}
+	.player-seat .bg-base-300.rounded-md {
+		border: 1px solid rgb(235 199 123 / 25%);
+		background: rgb(217 177 92 / 12%);
+		color: #f1d897;
+	}
+	.player-seat :global([data-testid='seat-video']) {
+		border-color: rgb(255 255 255 / 12%);
+		background: #101715;
+	}
+	.player-seat :global([data-testid='seat-video'] > div:last-child) {
+		background: rgb(7 13 11 / 80%);
+		color: rgb(238 233 218 / 72%);
 	}
 	.seat-hand-media {
 		display: grid;

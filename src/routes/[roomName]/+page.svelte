@@ -7,6 +7,7 @@
 	import UsersTable from './UsersTable.svelte';
 	import DeclareWinner from './DeclareWinner.svelte';
 	import PlayerSeat from '#lib/components/PlayerSeat.svelte';
+	import GameActions from '#lib/components/GameActions.svelte';
 	import PokerSeat from '#lib/components/PokerSeat.svelte';
 	import PlayingCard from '#lib/components/PlayingCard.svelte';
 	import TableScene from '#lib/components/TableScene.svelte';
@@ -114,7 +115,10 @@
 	function blackjackAction(action: 'hit' | 'stand' | 'double') {
 		void sendAction('blackjackAction', [action]);
 	}
-	function rummyAction(action: 'draw-stock' | 'draw-discard' | 'discard' | 'declare', index?: number) {
+	function rummyAction(
+		action: 'draw-stock' | 'draw-discard' | 'discard' | 'declare',
+		index?: number
+	) {
 		return sendAction('rummyAction', [action, ...(index === undefined ? [] : [index])]);
 	}
 	function setBlackjackWager() {
@@ -238,15 +242,25 @@
 
 {#if roomData?.isStarted}
 	{@const table = roomData}
-	<TableScene players={table.usersList} selfId={socket.playerId}>
+	<TableScene
+		players={table.usersList}
+		selfId={socket.playerId}
+		gameType={table.gameType ?? 'teen-patti'}
+	>
 		{#snippet center()}
 			<h2
 				class="text-primary text-2xl font-extrabold tracking-tight"
 				class:sr-only={!!table.result}
 			>
-				{table.gameType === 'texas-holdem' ? 'Texas Hold’em' : table.gameType === 'blackjack' ? 'Blackjack' : table.gameType === 'rummy' ? 'Indian Rummy' : 'Teen Patti'}
+				{table.gameType === 'texas-holdem'
+					? 'Texas Hold’em'
+					: table.gameType === 'blackjack'
+						? 'Blackjack'
+						: table.gameType === 'rummy'
+							? 'Indian Rummy'
+							: 'Teen Patti'}
 			</h2>
-				{#if table.gameType === 'texas-holdem'}
+			{#if table.gameType === 'texas-holdem'}
 				{#if !table.result}<p class="text-base-content/60 mb-2 text-sm capitalize">
 						{table.stage} · Blinds {table.smallBlind}/{table.bigBlind}
 					</p>{/if}
@@ -327,33 +341,89 @@
 				{/if}
 			{:else if table.gameType === 'blackjack'}
 				<p class="text-base-content/60 mb-2 text-sm capitalize">
-					{table.stage === 'players' ? 'Players’ turn' : table.stage === 'dealer' ? 'Dealer’s turn' : 'Dealer stands on soft 17'}
+					{table.stage === 'players'
+						? 'Players’ turn'
+						: table.stage === 'dealer'
+							? 'Dealer’s turn'
+							: 'Dealer stands on soft 17'}
 				</p>
-				<div class="flex flex-wrap items-center justify-center gap-2" aria-label="Dealer hand" data-testid="dealer-cards">
+				<div
+					class="flex flex-wrap items-center justify-center gap-2"
+					aria-label="Dealer hand"
+					data-testid="dealer-cards"
+				>
 					{#each table.dealerCards ?? [] as card, index (`${card.rank}-${card.suit}-${index}`)}
-						<PlayingCard rank={card.rank} suit={card.suit} faceDown={card.rank === 0} class="!h-20 !w-14 sm:!h-24 sm:!w-16" />
+						<PlayingCard
+							rank={card.rank}
+							suit={card.suit}
+							faceDown={card.rank === 0}
+							class="!h-20 !w-14 sm:!h-24 sm:!w-16"
+						/>
 					{/each}
 				</div>
-				<p class="mt-1 text-sm">Dealer total: {table.dealerTotal ?? '—'} <span class="text-base-content/50">· Pot: {table.pot}</span></p>
+				<p class="mt-1 text-sm">
+					Dealer total: {table.dealerTotal ?? '—'}
+					<span class="text-base-content/50">· Pot: {table.pot}</span>
+				</p>
+				{#if table.currentPlayer === table.usersList.findIndex((user) => user.id === socket.playerId)}
+					<div class="center-game-actions" data-testid="center-game-actions">
+						<BlackjackActionBar legalActions={table.legalActions} action={blackjackAction} />
+					</div>
+				{/if}
 				{#if table.result}
 					<div class="alert alert-info mx-auto mt-3 max-w-sm" role="status">
-						{table.result.winnerName === 'Dealer' ? 'Dealer wins this round' : table.result.winnerName === 'Push' ? 'Push — bets returned' : `${table.result.winnerName} wins`}
+						{table.result.winnerName === 'Dealer'
+							? 'Dealer wins this round'
+							: table.result.winnerName === 'Push'
+								? 'Push — bets returned'
+								: `${table.result.winnerName} wins`}
 					</div>
 					<div class="mt-2 flex justify-center gap-2">
-						<button class="btn btn-ghost btn-xs" onclick={toggleReady}>{selfReady ? 'Ready ✓' : 'I’m ready'}</button>
-						{#if table.hostId === socket.playerId}<button class="btn btn-primary btn-sm" onclick={startGameHandler} disabled={!table.legalActions.start || !allReadyToStart}>Deal again</button>{/if}
+						<button class="btn btn-ghost btn-xs" onclick={toggleReady}
+							>{selfReady ? 'Ready ✓' : 'I’m ready'}</button
+						>
+						{#if table.hostId === socket.playerId}<button
+								class="btn btn-primary btn-sm"
+								onclick={startGameHandler}
+								disabled={!table.legalActions.start || !allReadyToStart}>Deal again</button
+							>{/if}
 					</div>
 				{/if}
 			{:else if table.gameType === 'rummy'}
 				<div class="flex items-center justify-center gap-4">
-					<div class="text-center"><p class="text-base-content/50 mb-1 text-[10px] uppercase">Wild rank</p><span class="badge badge-primary">{rankLabel(table.wildRank ?? 0)}</span></div>
-					<div class="text-center"><p class="text-base-content/50 mb-1 text-[10px] uppercase">Stock</p><span class="badge badge-outline">{table.stockCount ?? 0}</span></div>
-					<div class="text-center"><p class="text-base-content/50 mb-1 text-[10px] uppercase">Discard</p>{#if table.discardPile?.[0]}<PlayingCard rank={table.discardPile[0].rank} suit={table.discardPile[0].suit} class="!h-14 !w-10" />{:else}<span>—</span>{/if}</div>
+					<div class="text-center">
+						<p class="text-base-content/50 mb-1 text-[10px] uppercase">Wild rank</p>
+						<span class="badge badge-primary">{rankLabel(table.wildRank ?? 0)}</span>
+					</div>
+					<div class="text-center">
+						<p class="text-base-content/50 mb-1 text-[10px] uppercase">Stock</p>
+						<span class="badge badge-outline">{table.stockCount ?? 0}</span>
+					</div>
+					<div class="text-center">
+						<p class="text-base-content/50 mb-1 text-[10px] uppercase">Discard</p>
+						{#if table.discardPile?.[0]}<PlayingCard
+								rank={table.discardPile[0].rank}
+								suit={table.discardPile[0].suit}
+								class="!h-14 !w-10"
+							/>{:else}<span>—</span>{/if}
+					</div>
 				</div>
-				<p class="mt-2 text-xs">{table.usersList[table.currentPlayer]?.username ?? 'Waiting'}’s turn</p>
+				<p class="mt-2 text-xs">
+					{table.usersList[table.currentPlayer]?.username ?? 'Waiting'}’s turn
+				</p>
 				{#if table.result}
-					<div class="alert alert-success mx-auto mt-2 max-w-sm" role="status">{table.result.winnerName} wins · {table.result.reason}</div>
-					<div class="mt-2 flex justify-center gap-2"><button class="btn btn-ghost btn-xs" onclick={toggleReady}>{selfReady ? 'Ready ✓' : 'I’m ready'}</button>{#if table.hostId === socket.playerId}<button class="btn btn-primary btn-sm" onclick={startGameHandler} disabled={!table.legalActions.start || !allReadyToStart}>New round</button>{/if}</div>
+					<div class="alert alert-success mx-auto mt-2 max-w-sm" role="status">
+						{table.result.winnerName} wins · {table.result.reason}
+					</div>
+					<div class="mt-2 flex justify-center gap-2">
+						<button class="btn btn-ghost btn-xs" onclick={toggleReady}
+							>{selfReady ? 'Ready ✓' : 'I’m ready'}</button
+						>{#if table.hostId === socket.playerId}<button
+								class="btn btn-primary btn-sm"
+								onclick={startGameHandler}
+								disabled={!table.legalActions.start || !allReadyToStart}>New round</button
+							>{/if}
+					</div>
 				{/if}
 			{:else}
 				{#if table.variantState?.indicator}
@@ -451,6 +521,25 @@
 					<p class="text-base-content/60 mt-4 text-xs" aria-live="polite">
 						{table.usersList[table.currentPlayer]?.username || 'Waiting'}’s turn
 					</p>
+					{#if self && !self.isPacked}
+						<div
+							class="center-game-actions"
+							data-testid="center-game-actions"
+							data-game-action="teen-patti"
+						>
+							<GameActions
+								user={self}
+								selfId={socket.playerId}
+								active={self.id === table.usersList[table.currentPlayer]?.id}
+								gameShow={table.gameShow}
+								legalActions={table.legalActions}
+								connected={socket.connected}
+								twoRemaining={usersPlaying.length === 2}
+								bind:chal
+								actions={{ seeCardsHandler, packHandler, chalHandler, showHandler }}
+							/>
+						</div>
+					{/if}
 				{/if}
 			{/if}
 		{/snippet}
@@ -495,14 +584,16 @@
 	<PokerActionBar legalActions={roomData.legalActions} bind:raiseTo action={pokerAction} />
 {/if}
 
-{#if roomData?.isStarted && roomData.gameType === 'blackjack' && roomData.currentPlayer === roomData.usersList.findIndex((user) => user.id === socket.playerId)}
-	<BlackjackActionBar legalActions={roomData.legalActions} action={blackjackAction} />
-{/if}
-
 {#if roomData?.isStarted && roomData.gameType === 'rummy'}
 	{@const me = roomData.usersList.find((user) => user.id === socket.playerId)}
 	{#if me}
-		<RummyActionBar user={me} stockCount={roomData.stockCount ?? 0} legalActions={roomData.legalActions} connected={socket.connected} action={rummyAction} />
+		<RummyActionBar
+			user={me}
+			stockCount={roomData.stockCount ?? 0}
+			legalActions={roomData.legalActions}
+			connected={socket.connected}
+			action={rummyAction}
+		/>
 	{/if}
 {/if}
 
@@ -644,16 +735,37 @@
 				{/if}
 				{#if roomData.gameType === 'blackjack'}
 					<div class="form-control w-full">
-						<label class="label" for="blackjack-wager"><span class="label-text font-semibold">Your even wager</span></label>
+						<label class="label" for="blackjack-wager"
+							><span class="label-text font-semibold">Your even wager</span></label
+						>
 						<div class="join w-full">
-							<input id="blackjack-wager" class="input join-item w-full" type="number" min="2" step="2" max={self?.balance ?? 2} bind:value={blackjackWager} disabled={!roomData.legalActions.setBet || !self || !socket.connected} />
-							<button type="button" class="btn btn-secondary join-item" onclick={setBlackjackWager} disabled={!roomData.legalActions.setBet || !socket.connected}>Set wager · {self?.wager ?? 2}</button>
+							<input
+								id="blackjack-wager"
+								class="input join-item w-full"
+								type="number"
+								min="2"
+								step="2"
+								max={self?.balance ?? 2}
+								bind:value={blackjackWager}
+								disabled={!roomData.legalActions.setBet || !self || !socket.connected}
+							/>
+							<button
+								type="button"
+								class="btn btn-secondary join-item"
+								onclick={setBlackjackWager}
+								disabled={!roomData.legalActions.setBet || !socket.connected}
+								>Set wager · {self?.wager ?? 2}</button
+							>
 						</div>
-						<p class="text-base-content/50 mt-1 text-xs">Dealer stands on soft 17. Natural blackjack pays 3:2.</p>
+						<p class="text-base-content/50 mt-1 text-xs">
+							Dealer stands on soft 17. Natural blackjack pays 3:2.
+						</p>
 					</div>
 				{/if}
 				{#if roomData.gameType === 'rummy'}
-					<p class="text-base-content/60 text-center text-sm">13 cards · two sequences required · one pure sequence required · maximum 6 players</p>
+					<p class="text-base-content/60 text-center text-sm">
+						13 cards · two sequences required · one pure sequence required · maximum 6 players
+					</p>
 				{/if}
 				<button
 					class="btn btn-primary mt-4 w-full font-bold tracking-widest uppercase"
