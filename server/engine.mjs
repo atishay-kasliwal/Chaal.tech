@@ -85,6 +85,20 @@ export function newRoom(name, table, hostId, rulesVersion = DEFAULT_RULES_VERSIO
 	};
 }
 const bootOf = (room) => room.boot ?? 1;
+
+/** Players below 10% of the buy-in may ask a friend at the table for chips. */
+export const CHIP_REQUEST_SHARES = [10, 25, 50];
+export const chipRequestAmounts = (room) =>
+	CHIP_REQUEST_SHARES.map((share) => Math.max(1, Math.floor((room.table * share) / 100)));
+export const canRequestChips = (room, player) => player.balance < room.table / 10;
+
+/** Table message for an accepted request; null when there is nothing to announce. */
+export function chipGiftText(room, fromId, lenderId, accept) {
+	if (accept !== true) return null;
+	const request = (room.chipRequests ?? []).find((r) => r.from === fromId && r.to === lenderId);
+	const name = (id) => room.players.find((p) => p.id === id)?.username;
+	return request ? `${name(lenderId)} gave ${name(fromId)} ${request.amount} chips` : null;
+}
 export function limits(room, player) {
 	return player.isBlind
 		? { min: Math.ceil(room.maxStake / 2), max: room.maxStake }
@@ -359,6 +373,41 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			require(target, 'That bot is not at the table');
 			target.departed = true;
 			target.seatNumber = null;
+		} else if (action === 'requestChips') {
+			require(room.boot !== undefined, 'Chip requests need a table created with table options');
+			require(canRequestChips(
+				room,
+				player
+			), 'You can ask for chips when you are below 10% of the buy-in');
+			const lender = seated(room).find((p) => p.id === payload.to && !p.departed);
+			require(lender && lender.id !== id && !lender.bot, 'Ask a friend who is at the table');
+			require(chipRequestAmounts(room).includes(
+				payload.amount
+			), 'Choose one of the offered amounts');
+			// One open request per player: a new ask replaces the old one.
+			room.chipRequests = [
+				...(room.chipRequests ?? []).filter((r) => r.from !== id),
+				{ from: id, to: lender.id, amount: payload.amount }
+			];
+		} else if (action === 'cancelChipRequest') {
+			room.chipRequests = (room.chipRequests ?? []).filter((r) => r.from !== id);
+		} else if (action === 'answerChipRequest') {
+			const request = (room.chipRequests ?? []).find((r) => r.from === payload.from && r.to === id);
+			require(request, 'That request is no longer open');
+			require(typeof payload.accept === 'boolean', 'Invalid answer');
+			room.chipRequests = room.chipRequests.filter((r) => r !== request);
+			if (payload.accept) {
+				const borrower = seated(room).find((p) => p.id === request.from && !p.departed);
+				require(borrower, 'That player has left the table');
+				require(player.balance >= request.amount, 'You do not have enough chips to give');
+				player.balance -= request.amount;
+				borrower.balance += request.amount;
+			}
+		} else if (action === 'setBalanceHidden') {
+			// Privacy only: the amount is withheld from other players' views, play is unchanged.
+			require(typeof payload.hidden === 'boolean', 'Invalid balance visibility');
+			if (payload.hidden) player.hideBalance = true;
+			else delete player.hideBalance;
 		} else if (action === 'ready') {
 			// Auto-ready tables let players choose to sit out the next hand at any time.
 			require(!playing(room) || room.autoReady, 'Readiness is locked during a hand');
@@ -368,6 +417,8 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 		} else if (action === 'leave') {
 			const wasTurn = room.currentPlayerId === id;
 			player.departed = true;
+			if (room.chipRequests)
+				room.chipRequests = room.chipRequests.filter((r) => r.from !== id && r.to !== id);
 			if (playing(room) && !player.isPacked) {
 				player.isPacked = true;
 				if (active(room).length === 1) settle(room, active(room)[0], 'last-player');
@@ -480,6 +531,17 @@ export function projection(room, id, connected) {
 		currentPlayer: list.findIndex((p) => p.id === room.currentPlayerId),
 		pot: room.pot,
 		maxStake: room.maxStake,
+		// Chip requests are private to the two players involved.
+		...(room.chipRequests?.some((r) => r.from === id || r.to === id)
+			? {
+					chipRequests: room.chipRequests
+						.filter((r) => r.from === id || r.to === id)
+						.map((r) => ({ ...r }))
+				}
+			: {}),
+		...(explain && canRequestChips(room, player)
+			? { chipRequestAmounts: chipRequestAmounts(room) }
+			: {}),
 		...(room.variantState === undefined
 			? {}
 			: { variantState: structuredClone(room.variantState) }),
@@ -502,7 +564,15 @@ export function projection(room, id, connected) {
 		usersList: list.map((p) => ({
 			id: p.id,
 			username: p.username,
-			balance: p.balance,
+			// A hidden balance reaches only its owner; others get just what the table needs.
+			...(p.hideBalance && p.id !== id
+				? {
+						balance: null,
+						balanceHidden: true,
+						coversBoot: p.balance >= bootOf(room),
+						hasChips: p.balance > 0
+					}
+				: { balance: p.balance, ...(p.hideBalance ? { balanceHidden: true } : {}) }),
 			handBet: p.handBet ?? null,
 			seatNumber: p.seatNumber,
 			isBlind: p.isBlind,

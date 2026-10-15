@@ -72,7 +72,7 @@ export function inviteMessage({ inviter, link, boot, buyIn, seats }) {
 	const stakes = `Buy-in ${rupees(buyIn)} · boot ${rupees(boot)}`;
 	const subject = `${name} saved you a seat ♠`;
 	const preheader = 'Your private Teen Patti table is ready.';
-	const text = `${name} saved you a seat at their Teen Patti table.\n\n${stakes} · ${seats} seats\n\nTake your seat: ${link}\n\nNo signup needed. Camera optional until you join.\n\nYou got this because ${name} entered your address at chaal.tech.`;
+	const text = `${name} saved you a seat at their Teen Patti table.\n\n${stakes} · ${seats} seats\n\nTake your seat: ${link}\n\nSign in with the Google account the club knows you by. Camera optional until you join.\n\nYou got this because ${name} entered your address at chaal.tech.`;
 	const who = escapeHtml(name);
 	const href = escapeHtml(link);
 	const initial = escapeHtml((Array.from(name)[0] ?? 'A').toUpperCase());
@@ -179,7 +179,7 @@ ${stat(String(seats), 'Seats', true)}
 </tr></table>
 </td></tr>
 <tr><td class="pad r-trust" align="center" style="padding:12px 48px 0;font-family:${sans};font-size:13px;line-height:20px;color:#A9AEA7">
-⚡&nbsp;No signup needed&nbsp;&nbsp;<span style="color:#4a5548">·</span>&nbsp;&nbsp;Camera optional until you join
+🔒&nbsp;Sign in with Google&nbsp;&nbsp;<span style="color:#4a5548">·</span>&nbsp;&nbsp;Camera optional until you join
 </td></tr>
 <tr><td class="pad r-div" style="padding:20px 48px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="1" style="height:1px;line-height:1px;font-size:1px;background:#2a3527" bgcolor="#2a3527">&nbsp;</td></tr></table></td></tr>
 <tr><td class="pad r-foot" align="center" style="padding:16px 48px 20px;font-family:${sans}">

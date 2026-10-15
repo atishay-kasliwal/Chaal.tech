@@ -123,7 +123,8 @@ test('Existing frontend outside the extracted room template retains the original
 		if (
 			file === 'src/lib/config.ts' ||
 			file === 'src/lib/utils/room.ts' ||
-			file === 'src/lib/stores/socket-store.svelte.ts'
+			file === 'src/lib/stores/socket-store.svelte.ts' ||
+			file === 'src/routes/[roomName]/UsernameForm.svelte'
 		)
 			continue; // Production builds and room lookups now require an explicit public game endpoint.
 		let source = await readFile(file);
@@ -159,6 +160,7 @@ test('Existing frontend outside the extracted room template retains the original
 			file === 'src/lib/stores/socket-store.svelte.ts' ||
 			file === 'src/routes/[roomName]/types.d.ts' ||
 			file === 'src/routes/[roomName]/UsersTable.svelte' ||
+			file === 'src/routes/[roomName]/UsernameForm.svelte' || // Seating is automatic; the name comes from the start panel.
 			file === 'src/routes/create-room/+page.svelte'
 		)
 			continue; // Phase 7 types and Phase 8 room/lobby controls have focused checks.
@@ -198,6 +200,7 @@ test('Phase 4 preservation checks account for the additive media and Phase 7 var
 			file === 'src/routes/[roomName]/+page.svelte' ||
 			file === 'src/routes/+layout.svelte' ||
 			file === 'src/routes/[roomName]/UsersTable.svelte' ||
+			file === 'src/routes/[roomName]/UsernameForm.svelte' ||
 			file === 'src/routes/create-room/+page.svelte' ||
 			file === 'src/routes/[roomName]/types.d.ts' ||
 			file === 'server/index.mjs' ||

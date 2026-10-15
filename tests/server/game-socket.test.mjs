@@ -16,6 +16,7 @@ test('timed socket requests preserve create-room arguments and command metadata'
 	globalThis.fetch = async (input, init) => {
 		const url = new URL(String(input));
 		if (url.pathname === '/session') {
+			assert.equal(new Headers(init.headers).get('Authorization'), 'Bearer club-token');
 			return Response.json({ token: 'session-token', playerId: 'a13795de-14da-482d-9a15-59c6cd4c26f5' });
 		}
 		if (url.pathname === '/rooms') {
@@ -30,7 +31,7 @@ test('timed socket requests preserve create-room arguments and command metadata'
 
 	const socket = new GameSocket(
 		'https://game.example',
-		() => token,
+		() => 'club-token',
 		(session) => {
 			token = session.token;
 		}
@@ -44,6 +45,7 @@ test('timed socket requests preserve create-room arguments and command metadata'
 	const result = await socket.timeout(8000).emitWithAck('createRoom', ...args, meta);
 
 	assert.equal(result.ok, true);
+	assert.equal(token, 'session-token');
 	assert.deepEqual(requests, [{ event: 'createRoom', args, meta }]);
 	socket.disconnect();
 });

@@ -2,6 +2,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { X } from '@lucide/svelte';
 	import StartPanel from './StartPanel.svelte';
+	import ClubGate from '#lib/club/ClubGate.svelte';
 	import { startModal, closeStart } from './start-modal.svelte.js';
 </script>
 
@@ -23,7 +24,7 @@
 		transition:fly={{ y: 24, duration: 220 }}
 	>
 		<button class="close" onclick={closeStart} aria-label="Close"><X class="h-4 w-4" /></button>
-		<StartPanel onclose={closeStart} />
+		<ClubGate><StartPanel onclose={closeStart} /></ClubGate>
 	</div>
 {/if}
 

@@ -2,94 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 
-const baseURL = process.env.CHAAL_CF_TEST_URL;
-const origin = 'http://localhost:5173';
+import { baseURL, origin, createSession, createRoom, openPlayer, closeClub } from './club-helper.mjs';
 
-async function createSession() {
-	const response = await fetch(`${baseURL}/session`, {
-		method: 'POST',
-		headers: { Origin: origin, 'Content-Type': 'application/json' },
-		body: '{}'
-	});
-	assert.equal(response.status, 200);
-	return response.json();
-}
-
-async function createRoom(session, commandId) {
-	const body = {
-		event: 'createRoom',
-		args: ['', 50, 'classic-1', 'teen-patti'],
-		meta: { commandId }
-	};
-	const response = await fetch(`${baseURL}/rooms`, {
-		method: 'POST',
-		headers: {
-			Origin: origin,
-			Authorization: `Bearer ${session.token}`,
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify(body)
-	});
-	return { response, result: await response.json(), body };
-}
-
-function openPlayer(session, roomName) {
-	const url = new URL(`/socket/${roomName}`, baseURL);
-	url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-	const ws = new WebSocket(url, ['chaal.v1', `chaal-auth.${session.token}`]);
-	const pending = new Map();
-	const waiters = [];
-	const player = { ws, session, view: null };
-	ws.addEventListener('message', (event) => {
-		const packet = JSON.parse(event.data);
-		if (packet.type === 'ack') {
-			const callback = pending.get(packet.id);
-			if (callback) {
-				pending.delete(packet.id);
-				callback(packet.result);
-			}
-		}
-		if (packet.type === 'event') {
-			if (packet.event === 'roomData') player.view = packet.args[0];
-			for (const waiter of [...waiters]) if (waiter(packet)) waiters.splice(waiters.indexOf(waiter), 1);
-		}
-	});
-	player.open = new Promise((resolve, reject) => {
-		ws.addEventListener('open', resolve, { once: true });
-		ws.addEventListener('error', () => reject(new Error('WebSocket failed to open')), { once: true });
-	});
-	player.waitFor = (predicate) => {
-		if (predicate({ type: 'event', event: 'roomData', args: [player.view] })) return Promise.resolve(player.view);
-		return new Promise((resolve, reject) => {
-			const timer = setTimeout(() => reject(new Error('Timed out waiting for room state')), 8000);
-			waiters.push((packet) => {
-				if (!predicate(packet)) return false;
-				clearTimeout(timer);
-				resolve(packet.args?.[0]);
-				return true;
-			});
-		});
-	};
-	player.send = (event, args = [], stateful = true) => {
-		const id = randomUUID();
-		const meta = {
-			commandId: randomUUID(),
-			...(stateful ? { expectedRevision: player.view?.revision, handId: player.view?.handId } : {})
-		};
-		return new Promise((resolve, reject) => {
-			const timer = setTimeout(() => {
-				pending.delete(id);
-				reject(new Error(`Timed out waiting for ${event}`));
-			}, 8000);
-			pending.set(id, (result) => {
-				clearTimeout(timer);
-				resolve(result);
-			});
-			ws.send(JSON.stringify({ type: 'event', id, event, args, meta }));
-		});
-	};
-	return player;
-}
+test.after(closeClub);
 
 test('Cloudflare room service keeps private state server-side and coordinates a live hand', async (t) => {
 	assert.ok(baseURL, 'the test runner must set CHAAL_CF_TEST_URL');
@@ -105,7 +20,11 @@ test('Cloudflare room service keeps private state server-side and coordinates a 
 	const replayed = await createRoom(hostSession, createCommandId);
 	assert.equal(replayed.result.roomName, created.result.roomName);
 
-	const preview = await fetch(`${baseURL}/room/${created.result.roomName}`, { headers: { Origin: origin } });
+	const anonymous = await fetch(`${baseURL}/room/${created.result.roomName}`, { headers: { Origin: origin } });
+	assert.equal(anonymous.status, 401);
+	const preview = await fetch(`${baseURL}/room/${created.result.roomName}`, {
+		headers: { Origin: origin, Authorization: `Bearer ${guestSession.token}` }
+	});
 	assert.equal(preview.status, 200);
 	const publicRoom = await preview.json();
 	assert.deepEqual(Object.keys(publicRoom).sort(), ['gameShow', 'isStarted', 'maxPlayers', 'name', 'playerCount'].sort());
@@ -156,7 +75,9 @@ test('Cloudflare room service keeps private state server-side and coordinates a 
 		assert.equal(opponentState.cardsInHand.length, 3);
 		assert.ok(opponentState.cardsInHand.every((card) => card.rank === 0 && card.suit === ''));
 	}
-	const afterStart = await fetch(`${baseURL}/room/${created.result.roomName}`, { headers: { Origin: origin } });
+	const afterStart = await fetch(`${baseURL}/room/${created.result.roomName}`, {
+		headers: { Origin: origin, Authorization: `Bearer ${guestSession.token}` }
+	});
 	const publicAfterStart = await afterStart.json();
 	assert.equal(publicAfterStart.isStarted, true);
 	assert.equal('players' in publicAfterStart, false);

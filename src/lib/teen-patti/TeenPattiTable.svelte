@@ -22,10 +22,21 @@
 	import { VARIANT_BY_VERSION, type RulesVersion } from '#lib/variant-catalog.js';
 	import { arrangeSeats } from '#lib/seat-layout.js';
 	import TpSeat from './TpSeat.svelte';
+	import CasinoChip from '#lib/components/CasinoChip.svelte';
+	import ChipStack from '#lib/components/ChipStack.svelte';
 	import BotAvatar from './BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import ActionDock from './ActionDock.svelte';
-	import { money, signedMoney, rankLabel } from './format.js';
+	import {
+		money,
+		signedMoney,
+		rankLabel,
+		balanceLabel,
+		coversBoot,
+		hasChips,
+		prefersHiddenBalance,
+		rememberHiddenBalance
+	} from './format.js';
 	import { handName, NAMED_VARIANTS, HAND_RANKINGS } from './hands.js';
 	import { describeChange, type FeedEvent } from './feed.js';
 	import { opponentPoints, SELF_POINT, POT_POINT } from './layout.js';
@@ -91,7 +102,7 @@
 			(user) =>
 				user.connected &&
 				!user.hasLeft &&
-				user.balance >= boot &&
+				coversBoot(user, boot) &&
 				(room.autoReady ? user.ready !== false : user.ready === true)
 		)
 	);
@@ -102,7 +113,7 @@
 			eligible.length >= 2 &&
 			(room.autoReady ||
 				room.usersList
-					.filter((user) => user.connected && !user.hasLeft && user.balance > 0)
+					.filter((user) => user.connected && !user.hasLeft && hasChips(user))
 					.every((user) => user.ready === true))
 	);
 	const result = $derived(room.result);
@@ -132,10 +143,21 @@
 		if (winName && loseName) return `${winName} beats ${loseName}${lowest}`;
 		return 'Won at the show';
 	});
-	const net = $derived(me ? me.balance - room.table : 0);
+	const net = $derived(me ? (me.balance ?? room.table) - room.table : 0);
 	const blindStake = $derived(Math.ceil(room.maxStake / 2));
 	const potCap = $derived(room.potLimit ? room.potLimit * boot : 0);
 	const setPotLimit = (value: number) => void send('setPotLimit', [value]);
+
+	// ——— Chip requests between friends ———
+	const askChips = (to: string, amount: number) => void send('requestChips', [to, amount]);
+	const cancelAsk = () => void send('cancelChipRequest');
+	const answerAsk = (from: string, accept: boolean) =>
+		void send('answerChipRequest', [from, accept]);
+	const incomingAsks = $derived(
+		(room.chipRequests ?? []).filter((request) => request.to === selfId)
+	);
+	const askerName = (id: string) =>
+		room.usersList.find((user) => user.id === id)?.username ?? 'A friend';
 	const seenStake = $derived(room.maxStake);
 
 	// ——— Clock, turn timer and auto-deal ———
@@ -226,11 +248,12 @@
 			const byHeight = ((arenaH - POT_SPACE) / gridRows - 30 - 30) / 0.75;
 			return Math.max(96, Math.min(arenaW * 0.485, byHeight));
 		}
+		// One or two friends get a generous tile, but never so big the table and pot disappear.
 		const [wShare, hShare] = portrait
-			? [n <= 1 ? 0.8 : 0.64, n <= 1 ? 0.46 : 0.33]
+			? [n <= 1 ? 0.72 : 0.64, n <= 1 ? 0.36 : 0.33]
 			: [
-					n <= 1 ? 0.44 : n === 2 ? 0.38 : n === 3 ? 0.25 : 0.2,
-					n <= 2 ? 0.64 : n === 3 ? 0.44 : 0.38
+					n <= 1 ? 0.34 : n === 2 ? 0.3 : n === 3 ? 0.25 : 0.2,
+					n <= 2 ? 0.48 : n === 3 ? 0.44 : 0.38
 				];
 		const byHeight = (arenaH * hShare - 30) / 0.75;
 		return Math.max(96, Math.min(arenaW * wShare, byHeight, 36 * 16));
@@ -279,7 +302,8 @@
 		);
 		if (!blocking.length) return arenaH * 0.52;
 		const below = Math.max(...blocking.map((seat) => seat.top + seatH / 2)) + 34;
-		return Math.min(below + Math.max(0, arenaH - below) / 2, arenaH - 70);
+		// Keep the pot's lines clear of your hand, which rises out of the dock below.
+		return Math.min(below + Math.max(0, arenaH - below) / 2, arenaH - (portrait ? 110 : 150));
 	});
 	const potPoint = () => ({ x: 50, y: (centerTop / arenaH) * 100 - 4 });
 	const pointFor = (playerId: string | undefined) => {
@@ -359,6 +383,18 @@
 	const bet = (amount: number) => room.legalActions.bet && void send('play', [false, amount]);
 	const show = () => room.legalActions.show && void send('show', [room.name]);
 	const sitOut = (value: boolean) => void send('ready', [!value]);
+	const setBalanceHidden = (hidden: boolean) => {
+		rememberHiddenBalance(hidden);
+		void send('setBalanceHidden', [hidden]);
+	};
+	// Carry this device's balance privacy choice onto every table it joins.
+	let balancePrefSynced = false;
+	$effect(() => {
+		if (balancePrefSynced || !me || !connected) return;
+		balancePrefSynced = true;
+		const wanted = prefersHiddenBalance();
+		if (wanted !== (me.balanceHidden === true)) void send('setBalanceHidden', [wanted]);
+	});
 
 	// ——— Bots ———
 	let botLevel = $state<'easy' | 'normal' | 'hard'>('normal');
@@ -477,8 +513,9 @@
 
 	const standings = $derived(
 		[...room.usersList]
-			.sort((a, b) => b.balance - a.balance)
-			.map((user) => ({ user, net: user.balance - room.table }))
+			// Hidden balances sort last and show no result.
+			.sort((a, b) => (b.balance ?? -Infinity) - (a.balance ?? -Infinity))
+			.map((user) => ({ user, net: user.balance === null ? null : user.balance - room.table }))
 	);
 	// Only this hand's story: a new deal wipes the ticker clean.
 	const recent = $derived.by(() => {
@@ -572,9 +609,33 @@
 		<div class="offline" role="status">Reconnecting — actions are paused</div>
 	{/if}
 
-	<main class="arena" class:portrait bind:this={arena}>
+	<main class="arena" class:portrait bind:this={arena} style:--seat-w="{seatW}px">
+		{#if incomingAsks.length}
+			<div class="chip-prompts" role="alert">
+				{#each incomingAsks as ask (ask.from)}
+					<div class="chip-prompt">
+						<span
+							><strong>{askerName(ask.from)}</strong> is low on chips and asked you for
+							<strong>{money(ask.amount)}</strong></span
+						>
+						<div class="chip-prompt-actions">
+							<button
+								type="button"
+								class="give"
+								disabled={!connected || (me?.balance ?? 0) < ask.amount}
+								onclick={() => answerAsk(ask.from, true)}>Give {money(ask.amount)}</button
+							>
+							<button type="button" class="decline" onclick={() => answerAsk(ask.from, false)}
+								>Decline</button
+							>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
 		<div class="felt" aria-hidden="true">
 			<div class="felt-inner"></div>
+			<span class="rail-logo">chaal<small>.tech</small></span>
 		</div>
 
 		{#each opponents as entry, index (entry.user.id)}
@@ -623,7 +684,7 @@
 						/>
 					{/if}
 					<span class="spotlight-name"
-						>{spotlightUser.username} · {money(spotlightUser.balance)}</span
+						>{spotlightUser.username} · {balanceLabel(spotlightUser)}</span
 					>
 				</span>
 			</button>
@@ -707,6 +768,16 @@
 				</div>
 			{:else}
 				<div class="pot" aria-live="polite">
+					{#if room.pot}
+						<span class="pot-chips">
+							<ChipStack
+								amount={room.pot}
+								size={portrait ? '2.3rem' : '3.6rem'}
+								spread={4}
+								stacks={4}
+							/>
+						</span>
+					{/if}
 					<span class="pot-label">Pot</span>
 					{#key room.pot}
 						<span class="pot-amount" in:fly={{ y: -8, duration: 260 }}>{money(room.pot)}</span>
@@ -724,18 +795,20 @@
 					{/if}
 				</div>
 			{/if}
-			<ol class="feed" class:hidden-feed={!!result} aria-label="Recent actions">
-				{#each recent as event, index (event.id)}
-					<li
-						class="feed-line k-{event.kind}"
-						style:opacity={1 - index * 0.32}
-						in:fly={{ y: 6, duration: 220 }}
-					>
-						{event.text}
-					</li>
-				{/each}
-			</ol>
 		</div>
+
+		<!-- Latest actions sit in the top-left corner, clear of the pot and the seats. -->
+		<ol class="feed" class:hidden-feed={!!result} aria-label="Recent actions">
+			{#each recent as event, index (event.id)}
+				<li
+					class="feed-line k-{event.kind}"
+					style:opacity={1 - index * 0.32}
+					in:fly={{ x: -8, duration: 220 }}
+				>
+					{event.text}
+				</li>
+			{/each}
+		</ol>
 
 		{#each flights as flight (flight.id)}
 			<span
@@ -744,8 +817,8 @@
 				style:--fy="{flight.from.y}%"
 				style:--tx="{flight.to.x}%"
 				style:--ty="{flight.to.y}%"
-				aria-hidden="true"
-			></span>
+				aria-hidden="true"><CasinoChip denomination={25} size="100%" decorative /></span
+			>
 		{/each}
 	</main>
 
@@ -771,6 +844,9 @@
 			onbet={bet}
 			onshow={show}
 			onsitout={sitOut}
+			onbalancehidden={setBalanceHidden}
+			onaskchips={askChips}
+			oncancelask={cancelAsk}
 		/>
 	{/if}
 
@@ -874,9 +950,9 @@
 							<li>
 								<span class="place">{index + 1}</span>
 								<span class="who">{user.username}{user.id === selfId ? ' (you)' : ''}</span>
-								<span class="amt">{money(user.balance)}</span>
-								<span class="delta" class:up={delta > 0} class:down={delta < 0}
-									>{signedMoney(delta)}</span
+								<span class="amt">{balanceLabel(user)}</span>
+								<span class="delta" class:up={(delta ?? 0) > 0} class:down={(delta ?? 0) < 0}
+									>{delta === null ? '—' : signedMoney(delta)}</span
 								>
 							</li>
 						{/each}
@@ -988,7 +1064,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.4rem;
-		background: radial-gradient(ellipse 80% 60% at 50% 40%, #16261f 0%, #0c1411 60%, #08100d 100%);
+		/* A dim card room with one warm lamp over the table. */
+		background:
+			radial-gradient(ellipse 60% 48% at 50% 42%, rgb(255 214 150 / 11%), transparent 70%),
+			radial-gradient(ellipse 90% 75% at 50% 45%, #18201b 0%, #0d110e 55%, #060807 100%);
 		padding: 0.5rem max(0.75rem, env(safe-area-inset-right)) 0.75rem
 			max(0.75rem, env(safe-area-inset-left));
 		color: #f1ebdc;
@@ -1110,6 +1189,55 @@
 		color: #ffd9cf;
 		font-size: 0.8rem;
 	}
+	/* A friend asking you for chips: a small card over the top of the table. */
+	.chip-prompts {
+		position: absolute;
+		top: 0.5rem;
+		left: 50%;
+		z-index: 8;
+		display: flex;
+		width: min(24rem, calc(100% - 1rem));
+		flex-direction: column;
+		gap: 0.5rem;
+		translate: -50% 0;
+	}
+	.chip-prompt {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		border: 1px solid rgb(240 200 110 / 55%);
+		border-radius: 1rem;
+		background: rgb(12 20 16 / 96%);
+		padding: 0.8rem 0.9rem;
+		box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 55%);
+		font-size: 0.88rem;
+	}
+	.chip-prompt strong {
+		color: #f4d68c;
+	}
+	.chip-prompt-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+	.chip-prompt-actions button {
+		flex: 1;
+		border-radius: 0.65rem;
+		padding: 0.5rem;
+		font-weight: 700;
+		cursor: pointer;
+	}
+	.chip-prompt .give {
+		background: #f4d68c;
+		color: #24180a;
+	}
+	.chip-prompt .give:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
+	.chip-prompt .decline {
+		border: 1px solid rgb(241 235 220 / 25%);
+		color: #f1ebdc;
+	}
 	/* Arena and felt */
 	.arena {
 		position: relative;
@@ -1118,30 +1246,110 @@
 		min-height: 0;
 		isolation: isolate;
 	}
+	/* Padded leather rail, lit from above, casting a shadow on the floor. */
 	.felt {
+		--rail: clamp(0.9rem, 2.6vw, 2rem);
 		position: absolute;
-		inset: 14% 5% 2% 5%;
+		inset: 6% 4% 3% 4%;
+		/* Seen from a chair: the far side recedes, the near rail comes toward you. */
+		transform: perspective(1400px) rotateX(20deg);
+		transform-origin: 50% 100%;
 		z-index: -1;
-		border-radius: 50% / 50%;
-		background: linear-gradient(160deg, #5a3a1c, #2e1c0c 60%, #4a2f15);
-		padding: clamp(0.5rem, 1.4vw, 1.1rem);
+		/* Racetrack: straight sides with round ends, like a real card table. */
+		border-radius: 999px;
+		background:
+			radial-gradient(ellipse 70% 40% at 50% 0%, rgb(255 225 180 / 16%), transparent 70%),
+			linear-gradient(180deg, #3a2618 0%, #24160d 45%, #150c06 100%);
+		padding: var(--rail);
+		/* The table's wooden edge under the rail, then its shadow on the floor. */
 		box-shadow:
-			0 2rem 4rem rgb(0 0 0 / 55%),
-			inset 0 1px 0 rgb(255 220 160 / 20%);
+			0 0.45rem 0 #22150b,
+			0 0.8rem 0 #120a05,
+			0 0.85rem 0 rgb(255 214 150 / 10%),
+			0 2.8rem 4.5rem -0.5rem rgb(0 0 0 / 80%),
+			0 1.2rem 1.6rem rgb(0 0 0 / 55%),
+			inset 0 2px 1px rgb(255 228 190 / 22%),
+			inset 0 -4px 8px rgb(0 0 0 / 60%),
+			inset 0 0 0 1px rgb(0 0 0 / 55%);
+	}
+	/* Stitching along the middle of the rail. */
+	.felt::before {
+		position: absolute;
+		inset: calc(var(--rail) * 0.45);
+		border: 1px dashed rgb(226 190 130 / 22%);
+		border-radius: inherit;
+		content: '';
+		pointer-events: none;
 	}
 	.felt-inner {
+		position: relative;
 		height: 100%;
+		overflow: hidden;
 		border-radius: inherit;
+		/* Lamp hotspot, cloth weave, then the green baize darkening toward the rail. */
 		background:
-			radial-gradient(ellipse 60% 55% at 50% 45%, rgb(255 255 255 / 7%), transparent 70%),
-			radial-gradient(ellipse at center, #1d6a45 0%, #145034 55%, #0e3b26 100%);
+			radial-gradient(ellipse 55% 50% at 50% 40%, rgb(255 240 200 / 13%), transparent 72%),
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+			radial-gradient(ellipse at 50% 45%, #1f7a4c 0%, #15603a 50%, #0c4127 85%, #08311d 100%);
+		/* Polished wood trim between rail and cloth, and the rail's shadow on the felt. */
 		box-shadow:
-			inset 0 0 0 2px rgb(240 200 120 / 22%),
-			inset 0 0 3rem rgb(0 0 0 / 45%);
+			0 0 0 3px #8a5a2c,
+			0 0 0 4px #c48a4a,
+			0 0 0 6px #4a2c12,
+			inset 0 0.9rem 1.6rem rgb(0 0 0 / 50%),
+			inset 0 0 2.5rem rgb(0 0 0 / 35%);
+	}
+	/* The printed betting line, and the house logo in the middle of the cloth. */
+	.felt-inner::before {
+		position: absolute;
+		inset: clamp(1.4rem, 9%, 3.5rem);
+		border: 1.5px solid rgb(240 210 140 / 16%);
+		border-radius: inherit;
+		content: '';
 	}
 	.arena.portrait .felt {
-		inset: 5% 3% 2% 3%;
-		border-radius: 42% / 26%;
+		--rail: clamp(0.8rem, 3.5vw, 1.2rem);
+		inset: 5% 3% 3% 3%;
+		transform: perspective(1400px) rotateX(14deg);
+	}
+	/* The house name, stamped into the leather at the top right of the rail. */
+	.rail-logo {
+		position: absolute;
+		top: calc(var(--rail) * 0.5);
+		right: 21%;
+		translate: 0 -50%;
+		color: rgb(58 36 20 / 92%);
+		font-size: clamp(0.7rem, calc(var(--rail) * 0.62), 1.15rem);
+		font-weight: 900;
+		letter-spacing: 0.02em;
+		line-height: 1;
+		/* Debossed: a dark top edge and a faint highlight below, like a hot stamp. */
+		text-shadow:
+			0 -1px 0 rgb(0 0 0 / 70%),
+			0 1px 0 rgb(255 226 180 / 16%);
+		white-space: nowrap;
+		user-select: none;
+	}
+	.rail-logo small {
+		font-size: 0.8em;
+		font-weight: 700;
+	}
+	/* Phones: the seats crowd the cloth, so keep the logo, chips and pot compact. */
+	.arena.portrait .center {
+		gap: 0.2rem;
+	}
+	/* Phones: the top is a semicircle, so the stamp sits on the rail at 45° and follows it.
+	   The felt is 94cqw wide, so its radius is 47cqw; the rail's middle is half a rail inside. */
+	.arena.portrait .rail-logo {
+		top: calc(47cqw - (47cqw - var(--rail) / 2) * 0.7071);
+		right: auto;
+		left: calc(47cqw + (47cqw - var(--rail) / 2) * 0.7071);
+		translate: -50% -50%;
+		rotate: 45deg;
+	}
+	.arena.portrait .pot {
+		padding-top: 0;
+		padding-bottom: 0.2rem;
 	}
 	.seat-slot,
 	.empty-seats {
@@ -1192,14 +1400,18 @@
 		top: 52%;
 		width: min(15rem, 44%);
 	}
+	/* The pot sits on the cloth: a stack of chips and the total printed beside it. */
 	.pot {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		border-radius: 1.2rem;
-		background: rgb(4 20 12 / 45%);
-		padding: 0.6rem 1.4rem 0.7rem;
-		box-shadow: inset 0 0 0 1px rgb(240 200 120 / 18%);
+		border-radius: 50%;
+		background: radial-gradient(ellipse at center, rgb(0 0 0 / 22%), transparent 70%);
+		padding: 0.6rem 1.8rem 0.8rem;
+	}
+	.pot-chips {
+		display: block;
+		margin-bottom: 0.45rem;
 	}
 	.pot-label {
 		color: rgb(244 227 181 / 70%);
@@ -1214,7 +1426,9 @@
 		font-variant-numeric: tabular-nums;
 		font-weight: 850;
 		line-height: 1.1;
-		text-shadow: 0 2px 10px rgb(0 0 0 / 45%);
+		text-shadow:
+			0 1px 0 rgb(0 0 0 / 55%),
+			0 2px 12px rgb(0 0 0 / 50%);
 	}
 	.stakes {
 		margin-top: 0.15rem;
@@ -1224,11 +1438,39 @@
 		white-space: nowrap;
 	}
 	.feed {
+		position: absolute;
+		top: 0.4rem;
+		left: 0.6rem;
+		z-index: 4;
 		display: flex;
-		min-height: 3.6rem;
+		max-width: min(17rem, calc(50% - var(--seat-w, 12rem) / 2 - 1rem));
 		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.15rem;
+		text-align: left;
+		pointer-events: none;
+	}
+	.feed-line {
+		text-shadow: 0 1px 3px rgb(0 0 0 / 70%);
+	}
+	/* Phones have no free corner beside the top seat: show just the newest action,
+	   as one pill centred above your hand. */
+	.arena.portrait .feed {
+		top: auto;
+		bottom: 0.4rem;
+		left: 50%;
+		max-width: calc(100% - 1.5rem);
+		translate: -50% 0;
 		align-items: center;
-		gap: 0.1rem;
+	}
+	.arena.portrait .feed-line:not(:first-child) {
+		display: none;
+	}
+	.arena.portrait .feed-line {
+		border-radius: 999px;
+		background: rgb(6 12 10 / 72%);
+		padding: 0.15rem 0.7rem;
+		white-space: nowrap;
 	}
 	.hidden-feed {
 		display: none;
@@ -1387,14 +1629,11 @@
 	.flying-chip {
 		position: absolute;
 		z-index: 6;
-		width: 1.4rem;
-		height: 1.4rem;
+		width: 1.8rem;
+		height: 1.8rem;
 		translate: -50% -50%;
 		border-radius: 999px;
-		background:
-			radial-gradient(circle, #c7382f 0 36%, transparent 37%),
-			repeating-conic-gradient(#f3e6c4 0 30deg, #c7382f 30deg 60deg);
-		box-shadow: 0 3px 8px rgb(0 0 0 / 55%);
+		box-shadow: 0 4px 10px rgb(0 0 0 / 55%);
 		animation: tp-chip 650ms cubic-bezier(0.35, 0.7, 0.3, 1) forwards;
 		pointer-events: none;
 	}

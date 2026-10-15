@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { socket } from '#lib/stores/socket-store.svelte.js';
 	import { displayToast } from '#lib/components/Toasts/index.js';
@@ -13,24 +13,37 @@
 		Users,
 		Copy,
 		Share2,
-		Check
+		Check,
+		Mail
 	} from '@lucide/svelte';
-	import { savedName, saveName, stageJoinName, roomCodeFrom } from './player-name.js';
+	import { club } from '#lib/club/club.svelte.js';
+	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
+	import { profileModal } from '#lib/club/profile-modal.svelte.js';
+	import {
+		stageJoinName,
+		roomCodeFrom,
+		inviteEmailsFrom,
+		looksLikeEmail,
+		stageInviteEmails
+	} from './player-name.js';
 
 	/**
-	 * Everything needed to get to a table: a name, one tap to start (or play bots),
+	 * Everything needed to get to a table: you (from your club profile), one tap to start (or play bots),
 	 * or paste a friend's link. Settings exist, folded away, with sensible defaults.
 	 */
 	let { onclose }: { onclose?: () => void } = $props();
 
-	let name = $state('');
-	let nameInput: HTMLInputElement | undefined = $state();
-	let nameMissing = $state(false);
+	// Members only reach this panel signed in; the table shows the club nickname.
+	const name = $derived(club.member?.nickname ?? '');
 	let busy = $state<'start' | 'bots' | 'join' | 'invite' | null>(null);
 	let link = $state('');
 	let inviteRoom = $state('');
 	let inviteUrl = $state('');
 	let copied = $state(false);
+	let inviteText = $state('');
+	const typedEmails = $derived(inviteEmailsFrom(inviteText));
+	/** Set when an invite link was opened without a name on this device. */
+	let joinCode = $state('');
 	let showSettings = $state(false);
 
 	// Table settings (folded away). Defaults: Teen Patti, ₹1,000, ₹10 boot, 128 × boot limit.
@@ -52,21 +65,14 @@
 	);
 
 	onMount(() => {
-		name = savedName();
+		const code = roomCodeFrom(new URLSearchParams(window.location.search).get('join') ?? '');
+		if (code) joinCode = code;
 		// Connect early so tapping Start is instant. The room page owns the socket afterwards.
 		socket.connect();
-		if (!name) void tick().then(() => nameInput?.focus());
 	});
 
 	function needName() {
-		if (name.trim()) {
-			saveName(name);
-			return false;
-		}
-		nameMissing = true;
-		nameInput?.focus();
-		setTimeout(() => (nameMissing = false), 600);
-		return true;
+		return !name;
 	}
 
 	async function create(withBots: boolean, forInvite = false) {
@@ -132,10 +138,24 @@
 		}
 	}
 
+	async function enterInviteTable() {
+		const invalid = typedEmails.filter((email) => !looksLikeEmail(email));
+		if (invalid.length) {
+			displayToast(`Check this email address: ${invalid[0]}`, 'error');
+			return;
+		}
+		if (typedEmails.length > 10) {
+			displayToast('Invite up to 10 people at a time', 'error');
+			return;
+		}
+		stageInviteEmails(inviteRoom, typedEmails);
+		await join(inviteRoom);
+	}
+
 	async function join(code: string) {
 		if (busy || needName()) return;
 		busy = 'join';
-		const access = await validateRoomAccess(code);
+		const access = await validateRoomAccess(code, socket);
 		busy = null;
 		if (access?.error) {
 			displayToast(access.error, 'error');
@@ -156,102 +176,131 @@
 <div class="start-panel">
 	<header class="head">
 		<span class="suits" aria-hidden="true">♠ ♥ ♦ ♣</span>
-		<h2>Chalo, let’s play!</h2>
-		<p>Your name, one tap, and you’re at the table.</p>
+		<h2>{joinCode ? 'Your seat is waiting' : 'Chalo, let’s play!'}</h2>
+		<p>
+			{joinCode ? 'One tap and you’re in.' : 'One tap and you’re at the table.'}
+		</p>
 	</header>
 
-	<label class="field" class:shake={nameMissing}>
-		<span class="label">Your name</span>
-		<input
-			bind:this={nameInput}
-			bind:value={name}
-			id="username-start"
-			type="text"
-			maxlength="24"
-			placeholder="e.g. Raju from Room 204"
-			autocomplete="nickname"
-			spellcheck="false"
-			onkeydown={(event) => event.key === 'Enter' && create(false)}
-		/>
-	</label>
+	<button type="button" class="playing-as" onclick={() => (profileModal.open = true)}>
+		<CharacterAvatar characterId={club.member?.characterId} size={40} />
+		<span><small>Playing as</small><strong>{name}</strong></span>
+		<span class="edit">Edit</span>
+	</button>
 
-	<div class="actions">
-		<button
-			id="create-room-btn"
-			class="big gold"
-			onclick={() => create(false)}
-			disabled={!socket.connected || !!busy}
-		>
-			<span class="emoji" aria-hidden="true">♠</span>
-			<span>
-				{busy === 'start' ? 'Starting…' : 'Start a table'}
-				<small>Invite your friends next</small>
-			</span>
-		</button>
-		{#if inviteRoom}
-			<section class="invite-card" aria-label="Invite friends">
-				<div class="invite-heading">
-					<span class="invite-icon"><Users size={20} /></span>
-					<div>
-						<h3>Your table is ready</h3>
-						<p>Good cards. Better company.</p>
-					</div>
-				</div>
-				<label class="invite-link"
-					><span>Send your friends this link</span><input
-						aria-label="Your table invite link"
-						readonly
-						value={inviteUrl}
-						onclick={(event) => event.currentTarget.select()}
-					/></label
-				>
-				<div class="invite-tools">
-					<button type="button" onclick={copyInvite}
-						>{#if copied}<Check size={15} />{:else}<Copy size={15} />{/if}{copied
-							? 'Copied!'
-							: 'Copy link'}</button
-					>
-					<button type="button" onclick={shareInvite}><Share2 size={15} />Share invite</button>
-				</div>
-				<span class="invite-note" role="status"
-					>{copied
-						? 'Link copied. Send it to your friends.'
-						: 'Anyone with the link can join your table.'}</span
-				>
-				<button type="button" class="enter-table" disabled={!!busy} onclick={() => join(inviteRoom)}
-					>Go to table<ArrowRight size={16} /></button
-				>
-			</section>
-		{:else}
+	{#if joinCode}
+		<div class="actions">
 			<button
-				type="button"
-				class="invite-card invite-trigger"
-				onclick={() => create(false, true)}
+				id="join-table-btn"
+				class="big gold"
+				onclick={() => join(joinCode)}
 				disabled={!socket.connected || !!busy}
 			>
-				<span class="invite-icon"><Users size={21} /></span>
-				<span class="invite-copy"
-					><strong>{busy === 'invite' ? 'Getting your table ready…' : 'Invite friends'}</strong
-					><small>A private table. Your favourite people.</small></span
-				>
-				<ArrowRight size={18} class="invite-arrow" />
-			</button>
-		{/if}
-		{#if gameType === 'teen-patti'}
-			<button
-				class="big"
-				data-testid="play-bots"
-				onclick={() => create(true)}
-				disabled={!socket.connected || !!busy}
-			>
-				<span class="emoji" aria-hidden="true">🤖</span>
+				<span class="emoji" aria-hidden="true">♠</span>
 				<span>
-					{busy === 'bots' ? 'Dealing…' : 'Play vs bots'}
-					<small>{botCount} {botLevel} bots, cards dealt instantly</small>
+					{busy === 'join' ? 'Taking your seat…' : 'Join the table'}
+					<small>Your friend is waiting</small>
 				</span>
 			</button>
-		{/if}
-	</div>
+			<button type="button" class="text-btn start-own" onclick={() => (joinCode = '')}
+				>Start your own table instead</button
+			>
+		</div>
+	{:else}
+		<div class="actions">
+			<button
+				id="create-room-btn"
+				class="big gold"
+				onclick={() => create(false)}
+				disabled={!socket.connected || !!busy}
+			>
+				<span class="emoji" aria-hidden="true">♠</span>
+				<span>
+					{busy === 'start' ? 'Starting…' : 'Start a table'}
+					<small>Invite your friends next</small>
+				</span>
+			</button>
+			{#if inviteRoom}
+				<section class="invite-card" aria-label="Invite friends">
+					<div class="invite-heading">
+						<span class="invite-icon"><Users size={20} /></span>
+						<div>
+							<h3>Your table is ready</h3>
+							<p>Good cards. Better company.</p>
+						</div>
+					</div>
+					<label class="invite-link"
+						><span>Send your friends this link</span><input
+							aria-label="Your table invite link"
+							readonly
+							value={inviteUrl}
+							onclick={(event) => event.currentTarget.select()}
+						/></label
+					>
+					<div class="invite-tools">
+						<button type="button" onclick={copyInvite}
+							>{#if copied}<Check size={15} />{:else}<Copy size={15} />{/if}{copied
+								? 'Copied!'
+								: 'Copy link'}</button
+						>
+						<button type="button" onclick={shareInvite}><Share2 size={15} />Share invite</button>
+					</div>
+					<span class="invite-note" role="status"
+						>{copied
+							? 'Link copied. Send it to your friends.'
+							: 'Anyone with the link can join your table.'}</span
+					>
+					<label class="invite-link"
+						><span>Or invite by email</span><input
+							bind:value={inviteText}
+							type="text"
+							inputmode="email"
+							autocomplete="off"
+							spellcheck="false"
+							placeholder="friend@example.com, another@example.com"
+							aria-label="Friends' email addresses"
+							onkeydown={(event) => event.key === 'Enter' && enterInviteTable()}
+						/></label
+					>
+					<button type="button" class="enter-table" disabled={!!busy} onclick={enterInviteTable}
+						>{#if typedEmails.length}<Mail size={16} />Send {typedEmails.length === 1
+								? 'invite'
+								: `${typedEmails.length} invites`} &amp; go to table{:else}Go to table<ArrowRight
+								size={16}
+							/>{/if}</button
+					>
+				</section>
+			{:else}
+				<button
+					type="button"
+					class="invite-card invite-trigger"
+					onclick={() => create(false, true)}
+					disabled={!socket.connected || !!busy}
+				>
+					<span class="invite-icon"><Users size={21} /></span>
+					<span class="invite-copy"
+						><strong>{busy === 'invite' ? 'Getting your table ready…' : 'Invite friends'}</strong
+						><small>A private table. Your favourite people.</small></span
+					>
+					<ArrowRight size={18} class="invite-arrow" />
+				</button>
+			{/if}
+			{#if gameType === 'teen-patti'}
+				<button
+					class="big"
+					data-testid="play-bots"
+					onclick={() => create(true)}
+					disabled={!socket.connected || !!busy}
+				>
+					<span class="emoji" aria-hidden="true">🤖</span>
+					<span>
+						{busy === 'bots' ? 'Dealing…' : 'Play vs bots'}
+						<small>{botCount} {botLevel} bots, cards dealt instantly</small>
+					</span>
+				</button>
+			{/if}
+		</div>
+	{/if}
 	{#if !socket.connected}
 		<p class="status" role="status">
 			{socket.error ? socket.error : 'Connecting to the table…'}
@@ -260,129 +309,131 @@
 		</p>
 	{/if}
 
-	<div class="or"><span>or join a friend</span></div>
-	<form
-		class="join"
-		onsubmit={(event) => {
-			event.preventDefault();
-			const code = roomCodeFrom(link);
-			if (code) void join(code);
-			else displayToast('Paste the invite link or room code your friend sent', 'error');
-		}}
-	>
-		<Link2 class="h-4 w-4 opacity-60" />
-		<input
-			bind:value={link}
-			id="roomName"
-			type="text"
-			placeholder="Paste invite link or code"
-			autocomplete="off"
-			spellcheck="false"
-			aria-label="Invite link or room code"
-		/>
-		<button id="join-room-btn" type="submit" disabled={!link.trim() || !!busy} aria-label="Join">
-			{busy === 'join' ? '…' : ''}<ArrowRight class="h-4 w-4" />
-		</button>
-	</form>
+	{#if !joinCode}
+		<div class="or"><span>or join a friend</span></div>
+		<form
+			class="join"
+			onsubmit={(event) => {
+				event.preventDefault();
+				const code = roomCodeFrom(link);
+				if (code) void join(code);
+				else displayToast('Paste the invite link or room code your friend sent', 'error');
+			}}
+		>
+			<Link2 class="h-4 w-4 opacity-60" />
+			<input
+				bind:value={link}
+				id="roomName"
+				type="text"
+				placeholder="Paste invite link or code"
+				autocomplete="off"
+				spellcheck="false"
+				aria-label="Invite link or room code"
+			/>
+			<button id="join-room-btn" type="submit" disabled={!link.trim() || !!busy} aria-label="Join">
+				{busy === 'join' ? '…' : ''}<ArrowRight class="h-4 w-4" />
+			</button>
+		</form>
 
-	<button
-		class="settings-toggle"
-		onclick={() => (showSettings = !showSettings)}
-		aria-expanded={showSettings}
-	>
-		<Settings2 class="h-4 w-4" />
-		<span>Table settings <small>{summary}</small></span>
-		<ChevronDown class="chev h-4 w-4 {showSettings ? 'open' : ''}" />
-	</button>
-	{#if showSettings}
-		<div class="settings">
-			<label class="row">
-				<span>Game</span>
-				<select id="gameType" bind:value={gameType}>
-					<option value="teen-patti">Teen Patti</option>
-					<option value="texas-holdem">Texas Hold’em Poker</option>
-					<option value="blackjack">Blackjack</option>
-					<option value="rummy">13-card Indian Rummy</option>
-				</select>
-			</label>
-			<p class="hint">
-				{gameType === 'texas-holdem'
-					? 'Poker rooms use standard Texas Hold’em rules.'
-					: gameType === 'blackjack'
-						? 'Dealer stands on soft 17. Natural blackjack pays 3:2.'
-						: gameType === 'rummy'
-							? '13-card Points Rummy: two sequences, one of them pure.'
-							: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
-			</p>
-			<label class="row">
-				<span>Starting chips per player</span>
-				<input
-					id="table"
-					type="number"
-					min={minimumBuyIn}
-					max="1000000"
-					step="1"
-					bind:value={table}
-				/>
-			</label>
-			{#if gameType === 'teen-patti'}
-				<div class="row">
-					<span>Boot (chaal starts here)</span>
-					<div class="pills" role="radiogroup" aria-label="Boot amount">
-						{#each BOOTS as amount (amount)}
-							<button
-								type="button"
-								role="radio"
-								aria-checked={boot === amount}
-								class:on={boot === amount}
-								disabled={amount * 20 > table}
-								onclick={() => (boot = amount)}>₹{amount}</button
-							>
-						{/each}
+		<button
+			class="settings-toggle"
+			onclick={() => (showSettings = !showSettings)}
+			aria-expanded={showSettings}
+		>
+			<Settings2 class="h-4 w-4" />
+			<span>Table settings <small>{summary}</small></span>
+			<ChevronDown class="chev h-4 w-4 {showSettings ? 'open' : ''}" />
+		</button>
+		{#if showSettings}
+			<div class="settings">
+				<label class="row">
+					<span>Game</span>
+					<select id="gameType" bind:value={gameType}>
+						<option value="teen-patti">Teen Patti</option>
+						<option value="texas-holdem">Texas Hold’em Poker</option>
+						<option value="blackjack">Blackjack</option>
+						<option value="rummy">13-card Indian Rummy</option>
+					</select>
+				</label>
+				<p class="hint">
+					{gameType === 'texas-holdem'
+						? 'Poker rooms use standard Texas Hold’em rules.'
+						: gameType === 'blackjack'
+							? 'Dealer stands on soft 17. Natural blackjack pays 3:2.'
+							: gameType === 'rummy'
+								? '13-card Points Rummy: two sequences, one of them pure.'
+								: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
+				</p>
+				<label class="row">
+					<span>Starting chips per player</span>
+					<input
+						id="table"
+						type="number"
+						min={minimumBuyIn}
+						max="1000000"
+						step="1"
+						bind:value={table}
+					/>
+				</label>
+				{#if gameType === 'teen-patti'}
+					<div class="row">
+						<span>Boot (chaal starts here)</span>
+						<div class="pills" role="radiogroup" aria-label="Boot amount">
+							{#each BOOTS as amount (amount)}
+								<button
+									type="button"
+									role="radio"
+									aria-checked={boot === amount}
+									class:on={boot === amount}
+									disabled={amount * 20 > table}
+									onclick={() => (boot = amount)}>₹{amount}</button
+								>
+							{/each}
+						</div>
 					</div>
-				</div>
-				<div class="row">
-					<span>Pot limit</span>
-					<div class="pills" role="radiogroup" aria-label="Pot limit">
-						{#each LIMITS as limit (limit)}
-							<button
-								type="button"
-								role="radio"
-								aria-checked={potLimit === limit}
-								class:on={potLimit === limit}
-								onclick={() => (potLimit = limit)}
-								>{limit ? `₹${(limit * boot).toLocaleString('en-IN')}` : 'Off'}</button
-							>
-						{/each}
+					<div class="row">
+						<span>Pot limit</span>
+						<div class="pills" role="radiogroup" aria-label="Pot limit">
+							{#each LIMITS as limit (limit)}
+								<button
+									type="button"
+									role="radio"
+									aria-checked={potLimit === limit}
+									class:on={potLimit === limit}
+									onclick={() => (potLimit = limit)}
+									>{limit ? `₹${(limit * boot).toLocaleString('en-IN')}` : 'Off'}</button
+								>
+							{/each}
+						</div>
 					</div>
-				</div>
-				<div class="row">
-					<span>Bots for “Play vs bots”</span>
-					<div class="pills" role="radiogroup" aria-label="Number of bots">
-						{#each [1, 2, 3, 4, 5] as count (count)}
-							<button
-								type="button"
-								role="radio"
-								aria-checked={botCount === count}
-								class:on={botCount === count}
-								onclick={() => (botCount = count)}>{count}</button
-							>
-						{/each}
+					<div class="row">
+						<span>Bots for “Play vs bots”</span>
+						<div class="pills" role="radiogroup" aria-label="Number of bots">
+							{#each [1, 2, 3, 4, 5] as count (count)}
+								<button
+									type="button"
+									role="radio"
+									aria-checked={botCount === count}
+									class:on={botCount === count}
+									onclick={() => (botCount = count)}>{count}</button
+								>
+							{/each}
+						</div>
+						<div class="pills" role="radiogroup" aria-label="Bot difficulty">
+							{#each ['easy', 'normal', 'hard'] as const as level (level)}
+								<button
+									type="button"
+									role="radio"
+									aria-checked={botLevel === level}
+									class:on={botLevel === level}
+									onclick={() => (botLevel = level)}>{level}</button
+								>
+							{/each}
+						</div>
 					</div>
-					<div class="pills" role="radiogroup" aria-label="Bot difficulty">
-						{#each ['easy', 'normal', 'hard'] as const as level (level)}
-							<button
-								type="button"
-								role="radio"
-								aria-checked={botLevel === level}
-								class:on={botLevel === level}
-								onclick={() => (botLevel = level)}>{level}</button
-							>
-						{/each}
-					</div>
-				</div>
-			{/if}
-		</div>
+				{/if}
+			</div>
+		{/if}
 	{/if}
 </div>
 
@@ -535,18 +586,6 @@
 		color: rgb(241 235 220 / 65%);
 		font-size: 0.95rem;
 	}
-	.field {
-		display: flex;
-		flex-direction: column;
-		gap: 0.35rem;
-	}
-	.label {
-		color: rgb(241 235 220 / 60%);
-		font-size: 0.72rem;
-		font-weight: 700;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-	}
 	input,
 	select {
 		width: 100%;
@@ -562,9 +601,30 @@
 		border-color: rgb(240 200 110 / 70%);
 		outline: none;
 	}
-	.shake input {
-		border-color: #e06a55;
-		animation: tp-shake 0.4s ease;
+	.playing-as {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		border: 1px solid rgb(241 235 220 / 12%);
+		border-radius: 1rem;
+		background: rgb(0 0 0 / 22%);
+		padding: 0.6rem 0.9rem;
+		color: #f1ebdc;
+		text-align: left;
+	}
+	.playing-as span:not(.edit) {
+		display: grid;
+		flex: 1;
+	}
+	.playing-as small {
+		color: rgb(241 235 220 / 60%);
+		font-size: 0.72rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+	.playing-as .edit {
+		color: #e2b862;
+		font-size: 0.85rem;
 	}
 	.actions {
 		display: grid;
@@ -630,6 +690,10 @@
 		color: rgb(241 235 220 / 60%);
 		font-size: 0.82rem;
 		text-align: center;
+	}
+	.start-own {
+		align-self: center;
+		font-size: 0.8rem;
 	}
 	.text-btn {
 		margin-left: 0.3rem;
@@ -757,18 +821,5 @@
 	.pills button:disabled {
 		cursor: not-allowed;
 		opacity: 0.35;
-	}
-	@keyframes tp-shake {
-		25% {
-			transform: translateX(-6px);
-		}
-		75% {
-			transform: translateX(6px);
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.shake input {
-			animation: none;
-		}
 	}
 </style>

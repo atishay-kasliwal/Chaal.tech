@@ -2,14 +2,24 @@ name = "chaal-game"
 main = "server/cloudflare/worker.mjs"
 compatibility_date = "2026-10-14"
 workers_dev = true
+# The MongoDB driver needs Node's net/tls/dns APIs.
+compatibility_flags = ["nodejs_compat"]
 
 [[durable_objects.bindings]]
 name = "ROOMS"
 class_name = "RoomDurableObject"
 
+[[durable_objects.bindings]]
+name = "CLUB"
+class_name = "ClubDirectory"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomDurableObject"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["ClubDirectory"]
 
 [vars]
 ALLOWED_ORIGINS = "https://chaal.tech,https://www.chaal.tech,https://chaal-tech.pages.dev,http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"
@@ -18,3 +28,6 @@ HOST_GRACE_MS = "30000"
 # Email invites (Resend). Set the key with: npx wrangler secret put RESEND_API_KEY --config wrangler.game.toml
 PUBLIC_APP_URL = "https://chaal.tech"
 INVITE_FROM = "Chaal <invites@chaal.tech>"
+# Private club. GOOGLE_CLIENT_ID is public (the browser uses it too); set it here or as a var.
+# MONGODB_URI is a secret: npx wrangler secret put MONGODB_URI --config wrangler.game.toml
+MONGODB_DB = "chaal"

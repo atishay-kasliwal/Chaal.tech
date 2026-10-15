@@ -1,6 +1,7 @@
 import { browser } from '$app/env';
 import { serverConfigError, serverURL } from '#lib/config.js';
-import { GameSocket } from './game-socket.js';
+import { GameSocket, SignInRequired } from './game-socket.js';
+import { club } from '#lib/club/club.svelte.js';
 
 interface Reply {
 	ok: boolean;
@@ -8,7 +9,8 @@ interface Reply {
 	code?: string;
 	roomName?: string;
 }
-const sessionKey = 'teen-patti-session-v1';
+/** Anonymous guest sessions from before the private club. Removed on sight. */
+const legacySessionKey = 'teen-patti-session-v1';
 
 class SocketStore {
 	connected = $state(false);
@@ -16,26 +18,36 @@ class SocketStore {
 	roomData = $state<RoomData | null>(null);
 	error = $state('');
 	private roomName = '';
-	private token: string | undefined;
 	socket: GameSocket;
 
 	constructor() {
-		this.socket = new GameSocket(serverURL, () => this.token, (session) => {
-			this.token = session.token;
-			this.playerId = session.playerId;
-			try {
-				localStorage.setItem(sessionKey, session.token);
-			} catch {
-				/* Refresh recovery requires browser storage. */
+		// The game credential stays in memory; only the club sign-in is kept on the device.
+		this.socket = new GameSocket(
+			serverURL,
+			() => club.token,
+			(session) => {
+				this.playerId = session.playerId;
 			}
-		});
+		);
 		if (browser) {
 			try {
-				this.token = localStorage.getItem(sessionKey) || undefined;
+				localStorage.removeItem(legacySessionKey);
 			} catch {
-				/* Memory-only session if storage is unavailable. */
+				/* Nothing stored. */
 			}
 		}
+		club.onSignOut(() => {
+			this.roomName = '';
+			this.roomData = null;
+			this.playerId = '';
+			this.connected = false;
+			this.error = '';
+			this.socket.forgetSession();
+		});
+		this.socket.on('signInRequired', (error: unknown) => {
+			this.connected = false;
+			club.expire(error instanceof SignInRequired ? error : undefined);
+		});
 		this.socket.on('connect', () => {
 			this.connected = true;
 			this.error = '';
@@ -56,9 +68,23 @@ class SocketStore {
 			this.error = error instanceof Error ? error.message : 'Game connection failed';
 		});
 		this.socket.on('sessionReplaced', () => {
-			this.error = 'This player is connected in another tab. Reconnect here to take over.';
+			this.error = 'You continued in another tab or device. Reconnect here to take over.';
 			this.connected = false;
 		});
+	}
+
+	/** A members-only HTTP call to the game service, with a fresh game credential. */
+	async authorizedFetch(path: string, init: RequestInit = {}) {
+		let token: string;
+		try {
+			token = await this.socket.gameToken();
+		} catch (error) {
+			if (error instanceof SignInRequired) club.expire(error);
+			throw error;
+		}
+		const headers = new Headers(init.headers);
+		headers.set('Authorization', `Bearer ${token}`);
+		return fetch(`${serverURL}${path}`, { ...init, headers });
 	}
 
 	connect() {

@@ -7,7 +7,12 @@ interface User {
 	/** Stable server-issued player ID, independent of the Socket.IO connection. */
 	id: string;
 	username: string;
-	balance: number;
+	/** Null when another player has hidden their balance from the table. */
+	balance: number | null;
+	balanceHidden?: boolean;
+	/** Sent instead of a hidden balance: enough to pay the boot, and any chips at all. */
+	coversBoot?: boolean;
+	hasChips?: boolean;
 	handBet: number | null;
 	seatNumber: number;
 	/** Hidden cards are rank-zero placeholders; no private identities are transmitted. */
@@ -31,8 +36,17 @@ interface User {
 	wager?: number;
 	blackjackOutcome?: string | null;
 }
+interface ChipRequest {
+	from: string;
+	to: string;
+	amount: number;
+}
 interface RoomData {
 	name: string;
+	/** Open chip requests this viewer sent or received. */
+	chipRequests?: ChipRequest[];
+	/** Amounts this viewer may ask for; present only when they are below 10% of the buy-in. */
+	chipRequestAmounts?: number[];
 	selfId: string;
 	hostId: string | null;
 	revision: number;

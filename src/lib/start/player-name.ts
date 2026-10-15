@@ -58,3 +58,38 @@ export function roomCodeFrom(text: string): string | null {
 	const bare = text.trim().toLowerCase();
 	return /^[a-z0-9][a-z0-9-]{2,31}$/.test(bare) ? bare : null;
 }
+
+const pendingInvitesPrefix = 'chaal-pending-invites-v1:';
+
+/** Email addresses typed into the start flow. Invites only go out once you are seated. */
+export function inviteEmailsFrom(text: string): string[] {
+	return text
+		.split(/[\s,;]+/)
+		.map((value) => value.trim().toLowerCase())
+		.filter(Boolean);
+}
+
+export function looksLikeEmail(value: string) {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+export function stageInviteEmails(roomName: string, emails: string[]) {
+	if (!roomName || !emails.length) return;
+	try {
+		sessionStorage.setItem(`${pendingInvitesPrefix}${roomName}`, JSON.stringify(emails));
+	} catch {
+		/* The host can still send invites from the table when session storage is blocked. */
+	}
+}
+
+/** Read and forget the invites staged for this room, so they are sent once. */
+export function takeInviteEmails(roomName: string): string[] {
+	try {
+		const key = `${pendingInvitesPrefix}${roomName}`;
+		const emails = JSON.parse(sessionStorage.getItem(key) ?? '[]');
+		sessionStorage.removeItem(key);
+		return Array.isArray(emails) ? emails.filter((email) => typeof email === 'string') : [];
+	} catch {
+		return [];
+	}
+}

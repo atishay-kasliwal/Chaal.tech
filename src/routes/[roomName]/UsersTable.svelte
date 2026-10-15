@@ -45,10 +45,14 @@
 							<td class="flex items-center gap-1 font-mono">
 								<IndianRupee class="h-3 w-3 opacity-60" />{user.balance}
 							</td>
-							<td class="font-mono {user.balance - table >= 0 ? 'text-success' : 'text-error'}">
+							<td
+								class="font-mono {(user.balance ?? table) - table >= 0
+									? 'text-success'
+									: 'text-error'}"
+							>
 								<div class="flex items-center gap-1">
 									<IndianRupee class="h-3 w-3 opacity-60" />
-									{user.balance - table > 0 ? '+' : ''}{user.balance - table}
+									{(user.balance ?? table) - table > 0 ? '+' : ''}{(user.balance ?? table) - table}
 								</div>
 							</td>
 						</tr>

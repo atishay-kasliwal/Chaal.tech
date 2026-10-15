@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { Eye, Hand, Gavel, Coins, TrendingUp } from '@lucide/svelte';
+	import { Eye, EyeOff, Hand, Gavel, Coins, TrendingUp } from '@lucide/svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import type { MediaParticipant } from '#lib/media/controller.js';
 	import TpCard from './TpCard.svelte';
+	import ChipAsk from './ChipAsk.svelte';
 	import { money, signedMoney } from './format.js';
 
 	let {
@@ -25,7 +26,10 @@
 		onpack,
 		onbet,
 		onshow,
-		onsitout
+		onsitout,
+		onbalancehidden,
+		onaskchips,
+		oncancelask
 	}: {
 		me: User;
 		room: RoomData;
@@ -47,13 +51,16 @@
 		onbet: (amount: number) => void;
 		onshow: () => void;
 		onsitout: (sitOut: boolean) => void;
+		onbalancehidden: (hidden: boolean) => void;
+		onaskchips: (to: string, amount: number) => void;
+		oncancelask: () => void;
 	} = $props();
 
 	const legal = $derived(room.legalActions);
 	const live = $derived(room.isStarted && !room.gameShow);
 	const playing = $derived(live && inHand && !me.isPacked);
 	const low = $derived(legal.minBet ?? 0);
-	const high = $derived(Math.min(legal.maxBet ?? 0, me.balance));
+	const high = $derived(Math.min(legal.maxBet ?? 0, me.balance ?? 0));
 	const canBet = $derived(myTurn && connected && !!legal.bet);
 	const canRaise = $derived(canBet && high > low);
 	const progress = $derived(total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0);
@@ -79,8 +86,24 @@
 			<SeatVideo participant={showMedia ? mediaParticipant : undefined} name={me.username} local />
 		</div>
 		<div class="me-info">
-			<span class="me-name">{me.username} <span class="you">You</span></span>
-			<span class="me-balance">{money(me.balance)}</span>
+			<span class="me-name" title={me.username}>{me.username}</span>
+			<span class="me-balance"
+				>{money(me.balance)}<button
+					type="button"
+					class="privacy"
+					class:on={me.balanceHidden}
+					onclick={() => onbalancehidden(!me.balanceHidden)}
+					disabled={!connected}
+					aria-pressed={me.balanceHidden === true}
+					title={me.balanceHidden
+						? 'Hidden from the table. Tap to show your balance.'
+						: 'Visible to the table. Tap to hide your balance.'}
+					aria-label={me.balanceHidden
+						? 'Show my balance to the table'
+						: 'Hide my balance from the table'}
+					>{#if me.balanceHidden}<EyeOff size={14} />{:else}<Eye size={14} />{/if}</button
+				></span
+			>
 			<span class="me-net" class:up={net > 0} class:down={net < 0} title="Tonight’s result"
 				>{signedMoney(net)} tonight</span
 			>
@@ -161,6 +184,7 @@
 	</div>
 
 	<div class="actions">
+		<ChipAsk {room} selfId={me.id} {connected} onask={onaskchips} oncancel={oncancelask} />
 		<div class="turn-line">
 			{#if playing && myTurn}
 				<span class="turn-text {urgency}">Your turn</span>
@@ -233,17 +257,20 @@
 
 <style>
 	.tp-dock {
-		--card-h: clamp(6rem, 16vh, 9.5rem);
+		/* Kept compact so the table and friends get most of the screen. */
+		--card-h: clamp(4.8rem, 11vh, 7rem);
+		/* Your hand is drawn larger and rises out of the dock toward the table. */
+		--hand-h: calc(var(--card-h) * 1.6);
 		position: relative;
 		display: grid;
-		grid-template-columns: clamp(12rem, 19vw, 19rem) minmax(0, 1fr) minmax(19rem, 27rem);
+		grid-template-columns: clamp(8rem, 11vw, 11rem) minmax(0, 1fr) minmax(18rem, 25rem);
 		align-items: center;
 		gap: clamp(0.75rem, 2vw, 2rem);
 		border: 1px solid rgb(240 209 140 / 14%);
 		border-radius: 1.4rem;
 		background:
 			linear-gradient(180deg, rgb(255 255 255 / 4%), transparent 40%), rgb(14 22 19 / 92%);
-		padding: 0.9rem 1.1rem;
+		padding: 0.6rem 1rem;
 		box-shadow: 0 -0.5rem 2.5rem rgb(0 0 0 / 35%);
 		transition:
 			border-color 300ms ease,
@@ -266,16 +293,16 @@
 		border-radius: 0.85rem;
 	}
 	.me-video :global(.seat-video) {
-		aspect-ratio: 4 / 3;
+		aspect-ratio: 16 / 10;
 	}
 	.me-video :global(.camera-off-label) {
 		display: none;
 	}
 	.me-info {
 		display: grid;
-		grid-template-columns: 1fr auto;
-		align-items: baseline;
-		gap: 0 0.5rem;
+		grid-template-columns: 1fr;
+		gap: 0.1rem;
+		min-width: 0;
 		line-height: 1.2;
 	}
 	.me-name {
@@ -286,21 +313,32 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
-	.you {
-		margin-left: 0.2rem;
-		border-radius: 999px;
-		border: 1px solid rgb(241 235 220 / 30%);
-		padding: 0 0.35rem;
-		color: rgb(241 235 220 / 70%);
-		font-size: 0.6rem;
-		font-weight: 600;
-		vertical-align: middle;
-	}
 	.me-balance {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
 		color: #f0d18c;
 		font-size: 1.05rem;
 		font-variant-numeric: tabular-nums;
 		font-weight: 800;
+	}
+	/* Hide or show your balance to the rest of the table. */
+	.privacy {
+		display: grid;
+		flex-shrink: 0;
+		place-items: center;
+		width: 1.3rem;
+		height: 1.3rem;
+		border-radius: 999px;
+		color: rgb(240 209 140 / 60%);
+		cursor: pointer;
+	}
+	.privacy:hover:not(:disabled) {
+		background: rgb(240 209 140 / 12%);
+		color: #f0d18c;
+	}
+	.privacy.on {
+		color: #9fc9b0;
 	}
 	.me-net {
 		grid-column: 1 / -1;
@@ -322,9 +360,14 @@
 		gap: 0.5rem;
 	}
 	.my-cards {
+		--card-h: var(--hand-h);
 		position: relative;
+		z-index: 3;
 		display: flex;
 		justify-content: center;
+		/* Lift the hand so about 40% of it sits above the dock's top edge. */
+		margin-top: calc(var(--hand-h) * -0.42);
+		filter: drop-shadow(0 0.9rem 1.2rem rgb(0 0 0 / 55%));
 	}
 	.my-cards > :global(.tp-card) {
 		transform-origin: 50% 120%;
@@ -349,17 +392,33 @@
 		justify-content: center;
 		gap: 0.45rem;
 		border-radius: 0.9rem;
-		background: rgb(6 12 10 / 45%);
 		color: #fbf3df;
-		font-size: 1rem;
+		font-size: 1.05rem;
 		font-weight: 750;
 		letter-spacing: 0.02em;
 		cursor: pointer;
-		transition: background 200ms ease;
-		backdrop-filter: blur(1px);
 	}
-	.see-overlay:hover:not(:disabled) {
-		background: rgb(6 12 10 / 25%);
+	/* The whole hand is the button; only a pill sits on it, so the card backs stay visible. */
+	.see-overlay::before {
+		position: absolute;
+		inset: 50% auto auto 50%;
+		z-index: -1;
+		width: 11.5em;
+		height: 2.6em;
+		translate: -50% -50%;
+		border-radius: 999px;
+		background: rgb(6 12 10 / 78%);
+		box-shadow:
+			0 0.4rem 1.2rem rgb(0 0 0 / 45%),
+			inset 0 0 0 1px rgb(247 220 149 / 30%);
+		content: '';
+		transition: background 200ms ease;
+	}
+	.see-overlay:hover:not(:disabled)::before {
+		background: rgb(6 12 10 / 90%);
+	}
+	.see-overlay {
+		isolation: isolate;
 	}
 	.see-overlay:disabled {
 		cursor: default;
@@ -367,6 +426,9 @@
 	.see-overlay.locked {
 		cursor: default;
 		font-size: 0.9rem;
+	}
+	.see-overlay.locked::before {
+		width: 13em;
 	}
 	.pick {
 		border-radius: calc(var(--card-h) * 0.08);
@@ -469,7 +531,7 @@
 	.act {
 		position: relative;
 		display: flex;
-		min-height: 3.6rem;
+		min-height: 3.2rem;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
@@ -569,15 +631,19 @@
 	}
 	@media (max-width: 959px) {
 		.tp-dock {
-			--card-h: clamp(5rem, 12vh, 7rem);
-			grid-template-columns: 9.5rem minmax(0, 1fr);
+			--card-h: clamp(4.2rem, 9vh, 5.5rem);
+			--hand-h: calc(var(--card-h) * 1.45);
+			grid-template-columns: 7rem minmax(0, 1fr);
 			grid-template-areas: 'me cards' 'actions actions';
 			gap: 0.6rem 0.8rem;
 			border-radius: 1.2rem 1.2rem 0 0;
-			padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom));
+			padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
 		}
 		.me {
 			grid-area: me;
+		}
+		.my-cards {
+			margin-top: calc(var(--hand-h) * -0.3);
 		}
 		.cards-zone {
 			grid-area: cards;
@@ -591,9 +657,6 @@
 		.me-name {
 			font-size: 0.75rem;
 		}
-		.you {
-			display: none;
-		}
 		.me-balance {
 			font-size: 0.9rem;
 		}
@@ -601,13 +664,13 @@
 			font-size: 0.65rem;
 		}
 		.act {
-			min-height: 3.3rem;
+			min-height: 2.9rem;
 			font-size: 0.85rem;
 		}
 	}
 	@media (max-width: 420px) {
 		.tp-dock {
-			grid-template-columns: 7.5rem minmax(0, 1fr);
+			grid-template-columns: 6rem minmax(0, 1fr);
 		}
 		.me-video :global(.seat-video-status) {
 			display: none;

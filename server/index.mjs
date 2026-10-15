@@ -11,6 +11,7 @@ import {
 	projection,
 	movements,
 	playing,
+	chipGiftText,
 	GameError
 } from './engine.mjs';
 import { nextBotMove, botDue, pickBotName, botDelay, humansPresent } from './bots/runner.mjs';
@@ -396,6 +397,22 @@ export function createGameServer({
 					action = 'setPotLimit';
 					payload = { potLimit: args[0] };
 					text = null;
+				} else if (event === 'setBalanceHidden') {
+					action = 'setBalanceHidden';
+					payload = { hidden: args[0] };
+					text = null;
+				} else if (event === 'requestChips') {
+					action = 'requestChips';
+					payload = { to: args[0], amount: args[1] };
+					text = null;
+				} else if (event === 'cancelChipRequest') {
+					action = 'cancelChipRequest';
+					payload = {};
+					text = null;
+				} else if (event === 'answerChipRequest') {
+					action = 'answerChipRequest';
+					payload = { from: args[0], accept: args[1] };
+					text = chipGiftText(before, args[0], id, args[1]);
 				} else if (event === 'removeBot') {
 					action = 'removeBot';
 					payload = { botId: args[0] };
@@ -554,6 +571,10 @@ export function createGameServer({
 			'addBot',
 			'removeBot',
 			'setPotLimit',
+			'setBalanceHidden',
+			'requestChips',
+			'cancelChipRequest',
+			'answerChipRequest',
 			'play',
 			'pokerAction',
 			'blackjackBet',
@@ -781,6 +802,11 @@ export function createGameServer({
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+	// This server has no club sign-in. Production runs on the Cloudflare Worker only.
+	if (process.env.NODE_ENV === 'production') {
+		console.error('The Node game server is for local tests only; the private club runs on Cloudflare.');
+		process.exit(1);
+	}
 	process.umask(0o077);
 	const app = createGameServer({
 		database: process.env.GAME_DATABASE || 'data/teen-patti.sqlite',

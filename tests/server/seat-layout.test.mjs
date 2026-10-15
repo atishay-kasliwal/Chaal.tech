@@ -75,6 +75,7 @@ test('Phase 5 module baselines remain intact except approved room layout and var
 			file === 'src/lib/components/PokerSeat.svelte' ||
 			file === 'src/routes/create-room/+page.svelte' ||
 			file === 'src/routes/[roomName]/UsersTable.svelte' ||
+			file === 'src/routes/[roomName]/UsernameForm.svelte' || // Seating is automatic; the name comes from the start panel.
 			file === 'src/routes/[roomName]/types.d.ts' ||
 			file === 'server/index.mjs' ||
 			file === 'server/media.mjs' ||

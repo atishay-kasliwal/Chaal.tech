@@ -5,8 +5,14 @@
 	import { fade, fly } from 'svelte/transition';
 	import StartModal from '#lib/start/StartModal.svelte';
 	import { openStart } from '#lib/start/start-modal.svelte.js';
+	import { onMount } from 'svelte';
+	import { club } from '#lib/club/club.svelte.js';
+	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
+	import ProfilePanel from '#lib/club/ProfilePanel.svelte';
+	import { profileModal } from '#lib/club/profile-modal.svelte.js';
 
 	let { children } = $props();
+	onMount(() => club.start());
 </script>
 
 <nav
@@ -24,7 +30,10 @@
 			/>
 		</a>
 	</div>
-	<div class="navbar-end w-auto shrink-0">
+	<div class="navbar-end w-auto shrink-0 gap-2">
+		{#if club.member && page.route.id !== '/club'}
+			<a href="/club" class="btn btn-ghost rounded-full">Club</a>
+		{/if}
 		{#if page.route.id !== '/create-room'}
 			<!-- Opens the pop-up; the link still works without JavaScript. -->
 			<a
@@ -35,6 +44,15 @@
 					openStart();
 				}}>Start a table</a
 			>
+		{/if}
+		{#if club.member}
+			<button
+				class="rounded-full"
+				onclick={() => (profileModal.open = true)}
+				aria-label="Your profile: {club.member.nickname}"
+			>
+				<CharacterAvatar characterId={club.member.characterId} size={38} />
+			</button>
 		{/if}
 	</div>
 </nav>
@@ -58,6 +76,7 @@
 </main>
 
 <StartModal />
+<ProfilePanel />
 
 <style>
 	.brand-logo {

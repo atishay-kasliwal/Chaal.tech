@@ -3,8 +3,11 @@
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import type { MediaParticipant } from '#lib/media/controller.js';
 	import TpCard from './TpCard.svelte';
+	import CasinoChip from '#lib/components/CasinoChip.svelte';
+	import ChipStack from '#lib/components/ChipStack.svelte';
 	import BotAvatar from './BotAvatar.svelte';
-	import { money } from './format.js';
+	import { money, balanceLabel, coversBoot } from './format.js';
+	import { onMount } from 'svelte';
 
 	let {
 		user,
@@ -45,6 +48,16 @@
 		onremove?: () => void;
 	} = $props();
 
+	/** Phones have less felt between seats and pot, so bets draw at most two stacks there. */
+	let narrow = $state(false);
+	onMount(() => {
+		const query = window.matchMedia('(max-width: 639px)');
+		const update = () => (narrow = query.matches);
+		update();
+		query.addEventListener('change', update);
+		return () => query.removeEventListener('change', update);
+	});
+
 	const away = $derived(user.hasLeft || !user.connected);
 	const revealed = $derived(user.cardsInHand.some((card) => card.rank > 0));
 	const progress = $derived(total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0);
@@ -56,7 +69,7 @@
 				? 'Left'
 				: 'Away'
 			: !inHand
-				? user.balance < boot
+				? !coversBoot(user, boot)
 					? 'Out of chips'
 					: user.ready === false
 						? 'Sitting out'
@@ -115,6 +128,16 @@
 					>{status}</span
 				>
 			{/if}
+			<!-- Name tag: top right of the tile, with a chip beside the stack size. -->
+			<div class="plate">
+				<span class="name" title={user.username}>
+					{#if host}<Crown class="crown h-3 w-3" aria-label="Host" />{/if}
+					{user.username}
+				</span>
+				<span class="balance" class:hidden-balance={user.balance === null}
+					><CasinoChip denomination={100} size="0.95em" decorative />{balanceLabel(user)}</span
+				>
+			</div>
 			{#if active && total > 0}
 				<span class="clock {urgency}">{seconds}s</span>
 			{/if}
@@ -144,17 +167,14 @@
 		</div>
 	</div>
 
-	<div class="plate">
-		<span class="name" title={user.username}>
-			{#if host}<Crown class="crown h-3.5 w-3.5" aria-label="Host" />{/if}
-			{user.username}
-		</span>
-		<span class="balance">{money(user.balance)}</span>
-	</div>
-
 	{#if inHand && (user.handBet ?? 0) > 0 && !showdown}
 		<span class="bet" aria-label="{money(user.handBet)} in the pot">
-			<span class="chip" aria-hidden="true"></span>{money(user.handBet)}
+			<ChipStack
+				amount={user.handBet ?? 0}
+				size="var(--bet-chip)"
+				height={4}
+				stacks={narrow ? 2 : 3}
+			/><span class="bet-amount">{money(user.handBet)}</span>
 		</span>
 	{/if}
 </div>
@@ -162,6 +182,7 @@
 <style>
 	.tp-seat {
 		--card-h: clamp(1.9rem, calc(var(--seat-w, 12rem) * 0.19), 3.6rem);
+		--bet-chip: 2.8rem;
 		position: relative;
 		display: flex;
 		width: 100%;
@@ -177,8 +198,21 @@
 		width: 100%;
 		border-radius: 1.05rem;
 		padding: 3px;
-		background: conic-gradient(var(--ring-color) calc(var(--p) * 1turn), rgb(255 255 255 / 7%) 0)
-			border-box;
+		/* Turn timer sweeps over a brushed-gold bezel. */
+		background:
+			conic-gradient(var(--ring-color) calc(var(--p) * 1turn), transparent 0) border-box,
+			linear-gradient(
+					160deg,
+					rgb(255 236 200 / 45%),
+					rgb(150 110 60 / 30%) 35%,
+					rgb(40 28 16 / 60%) 70%,
+					rgb(200 160 100 / 35%)
+				)
+				border-box;
+		/* The tile stands off the felt and casts a shadow onto it. */
+		box-shadow:
+			0 1.3rem 2rem -0.7rem rgb(0 0 0 / 80%),
+			0 0.35rem 0.7rem rgb(0 0 0 / 40%);
 		transition: box-shadow 300ms ease;
 	}
 	.ring.calm {
@@ -192,8 +226,9 @@
 	}
 	.active .ring {
 		box-shadow:
+			0 1.3rem 2rem -0.7rem rgb(0 0 0 / 80%),
 			0 0 0 1px rgb(255 255 255 / 6%),
-			0 0 1.6rem rgb(233 191 98 / 35%);
+			0 0 1.8rem rgb(233 191 98 / 40%);
 	}
 	.winner .ring {
 		background: linear-gradient(135deg, #f7df9d, #c08a34);
@@ -204,6 +239,25 @@
 		overflow: hidden;
 		border-radius: 0.85rem;
 		background: #0e1714;
+	}
+	/* Glass over the video: a sheen across the top and a soft vignette at the bottom. */
+	.frame::after {
+		position: absolute;
+		inset: 0;
+		z-index: 2;
+		border-radius: inherit;
+		background: linear-gradient(
+			180deg,
+			rgb(255 255 255 / 13%) 0%,
+			rgb(255 255 255 / 3%) 30%,
+			transparent 55%,
+			rgb(0 0 0 / 28%) 100%
+		);
+		box-shadow:
+			inset 0 1px 0 rgb(255 255 255 / 22%),
+			inset 0 0 0 1px rgb(255 255 255 / 6%);
+		content: '';
+		pointer-events: none;
 	}
 	.tp-seat .frame :global(.seat-video) {
 		aspect-ratio: 4 / 3;
@@ -276,7 +330,7 @@
 	.clock {
 		position: absolute;
 		z-index: 3;
-		top: 0.4rem;
+		top: 2.1rem;
 		right: 0.4rem;
 		border-radius: 999px;
 		background: rgb(8 14 12 / 82%);
@@ -303,15 +357,23 @@
 		background: rgb(5 9 8 / 55%);
 		color: rgb(233 226 207 / 70%);
 	}
+	/* Name tag over the top-right of the tile: name, then chip and stack size. */
 	.plate {
+		position: absolute;
+		z-index: 3;
+		top: 0.4rem;
+		right: 0.4rem;
 		display: flex;
-		width: 100%;
+		max-width: calc(100% - 5.5rem);
 		min-width: 0;
-		align-items: baseline;
-		justify-content: space-between;
+		align-items: center;
 		gap: 0.4rem;
-		padding-inline: 0.2rem;
+		border-radius: 999px;
+		background: rgb(8 14 12 / 78%);
+		padding: 0.15rem 0.55rem 0.15rem 0.6rem;
 		line-height: 1.15;
+		box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
+		backdrop-filter: blur(6px);
 	}
 	.name {
 		display: inline-flex;
@@ -330,11 +392,19 @@
 		color: #e9bf62;
 	}
 	.balance {
+		display: inline-flex;
 		flex-shrink: 0;
+		align-items: center;
+		gap: 0.2rem;
 		color: #f0d18c;
 		font-size: 0.82rem;
 		font-variant-numeric: tabular-nums;
 		font-weight: 700;
+	}
+	.balance.hidden-balance {
+		color: rgb(240 209 140 / 55%);
+		font-style: italic;
+		font-weight: 600;
 	}
 	/* Cards ride on the video so faces keep the whole tile. */
 	.hand {
@@ -375,31 +445,25 @@
 		background: linear-gradient(135deg, #f7df9d, #c08a34);
 		color: #24180a;
 	}
+	/* This hand's bet: real chips on the felt in front of the seat, amount beside them. */
 	.bet {
 		position: absolute;
-		top: calc(100% + 0.25rem);
+		top: calc(100% + 0.35rem);
 		left: 50%;
 		translate: -50% 0;
 		white-space: nowrap;
 		display: inline-flex;
-		align-items: center;
-		gap: 0.3rem;
-		border-radius: 999px;
-		background: rgb(6 12 10 / 62%);
-		padding: 0.1rem 0.55rem 0.1rem 0.2rem;
+		align-items: flex-end;
+		gap: 0.35rem;
 		color: #f4e3b5;
 		font-size: 0.72rem;
 		font-variant-numeric: tabular-nums;
 		font-weight: 700;
 	}
-	.chip {
-		width: 0.95rem;
-		height: 0.95rem;
+	.bet-amount {
 		border-radius: 999px;
-		background:
-			radial-gradient(circle, #c7382f 0 38%, transparent 39%),
-			repeating-conic-gradient(#f3e6c4 0 30deg, #c7382f 30deg 60deg);
-		box-shadow: 0 1px 2px rgb(0 0 0 / 50%);
+		background: rgb(6 12 10 / 62%);
+		padding: 0.05rem 0.45rem;
 	}
 	.packed,
 	.away {
@@ -416,6 +480,9 @@
 	}
 	@media (max-width: 639px) {
 		.tp-seat {
+			--bet-chip: 1.9rem;
+		}
+		.tp-seat {
 			gap: 0.15rem;
 		}
 		.hand {
@@ -431,11 +498,6 @@
 		.balance {
 			font-size: 0.68rem;
 		}
-		.plate {
-			flex-direction: column;
-			align-items: center;
-			gap: 0;
-		}
 		.tp-seat .frame :global(.seat-video-status) {
 			display: none;
 		}
@@ -445,8 +507,15 @@
 			padding: 0.05rem 0.35rem;
 			font-size: 0.5rem;
 		}
-		.clock {
+		.plate {
 			top: 0.2rem;
+			right: 0.2rem;
+			max-width: calc(100% - 3.5rem);
+			gap: 0.25rem;
+			padding: 0.05rem 0.4rem;
+		}
+		.clock {
+			top: 1.45rem;
 			right: 0.2rem;
 			padding: 0.05rem 0.35rem;
 			font-size: 0.6rem;

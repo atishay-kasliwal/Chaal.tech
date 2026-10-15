@@ -1,8 +1,27 @@
 import { roomName } from '../engine.mjs';
-import { issueSession, verifySession, roomCodeFor, tokenFromWebSocketProtocols } from './security.mjs';
+import {
+	issueClubToken,
+	verifyClubToken,
+	issueGameToken,
+	verifyGameToken,
+	roomCodeFor,
+	tokenFromWebSocketProtocols
+} from './security.mjs';
 import { RoomDurableObject } from './room-object.mjs';
+import { ClubDirectory, clubDirectory } from './club-directory.mjs';
+import {
+	ClubError,
+	withClubDatabase,
+	claimMembership,
+	memberById,
+	assertActive,
+	publicProfile,
+	updateProfile,
+	activeRoster
+} from '../club/members.mjs';
+import { verifyGoogleCredential } from '../club/google.mjs';
 
-export { RoomDurableObject };
+export { RoomDurableObject, ClubDirectory };
 
 const DEFAULT_ORIGINS = [
 	'https://chaal.tech',
@@ -45,8 +64,43 @@ function bearer(request) {
 	return value.startsWith('Bearer ') ? value.slice(7) : null;
 }
 
+/** A game credential: the stable player plus the member it was issued to. */
 async function authenticatedPlayer(request, env) {
-	return verifySession(bearer(request), env.SESSION_SECRET);
+	return verifyGameToken(bearer(request), env.SESSION_SECRET);
+}
+
+/** Trusted identity for the room object. Only the Worker sets these headers. */
+function identityHeaders(headers, player) {
+	headers.set('x-chaal-player-id', player.playerId);
+	headers.set('x-chaal-member-id', player.memberId);
+	headers.set('x-chaal-nickname', encodeURIComponent(player.nickname));
+	headers.set('x-chaal-character', player.characterId);
+	headers.set('x-chaal-auth-exp', String(player.expiresAt));
+	return headers;
+}
+
+/** The signed-in member, read fresh from the guest list. Fails closed when the list is unreachable. */
+async function signedInMember(request, env, db) {
+	const club = await verifyClubToken(bearer(request), env.SESSION_SECRET);
+	if (!club) throw new ClubError('Sign in to continue.', 'SIGN_IN', 401);
+	const member = assertActive(await memberById(db, club.memberId));
+	if ((member.sessionVersion ?? 1) !== club.version) throw new ClubError('Sign in again to continue.', 'SIGN_IN', 401);
+	return member;
+}
+
+function clubFailure(error, origin, env) {
+	if (error instanceof ClubError) return response({ ok: false, code: error.code, error: error.message }, error.status, origin, env);
+	console.error('Club request failed:', error?.name ?? 'Error');
+	return response({ ok: false, code: 'CLUB_UNAVAILABLE', error: 'The club is unreachable right now. Try again.' }, 503, origin, env);
+}
+
+/** Lobby roster is cosmetic: a minute-old copy is fine and spares the database. */
+let rosterCache = { at: 0, roster: [] };
+async function roster(env) {
+	if (Date.now() - rosterCache.at < 60_000) return rosterCache.roster;
+	const fresh = await withClubDatabase(env, activeRoster);
+	rosterCache = { at: Date.now(), roster: fresh };
+	return fresh;
 }
 
 function roomStub(env, name) {
@@ -84,20 +138,75 @@ export default {
 			return response({ ok: true, service: 'chaal-game' }, 200, origin, env);
 		if (url.pathname === '/ready' && request.method === 'GET')
 			return response({ ok: true, storage: 'durable-objects' }, 200, origin, env);
-		if (url.pathname === '/session' && request.method === 'POST') {
-			if (!env.SESSION_SECRET) return response({ error: 'Game service is not configured' }, 503, origin, env);
-			const previousToken = bearer(request);
-			const existingPlayer = await verifySession(previousToken, env.SESSION_SECRET);
-			if (existingPlayer) return response({ token: previousToken, playerId: existingPlayer }, 200, origin, env);
+		if (!env.SESSION_SECRET && url.pathname !== '/health' && url.pathname !== '/ready')
+			return response({ error: 'Game service is not configured' }, 503, origin, env);
+		if (url.pathname === '/auth/google' && request.method === 'POST') {
+			// Browsers always send Origin on this POST; a missing one is not a signed-in page.
+			if (!originAllowed(request, env, true)) return response({ error: 'Origin not allowed' }, 403, origin, env);
 			try {
-				return response(await issueSession(env.SESSION_SECRET), 200, origin, env);
-			} catch {
-				return response({ error: 'Game service is not configured' }, 503, origin, env);
+				const body = await jsonBody(request);
+				const identity = await verifyGoogleCredential(body?.credential, env);
+				const member = await withClubDatabase(env, (db) => claimMembership(db, identity));
+				const clubToken = await issueClubToken(env.SESSION_SECRET, {
+					memberId: String(member._id),
+					version: member.sessionVersion ?? 1
+				});
+				return response({ ok: true, clubToken, member: publicProfile(member) }, 200, origin, env);
+			} catch (error) {
+				return clubFailure(error, origin, env);
 			}
 		}
+		if (url.pathname === '/me' && (request.method === 'GET' || request.method === 'POST')) {
+			try {
+				const body = request.method === 'POST' ? await jsonBody(request) : null;
+				const member = await withClubDatabase(env, async (db) => {
+					const current = await signedInMember(request, env, db);
+					if (request.method === 'GET') return current;
+					return updateProfile(db, String(current._id), body?.profile, { onboard: body?.onboard === true });
+				});
+				if (request.method === 'POST') rosterCache.at = 0;
+				return response({ ok: true, member: publicProfile(member) }, 200, origin, env);
+			} catch (error) {
+				return clubFailure(error, origin, env);
+			}
+		}
+		if (url.pathname === '/session' && request.method === 'POST') {
+			// Exchange the club sign-in for a five-minute game credential, after a fresh membership check.
+			try {
+				const member = await withClubDatabase(env, (db) => signedInMember(request, env, db));
+				const profile = publicProfile(member);
+				const session = await issueGameToken(env.SESSION_SECRET, profile);
+				return response({ ...session, member: profile }, 200, origin, env);
+			} catch (error) {
+				return clubFailure(error, origin, env);
+			}
+		}
+		if (url.pathname === '/club' && request.method === 'GET') {
+			const player = await authenticatedPlayer(request, env);
+			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
+			try {
+				const [members, lobby] = await Promise.all([
+					roster(env),
+					clubDirectory(env).fetch('https://club.internal/lobby').then((result) => result.json())
+				]);
+				return response({ ok: true, members, ...lobby }, 200, origin, env);
+			} catch (error) {
+				return clubFailure(error, origin, env);
+			}
+		}
+		if ((url.pathname === '/club/heartbeat' || url.pathname === '/club/leave') && request.method === 'POST') {
+			const player = await authenticatedPlayer(request, env);
+			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
+			await clubDirectory(env).fetch(`https://club.internal/${url.pathname.slice('/club/'.length)}`, {
+				method: 'POST',
+				body: JSON.stringify({ memberId: player.memberId })
+			});
+			return response({ ok: true }, 200, origin, env);
+		}
 		if (url.pathname === '/rooms' && request.method === 'POST') {
-			const playerId = await authenticatedPlayer(request, env);
-			if (!playerId) return response({ error: 'Invalid session' }, 401, origin, env);
+			const player = await authenticatedPlayer(request, env);
+			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
+			const playerId = player.playerId;
 			const body = await jsonBody(request);
 			if (!body || body.event !== 'createRoom' || !Array.isArray(body.args) || !body.meta?.commandId)
 				return response({ error: 'Invalid room request' }, 400, origin, env);
@@ -106,7 +215,7 @@ export default {
 				const stub = roomStub(env, name);
 				const internal = new Request('https://room.internal/create', {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json', 'x-chaal-player-id': playerId },
+					headers: identityHeaders(new Headers({ 'Content-Type': 'application/json' }), player),
 					body: JSON.stringify({ name, args: body.args, meta: body.meta })
 				});
 				const result = await stub.fetch(internal);
@@ -119,6 +228,9 @@ export default {
 
 		const roomMatch = /^\/room\/([^/]+)$/.exec(url.pathname);
 		if (roomMatch && request.method === 'GET') {
+			// Even whether a room exists is for members only.
+			if (!(await authenticatedPlayer(request, env)))
+				return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
 			try {
 				const name = roomName(decodeURIComponent(roomMatch[1]));
 				const result = await roomStub(env, name).fetch('https://room.internal/room');
@@ -134,12 +246,11 @@ export default {
 			// Browsers always send Origin; non-browser clients may omit it but still need a signed token.
 			if (!originAllowed(request, env)) return response({ error: 'Origin not allowed' }, 403, origin, env);
 			const token = tokenFromWebSocketProtocols(request.headers.get('Sec-WebSocket-Protocol'));
-			const playerId = await verifySession(token, env.SESSION_SECRET);
-			if (!playerId) return response({ error: 'Invalid session' }, 401, origin, env);
+			const player = await verifyGameToken(token, env.SESSION_SECRET);
+			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
 			try {
 				const name = roomName(decodeURIComponent(socketMatch[1]));
-				const headers = new Headers(request.headers);
-				headers.set('x-chaal-player-id', playerId);
+				const headers = identityHeaders(new Headers(request.headers), player);
 				headers.set('Sec-WebSocket-Protocol', 'chaal.v1');
 				return await roomStub(env, name).fetch(new Request(request, { headers }));
 			} catch {

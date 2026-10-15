@@ -1,8 +1,11 @@
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
-import { readdir } from 'node:fs/promises';
+import { readdir, writeFile, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import { generateKeyPair, exportJWK } from 'jose';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const testSecret = 'cloudflare-worker-test-secret-0123456789abcdef';
@@ -34,10 +37,26 @@ function run(command, args, options = {}) {
 const [port, inspectorPort] = await Promise.all([freePort(), freePort()]);
 const endpoint = `http://127.0.0.1:${port}`;
 const wrangler = path.join(root, 'node_modules/.bin/wrangler');
+// A throwaway guest list and a stand-in for Google's signing key: the real sign-in path, offline.
+const mongo = await MongoMemoryServer.create();
+const clientId = 'chaal-test.apps.googleusercontent.com';
+const { publicKey, privateKey } = await generateKeyPair('RS256', { extractable: true });
+const publicJwk = { ...(await exportJWK(publicKey)), kid: 'test-key', alg: 'RS256', use: 'sig' };
+const privateJwk = { ...(await exportJWK(privateKey)), kid: 'test-key', alg: 'RS256' };
+const varsDir = await mkdtemp(path.join(tmpdir(), 'chaal-cf-test-'));
+const varsFile = path.join(varsDir, 'test.vars');
+await writeFile(varsFile, [
+	`SESSION_SECRET=${testSecret}`,
+	`MONGODB_URI=${mongo.getUri()}`,
+	'MONGODB_DB=chaal-cf-test',
+	`GOOGLE_CLIENT_ID=${clientId}`,
+	'ALLOW_TEST_SIGN_IN=true',
+	`TEST_GOOGLE_JWKS='${JSON.stringify({ keys: [publicJwk] })}'`
+].join('\n'), { mode: 0o600 });
 const worker = spawn(wrangler, [
 	'dev', '--config', 'wrangler.game.toml', '--local', '--ip', '127.0.0.1',
 	'--port', String(port), '--inspector-port', String(inspectorPort),
-	'--var', `SESSION_SECRET:${testSecret}`, '--log-level', 'error'
+	'--env-file', varsFile, '--persist-to', path.join(varsDir, 'state'), '--log-level', 'error'
 ], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
 let workerOutput = '';
 worker.stdout.on('data', (chunk) => { workerOutput += chunk.toString(); });
@@ -72,7 +91,14 @@ try {
 		.filter((name) => name.endsWith('.test.mjs'))
 		.map((name) => path.join('tests/cloudflare', name));
 	const result = await run(process.execPath, ['--test', ...files], {
-		env: { ...process.env, CHAAL_CF_TEST_URL: endpoint }
+		env: {
+			...process.env,
+			CHAAL_CF_TEST_URL: endpoint,
+			CHAAL_CF_TEST_SECRET: testSecret,
+			CHAAL_CF_TEST_MONGO: mongo.getUri(),
+			CHAAL_CF_TEST_CLIENT_ID: clientId,
+			CHAAL_CF_TEST_GOOGLE_KEY: JSON.stringify(privateJwk)
+		}
 	});
 	process.stdout.write(result.stdout);
 	process.stderr.write(result.stderr);
@@ -85,4 +111,6 @@ try {
 	process.exitCode = 1;
 } finally {
 	await stopWorker();
+	await mongo.stop();
+	await rm(varsDir, { recursive: true, force: true });
 }

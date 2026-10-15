@@ -1,12 +1,24 @@
 /* global WebSocketPair */
 
 import { createGameRoom, listGameTypes } from '../games/index.mjs';
-import { newRoom, roomName, transition, projection, movements, playing, GameError } from '../engine.mjs';
+import {
+	newRoom,
+	roomName,
+	transition,
+	projection,
+	movements,
+	playing,
+	chipGiftText,
+	GameError
+} from '../engine.mjs';
 import { shuffledDeck } from '../classic.mjs';
 import { freshRummyDeck } from '../rummy/rummy.mjs';
 import { getVariant, listVariants } from '../variants/index.mjs';
 import { secureRandomInt, toHex } from '../random.mjs';
 import { inviteEmails, planInvites, inviteMessage, sendWithResend } from './invites.mjs';
+import { verifyGameToken } from './security.mjs';
+import { clubDirectory } from './club-directory.mjs';
+import { withClubDatabase, invitableEmails } from '../club/members.mjs';
 import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
 
 const secureRandom = () => secureRandomInt(0x1_0000_0000) / 0x1_0000_0000;
@@ -19,7 +31,8 @@ const ROOM_RETENTION_MS = 365 * DAY_MS;
 const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
 	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
-	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit'
+	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit',
+	'setBalanceHidden', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
 ]);
 
 const hash = async (value) => {
@@ -45,6 +58,14 @@ const shuffle = (cards) => {
 };
 const productionDeck = (gameType) =>
 	gameType === 'rummy' ? shuffle(freshRummyDeck()) : shuffledDeck();
+
+function safeDecode(value) {
+	try {
+		return decodeURIComponent(value ?? '');
+	} catch {
+		return '';
+	}
+}
 
 function json(data, status = 200, headers = {}) {
 	return new Response(JSON.stringify(data), {
@@ -176,6 +197,11 @@ export class RoomDurableObject {
 			});
 		}
 		if (url.pathname === '/create' && request.method === 'POST') return this.createRoom(request);
+		// The lobby asks directly when a table has been quiet, in case a report was missed.
+		if (url.pathname === '/lobby-summary' && request.method === 'GET') {
+			const room = this.room()?.snapshot;
+			return json(room ? this.lobbySummary(room) : { name: null, closed: true });
+		}
 		const socketMatch = /^\/socket\/([^/]+)$/.exec(url.pathname);
 		if (socketMatch && request.headers.get('Upgrade')?.toLowerCase() === 'websocket') {
 			const stored = this.room();
@@ -219,6 +245,7 @@ export class RoomDurableObject {
 			room.revision = 1;
 			const result = { ok: true, roomName: room.name, revision: room.revision, handId: room.handId };
 			this.commit(room, playerId, meta.commandId, commandFingerprint, result, null, null);
+			this.reportToLobby(room);
 			await this.scheduleAlarm();
 			return json(result);
 		} catch (error) {
@@ -233,7 +260,8 @@ export class RoomDurableObject {
 
 	openSocket(request) {
 		const playerId = request.headers.get('x-chaal-player-id');
-		if (!UUID_PATTERN.test(playerId ?? '')) return json({ error: 'Invalid session' }, 401);
+		const authExp = Number(request.headers.get('x-chaal-auth-exp'));
+		if (!UUID_PATTERN.test(playerId ?? '') || !(authExp > Date.now())) return json({ error: 'Invalid session' }, 401);
 		const stored = this.room();
 		if (!stored) return json({ error: 'Room not found' }, 404);
 		const pair = new WebSocketPair();
@@ -241,6 +269,9 @@ export class RoomDurableObject {
 		this.ctx.acceptWebSocket(server, [playerId]);
 		server.serializeAttachment({
 			playerId,
+			memberId: request.headers.get('x-chaal-member-id') ?? '',
+			nickname: safeDecode(request.headers.get('x-chaal-nickname')).slice(0, 24),
+			authExp,
 			roomName: null,
 			createdAt: Date.now(),
 			windowStartedAt: Date.now(),
@@ -279,6 +310,11 @@ export class RoomDurableObject {
 		const attachment = socket.deserializeAttachment();
 		if (!attachment?.playerId) return socket.close(1008, 'Invalid session');
 		try {
+			if (packet.event === 'renewAuth') {
+				this.sendAck(socket, packet.id, await this.renewAuth(socket, packet.args?.[0]));
+				return;
+			}
+			if (this.authExpired(socket, attachment)) return;
 			if (packet.event === 'resumeRoom') {
 				const reply = await this.resume(socket, attachment, packet.args?.[0]);
 				this.sendAck(socket, packet.id, reply);
@@ -373,10 +409,12 @@ export class RoomDurableObject {
 			if (attachment.roomName && attachment.roomName !== name)
 				throw new GameError('Leave your current room first');
 			action = 'join';
-			payload = { username: args[0] };
+			// The table shows the member's club nickname, never a name the browser picked.
+			const username = attachment.nickname || args[0];
+			payload = { username };
 			text = before.gameType && before.gameType !== 'teen-patti'
 				? null
-				: `${args[0]} has joined the Game`;
+				: `${username} has joined the Game`;
 		} else {
 			if ((event === 'start' || event === 'show') && args[0] !== name)
 				throw new GameError('Wrong room', 'FORBIDDEN');
@@ -421,6 +459,22 @@ export class RoomDurableObject {
 				action = 'setPotLimit';
 				payload = { potLimit: args[0] };
 				text = null;
+			} else if (event === 'setBalanceHidden') {
+				action = 'setBalanceHidden';
+				payload = { hidden: args[0] };
+				text = null;
+			} else if (event === 'requestChips') {
+				action = 'requestChips';
+				payload = { to: args[0], amount: args[1] };
+				text = null;
+			} else if (event === 'cancelChipRequest') {
+				action = 'cancelChipRequest';
+				payload = {};
+				text = null;
+			} else if (event === 'answerChipRequest') {
+				action = 'answerChipRequest';
+				payload = { from: args[0], accept: args[1] };
+				text = chipGiftText(before, args[0], playerId, args[1]);
 			} else if (event === 'removeBot') {
 				action = 'removeBot';
 				payload = { botId: args[0] };
@@ -512,8 +566,9 @@ export class RoomDurableObject {
 	sendRoomView(socket, name) {
 		try {
 			const room = this.room()?.snapshot;
-			if (room?.name === name)
-				this.sendEvent(socket, 'roomData', projection(room, socket.deserializeAttachment().playerId, this.connectedRoom(name)));
+			const attachment = socket.deserializeAttachment();
+			if (room?.name === name && !this.authExpired(socket, attachment))
+				this.sendEvent(socket, 'roomData', projection(room, attachment.playerId, this.connectedRoom(name)));
 		} catch (error) {
 			if (!(error instanceof GameError)) console.error('Room snapshot unavailable:', error?.name ?? 'Error');
 		}
@@ -526,10 +581,68 @@ export class RoomDurableObject {
 		const connected = this.connectedRoom(name);
 		for (const socket of this.ctx.getWebSockets()) {
 			const attachment = socket.deserializeAttachment();
-			if (attachment?.roomName !== name) continue;
+			if (attachment?.roomName !== name || this.authExpired(socket, attachment)) continue;
 			this.sendEvent(socket, 'roomData', projection(room, attachment.playerId, connected));
 			if (text) this.sendEvent(socket, 'message', { text });
 		}
+		this.reportToLobby(room);
+	}
+
+	/** A socket outlives its credential only until the next message or update: then it must renew. */
+	authExpired(socket, attachment) {
+		if (attachment?.authExp > Date.now()) return false;
+		try { socket.close(4003, 'Sign-in expired'); } catch { /* Already closed. */ }
+		return true;
+	}
+
+	/** Swap in a fresh game credential without dropping the seat or the hand. */
+	async renewAuth(socket, token) {
+		const claims = await verifyGameToken(token, this.env.SESSION_SECRET);
+		const current = socket.deserializeAttachment();
+		if (!claims || claims.playerId !== current?.playerId)
+			return { ok: false, code: 'SIGN_IN', error: 'Sign in again to continue' };
+		current.authExp = claims.expiresAt;
+		current.nickname = claims.nickname;
+		socket.serializeAttachment(current);
+		return { ok: true, expiresAt: claims.expiresAt };
+	}
+
+	/** Public table summary for the club lobby. Sent only when it changes. */
+	reportToLobby(room, closed = false) {
+		if (!this.env.CLUB || !room) return;
+		const summary = this.lobbySummary(room, closed);
+		const key = JSON.stringify(summary);
+		if (key === this.lastLobbyReport) return;
+		this.lastLobbyReport = key;
+		this.ctx.waitUntil(
+			clubDirectory(this.env)
+				.fetch('https://club.internal/table', { method: 'POST', body: key })
+				.catch(() => { this.lastLobbyReport = null; })
+		);
+	}
+
+	lobbySummary(room, closed = false) {
+		const connected = this.connectedRoom(room.name);
+		const seatedPlayers = room.players.filter((player) => player.seatNumber !== null && !player.departed);
+		const memberIds = [...new Set(this.ctx.getWebSockets()
+			.map((socket) => socket.deserializeAttachment())
+			.filter((attachment) => attachment?.roomName === room.name && attachment.memberId)
+			.map((attachment) => attachment.memberId))].sort();
+		const host = room.players.find((player) => player.id === room.hostId);
+		const summary = closed ? { name: room.name, closed: true } : {
+			name: room.name,
+			gameType: room.gameType ?? 'teen-patti',
+			playerCount: seatedPlayers.length,
+			botCount: seatedPlayers.filter((player) => player.bot).length,
+			maxPlayers: MAX_PLAYERS,
+			isStarted: playing(room),
+			hostName: host?.username ?? null,
+			boot: room.boot ?? null,
+			table: room.table,
+			connectedMembers: memberIds,
+			anyoneConnected: connected.size > 0
+		};
+		return summary;
 	}
 
 	webSocketClose(socket) {
@@ -708,6 +821,7 @@ export class RoomDurableObject {
 			const joiners = new Set(latest.snapshot.players.map((player) => player.id)).size;
 			const retentionMs = joiners < 3 ? SMALL_ROOM_RETENTION_MS : ROOM_RETENTION_MS;
 			if (latest.updatedAt + retentionMs <= now) {
+				this.reportToLobby(latest.snapshot, true);
 				await this.ctx.storage.deleteAll();
 				return;
 			}
@@ -767,7 +881,12 @@ export class RoomDurableObject {
 				throw new GameError('Wait a few seconds before sending more invites', 'RATE_LIMIT');
 			current.inviteLast = Date.now();
 			socket.serializeAttachment(current);
-			const plan = planInvites(this.getMeta('invites'), inviteEmails(emails), player.id, Date.now());
+			const requested = inviteEmails(emails);
+			const members = await withClubDatabase(this.env, (db) => invitableEmails(db, requested));
+			const outsiders = requested.filter((email) => !members.includes(email));
+			if (!members.length)
+				throw new GameError('Only club members can be invited. Ask the club owner to add them first.', 'NOT_MEMBER_EMAIL');
+			const plan = planInvites(this.getMeta('invites'), members, player.id, Date.now());
 			if (plan.send.length) {
 				const room = this.room().snapshot;
 				await sendWithResend({
@@ -784,7 +903,7 @@ export class RoomDurableObject {
 				});
 				this.setMeta('invites', plan.record);
 			}
-			return { ok: true, sent: plan.send, skipped: plan.skipped, invites: invited() };
+			return { ok: true, sent: plan.send, skipped: plan.skipped, notMembers: outsiders, invites: invited() };
 		} catch (error) {
 			if (!(error instanceof GameError)) console.error('Invite email failed:', error?.message ?? 'Error');
 			return {

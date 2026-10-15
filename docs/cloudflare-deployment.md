@@ -37,7 +37,7 @@ The existing `npm test` suite continues to test the shared game engines through 
 
 ## Production deployment
 
-Wrangler must be authenticated to the Cloudflare account. The `SESSION_SECRET` is a production-only signing key for stable guest identities and unguessable, retry-safe room codes. Generate and upload it without putting its value in shell history:
+Wrangler must be authenticated to the Cloudflare account. The `SESSION_SECRET` is a production-only signing key for club sign-ins, five-minute game credentials and unguessable, retry-safe room codes. Sign-in and membership setup (Google client ID, `MONGODB_URI`) is in [PRIVATE_CLUB.md](PRIVATE_CLUB.md). Generate and upload it without putting its value in shell history:
 
 ```sh
 openssl rand -hex 48 | node_modules/.bin/wrangler secret put SESSION_SECRET --config wrangler.game.toml
@@ -84,7 +84,7 @@ The Worker issues short-lived room/identity-scoped tokens using the game engine'
 
 ## Data and rollout notes
 
-Room state is private to its room Durable Object. A room's current snapshot, idempotency receipts, and chip movements share a transactional SQLite database. Session tokens are signed guest credentials; no global session database or user account system is required. Rotating `SESSION_SECRET` invalidates existing guest sessions and changes deterministic room-code derivation for future creates, so keep it stable and backed up in Cloudflare's secret store.
+Room state is private to its room Durable Object. A room's current snapshot, idempotency receipts, and chip movements share a transactional SQLite database. Membership lives in MongoDB (see [PRIVATE_CLUB.md](PRIVATE_CLUB.md)); game credentials are short-lived signed tokens bound to a member's stable player ID. Rotating `SESSION_SECRET` signs every member out and changes deterministic room-code derivation for future creates, so keep it stable and backed up in Cloudflare's secret store.
 
 This rollout starts with an empty Cloudflare Durable Object namespace. The prior SQLite file was a local/test deployment artifact and is not imported. The Node SQLite store and Docker/Render deployment are no longer part of the production path.
 

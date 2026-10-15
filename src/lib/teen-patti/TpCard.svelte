@@ -1,5 +1,6 @@
 <script lang="ts">
-	import PlayingCard from '#lib/components/PlayingCard.svelte';
+	import { asset } from '$app/paths';
+	import ClassicCard from '#lib/components/ClassicCard.svelte';
 
 	/**
 	 * One card at a size the parent controls through --card-h. Faces use the
@@ -38,14 +39,16 @@
 	data-face={showFace ? 'up' : 'down'}
 >
 	{#if showFace && card}
-		<PlayingCard rank={card.rank} suit={card.suit} class="!h-full !w-full" />
+		<ClassicCard rank={card.rank} suit={card.suit} class="!h-full !w-full" />
 		{#if wild}<span class="joker" title="Joker — counts as any card">★</span>{/if}
 	{:else}
-		<div class="back" aria-hidden="true">
-			<div class="back-inner">
-				<span class="back-mark">₹</span>
-			</div>
-		</div>
+		<img
+			class="back"
+			src={asset('cards/back-navy.svg')}
+			alt=""
+			aria-hidden="true"
+			draggable="false"
+		/>
 	{/if}
 </div>
 
@@ -67,6 +70,25 @@
 	}
 	.tp-card :global(playing-card) {
 		border-radius: calc(var(--h) * 0.07);
+	}
+	/* Card-stock finish over the face: a fine dimpled texture and a soft sheen from the lamp. */
+	.tp-card[data-face='up']::after {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		border-radius: inherit;
+		background:
+			linear-gradient(
+				155deg,
+				rgb(255 255 255 / 22%) 0%,
+				transparent 38%,
+				transparent 70%,
+				rgb(0 0 0 / 5%) 100%
+			),
+			radial-gradient(circle at 50% 50%, rgb(0 0 0 / 5%) 0 0.5px, transparent 0.8px) 0 0 / 3px 3px;
+		box-shadow: inset 0 0 0 1px rgb(0 0 0 / 6%);
+		content: '';
+		pointer-events: none;
 	}
 	.joker {
 		position: absolute;
@@ -95,29 +117,14 @@
 			0 0 0 2px var(--tp-gold, #e2b862),
 			0 0 calc(var(--h) * 0.25) rgb(226 184 98 / 55%);
 	}
+	/* Classic navy back, drawn in static/cards/back-navy.svg; the same either way up. */
 	.back {
-		height: 100%;
+		display: block;
 		width: 100%;
-		border-radius: inherit;
-		padding: calc(var(--h) * 0.045);
-		background: #f4ecd8;
-	}
-	.back-inner {
-		display: grid;
 		height: 100%;
-		place-items: center;
-		border-radius: calc(var(--h) * 0.04);
-		background:
-			radial-gradient(circle at 50% 50%, rgb(255 214 140 / 22%) 0 18%, transparent 19%),
-			repeating-linear-gradient(45deg, rgb(255 210 140 / 16%) 0 2px, transparent 2px 7px),
-			repeating-linear-gradient(-45deg, rgb(255 210 140 / 16%) 0 2px, transparent 2px 7px),
-			linear-gradient(160deg, #8a1c2b, #5a0f1c);
-		box-shadow: inset 0 0 0 1px rgb(240 200 120 / 45%);
-	}
-	.back-mark {
-		color: rgb(246 214 150 / 85%);
-		font-size: calc(var(--h) * 0.2);
-		font-weight: 800;
+		max-width: none;
+		border-radius: inherit;
+		user-select: none;
 	}
 	.flip {
 		animation: tp-flip 420ms cubic-bezier(0.3, 0.7, 0.3, 1) both;

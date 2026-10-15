@@ -20,7 +20,8 @@
 		"phase1:browser": "node scripts/phase1/browser.mjs",
 		"phase4:browser": "node scripts/phase4/browser.mjs",
 		"phase5:browser": "node scripts/phase5/browser.mjs",
-		"phase6:browser": "node scripts/phase6/browser.mjs"
+		"phase6:browser": "node scripts/phase6/browser.mjs",
+		"club": "node --env-file-if-exists=.env scripts/club-members.mjs"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.1.1",
@@ -34,23 +35,26 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.23.0",
 		"globals": "^17.13.0",
+		"mongodb-memory-server": "^10.4.3",
 		"playwright": "1.64.0",
 		"prettier": "^3.9.9",
 		"prettier-plugin-svelte": "^4.1.1",
 		"prettier-plugin-tailwindcss": "^0.8.1",
-		"wrangler": "^4.151.0",
 		"svelte": "^5.57.1",
 		"svelte-check": "^4.7.6",
 		"tailwindcss": "^4.3.3",
 		"typescript": "^6.0.0",
 		"typescript-eslint": "8.71.2",
-		"vite": "^8.3.3"
+		"vite": "^8.3.3",
+		"wrangler": "^4.151.0"
 	},
 	"type": "module",
 	"dependencies": {
 		"@lucide/svelte": "^1.52.0",
+		"jose": "^6.2.12",
 		"livekit-client": "2.22.4",
 		"livekit-server-sdk": "2.19.1",
+		"mongodb": "^6.21.0",
 		"socket.io": "4.8.4",
 		"socket.io-client": "^4.8.4",
 		"socket.io-msgpack-parser": "^3.0.2"
