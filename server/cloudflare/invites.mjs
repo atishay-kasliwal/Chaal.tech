@@ -78,6 +78,7 @@ export function inviteMessage({ inviter, link, boot, buyIn, seats }) {
 	const assets = `${new URL(link).origin}/email`;
 	const backdrop = escapeHtml(`${assets}/invite-table.jpg`);
 	const phoneBackdrop = escapeHtml(`${assets}/invite-table-phone.jpg`);
+	const brandLogo = escapeHtml(`${new URL(link).origin}/brand/chaal-email.png`);
 	const sans = 'Arial,Helvetica,sans-serif';
 	const serif = "Georgia,'Times New Roman',Times,serif";
 	const stat = (value, label, divider) => `<td class="stat" width="33%" align="center" valign="top" style="padding:14px 6px 12px;${divider ? 'border-left:1px solid #2a3527;' : ''}">
@@ -102,7 +103,7 @@ a{text-decoration:none}
 .shell{padding:0!important;background-image:url('${phoneBackdrop}')!important;background-size:100% auto!important}
 .pad{padding-left:20px!important;padding-right:20px!important}
 .r-top{padding-top:22px!important}
-.logo{font-size:17px!important;line-height:20px!important}
+.logo{width:180px!important;height:auto!important}
 .rules{margin-top:8px!important}
 .rule{width:24px!important}
 .r-icon{padding-top:18px!important}
@@ -131,7 +132,7 @@ a{text-decoration:none}
 <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px">
 <tr><td class="pad r-top" align="center" style="padding:24px 48px 0">
-<div class="logo" style="font-family:${sans};font-size:20px;line-height:24px;font-weight:700;letter-spacing:5px;color:#E8B955">CHAAL&nbsp;&#9824;&#65038;</div>
+<a href="https://chaal.tech" aria-label="Chaal.tech" style="display:inline-block;text-decoration:none"><img class="logo" src="${brandLogo}" width="220" height="54" alt="Chaal.tech" style="display:block;width:220px;max-width:100%;height:auto;border:0"></a>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="rules" style="margin-top:12px"><tr>
 <td class="rule" width="48" style="width:48px"><div style="height:1px;line-height:1px;font-size:1px;background:#3a4436">&nbsp;</div></td>
 <td style="padding:0 14px;font-family:${sans};font-size:11px;line-height:16px;letter-spacing:3px;color:#C9C6BC;white-space:nowrap">PRIVATE TABLE INVITE</td>

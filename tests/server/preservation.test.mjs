@@ -17,16 +17,27 @@ const changed = new Set([
 	'src/routes/[roomName]/DeclareWinner.svelte',
 	'src/routes/[roomName]/UsernameForm.svelte',
 	'src/routes/[roomName]/UsersTable.svelte',
-	'src/routes/[roomName]/types.d.ts'
+	'src/routes/[roomName]/types.d.ts',
+	// The approved Chaal identity is used for browser, app, and share icons.
+	'src/app.html',
+	'static/android-chrome-192x192.png',
+	'static/android-chrome-512x512.png',
+	'static/apple-touch-icon.png',
+	'static/favicon-16x16.png',
+	'static/favicon-32x32.png',
+	'static/favicon.ico',
+	'static/site.webmanifest',
+	// Landing page redesigned with the founders' story and a one-tap start pop-up.
+	'src/routes/+page.svelte'
 ]);
 
-test('Preserved landing, theme, waiting table, toast and original asset files remain byte-identical', async () => {
+test('Preserved landing, theme, waiting table, toast and unbranded original files remain byte-identical', async () => {
 	const retained = manifest.files.filter(
 		(entry) =>
 			(entry.path.startsWith('src/') || entry.path.startsWith('static/')) &&
 			!changed.has(entry.path)
 	);
-	assert.equal(retained.length, 17);
+	assert.equal(retained.length, 8);
 	for (const entry of retained) {
 		let bytes = await readFile(entry.path);
 		if (entry.path === 'src/app.html')

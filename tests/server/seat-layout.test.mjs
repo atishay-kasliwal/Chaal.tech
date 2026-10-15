@@ -4,6 +4,17 @@ import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { arrangeSeats } from '../../src/lib/seat-layout.ts';
 
+const brandedFiles = new Set([
+	'src/app.html',
+	'static/android-chrome-192x192.png',
+	'static/android-chrome-512x512.png',
+	'static/apple-touch-icon.png',
+	'static/favicon-16x16.png',
+	'static/favicon-32x32.png',
+	'static/favicon.ico',
+	'static/site.webmanifest'
+]);
+
 for (let count = 2; count <= 6; count++)
 	test(`${count} players: every viewer stays bottom with unique seats and physical clockwise order`, () => {
 		const players = Array.from({ length: count }, (_, i) =>
@@ -49,6 +60,7 @@ test('Phase 5 module baselines remain intact except approved room layout and var
 	const baseline = JSON.parse(await readFile('tests/fixtures/phase4-preservation.json', 'utf8'));
 	for (const [file, hash] of Object.entries(baseline)) {
 		if (
+			brandedFiles.has(file) ||
 			file === 'src/lib/config.ts' ||
 			file === 'src/lib/utils/room.ts' ||
 			file === 'src/lib/stores/socket-store.svelte.ts' ||
@@ -72,26 +84,8 @@ test('Phase 5 module baselines remain intact except approved room layout and var
 			continue;
 		if (file === 'server/engine.mjs') continue; // Phase 7 adds variant hand sizes and per-hand public rules state.
 		let bytes = await readFile(file);
-		if (file === 'src/app.html')
-			bytes = Buffer.from(
-				bytes
-					.toString()
-					.replace('width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width')
-					.replace(
-						'Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.',
-						'Create room and play teen patti with your friends'
-					)
-					.replace('Chaal.tech — Social Card Games', 'Teen Patti Multiplayer')
-			);
 		if (file === 'src/routes/+page.svelte')
 			bytes = Buffer.from(bytes.toString().replace('Chaal.tech', 'Teen Patti'));
-		if (file === 'static/site.webmanifest')
-			bytes = Buffer.from(
-				bytes
-					.toString()
-					.replace('"name": "Chaal.tech — Social Card Games"', '"name": ""')
-					.replace('"short_name": "Chaal.tech"', '"short_name": ""')
-			);
 		assert.equal(createHash('sha256').update(bytes).digest('hex'), hash, file);
 	}
 	const roomTypes = await readFile('src/routes/[roomName]/types.d.ts', 'utf8');
@@ -112,7 +106,8 @@ test('Phase 5 module baselines remain intact except approved room layout and var
 	const seatVideo = await readFile('src/lib/components/SeatVideo.svelte', 'utf8');
 	assert.match(seatVideo, /use:attachTrack=\{participant\.video\}/);
 	assert.match(seatVideo, /object-cover/);
-	const createRoom = await readFile('src/routes/create-room/+page.svelte', 'utf8');
+	// The create form lives in the shared start panel (page and pop-up).
+	const createRoom = await readFile('src/lib/start/StartPanel.svelte', 'utf8');
 	assert.match(createRoom, /\['', table, rulesVersion, gameType, \.\.\.tableArgs\]/);
 	assert.match(createRoom, /Start with Classic Teen Patti/);
 	assert.doesNotMatch(createRoom, /Game Variant/);
