@@ -1,10 +1,16 @@
-name: CI
+name: CI / CD
 
+# Every push and pull request is tested. A push (or merged pull request) to main
+# that passes every check is deployed to Cloudflare: game Worker first, then Pages.
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+env:
+  GAME_SERVER_URL: https://chaal-game.s6-backend-spike.workers.dev
 
 jobs:
   test:
@@ -22,4 +28,54 @@ jobs:
       - run: npm run test:cloudflare
       - run: npm run build
         env:
-          VITE_SERVER_URL: https://chaal-game.workers.dev
+          VITE_SERVER_URL: ${{ env.GAME_SERVER_URL }}
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    # One production deploy at a time; a newer push waits instead of racing.
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Check Cloudflare credentials
+        id: creds
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning title=Deploy skipped::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets to enable automatic deploys."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.creds.outputs.ready == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.creds.outputs.ready == 'true'
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+        if: steps.creds.outputs.ready == 'true'
+      - name: Deploy game Worker
+        if: steps.creds.outputs.ready == 'true'
+        run: npm run deploy:backend
+      - name: Deploy website to Pages
+        if: steps.creds.outputs.ready == 'true'
+        run: npm run deploy:pages -- --project-name=chaal-tech --branch=main --commit-dirty=true
+        env:
+          VITE_SERVER_URL: ${{ env.GAME_SERVER_URL }}
+      - name: Smoke-check production
+        if: steps.creds.outputs.ready == 'true'
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if curl -fsS "$GAME_SERVER_URL/health" && curl -fsS -o /dev/null https://chaal.tech; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Production health check failed after deploy"
+          exit 1

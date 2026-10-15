@@ -87,3 +87,14 @@ The Worker issues short-lived room/identity-scoped tokens using the game engine'
 Room state is private to its room Durable Object. A room's current snapshot, idempotency receipts, and chip movements share a transactional SQLite database. Session tokens are signed guest credentials; no global session database or user account system is required. Rotating `SESSION_SECRET` invalidates existing guest sessions and changes deterministic room-code derivation for future creates, so keep it stable and backed up in Cloudflare's secret store.
 
 This rollout starts with an empty Cloudflare Durable Object namespace. The prior SQLite file was a local/test deployment artifact and is not imported. The Node SQLite store and Docker/Render deployment are no longer part of the production path.
+
+## Continuous deployment
+
+`.github/workflows/ci.yml` tests every push and pull request. A push or merged pull request to `main` that passes lint, type-check, both test suites and the build is deployed automatically: the game Worker first, then the Pages site, followed by a production health check. Run the workflow manually from the Actions tab to redeploy.
+
+The deploy job needs two repository secrets (Settings → Secrets and variables → Actions):
+
+- `CLOUDFLARE_ACCOUNT_ID` — the Cloudflare account that owns `chaal-game` and `chaal-tech`.
+- `CLOUDFLARE_API_TOKEN` — an API token with **Account › Workers Scripts › Edit** and **Account › Cloudflare Pages › Edit** for that account.
+
+Without them the deploy job is skipped with a warning and tests still run. Worker secrets (`SESSION_SECRET`, `RESEND_API_KEY`, LiveKit) live in Cloudflare and are not touched by deploys.
