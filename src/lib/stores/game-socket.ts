@@ -148,7 +148,7 @@ export class GameSocket {
 	}
 
 	timeout(milliseconds: number) {
-		return { emitWithAck: (event: string, ...args: unknown[]) => this.emitWithAck(event, args, milliseconds) };
+		return { emitWithAck: (event: string, ...args: unknown[]) => this.request(event, args, milliseconds) };
 	}
 
 	emitWithAck(event: string, ...args: unknown[]): Promise<Reply> {
