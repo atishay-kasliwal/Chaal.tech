@@ -11,6 +11,8 @@ import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, botMoveText 
 
 const secureRandom = () => secureRandomInt(0x1_0000_0000) / 0x1_0000_0000;
 
+/** Seats at every table; the engine allows seat numbers 0–5. */
+const MAX_PLAYERS = 6;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SMALL_ROOM_RETENTION_MS = 30 * DAY_MS;
 const ROOM_RETENTION_MS = 365 * DAY_MS;
@@ -170,7 +172,7 @@ export class RoomDurableObject {
 				isStarted: playing(room),
 				gameShow: room.gameShow,
 				playerCount: room.players.filter((player) => player.seatNumber !== null && !player.departed).length,
-				maxPlayers: 6
+				maxPlayers: MAX_PLAYERS
 			});
 		}
 		if (url.pathname === '/create' && request.method === 'POST') return this.createRoom(request);
@@ -776,7 +778,8 @@ export class RoomDurableObject {
 						inviter: player.username,
 						link: `${settings.origin}/${room.name}`,
 						boot: room.boot ?? 1,
-						buyIn: room.table
+						buyIn: room.table,
+						seats: MAX_PLAYERS
 					})
 				});
 				this.setMeta('invites', plan.record);
