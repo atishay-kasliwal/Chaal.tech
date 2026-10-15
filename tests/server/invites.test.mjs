@@ -76,6 +76,22 @@ test('Invite email escapes the inviter name and carries the room link', () => {
 	assert.doesNotMatch(message.html, />https:\/\/chaal\.tech\/abc123</);
 });
 
+test('Invite email capitalizes the inviter and keeps its dark palette in dark-mode clients', () => {
+	const message = inviteMessage({
+		inviter: 'atishay kasliwal',
+		link: 'https://chaal.tech/abc123',
+		boot: 10,
+		buyIn: 1000,
+		seats: 6
+	});
+	assert.equal(message.subject, 'Atishay kasliwal saved you a seat ♠');
+	assert.match(message.text, /^Atishay kasliwal saved you a seat/);
+	assert.match(message.html, />Atishay kasliwal saved you<br/);
+	assert.match(message.html, /name="color-scheme" content="light dark"/);
+	assert.match(message.html, /@media \(prefers-color-scheme:dark\)/);
+	assert.match(message.html, /\.stats-panel\{background-color:#13251C!important/);
+});
+
 test('Resend receives one message per recipient in a single batch call', async () => {
 	const calls = [];
 	const fetcher = async (url, init) => {

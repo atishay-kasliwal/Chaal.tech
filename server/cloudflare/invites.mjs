@@ -66,7 +66,9 @@ const rupees = (value) => `₹${Number(value).toLocaleString('en-IN')}`;
  * inline styles so Gmail, Apple Mail and Outlook all render it the same way.
  */
 export function inviteMessage({ inviter, link, boot, buyIn, seats }) {
-	const name = inviter.trim() || 'A friend';
+	const rawName = inviter.trim() || 'A friend';
+	const firstCharacter = Array.from(rawName)[0] ?? '';
+	const name = `${firstCharacter.toLocaleUpperCase()}${rawName.slice(firstCharacter.length)}`;
 	const stakes = `Buy-in ${rupees(buyIn)} · boot ${rupees(boot)}`;
 	const subject = `${name} saved you a seat ♠`;
 	const preheader = 'Your private Teen Patti table is ready.';
@@ -83,7 +85,7 @@ export function inviteMessage({ inviter, link, boot, buyIn, seats }) {
 	const serif = "Georgia,'Times New Roman',Times,serif";
 	const stat = (value, label, divider) => `<td class="stat" width="33%" align="center" valign="top" style="padding:14px 6px 12px;${divider ? 'border-left:1px solid #2a3527;' : ''}">
 <div class="stat-value" style="font-family:${sans};font-size:26px;line-height:32px;font-weight:700;color:#E8B955;white-space:nowrap">${escapeHtml(value)}</div>
-<div style="font-family:${sans};font-size:11px;line-height:16px;letter-spacing:2px;text-transform:uppercase;color:#A9AEA7;padding-top:4px">${label}</div>
+<div class="stat-label" style="font-family:${sans};font-size:11px;line-height:16px;letter-spacing:2px;text-transform:uppercase;color:#A9AEA7;padding-top:4px">${label}</div>
 </td>`;
 	const html = `<!doctype html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -91,14 +93,25 @@ export function inviteMessage({ inviter, link, boot, buyIn, seats }) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="x-apple-disable-message-reformatting">
-<meta name="color-scheme" content="dark">
-<meta name="supported-color-schemes" content="dark">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 <title>${escapeHtml(subject)}</title>
 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 <style>
+:root{color-scheme:light dark;supported-color-schemes:light dark}
 body{margin:0;padding:0;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
 table{border-collapse:collapse;mso-table-lspace:0;mso-table-rspace:0}
 a{text-decoration:none}
+@media (prefers-color-scheme:dark){
+body,.email-canvas,.shell{background-color:#07110D!important;color:#F4F0E6!important}
+.headline{color:#F4F0E6!important}
+.sub,.r-trust,.r-foot{color:#C5CCC3!important}
+.stats-panel{background-color:#13251C!important;border-color:#3b493c!important}
+.stat-value,.gold-text{color:#E8B955!important}
+.stat-label{color:#C5CCC3!important}
+.icon,.cta-cell{background-color:#E8B955!important}
+.cta-a{color:#07110D!important}
+}
 @media only screen and (max-width:620px){
 .shell{padding:0!important;background-image:url('${phoneBackdrop}')!important;background-size:100% auto!important}
 .pad{padding-left:20px!important;padding-right:20px!important}
@@ -125,9 +138,9 @@ a{text-decoration:none}
 }
 </style>
 </head>
-<body style="margin:0;padding:0;background:#07110D" bgcolor="#07110D">
+<body class="email-body" style="margin:0;padding:0;background:#07110D;color:#F4F0E6" bgcolor="#07110D">
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#07110D;opacity:0">${preheader}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#07110D" style="background:#07110D">
+<table class="email-canvas" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#07110D" style="background:#07110D">
 <tr><td class="shell" align="center" valign="top" background="${backdrop}" style="padding:12px 12px;background-color:#07110D;background-image:url('${backdrop}');background-repeat:no-repeat;background-position:center top;background-size:1400px auto">
 <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px">
@@ -145,11 +158,11 @@ a{text-decoration:none}
 </tr></table>
 </td></tr>
 <tr><td class="pad r-head" align="center" style="padding:16px 48px 0">
-<h1 class="headline" style="margin:0;font-family:${serif};font-size:38px;line-height:43px;font-weight:700;color:#F4F0E6">${who} saved you<br><span style="color:#E8B955">a seat.</span></h1>
+<h1 class="headline" style="margin:0;font-family:${serif};font-size:38px;line-height:43px;font-weight:700;color:#F4F0E6">${who} saved you<br><span class="gold-text" style="color:#E8B955">a seat.</span></h1>
 <p class="sub" style="margin:10px 0 0;font-family:${serif};font-size:18px;line-height:26px;color:#A9AEA7">Teen Patti is better when everyone shows up.</p>
 </td></tr>
 <tr><td class="pad r-stats" style="padding:22px 48px 0">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#13251C" style="border-collapse:separate;background:#13251C;border:1px solid #2a3527;border-radius:12px">
+<table class="stats-panel" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#13251C" style="border-collapse:separate;background:#13251C;border:1px solid #2a3527;border-radius:12px">
 <tr>
 ${stat(rupees(buyIn), 'Buy in', false)}
 ${stat(rupees(boot), 'Boot', true)}
@@ -159,7 +172,7 @@ ${stat(String(seats), 'Seats', true)}
 </td></tr>
 <tr><td class="pad r-cta" align="center" style="padding:22px 48px 0">
 <table role="presentation" class="cta" width="76%" cellpadding="0" cellspacing="0" border="0" style="width:76%"><tr>
-<td align="center" bgcolor="#E8B955" style="background:#E8B955;border-radius:999px">
+<td class="cta-cell" align="center" bgcolor="#E8B955" style="background:#E8B955;border-radius:999px">
 <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:54px;v-text-anchor:middle;width:400px" arcsize="50%" stroke="f" fillcolor="#E8B955"><w:anchorlock/><center style="color:#07110D;font-family:Arial,sans-serif;font-size:17px;font-weight:bold">Take your seat &#8594;</center></v:roundrect><![endif]-->
 <!--[if !mso]><!--><a class="cta-a" href="${href}" style="display:block;padding:16px 24px;font-family:${sans};font-size:17px;line-height:20px;font-weight:700;color:#07110D;text-decoration:none;border-radius:999px">Take your seat&nbsp;&#8594;</a><!--<![endif]-->
 </td>
