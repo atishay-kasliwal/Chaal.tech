@@ -571,6 +571,8 @@ test('A permanently disconnected host passes ownership clockwise to a connected 
 	host.socket.disconnect();
 	await waitFor(() => app.store.room('test-room').hostId === next.id);
 	assert.equal(app.store.room('test-room').hostId, next.id);
+	// The stored transfer is published asynchronously; wait for the new host's view.
+	await waitFor(() => next.view.hostId === next.id);
 	assert.equal(next.view.hostId, next.id);
 	assert.equal(next.view.legalActions.start, true);
 });
