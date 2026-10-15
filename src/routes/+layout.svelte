@@ -13,17 +13,18 @@
 	class="navbar bg-base-100 relative z-20 container mx-auto"
 	class:room-route={page.route.id === '/[roomName]'}
 >
-	<div class="navbar-start">
-		<a
-			class="flex items-center gap-2 text-xl font-extrabold tracking-tight normal-case"
-			href="/"
-			aria-label="Chaal.tech home"
-		>
-			<img src="/brand/chaal-mark.svg" width="32" height="32" alt="" />
-			<span>Chaal.tech</span>
+	<div class="navbar-start min-w-0 flex-1">
+		<a class="inline-flex shrink-0 items-center" href="/" aria-label="Chaal.tech home">
+			<img
+				class="brand-logo"
+				src="/brand/chaal-logo.svg"
+				width="208"
+				height="52"
+				alt="Chaal.tech"
+			/>
 		</a>
 	</div>
-	<div class="navbar-end">
+	<div class="navbar-end w-auto shrink-0">
 		{#if page.route.id !== '/create-room'}
 			<!-- Opens the pop-up; the link still works without JavaScript. -->
 			<a
@@ -59,6 +60,19 @@
 <StartModal />
 
 <style>
+	.brand-logo {
+		display: block;
+		width: 176px;
+		height: auto;
+		max-width: none;
+	}
+
+	@media (min-width: 640px) {
+		.brand-logo {
+			width: 208px;
+		}
+	}
+
 	@media (max-width: 959px) and (max-height: 500px) {
 		.room-route {
 			display: none;
