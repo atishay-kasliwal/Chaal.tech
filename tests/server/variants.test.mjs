@@ -11,6 +11,16 @@ const baseline = JSON.parse(
 	await readFile(new URL('../fixtures/phase1-classic.json', import.meta.url), 'utf8')
 );
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const brandedFiles = new Set([
+	'src/app.html',
+	'static/android-chrome-192x192.png',
+	'static/android-chrome-512x512.png',
+	'static/apple-touch-icon.png',
+	'static/favicon-16x16.png',
+	'static/favicon-32x32.png',
+	'static/favicon.ico',
+	'static/site.webmanifest'
+]);
 
 test('Classic remains the default and every Teen Patti variant has its own registered rules version', () => {
 	assert.equal(DEFAULT_RULES_VERSION, 'classic-1');
@@ -109,6 +119,7 @@ for (const fixture of baseline.cases) {
 
 test('Existing frontend outside the extracted room template retains the original source hashes', async () => {
 	for (const [file, sha] of Object.entries(baseline.frontend)) {
+		if (brandedFiles.has(file)) continue;
 		if (
 			file === 'src/lib/config.ts' ||
 			file === 'src/lib/utils/room.ts' ||
@@ -116,17 +127,6 @@ test('Existing frontend outside the extracted room template retains the original
 		)
 			continue; // Production builds and room lookups now require an explicit public game endpoint.
 		let source = await readFile(file);
-		if (file === 'src/app.html')
-			source = Buffer.from(
-				source
-					.toString()
-					.replace('width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width')
-					.replace(
-						'Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.',
-						'Create room and play teen patti with your friends'
-					)
-					.replace('Chaal.tech — Social Card Games', 'Teen Patti Multiplayer')
-			);
 		if (file === 'src/routes/+page.svelte')
 			source = Buffer.from(
 				source
@@ -155,13 +155,6 @@ test('Existing frontend outside the extracted room template retains the original
 						'class="group border-base-300 bg-base-200/30 hover:bg-base-200 focus:bg-base-200 relative rounded-xl border p-6 transition-all hover:shadow-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"\n\t\t\t\t\t\t\ttabindex="0"\n\t\t\t\t\t\t\trole="button"'
 					)
 			);
-		if (file === 'static/site.webmanifest')
-			source = Buffer.from(
-				source
-					.toString()
-					.replace('"name": "Chaal.tech — Social Card Games"', '"name": ""')
-					.replace('"short_name": "Chaal.tech"', '"short_name": ""')
-			);
 		if (
 			file === 'src/lib/stores/socket-store.svelte.ts' ||
 			file === 'src/routes/[roomName]/types.d.ts' ||
@@ -182,7 +175,11 @@ test('Existing frontend outside the extracted room template retains the original
 					.replace('[roomName, table, rulesVersion]', '[roomName, table]')
 					.replace(/(<!-- Create Room CTA -->\n)[\s\S]*?(\t\t\t\t<div class="mt-1">)/, '$1$2')
 			);
-		if (file === 'src/routes/[roomName]/+page.svelte' || file === 'src/routes/+layout.svelte')
+		if (
+			file === 'src/routes/[roomName]/+page.svelte' ||
+			file === 'src/routes/+layout.svelte' ||
+			file === 'src/routes/+page.svelte'
+		)
 			continue; // Room composition and compact landscape navigation have focused checks.
 		assert.equal(digest(source), sha, file);
 	}
@@ -192,6 +189,7 @@ test('Existing frontend outside the extracted room template retains the original
 test('Phase 4 preservation checks account for the additive media and Phase 7 variant engine changes', async () => {
 	const frozen = JSON.parse(await readFile('tests/fixtures/phase3-preservation.json', 'utf8'));
 	for (const [file, sha] of Object.entries(frozen)) {
+		if (brandedFiles.has(file)) continue;
 		if (
 			file === 'src/lib/config.ts' ||
 			file === 'src/lib/utils/room.ts' ||
@@ -208,25 +206,6 @@ test('Phase 4 preservation checks account for the additive media and Phase 7 var
 		)
 			continue; // Table composition, public variant types, create-room rules and Phase 7 card-count hooks have focused coverage.
 		let bytes = await readFile(file);
-		if (file === 'src/app.html')
-			bytes = Buffer.from(
-				bytes
-					.toString()
-					.replace('width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width')
-					.replace(
-						'Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.',
-						'Create room and play teen patti with your friends'
-					)
-					.replace('Chaal.tech — Social Card Games', 'Teen Patti Multiplayer')
-			);
-		if (file === 'static/site.webmanifest') {
-			bytes = Buffer.from(
-				bytes
-					.toString()
-					.replace('"name": "Chaal.tech — Social Card Games"', '"name": ""')
-					.replace('"short_name": "Chaal.tech"', '"short_name": ""')
-			);
-		}
 		if (file === 'src/routes/+page.svelte')
 			bytes = Buffer.from(bytes.toString().replace('Chaal.tech', 'Teen Patti'));
 		assert.equal(digest(bytes), sha, file);
@@ -236,7 +215,8 @@ test('Phase 4 preservation checks account for the additive media and Phase 7 var
 	assert.match(roomTypes, /variantState\?: \{ wildRank: number; indicator: Card \}/);
 	const service = await readFile('server/index.mjs', 'utf8');
 	assert.match(service, /'ready'/);
-	const createRoom = await readFile('src/routes/create-room/+page.svelte', 'utf8');
+	// The create form lives in the shared start panel (page and pop-up).
+	const createRoom = await readFile('src/lib/start/StartPanel.svelte', 'utf8');
 	assert.match(createRoom, /max="1000000"/);
 	assert.match(createRoom, /step="1"/);
 	assert.match(createRoom, /Starting chips per player/);

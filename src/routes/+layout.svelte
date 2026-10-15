@@ -3,6 +3,8 @@
 	import { Toasts } from '#lib/components/Toasts/index.js';
 	import { page } from '$app/state';
 	import { fade, fly } from 'svelte/transition';
+	import StartModal from '#lib/start/StartModal.svelte';
+	import { openStart } from '#lib/start/start-modal.svelte.js';
 
 	let { children } = $props();
 </script>
@@ -12,16 +14,27 @@
 	class:room-route={page.route.id === '/[roomName]'}
 >
 	<div class="navbar-start">
-		<a class="text-xl normal-case" href="/">Chaal.tech</a>
+		<a
+			class="flex items-center gap-2 text-xl font-extrabold tracking-tight normal-case"
+			href="/"
+			aria-label="Chaal.tech home"
+		>
+			<img src="/brand/chaal-mark.svg" width="32" height="32" alt="" />
+			<span>Chaal.tech</span>
+		</a>
 	</div>
 	<div class="navbar-end">
-		<a
-			class="link link-hover mr-4"
-			href="https://github.com/mustafa-kapadia1483/teen-patti"
-			target="_blank"
-			rel="noreferrer">Github</a
-		>
-		<a href="/create-room" class="btn btn-primary">Join / Create Room</a>
+		{#if page.route.id !== '/create-room'}
+			<!-- Opens the pop-up; the link still works without JavaScript. -->
+			<a
+				href="/create-room"
+				class="btn btn-primary rounded-full"
+				onclick={(event) => {
+					event.preventDefault();
+					openStart();
+				}}>Start a table</a
+			>
+		{/if}
 	</div>
 </nav>
 
@@ -42,6 +55,8 @@
 	</div>
 	<Toasts />
 </main>
+
+<StartModal />
 
 <style>
 	@media (max-width: 959px) and (max-height: 500px) {

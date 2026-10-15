@@ -510,7 +510,7 @@
 <div class="tp-shell" data-testid="table-scene" data-game="teen-patti">
 	<header class="topbar">
 		<div class="brand">
-			<span class="logo" aria-hidden="true">♠</span>
+			<img class="logo" src="/brand/chaal-mark.svg" width="34" height="34" alt="" />
 			<button class="room-code" onclick={openInvite} title="Invite friends">
 				<span class="code">{room.name}</span>
 				<Copy class="h-3.5 w-3.5" />
@@ -1019,15 +1019,12 @@
 		gap: 0.5rem;
 	}
 	.logo {
-		display: grid;
+		display: block;
 		width: 2.1rem;
 		height: 2.1rem;
 		flex-shrink: 0;
 		place-items: center;
-		border-radius: 0.7rem;
-		background: linear-gradient(150deg, #f4d68c, #b98030);
-		color: #1c1408;
-		font-size: 1.1rem;
+		object-fit: contain;
 	}
 	.room-code {
 		display: inline-flex;

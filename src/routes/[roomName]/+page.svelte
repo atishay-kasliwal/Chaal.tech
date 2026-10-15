@@ -15,6 +15,7 @@
 	import { VARIANT_BY_VERSION, VARIANT_CATALOG, type RulesVersion } from '#lib/variant-catalog.js';
 	import RoomMedia from '#lib/components/RoomMedia.svelte';
 	import TeenPattiTable from '#lib/teen-patti/TeenPattiTable.svelte';
+	import { savedName, saveName } from '#lib/start/player-name.js';
 	import type { MediaState } from '#lib/media/controller.js';
 	let mediaState = $state.raw<MediaState | null>(null);
 	import { LogOut, Play, Crown, Swords, Copy } from '@lucide/svelte';
@@ -154,6 +155,38 @@
 			lastRevision = snapshot.revision;
 		}
 	});
+	/** A remembered name seats you straight away — invite links become one tap. */
+	let autoJoinAttempts = $state(0);
+	let autoJoinBusy = false;
+	$effect(() => {
+		if (usernameCreated || autoJoinBusy || autoJoinAttempts >= 5 || !socket.connected) return;
+		const name = savedName();
+		if (!name) return;
+		autoJoinBusy = true;
+		void socket.command('joinRoom', [name, data.roomName], false).then((reply) => {
+			if (reply.ok) {
+				autoJoinBusy = false;
+				usernameCreated = true;
+				return;
+			}
+			// A game answer (room full, hand in progress) stops here and shows the seat form.
+			if (reply.code) {
+				autoJoinBusy = false;
+				autoJoinAttempts = 5;
+				return;
+			}
+			// A connection hiccup — e.g. still switching to this room's socket — retries shortly.
+			setTimeout(() => {
+				autoJoinBusy = false;
+				autoJoinAttempts++;
+			}, 800);
+		});
+	});
+	// First time here (typed into the seat form): remember the name for next time.
+	$effect(() => {
+		if (usernameCreated && username && !savedName()) saveName(username);
+	});
+
 	/** Practice tables from the create page: seat the requested bots, then deal once. */
 	let practiceDone = false;
 	$effect(() => {

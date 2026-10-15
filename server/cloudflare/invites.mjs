@@ -59,33 +59,130 @@ export function planInvites(previous, emails, playerId, now) {
 const escapeHtml = (value) =>
 	String(value).replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 
-/** The email itself: short, readable on a phone, one obvious button. */
-export function inviteMessage({ inviter, link, boot, buyIn }) {
+const rupees = (value) => `₹${Number(value).toLocaleString('en-IN')}`;
+
+/**
+ * The email itself: a private-table invite, one obvious button. Table layout and
+ * inline styles so Gmail, Apple Mail and Outlook all render it the same way.
+ */
+export function inviteMessage({ inviter, link, boot, buyIn, seats }) {
 	const name = inviter.trim() || 'A friend';
-	const stakes = `Buy-in ₹${buyIn.toLocaleString('en-IN')} · boot ₹${boot}`;
-	const subject = `${name} invited you to Teen Patti on Chaal`;
-	const text = `${name} saved you a seat at their Teen Patti table.\n\n${stakes}\n\nJoin here: ${link}\n\nVideo and voice work right in the browser — no app needed.`;
+	const stakes = `Buy-in ${rupees(buyIn)} · boot ${rupees(boot)}`;
+	const subject = `${name} saved you a seat ♠`;
+	const preheader = 'Your private Teen Patti table is ready.';
+	const text = `${name} saved you a seat at their Teen Patti table.\n\n${stakes} · ${seats} seats\n\nTake your seat: ${link}\n\nNo signup needed. Camera optional until you join.\n\nYou got this because ${name} entered your address at chaal.tech.`;
+	const who = escapeHtml(name);
+	const href = escapeHtml(link);
+	const initial = escapeHtml((Array.from(name)[0] ?? 'A').toUpperCase());
+	// Served from static/email; image-blocking clients and Outlook show the plain colour behind it.
+	const assets = `${new URL(link).origin}/email`;
+	const backdrop = escapeHtml(`${assets}/invite-table.jpg`);
+	const phoneBackdrop = escapeHtml(`${assets}/invite-table-phone.jpg`);
+	const brandLogo = escapeHtml(`${new URL(link).origin}/brand/chaal-email.png`);
+	const sans = 'Arial,Helvetica,sans-serif';
+	const serif = "Georgia,'Times New Roman',Times,serif";
+	const stat = (value, label, divider) => `<td class="stat" width="33%" align="center" valign="top" style="padding:14px 6px 12px;${divider ? 'border-left:1px solid #2a3527;' : ''}">
+<div class="stat-value" style="font-family:${sans};font-size:26px;line-height:32px;font-weight:700;color:#E8B955;white-space:nowrap">${escapeHtml(value)}</div>
+<div style="font-family:${sans};font-size:11px;line-height:16px;letter-spacing:2px;text-transform:uppercase;color:#A9AEA7;padding-top:4px">${label}</div>
+</td>`;
 	const html = `<!doctype html>
-<html><body style="margin:0;background:#0c1411;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#f1ebdc">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0c1411;padding:32px 12px">
-<tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;background:#14221c;border-radius:18px;border:1px solid #3a3420">
-<tr><td style="padding:32px 28px 8px;text-align:center">
-<div style="display:inline-block;width:44px;height:44px;line-height:44px;border-radius:12px;background:#e2b862;color:#1c1408;font-size:22px">♠</div>
-<h1 style="margin:18px 0 6px;font-size:22px;color:#f4d68c">${escapeHtml(name)} saved you a seat</h1>
-<p style="margin:0;font-size:15px;color:#cfc8b6">Teen Patti with friends, on video.</p>
-<p style="margin:14px 0 0;font-size:13px;color:#a59f8f">${escapeHtml(stakes)}</p>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<title>${escapeHtml(subject)}</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+body{margin:0;padding:0;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
+table{border-collapse:collapse;mso-table-lspace:0;mso-table-rspace:0}
+a{text-decoration:none}
+@media only screen and (max-width:620px){
+.shell{padding:0!important;background-image:url('${phoneBackdrop}')!important;background-size:100% auto!important}
+.pad{padding-left:20px!important;padding-right:20px!important}
+.r-top{padding-top:22px!important}
+.logo{width:180px!important;height:auto!important}
+.rules{margin-top:8px!important}
+.rule{width:24px!important}
+.r-icon{padding-top:18px!important}
+.icon{width:46px!important;height:46px!important;line-height:46px!important;font-size:28px!important;border-radius:12px!important}
+.r-head{padding-top:14px!important}
+.headline{font-size:30px!important;line-height:34px!important}
+.sub{margin-top:8px!important;font-size:15px!important;line-height:21px!important}
+.r-stats{padding-top:18px!important}
+.stat{padding:11px 2px 10px!important}
+.stat-value{font-size:20px!important;line-height:24px!important}
+.r-cta{padding-top:18px!important}
+.cta{width:100%!important}
+.cta-a{padding:15px 20px!important}
+.r-trust{padding-top:10px!important;font-size:12px!important}
+.r-div{padding-top:16px!important}
+.r-foot{padding-top:14px!important;padding-bottom:18px!important}
+.trouble{padding-top:8px!important}
+.legal{padding-top:8px!important;font-size:10px!important;line-height:14px!important}
+}
+</style>
+</head>
+<body style="margin:0;padding:0;background:#07110D" bgcolor="#07110D">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#07110D;opacity:0">${preheader}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#07110D" style="background:#07110D">
+<tr><td class="shell" align="center" valign="top" background="${backdrop}" style="padding:12px 12px;background-color:#07110D;background-image:url('${backdrop}');background-repeat:no-repeat;background-position:center top;background-size:1400px auto">
+<!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px">
+<tr><td class="pad r-top" align="center" style="padding:24px 48px 0">
+<a href="https://chaal.tech" aria-label="Chaal.tech" style="display:inline-block;text-decoration:none"><img class="logo" src="${brandLogo}" width="220" height="54" alt="Chaal.tech" style="display:block;width:220px;max-width:100%;height:auto;border:0"></a>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" class="rules" style="margin-top:12px"><tr>
+<td class="rule" width="48" style="width:48px"><div style="height:1px;line-height:1px;font-size:1px;background:#3a4436">&nbsp;</div></td>
+<td style="padding:0 14px;font-family:${sans};font-size:11px;line-height:16px;letter-spacing:3px;color:#C9C6BC;white-space:nowrap">PRIVATE TABLE INVITE</td>
+<td class="rule" width="48" style="width:48px"><div style="height:1px;line-height:1px;font-size:1px;background:#3a4436">&nbsp;</div></td>
+</tr></table>
 </td></tr>
-<tr><td style="padding:24px 28px;text-align:center">
-<a href="${escapeHtml(link)}" style="display:inline-block;background:#e2b862;color:#24180a;text-decoration:none;font-weight:700;font-size:16px;padding:14px 28px;border-radius:999px">Join the table</a>
+<tr><td class="pad r-icon" align="center" style="padding:20px 48px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td class="icon" width="54" height="54" align="center" valign="middle" bgcolor="#E8B955" style="width:54px;height:54px;background:#E8B955;border-radius:13px;font-family:${sans};font-size:32px;line-height:54px;color:#07110D">&#9824;&#65038;</td>
+</tr></table>
 </td></tr>
-<tr><td style="padding:0 28px 28px;text-align:center;font-size:12px;color:#8a8576">
-Or open this link: <a href="${escapeHtml(link)}" style="color:#e2b862;word-break:break-all">${escapeHtml(link)}</a><br><br>
-You got this because ${escapeHtml(name)} entered your address at chaal.tech. No account or app needed.
+<tr><td class="pad r-head" align="center" style="padding:16px 48px 0">
+<h1 class="headline" style="margin:0;font-family:${serif};font-size:38px;line-height:43px;font-weight:700;color:#F4F0E6">${who} saved you<br><span style="color:#E8B955">a seat.</span></h1>
+<p class="sub" style="margin:10px 0 0;font-family:${serif};font-size:18px;line-height:26px;color:#A9AEA7">Teen Patti is better when everyone shows up.</p>
+</td></tr>
+<tr><td class="pad r-stats" style="padding:22px 48px 0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#13251C" style="border-collapse:separate;background:#13251C;border:1px solid #2a3527;border-radius:12px">
+<tr>
+${stat(rupees(buyIn), 'Buy in', false)}
+${stat(rupees(boot), 'Boot', true)}
+${stat(String(seats), 'Seats', true)}
+</tr>
+</table>
+</td></tr>
+<tr><td class="pad r-cta" align="center" style="padding:22px 48px 0">
+<table role="presentation" class="cta" width="76%" cellpadding="0" cellspacing="0" border="0" style="width:76%"><tr>
+<td align="center" bgcolor="#E8B955" style="background:#E8B955;border-radius:999px">
+<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:54px;v-text-anchor:middle;width:400px" arcsize="50%" stroke="f" fillcolor="#E8B955"><w:anchorlock/><center style="color:#07110D;font-family:Arial,sans-serif;font-size:17px;font-weight:bold">Take your seat &#8594;</center></v:roundrect><![endif]-->
+<!--[if !mso]><!--><a class="cta-a" href="${href}" style="display:block;padding:16px 24px;font-family:${sans};font-size:17px;line-height:20px;font-weight:700;color:#07110D;text-decoration:none;border-radius:999px">Take your seat&nbsp;&#8594;</a><!--<![endif]-->
+</td>
+</tr></table>
+</td></tr>
+<tr><td class="pad r-trust" align="center" style="padding:12px 48px 0;font-family:${sans};font-size:13px;line-height:20px;color:#A9AEA7">
+⚡&nbsp;No signup needed&nbsp;&nbsp;<span style="color:#4a5548">·</span>&nbsp;&nbsp;Camera optional until you join
+</td></tr>
+<tr><td class="pad r-div" style="padding:20px 48px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="1" style="height:1px;line-height:1px;font-size:1px;background:#2a3527" bgcolor="#2a3527">&nbsp;</td></tr></table></td></tr>
+<tr><td class="pad r-foot" align="center" style="padding:16px 48px 20px;font-family:${sans}">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="36" height="36" align="center" valign="middle" bgcolor="#1C2A1F" style="width:36px;height:36px;border-radius:18px;background:#1C2A1F;font-family:${sans};font-size:15px;line-height:36px;font-weight:700;color:#E8B955">${initial}</td>
+<td style="padding-left:12px;font-family:${sans};font-size:13px;line-height:20px;color:#A9AEA7">Invited by <span style="color:#F4F0E6">${who}</span> through Chaal</td>
+</tr></table>
+<div class="trouble" style="padding-top:8px;font-size:12px;line-height:18px"><a href="${href}" style="color:#E8B955;text-decoration:underline">Having trouble? Open invitation&nbsp;&#8594;</a></div>
+<div class="legal" style="padding-top:10px;font-size:11px;line-height:16px;color:#6b7368">You got this because ${who} entered your address at chaal.tech.</div>
 </td></tr>
 </table>
-</td></tr></table>
-</body></html>`;
+<!--[if mso]></td></tr></table><![endif]-->
+</td></tr>
+</table>
+</body>
+</html>`;
 	return { subject, text, html };
 }
 
