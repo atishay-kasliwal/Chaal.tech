@@ -3,6 +3,7 @@
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import type { MediaParticipant } from '#lib/media/controller.js';
 	import TpCard from './TpCard.svelte';
+	import BotAvatar from './BotAvatar.svelte';
 	import { money } from './format.js';
 
 	let {
@@ -20,7 +21,8 @@
 		dealKey,
 		showMedia,
 		mediaParticipant,
-		onspotlight
+		onspotlight,
+		onremove
 	}: {
 		user: User;
 		boot: number;
@@ -39,6 +41,8 @@
 		mediaParticipant?: MediaParticipant;
 		/** Open this player's video large. */
 		onspotlight?: () => void;
+		/** Host only, between hands: take this bot off the table. */
+		onremove?: () => void;
 	} = $props();
 
 	const away = $derived(user.hasLeft || !user.connected);
@@ -90,10 +94,22 @@
 				aria-label="Show {user.username}’s video large"
 				title="Tap to see {user.username} large"
 			></button>
-			<SeatVideo
-				participant={showMedia && !away ? mediaParticipant : undefined}
-				name={user.username}
-			/>
+			{#if user.bot}
+				<BotAvatar name={user.username} level={user.bot} thinking={active} />
+			{:else}
+				<SeatVideo
+					participant={showMedia && !away ? mediaParticipant : undefined}
+					name={user.username}
+				/>
+			{/if}
+			{#if onremove}
+				<button
+					class="remove-bot"
+					onclick={onremove}
+					aria-label="Remove {user.username}"
+					title="Remove bot">×</button
+				>
+			{/if}
 			{#if status}
 				<span class="seat-status" data-status={status.toLowerCase().replaceAll(' ', '-')}
 					>{status}</span
@@ -207,6 +223,27 @@
 		inset: 0;
 		z-index: 2;
 		cursor: zoom-in;
+	}
+	.remove-bot {
+		position: absolute;
+		top: 0.35rem;
+		right: 0.35rem;
+		z-index: 4;
+		display: grid;
+		width: 1.6rem;
+		height: 1.6rem;
+		place-items: center;
+		border-radius: 999px;
+		background: rgb(8 14 12 / 75%);
+		color: #f0a898;
+		font-size: 1rem;
+		font-weight: 700;
+		line-height: 1;
+		cursor: pointer;
+	}
+	.remove-bot:hover {
+		background: #8c3324;
+		color: #fff;
 	}
 	.seat-status {
 		position: absolute;

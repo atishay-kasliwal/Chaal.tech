@@ -16,6 +16,8 @@ interface User {
 	handName?: string | null;
 	/** Indexes of jokers in a visible hand. */
 	wildCards?: number[];
+	/** Present for server-run bots: their difficulty. */
+	bot?: 'easy' | 'normal' | 'hard';
 	isBlind: boolean;
 	isPacked: boolean;
 	connected: boolean;
@@ -97,6 +99,6 @@ interface RoomData {
 		drawDiscard?: boolean;
 		discard?: boolean;
 		declare?: boolean;
-		discard?: boolean;
+		addBot?: boolean;
 	};
 }

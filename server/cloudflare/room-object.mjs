@@ -7,6 +7,9 @@ import { freshRummyDeck } from '../rummy/rummy.mjs';
 import { getVariant, listVariants } from '../variants/index.mjs';
 import { secureRandomInt, toHex } from '../random.mjs';
 import { inviteEmails, planInvites, inviteMessage, sendWithResend } from './invites.mjs';
+import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
+
+const secureRandom = () => secureRandomInt(0x1_0000_0000) / 0x1_0000_0000;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SMALL_ROOM_RETENTION_MS = 30 * DAY_MS;
@@ -14,7 +17,7 @@ const ROOM_RETENTION_MS = 365 * DAY_MS;
 const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
 	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
-	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom'
+	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot'
 ]);
 
 const hash = async (value) => {
@@ -404,6 +407,18 @@ export class RoomDurableObject {
 				action = 'see';
 				payload = {};
 				text = 'Cards seen';
+			} else if (event === 'addBot') {
+				action = 'addBot';
+				payload = {
+					botId: `bot-${crypto.randomUUID()}`,
+					name: pickBotName(before, secureRandom),
+					level: args[0]
+				};
+				text = null;
+			} else if (event === 'removeBot') {
+				action = 'removeBot';
+				payload = { botId: args[0] };
+				text = null;
 			} else if (event === 'discardCard') {
 				action = 'discard';
 				payload = { index: args[0] };
@@ -548,6 +563,60 @@ export class RoomDurableObject {
 		this.sql.exec('DELETE FROM room_meta WHERE key=?', key);
 	}
 
+	/**
+	 * Bots act after a human-like pause. Plan one pending bot move per room revision,
+	 * and only while a person is connected, so empty tables cost nothing.
+	 */
+	planBot(room) {
+		const connected = this.connectedRoom(room.name);
+		const planned = this.getMeta('botTurn');
+		const dueBot = humansPresent(room, connected) ? botDue(room, connected) : null;
+		if (!dueBot) {
+			if (planned) this.deleteMeta('botTurn');
+			return null;
+		}
+		if (planned?.revision === room.revision) return planned;
+		// A bot that just looked or discarded on its own turn follows up quickly.
+		const quick = planned?.botId === dueBot && planned?.handId === room.handId;
+		const next = {
+			revision: room.revision,
+			handId: room.handId,
+			botId: dueBot,
+			at: Date.now() + botDelay(secureRandom, quick)
+		};
+		this.setMeta('botTurn', next);
+		return next;
+	}
+
+	async playBot() {
+		const stored = this.room();
+		const planned = this.getMeta('botTurn');
+		if (!stored || !planned || planned.at > Date.now()) return false;
+		const before = stored.snapshot;
+		if (planned.revision !== before.revision) return false;
+		const connected = this.connectedRoom(before.name);
+		const move = nextBotMove(before, connected, secureRandom);
+		if (!move) return false;
+		try {
+			const room = transition(before, move.botId, move.action, move.payload, {
+				now: Date.now(),
+				turnMs: this.turnMs(),
+				connected
+			});
+			const commandId = `bot:${before.handId}:${before.revision}`;
+			this.commit(room, move.botId, commandId, await hash(commandId), { ok: true }, movements(before, room, `bot-${move.action}`), before.revision);
+			this.publish(room.name, room.result && !before.result
+				? `${room.result.winnerName} won ${room.result.amount} chips`
+				: botMoveText(before, move));
+			return true;
+		} catch (error) {
+			// A bot must never wedge a table: drop the plan; its turn timer packs it if needed.
+			console.error('Bot move failed:', error?.code ?? error?.name ?? 'Error');
+			this.deleteMeta('botTurn');
+			return false;
+		}
+	}
+
 	async scheduleAlarm() {
 		const stored = this.room();
 		if (!stored) {
@@ -556,6 +625,8 @@ export class RoomDurableObject {
 		}
 		const room = stored.snapshot;
 		const deadlines = [];
+		const botTurn = this.planBot(room);
+		if (botTurn) deadlines.push(botTurn.at);
 		if (playing(room) && Number.isSafeInteger(room.deadline)) deadlines.push(room.deadline);
 		const hostRecovery = this.getMeta('hostRecovery');
 		if (hostRecovery?.at) deadlines.push(hostRecovery.at);
@@ -577,6 +648,11 @@ export class RoomDurableObject {
 		const now = Date.now();
 		this.sql.exec('DELETE FROM receipts WHERE created_at<=?', now - 30 * DAY_MS);
 		this.sql.exec('DELETE FROM ledger WHERE created_at<=?', now - ROOM_RETENTION_MS);
+
+		if (await this.playBot()) {
+			room = this.room().snapshot;
+			changed = true;
+		}
 
 		if (playing(room) && room.deadline <= now) {
 			try {

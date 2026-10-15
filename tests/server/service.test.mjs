@@ -809,3 +809,76 @@ test('An unsupported saved rules version fails closed without blocking other roo
 	assert.equal(unsupported.rulesVersion, 'classic-999');
 	assert.equal(unsupported.result, null);
 });
+
+test('Bots seated by the host play their own turns over the real server, and pause without people', async (t) => {
+	const started = Date.now();
+	// Run the server clock 25× fast so bot "thinking" pauses take milliseconds.
+	const app = createGameServer({
+		database: ':memory:',
+		turnMs: 600000,
+		roomCodeFactory: (requestedName) => requestedName,
+		clock: () => started + (Date.now() - started) * 25
+	});
+	const address = await app.listen(0);
+	const host = await client(`http://127.0.0.1:${address.port}`);
+	t.after(async () => {
+		host.socket.disconnect();
+		await app.close();
+	});
+	assert.equal(
+		(
+			await host.send('createRoom', [
+				'bots-room',
+				1000,
+				'classic-1',
+				'teen-patti',
+				{ boot: 10, autoReady: true }
+			])
+		).ok,
+		true
+	);
+	assert.equal((await host.send('joinRoom', ['Host', 'bots-room'])).ok, true);
+	await pause();
+	assert.equal((await host.send('addBot', ['easy'])).ok, true);
+	await pause();
+	assert.equal((await host.send('addBot', ['hard'])).ok, true);
+	await pause();
+	assert.equal((await host.send('addBot', ['genius'])).ok, false);
+	const seated = app.store.room('bots-room').players.filter((p) => p.bot);
+	assert.equal(seated.length, 2);
+	assert.notEqual(seated[0].username, seated[1].username);
+	assert.equal((await host.send('start', ['bots-room', 0, 3, 'classic-1'])).ok, true);
+	// The person bets on their turns; bots act on theirs without any client prompting them.
+	let botMoves = 0;
+	for (let step = 0; step < 200 && !app.store.room('bots-room').gameShow; step++) {
+		const room = app.store.room('bots-room');
+		if (room.currentPlayerId === host.id) {
+			await pause();
+			const legal = host.view.legalActions;
+			const reply = legal.show
+				? await host.send('show', ['bots-room'])
+				: await host.send('play', [false, legal.minBet]);
+			if (!reply.ok) await pause();
+		} else {
+			const before = room.revision;
+			await waitFor(() => app.store.room('bots-room').revision !== before, 4000);
+			botMoves++;
+		}
+	}
+	const finished = app.store.room('bots-room');
+	assert.equal(finished.gameShow, true);
+	assert.ok(botMoves > 0, 'bots moved by themselves');
+	assert.equal(
+		finished.players.reduce((sum, p) => sum + p.balance, finished.pot),
+		finished.issuedChips
+	);
+	// With nobody connected, bots wait instead of playing on.
+	assert.equal((await host.send('start', ['bots-room', 0, 3, 'classic-1'])).ok, true);
+	await pause();
+	const dealt = app.store.room('bots-room');
+	if (dealt.players.find((p) => p.id === dealt.currentPlayerId)?.bot) {
+		host.socket.disconnect();
+		await new Promise((resolve) => setTimeout(resolve, 400));
+		assert.equal(app.store.room('bots-room').revision, dealt.revision);
+	}
+});

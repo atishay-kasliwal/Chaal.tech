@@ -13,6 +13,7 @@ import {
 	playing,
 	GameError
 } from './engine.mjs';
+import { nextBotMove, botDue, pickBotName, botDelay, humansPresent } from './bots/runner.mjs';
 import { shuffledDeck } from './classic.mjs';
 import { createMediaService } from './media.mjs';
 import { createGameRoom, listGameTypes } from './games/index.mjs';
@@ -383,6 +384,18 @@ export function createGameServer({
 					action = 'see';
 					payload = {};
 					text = 'Cards seen';
+				} else if (event === 'addBot') {
+					action = 'addBot';
+					payload = {
+						botId: `bot-${randomUUID()}`,
+						name: pickBotName(before, Math.random),
+						level: args[0]
+					};
+					text = null;
+				} else if (event === 'removeBot') {
+					action = 'removeBot';
+					payload = { botId: args[0] };
+					text = null;
 				} else if (event === 'discardCard') {
 					action = 'discard';
 					payload = { index: args[0] };
@@ -534,6 +547,8 @@ export function createGameServer({
 			'start',
 			'seeCards',
 			'discardCard',
+			'addBot',
+			'removeBot',
 			'play',
 			'pokerAction',
 			'blackjackBet',
@@ -615,9 +630,59 @@ export function createGameServer({
 	} catch (error) {
 		console.error('Retention cleanup failed:', error.code || error.name);
 	}
+	// Bots: one planned move per room revision, played after a human-like pause.
+	const botPlans = new Map();
+	function runBots(before) {
+		const live = connected(before.name);
+		const due = humansPresent(before, live) ? botDue(before, live) : null;
+		const plan = botPlans.get(before.name);
+		if (!due) {
+			botPlans.delete(before.name);
+			return;
+		}
+		if (plan?.revision !== before.revision) {
+			const quick = plan?.botId === due && plan?.handId === before.handId;
+			botPlans.set(before.name, {
+				revision: before.revision,
+				handId: before.handId,
+				botId: due,
+				at: clock() + botDelay(Math.random, quick)
+			});
+			return;
+		}
+		if (plan.at > clock()) return;
+		const move = nextBotMove(before, live, Math.random);
+		if (!move) return;
+		const room = transition(before, move.botId, move.action, move.payload, {
+			now: clock(),
+			turnMs,
+			connected: live
+		});
+		const commandId = `bot:${before.handId}:${before.revision}`;
+		store.commit(
+			room,
+			move.botId,
+			commandId,
+			commandId,
+			{ ok: true },
+			movements(before, room, `bot-${move.action}`),
+			before.revision
+		);
+		publish(
+			room.name,
+			room.result && !before.result
+				? `${room.result.winnerName} won ${room.result.amount} chips`
+				: null
+		);
+	}
 	const timer = setInterval(() => {
 		try {
 			for (const before of store.rooms()) {
+				try {
+					runBots(before);
+				} catch (error) {
+					console.error('Bot move failed:', error.code || error.name);
+				}
 				try {
 					if (!playing(before) || before.deadline > clock()) continue;
 					const commandId = `timeout:${before.handId}:${before.revision}`;

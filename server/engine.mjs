@@ -28,6 +28,9 @@ const active = (room) => {
 const mustDiscard = (variant, player) =>
 	Number.isInteger(variant.discardTo) && !player.isBlind && player.cards.length > variant.discardTo;
 export const playing = (room) => room.isStarted && !room.gameShow;
+/** Bots are seated by the server and never disconnect. */
+const present = (p, connected) => !!p.bot || connected.has(p.id);
+export const BOT_LEVELS = Object.freeze(['easy', 'normal', 'hard']);
 
 export function roomName(value) {
 	require(typeof value === 'string' &&
@@ -201,12 +204,19 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				payload.cutAt <= 51, 'Invalid deck cut');
 			for (const p of room.players) if (p.departed) p.seatNumber = null;
 			const boot = bootOf(room);
+			// Broke bots buy back in so a practice table can keep going all evening.
+			for (const p of seated(room))
+				if (p.bot && !p.departed && p.balance < boot) {
+					p.balance += room.table;
+					room.issuedChips += room.table;
+					p.bot.rebuys++;
+				}
 			// Auto-ready tables deal everyone who has not chosen to sit out.
 			const participants = seated(room).filter(
 				(p) =>
 					!p.departed &&
 					p.balance >= boot &&
-					ctx.connected.has(p.id) &&
+					present(p, ctx.connected) &&
 					(!room.autoReady || p.ready !== false)
 			);
 			require(participants.length >= 2, 'At least two connected players with chips are required');
@@ -256,6 +266,44 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			}
 			// Original first hand advances from the initiator to the next seat.
 			nextTurn(room, player.seatNumber, ctx);
+		} else if (action === 'addBot') {
+			require(id === room.hostId, 'Only the host can add bots', 'FORBIDDEN');
+			require(room.boot !== undefined, 'Bots need a table created with table options');
+			require(!playing(room), 'Add bots between hands');
+			require(BOT_LEVELS.includes(payload.level), 'Choose easy, normal or hard');
+			require(typeof payload.botId === 'string' &&
+				/^bot-[a-z0-9-]{4,40}$/.test(payload.botId) &&
+				!room.players.some((p) => p.id === payload.botId), 'Invalid bot');
+			require(typeof payload.name === 'string' &&
+				payload.name.trim().length >= 1 &&
+				payload.name.trim().length <= 24, 'Invalid bot name');
+			for (const departed of room.players) if (departed.departed) departed.seatNumber = null;
+			const used = new Set(seated(room).map((p) => p.seatNumber));
+			const seatNumber = Array.from({ length: 6 }, (_, n) => n).find((n) => !used.has(n));
+			require(seatNumber !== undefined, 'Room is full');
+			room.players.push({
+				id: payload.botId,
+				username: payload.name.trim().toLowerCase(),
+				balance: room.table,
+				handBet: 0,
+				seatNumber,
+				cards: [],
+				isBlind: true,
+				isPacked: false,
+				ready: true,
+				departed: false,
+				bot: { level: payload.level, rebuys: 0 }
+			});
+			room.issuedChips += room.table;
+		} else if (action === 'removeBot') {
+			require(id === room.hostId, 'Only the host can remove bots', 'FORBIDDEN');
+			require(!playing(room), 'Remove bots between hands');
+			const target = room.players.find(
+				(p) => p.id === payload.botId && p.bot && p.seatNumber !== null && !p.departed
+			);
+			require(target, 'That bot is not at the table');
+			target.departed = true;
+			target.seatNumber = null;
 		} else if (action === 'ready') {
 			// Auto-ready tables let players choose to sit out the next hand at any time.
 			require(!playing(room) || room.autoReady, 'Readiness is locked during a hand');
@@ -271,7 +319,8 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				else if (wasTurn) nextTurn(room, player.seatNumber, ctx);
 			}
 			if (!playing(room)) player.seatNumber = null;
-			if (room.hostId === id) room.hostId = seated(room).find((p) => !p.departed)?.id ?? null;
+			if (room.hostId === id)
+				room.hostId = seated(room).find((p) => !p.departed && !p.bot)?.id ?? null;
 		} else {
 			require(playing(room), 'No active hand');
 			require(!player.isPacked && player.cards.length > 0, 'You are not active in this hand');
@@ -395,7 +444,8 @@ export function projection(room, id, connected) {
 			isBlind: p.isBlind,
 			isPacked: p.isPacked,
 			...(ctxReadySupported(room) ? { ready: p.ready === true } : {}),
-			connected: connected.has(p.id),
+			connected: present(p, connected),
+			...(p.bot ? { bot: p.bot.level } : {}),
 			hasLeft: p.departed,
 			cardsInHand:
 				(p.id === id && !p.isBlind) || reveal.has(p.id)
@@ -415,7 +465,8 @@ export function projection(room, id, connected) {
 			see: playing(room) && !player.isPacked && player.isBlind && variant.allowSee !== false,
 			...(explain
 				? {
-						discard: playing(room) && !player.isPacked && mustDiscard(variant, player)
+						discard: playing(room) && !player.isPacked && mustDiscard(variant, player),
+						addBot: id === room.hostId && !playing(room) && seated(room).length < 6
 					}
 				: {}),
 			pack: myTurn,

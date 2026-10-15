@@ -154,6 +154,31 @@
 			lastRevision = snapshot.revision;
 		}
 	});
+	/** Practice tables from the create page: seat the requested bots, then deal once. */
+	let practiceDone = false;
+	$effect(() => {
+		const room = roomData;
+		if (practiceDone || !room || !usernameCreated || room.isStarted) return;
+		if ((room.gameType ?? 'teen-patti') !== 'teen-patti' || room.hostId !== socket.playerId) return;
+		const params = new URLSearchParams(window.location.search);
+		const wanted = Math.min(5, Math.max(0, Number(params.get('bots')) || 0));
+		const level = ['easy', 'normal', 'hard'].includes(params.get('level') ?? '')
+			? params.get('level')
+			: 'normal';
+		if (!wanted) return;
+		practiceDone = true;
+		history.replaceState(history.state, '', window.location.pathname);
+		void (async () => {
+			for (let i = room.usersList.filter((u) => u.bot).length; i < wanted; i++) {
+				const revision = socket.roomData?.revision;
+				if (!(await sendAction('addBot', [level]))) return;
+				// Wait for the new seat to arrive before the next command (revision-checked).
+				for (let tries = 0; tries < 50 && socket.roomData?.revision === revision; tries++)
+					await new Promise((resolve) => setTimeout(resolve, 40));
+			}
+			await dealTeenPatti();
+		})();
+	});
 	onMount(() => {
 		try {
 			autoDeal = localStorage.getItem(autoDealKey) !== 'off';

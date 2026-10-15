@@ -16,7 +16,8 @@
 		ArrowRight,
 		Sparkles,
 		Users,
-		IndianRupee
+		IndianRupee,
+		Bot
 	} from '@lucide/svelte';
 
 	let roomName = $state<string>('');
@@ -29,6 +30,9 @@
 	let rulesVersion: RulesVersion = 'classic-1';
 	let gameType = $state<'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy'>('teen-patti');
 	const minimumBuyIn = $derived(gameType === 'teen-patti' ? 1000 : 50);
+	/** Practice: seat bots and deal as soon as the host takes their seat. */
+	let botCount = $state(0);
+	let botLevel = $state<'easy' | 'normal' | 'hard'>('normal');
 
 	onMount(() => {
 		// Connect here so the "Create Room" button becomes visible once connected.
@@ -59,7 +63,11 @@
 			false
 		);
 		if (result.ok && result.roomName) {
-			goto('/' + result.roomName);
+			goto(
+				'/' +
+					result.roomName +
+					(gameType === 'teen-patti' && botCount > 0 ? `?bots=${botCount}&level=${botLevel}` : '')
+			);
 		} else displayToast(result.error || 'Could not create room', 'error');
 	}
 
@@ -237,6 +245,47 @@
 						<p class="fieldset-label text-base-content/40">
 							Each hand starts with ₹{boot} from everyone. Blind bets ₹{boot}–₹{boot * 2}; seen bets
 							₹{boot * 2}–₹{boot * 4}. 60 seconds per turn.
+						</p>
+					</fieldset>
+
+					<fieldset class="fieldset gap-1" data-testid="practice-bots">
+						<legend
+							class="fieldset-legend text-primary/80 flex items-center gap-1 text-xs font-semibold tracking-widest uppercase"
+						>
+							<Bot class="h-3 w-3" /> Practice vs bots
+						</legend>
+						<div class="join w-full" role="radiogroup" aria-label="Number of bots">
+							{#each [0, 1, 2, 3, 4, 5] as count (count)}
+								<button
+									type="button"
+									role="radio"
+									aria-checked={botCount === count}
+									class="btn btn-sm join-item flex-1 {botCount === count
+										? 'btn-primary'
+										: 'btn-outline'}"
+									onclick={() => (botCount = count)}>{count === 0 ? 'None' : count}</button
+								>
+							{/each}
+						</div>
+						{#if botCount > 0}
+							<div class="join mt-1 w-full" role="radiogroup" aria-label="Bot difficulty">
+								{#each ['easy', 'normal', 'hard'] as const as level (level)}
+									<button
+										type="button"
+										role="radio"
+										aria-checked={botLevel === level}
+										class="btn btn-sm join-item flex-1 capitalize {botLevel === level
+											? 'btn-secondary'
+											: 'btn-outline'}"
+										onclick={() => (botLevel = level)}>{level}</button
+									>
+								{/each}
+							</div>
+						{/if}
+						<p class="fieldset-label text-base-content/40">
+							{botCount > 0
+								? `${botCount} ${botLevel} bot${botCount > 1 ? 's' : ''} join and the first hand is dealt as soon as you sit down. Friends can still join between hands.`
+								: 'No bots — wait for friends. You can add bots at the table any time.'}
 						</p>
 					</fieldset>
 				{/if}

@@ -15,12 +15,14 @@
 		UserPlus,
 		Sparkles,
 		Mail,
-		Share2
+		Share2,
+		Bot
 	} from '@lucide/svelte';
 	import type { MediaState } from '#lib/media/controller.js';
 	import { VARIANT_BY_VERSION, type RulesVersion } from '#lib/variant-catalog.js';
 	import { arrangeSeats } from '#lib/seat-layout.js';
 	import TpSeat from './TpSeat.svelte';
+	import BotAvatar from './BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import ActionDock from './ActionDock.svelte';
 	import { money, signedMoney, rankLabel } from './format.js';
@@ -351,6 +353,12 @@
 	const bet = (amount: number) => room.legalActions.bet && void send('play', [false, amount]);
 	const show = () => room.legalActions.show && void send('show', [room.name]);
 	const sitOut = (value: boolean) => void send('ready', [!value]);
+
+	// ——— Bots ———
+	let botLevel = $state<'easy' | 'normal' | 'hard'>('normal');
+	const canAddBot = $derived(isHost && !live && !!room.legalActions.addBot && connected);
+	const addBot = () => canAddBot && void send('addBot', [botLevel]);
+	const removeBot = (botId: string) => void send('removeBot', [botId]);
 	const low = $derived(room.legalActions.minBet ?? 0);
 	const high = $derived(Math.min(room.legalActions.maxBet ?? 0, me?.balance ?? 0));
 
@@ -475,6 +483,24 @@
 
 <svelte:window {onkeydown} />
 
+{#snippet botAdder()}
+	<div class="bot-adder" data-testid="bot-adder">
+		<div class="levels" role="radiogroup" aria-label="Bot difficulty">
+			{#each ['easy', 'normal', 'hard'] as const as level (level)}
+				<button
+					role="radio"
+					aria-checked={botLevel === level}
+					class:on={botLevel === level}
+					onclick={() => (botLevel = level)}>{level}</button
+				>
+			{/each}
+		</div>
+		<button class="mini add-bot" onclick={addBot} disabled={!canAddBot}>
+			<Bot class="h-3.5 w-3.5" /> Add bot
+		</button>
+	</div>
+{/snippet}
+
 <div class="tp-shell" data-testid="table-scene" data-game="teen-patti">
 	<header class="topbar">
 		<div class="brand">
@@ -569,6 +595,7 @@
 					showMedia={!!mediaState && ['connected', 'reconnecting'].includes(mediaState.status)}
 					mediaParticipant={mediaState?.participants.find((p) => p.identity === entry.user.id)}
 					onspotlight={() => (spotlight = entry.user.id)}
+					onremove={entry.user.bot && isHost && !live ? () => removeBot(entry.user.id) : undefined}
 				/>
 			</div>
 		{/each}
@@ -581,10 +608,14 @@
 				transition:fade={{ duration: 150 }}
 			>
 				<span class="spotlight-frame">
-					<SeatVideo
-						participant={mediaState?.participants.find((p) => p.identity === spotlightUser.id)}
-						name={spotlightUser.username}
-					/>
+					{#if spotlightUser.bot}
+						<BotAvatar name={spotlightUser.username} level={spotlightUser.bot} />
+					{:else}
+						<SeatVideo
+							participant={mediaState?.participants.find((p) => p.identity === spotlightUser.id)}
+							name={spotlightUser.username}
+						/>
+					{/if}
 					<span class="spotlight-name"
 						>{spotlightUser.username} · {money(spotlightUser.balance)}</span
 					>
@@ -635,6 +666,7 @@
 						</div>
 						{#if dealError}<p class="deal-error">{dealError}</p>{/if}
 					{/if}
+					{#if isHost && canAddBot}<div class="result-bots">{@render botAdder()}</div>{/if}
 				</div>
 			{:else if !room.isStarted}
 				<div class="lobby" in:fade>
@@ -649,6 +681,7 @@
 						<button class="deal-btn" onclick={dealNow} disabled={!canDeal} data-testid="deal-first">
 							<Play class="h-4 w-4" /> Deal first hand
 						</button>
+						{@render botAdder()}
 						{#if !canDeal}
 							<p class="lobby-hint">
 								{eligible.length < 2
@@ -793,6 +826,13 @@
 						</p>
 					{/if}
 					<p class="muted small">Each table can email up to 10 people.</p>
+					{#if isHost}
+						<h3>No one free? Add a bot</h3>
+						<p class="muted">
+							Bots play at your pace, have no camera, and can be removed between hands.
+						</p>
+						{@render botAdder()}
+					{/if}
 					{#if invited.length}
 						<h3>Invited</h3>
 						<ul class="invited">
@@ -1468,6 +1508,35 @@
 		font-size: 0.85rem;
 		list-style: disc;
 	}
+	.bot-adder {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		margin-top: 0.3rem;
+	}
+	.levels {
+		display: inline-flex;
+		overflow: hidden;
+		border: 1px solid rgb(241 235 220 / 16%);
+		border-radius: 999px;
+	}
+	.levels button {
+		padding: 0.25rem 0.6rem;
+		color: rgb(241 235 220 / 70%);
+		font-size: 0.72rem;
+		font-weight: 650;
+		text-transform: capitalize;
+		cursor: pointer;
+	}
+	.levels button.on {
+		background: rgb(240 200 110 / 22%);
+		color: #f4d68c;
+	}
+	.mini.add-bot {
+		padding: 0.3rem 0.8rem;
+	}
 	.link-box {
 		display: flex;
 		align-items: center;
@@ -1606,6 +1675,10 @@
 		.result-detail,
 		.next {
 			font-size: 0.68rem;
+		}
+		/* Phones: keep the result card short; bots are added from the invite panel. */
+		.result-bots {
+			display: none;
 		}
 	}
 	@media (max-width: 420px) {
