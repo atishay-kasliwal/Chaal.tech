@@ -25,6 +25,8 @@
 	let table = $state<number>(1000);
 	/** Teen Patti boot: every player's entry per hand, and the first blind stake. */
 	let boot = $state<number>(10);
+	/** Pot limit in boots; 0 is off. 128 × ₹10 = ₹1,280 by default. */
+	let potLimit = $state<number>(128);
 	const BOOTS = [5, 10, 20, 50, 100];
 	// Every Teen Patti room opens with Classic. Variant choice belongs between hands.
 	let rulesVersion: RulesVersion = 'classic-1';
@@ -56,7 +58,7 @@
 			return;
 		}
 		// Teen Patti rooms seat players ready, show the turn clock and use the chosen boot.
-		const tableArgs = gameType === 'teen-patti' ? [{ boot, autoReady: true }] : [];
+		const tableArgs = gameType === 'teen-patti' ? [{ boot, autoReady: true, potLimit }] : [];
 		const result = await socket.command(
 			'createRoom',
 			['', table, rulesVersion, gameType, ...tableArgs],
@@ -245,6 +247,33 @@
 						<p class="fieldset-label text-base-content/40">
 							Each hand starts with ₹{boot} from everyone. Blind bets ₹{boot}–₹{boot * 2}; seen bets
 							₹{boot * 2}–₹{boot * 4}. 60 seconds per turn.
+						</p>
+					</fieldset>
+
+					<fieldset class="fieldset gap-1" data-testid="pot-limit">
+						<legend
+							class="fieldset-legend text-primary/80 flex items-center gap-1 text-xs font-semibold tracking-widest uppercase"
+						>
+							<Coins class="h-3 w-3" /> Pot limit
+						</legend>
+						<div class="join w-full" role="radiogroup" aria-label="Pot limit">
+							{#each [0, 64, 128, 256, 512] as limit (limit)}
+								<button
+									type="button"
+									role="radio"
+									aria-checked={potLimit === limit}
+									class="btn btn-sm join-item flex-1 {potLimit === limit
+										? 'btn-primary'
+										: 'btn-outline'}"
+									onclick={() => (potLimit = limit)}
+									>{limit ? `₹${(limit * boot).toLocaleString('en-IN')}` : 'Off'}</button
+								>
+							{/each}
+						</div>
+						<p class="fieldset-label text-base-content/40">
+							{potLimit
+								? `When the pot reaches ₹${(potLimit * boot).toLocaleString('en-IN')}, everyone still in shows and the best hand wins.`
+								: 'No limit — stakes can keep doubling until someone packs or asks for a Show.'}
 						</p>
 					</fieldset>
 

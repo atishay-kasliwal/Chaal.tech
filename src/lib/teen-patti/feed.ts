@@ -57,9 +57,19 @@ export function describeChange(before: RoomData | null, after: RoomData): FeedEv
 			push({ kind: 'leave', playerId: old.id, text: `${old.username} left the table` });
 
 	if (after.result && !before.result) {
-		const { winnerName, amount, reason, winnerId } = after.result;
+		const { winnerName, amount, reason, winnerId, winners } = after.result;
 		if (reason.startsWith('show')) push({ kind: 'show', text: 'Show! Cards on the table' });
-		push({ kind: 'win', playerId: winnerId, amount, text: `${winnerName} won ₹${amount}` });
+		if (reason.startsWith('pot-limit'))
+			push({ kind: 'show', text: 'Pot limit reached — everyone shows' });
+		if (winners?.length)
+			for (const share of winners)
+				push({
+					kind: 'win',
+					playerId: share.id,
+					amount: share.amount,
+					text: `${share.name} takes ₹${share.amount} (split)`
+				});
+		else push({ kind: 'win', playerId: winnerId, amount, text: `${winnerName} won ₹${amount}` });
 	}
 	return events;
 }

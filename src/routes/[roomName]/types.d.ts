@@ -64,6 +64,8 @@ interface RoomData {
 	/** Present on rooms created with table options (boot, auto-ready, visible turn timer). */
 	boot?: number;
 	autoReady?: boolean;
+	/** Pot limit in boots; 0 when off. Reaching it forces a Show among everyone still in. */
+	potLimit?: number;
 	turnMs?: number | null;
 	deadline: number | null;
 	usersList: User[];
@@ -74,6 +76,8 @@ interface RoomData {
 		reason: string;
 		handId: string;
 		revealedPlayerIds?: string[];
+		/** Split pots: each winner's share. */
+		winners?: { id: string; name: string; amount: number }[];
 	} | null;
 	legalActions: {
 		start: boolean;

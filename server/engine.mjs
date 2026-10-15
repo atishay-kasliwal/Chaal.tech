@@ -47,8 +47,12 @@ export function tableOptions(table, options) {
 	require(Number.isSafeInteger(boot) &&
 		boot >= 1 &&
 		boot * 20 <= table, 'Boot must be an integer from 1 to 1/20 of the starting chips');
-	return { boot, autoReady: options.autoReady === true };
+	const potLimit = options.potLimit ?? 0;
+	require(POT_LIMITS.includes(potLimit), 'Pot limit must be off or 64, 128, 256 or 512 boots');
+	return { boot, autoReady: options.autoReady === true, potLimit };
 }
+/** Pot limit, in boots. 0 turns it off. Reaching it forces a Show among everyone still in. */
+export const POT_LIMITS = Object.freeze([0, 64, 128, 256, 512]);
 export function newRoom(name, table, hostId, rulesVersion = DEFAULT_RULES_VERSION, options) {
 	roomName(name);
 	require(typeof rulesVersion === 'string' &&
@@ -56,10 +60,10 @@ export function newRoom(name, table, hostId, rulesVersion = DEFAULT_RULES_VERSIO
 	require(Number.isSafeInteger(table) &&
 		table >= 50 &&
 		table <= 1_000_000, 'Starting chips must be an integer from 50 to 1000000');
-	const { boot, autoReady } = tableOptions(table, options);
+	const { boot, autoReady, potLimit } = tableOptions(table, options);
 	return {
 		schema: 1,
-		...(boot === undefined ? {} : { boot, autoReady }),
+		...(boot === undefined ? {} : { boot, autoReady, ...(potLimit ? { potLimit } : {}) }),
 		rulesVersion,
 		name,
 		table,
@@ -108,6 +112,48 @@ function settle(room, winner, reason, revealed = []) {
 		amount,
 		reason,
 		revealedPlayerIds: revealed,
+		handId: room.handId
+	};
+}
+/**
+ * Pot limit reached: everyone still in shows. The best hand takes the pot; exact ties
+ * split it evenly, any odd rupee going to the first tied player clockwise.
+ */
+function forcedShow(room, variant) {
+	const contenders = active(room);
+	let best = [contenders[0]];
+	for (const player of contenders.slice(1)) {
+		const comparison = variant.compareHands(player.cards, best[0].cards, room.variantState);
+		if (comparison > 0) best = [player];
+		else if (comparison === 0) best.push(player);
+	}
+	const revealed = contenders.map((p) => p.id);
+	if (best.length === 1) {
+		settle(room, best[0], 'pot-limit', revealed);
+		return;
+	}
+	require(!room.result, 'Hand already settled');
+	const pot = room.pot;
+	const share = Math.floor(pot / best.length);
+	const winners = best.map((p, index) => ({
+		id: p.id,
+		name: p.username,
+		amount: share + (index < pot - share * best.length ? 1 : 0)
+	}));
+	for (const winner of winners)
+		room.players.find((p) => p.id === winner.id).balance += winner.amount;
+	room.pot = 0;
+	room.gameShow = true;
+	room.currentPlayerId = null;
+	room.deadline = null;
+	room.turnMs = null;
+	room.result = {
+		winnerId: winners[0].id,
+		winnerName: winners.map((w) => w.name).join(' & '),
+		amount: pot,
+		reason: 'pot-limit-split',
+		revealedPlayerIds: revealed,
+		winners,
 		handId: room.handId
 	};
 }
@@ -295,6 +341,15 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				bot: { level: payload.level, rebuys: 0 }
 			});
 			room.issuedChips += room.table;
+		} else if (action === 'setPotLimit') {
+			require(id === room.hostId, 'Only the host can change the pot limit', 'FORBIDDEN');
+			require(room.boot !== undefined, 'Pot limits need a table created with table options');
+			require(!playing(room), 'Change the pot limit between hands');
+			require(POT_LIMITS.includes(
+				payload.potLimit
+			), 'Pot limit must be off or 64, 128, 256 or 512 boots');
+			if (payload.potLimit) room.potLimit = payload.potLimit;
+			else delete room.potLimit;
 		} else if (action === 'removeBot') {
 			require(id === room.hostId, 'Only the host can remove bots', 'FORBIDDEN');
 			require(!playing(room), 'Remove bots between hands');
@@ -353,7 +408,8 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					if (player.handBet !== undefined) player.handBet += payload.amount;
 					room.pot += payload.amount;
 					room.maxStake = player.isBlind ? payload.amount * 2 : payload.amount;
-					nextTurn(room, player.seatNumber, ctx);
+					if (room.potLimit && room.pot >= room.potLimit * bootOf(room)) forcedShow(room, variant);
+					else nextTurn(room, player.seatNumber, ctx);
 				} else if (action === 'show') {
 					require(!mustDiscard(variant, player), 'Discard a card before you Show');
 					const candidates = active(room);
@@ -407,7 +463,12 @@ export function projection(room, id, connected) {
 		table: room.table,
 		...(room.boot === undefined
 			? {}
-			: { boot: room.boot, autoReady: room.autoReady === true, turnMs: room.turnMs ?? null }),
+			: {
+					boot: room.boot,
+					autoReady: room.autoReady === true,
+					turnMs: room.turnMs ?? null,
+					potLimit: room.potLimit ?? 0
+				}),
 		selfId: id,
 		hostId: room.hostId,
 		revision: room.revision,
@@ -432,7 +493,10 @@ export function projection(room, id, connected) {
 					handId: room.result.handId,
 					...(room.boot === undefined
 						? {}
-						: { revealedPlayerIds: [...(room.result.revealedPlayerIds ?? [])] })
+						: {
+								revealedPlayerIds: [...(room.result.revealedPlayerIds ?? [])],
+								...(room.result.winners ? { winners: structuredClone(room.result.winners) } : {})
+							})
 				}
 			: null,
 		usersList: list.map((p) => ({

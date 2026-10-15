@@ -17,7 +17,7 @@ const ROOM_RETENTION_MS = 365 * DAY_MS;
 const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
 	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
-	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot'
+	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit'
 ]);
 
 const hash = async (value) => {
@@ -414,6 +414,10 @@ export class RoomDurableObject {
 					name: pickBotName(before, secureRandom),
 					level: args[0]
 				};
+				text = null;
+			} else if (event === 'setPotLimit') {
+				action = 'setPotLimit';
+				payload = { potLimit: args[0] };
 				text = null;
 			} else if (event === 'removeBot') {
 				action = 'removeBot';

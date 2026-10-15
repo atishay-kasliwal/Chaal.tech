@@ -392,6 +392,10 @@ export function createGameServer({
 						level: args[0]
 					};
 					text = null;
+				} else if (event === 'setPotLimit') {
+					action = 'setPotLimit';
+					payload = { potLimit: args[0] };
+					text = null;
 				} else if (event === 'removeBot') {
 					action = 'removeBot';
 					payload = { botId: args[0] };
@@ -549,6 +553,7 @@ export function createGameServer({
 			'discardCard',
 			'addBot',
 			'removeBot',
+			'setPotLimit',
 			'play',
 			'pokerAction',
 			'blackjackBet',

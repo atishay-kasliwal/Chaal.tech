@@ -113,6 +113,10 @@
 	const resultDetail = $derived.by(() => {
 		if (!result) return '';
 		if (result.reason === 'last-player') return 'Everyone else packed';
+		if (result.reason === 'pot-limit-split')
+			return `Pot limit reached — equal best hands${nameOf(winner) ? ` (${nameOf(winner)})` : ''}, pot split`;
+		if (result.reason === 'pot-limit')
+			return `Pot limit reached — everyone showed${nameOf(winner) ? `; ${nameOf(winner)} is best` : ''}`;
 		// Only the two hands compared at the Show; a player who looked and then packed is not one.
 		const shown = room.usersList.filter((user) =>
 			revealed.size ? revealed.has(user.id) : user.cardsInHand.some((c) => c.rank > 0)
@@ -130,6 +134,8 @@
 	});
 	const net = $derived(me ? me.balance - room.table : 0);
 	const blindStake = $derived(Math.ceil(room.maxStake / 2));
+	const potCap = $derived(room.potLimit ? room.potLimit * boot : 0);
+	const setPotLimit = (value: number) => void send('setPotLimit', [value]);
 	const seenStake = $derived(room.maxStake);
 
 	// ——— Clock, turn timer and auto-deal ———
@@ -637,8 +643,13 @@
 				<div class="result" in:fly={{ y: 12, duration: 350 }} role="status" aria-live="polite">
 					<Trophy class="trophy h-7 w-7" />
 					<p class="result-title">
-						{result.winnerId === selfId ? 'You win' : `${result.winnerName} wins`}
-						<span>{money(result.amount)}</span>
+						{#if result.winners}
+							{result.winners.some((w) => w.id === selfId) ? 'You split' : 'Split pot'}
+							<span>{result.winners.map((w) => `${w.name} ${money(w.amount)}`).join(' · ')}</span>
+						{:else}
+							{result.winnerId === selfId ? 'You win' : `${result.winnerName} wins`}
+							<span>{money(result.amount)}</span>
+						{/if}
 					</p>
 					<p class="result-detail">{resultDetail}</p>
 					{#if dealIn !== null}
@@ -703,6 +714,14 @@
 					<span class="stakes">
 						Blind {money(blindStake)} · Seen {money(seenStake)}
 					</span>
+					{#if potCap}
+						<span class="limit" title="When the pot reaches this, everyone still in must show">
+							<span class="limit-bar"
+								><span style:transform="scaleX({Math.min(1, room.pot / potCap)})"></span></span
+							>
+							Limit {money(potCap)}
+						</span>
+					{/if}
 				</div>
 			{/if}
 			<ol class="feed" class:hidden-feed={!!result} aria-label="Recent actions">
@@ -897,6 +916,12 @@
 							<strong>Show</strong> is allowed when two players remain; cards are compared and the pot
 							is settled.
 						</li>
+						{#if potCap}
+							<li>
+								<strong>Pot limit {money(potCap)}:</strong> when the pot reaches it, everyone still in
+								shows and the best hand wins. Equal best hands split the pot.
+							</li>
+						{/if}
 						<li>
 							You have <strong>{Math.round(total / 1000)} seconds</strong> per turn. If time runs out
 							you pack automatically.
@@ -921,6 +946,27 @@
 						<button class="mini gold" onclick={() => (paused = false)}
 							><Play class="h-3.5 w-3.5" /> Resume auto-deal</button
 						>
+					{/if}
+					{#if room.boot !== undefined}
+						<div class="setting-block">
+							<span class="setting-title"
+								>Pot limit<small
+									>When the pot reaches this, everyone still in shows and the best hand wins.
+									Changes apply between hands.</small
+								></span
+							>
+							<div class="levels wide" role="radiogroup" aria-label="Pot limit">
+								{#each [0, 64, 128, 256, 512] as limit (limit)}
+									<button
+										role="radio"
+										aria-checked={(room.potLimit ?? 0) === limit}
+										class:on={(room.potLimit ?? 0) === limit}
+										disabled={live || !connected}
+										onclick={() => setPotLimit(limit)}>{limit ? money(limit * boot) : 'Off'}</button
+									>
+								{/each}
+							</div>
+						</div>
 					{/if}
 					{@render settings()}
 				{/if}
@@ -1533,6 +1579,52 @@
 	.levels button.on {
 		background: rgb(240 200 110 / 22%);
 		color: #f4d68c;
+	}
+	.levels.wide {
+		align-self: flex-start;
+		flex-wrap: wrap;
+	}
+	.levels button:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+	.setting-block {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.setting-title {
+		display: flex;
+		flex-direction: column;
+		font-size: 0.9rem;
+		font-weight: 650;
+	}
+	.setting-title small {
+		color: rgb(241 235 220 / 55%);
+		font-weight: 500;
+	}
+	.limit {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		margin-top: 0.25rem;
+		color: rgb(241 235 220 / 60%);
+		font-size: 0.68rem;
+		font-variant-numeric: tabular-nums;
+	}
+	.limit-bar {
+		width: 3.5rem;
+		height: 0.25rem;
+		overflow: hidden;
+		border-radius: 999px;
+		background: rgb(255 255 255 / 10%);
+	}
+	.limit-bar span {
+		display: block;
+		height: 100%;
+		transform-origin: left;
+		background: #e9bf62;
+		transition: transform 300ms ease;
 	}
 	.mini.add-bot {
 		padding: 0.3rem 0.8rem;

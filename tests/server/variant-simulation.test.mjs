@@ -30,6 +30,7 @@ function shuffled(random) {
 }
 
 const ids = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5'];
+let forcedShows = 0;
 
 function assertNoLeaks(room, connected) {
 	const reveal = new Set(room.result?.revealedPlayerIds ?? []);
@@ -85,7 +86,9 @@ function playSession(rulesVersion, playerCount, seed) {
 	const random = rng(seed);
 	const connected = new Set(ids.slice(0, playerCount));
 	let now = 1_000;
-	let room = newRoom('sim-room', 1000, 'p0', 'classic-1', { boot: 10, autoReady: true });
+	// Every session also picks a pot limit (including off) so forced Shows get exercised.
+	const potLimit = [0, 64, 128, 256, 512][seed % 5];
+	let room = newRoom('sim-room', 1000, 'p0', 'classic-1', { boot: 10, autoReady: true, potLimit });
 	for (const id of ids.slice(0, playerCount))
 		room = transition(room, id, 'join', { username: id }, { now, turnMs: 60000, connected });
 	const issued = room.issuedChips;
@@ -140,6 +143,16 @@ function playSession(rulesVersion, playerCount, seed) {
 		assert.ok(room.players.some((p) => p.id === room.result.winnerId));
 		if (room.result.reason.startsWith('show'))
 			assert.equal(room.result.revealedPlayerIds.length, 2);
+		if (room.result.reason.startsWith('pot-limit')) {
+			forcedShows++;
+			assert.ok(room.result.amount >= potLimit * 10, 'forced Show only at the limit');
+			assert.ok(room.result.revealedPlayerIds.length >= 2);
+			if (room.result.winners)
+				assert.equal(
+					room.result.winners.reduce((sum, w) => sum + w.amount, 0),
+					room.result.amount
+				);
+		}
 		// Occasionally someone sits out the next hand, then comes back.
 		const sitter = pick(random, room.players);
 		room = transition(
@@ -196,4 +209,8 @@ test('Illegal actions are refused without changing the table, in every variant',
 			);
 		assert.equal(JSON.stringify(room), before, variant.rulesVersion);
 	}
+});
+
+test('The simulation actually reached pot limits and forced Shows', () => {
+	assert.ok(forcedShows > 20, `forced Shows: ${forcedShows}`);
 });
