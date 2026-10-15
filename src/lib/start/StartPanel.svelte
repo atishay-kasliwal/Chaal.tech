@@ -5,8 +5,17 @@
 	import { displayToast } from '#lib/components/Toasts/index.js';
 	import { validateRoomAccess } from '#lib/utils/room.js';
 	import { type RulesVersion } from '#lib/variant-catalog.js';
-	import { ArrowRight, ChevronDown, Settings2, Link2 } from '@lucide/svelte';
-	import { savedName, saveName, roomCodeFrom } from './player-name.js';
+	import {
+		ArrowRight,
+		ChevronDown,
+		Settings2,
+		Link2,
+		Users,
+		Copy,
+		Share2,
+		Check
+	} from '@lucide/svelte';
+	import { savedName, saveName, stageJoinName, roomCodeFrom } from './player-name.js';
 
 	/**
 	 * Everything needed to get to a table: a name, one tap to start (or play bots),
@@ -17,8 +26,11 @@
 	let name = $state('');
 	let nameInput: HTMLInputElement | undefined = $state();
 	let nameMissing = $state(false);
-	let busy = $state<'start' | 'bots' | 'join' | null>(null);
+	let busy = $state<'start' | 'bots' | 'join' | 'invite' | null>(null);
 	let link = $state('');
+	let inviteRoom = $state('');
+	let inviteUrl = $state('');
+	let copied = $state(false);
 	let showSettings = $state(false);
 
 	// Table settings (folded away). Defaults: Teen Patti, ₹1,000, ₹10 boot, 128 × boot limit.
@@ -57,7 +69,7 @@
 		return true;
 	}
 
-	async function create(withBots: boolean) {
+	async function create(withBots: boolean, forInvite = false) {
 		if (busy || needName()) return;
 		if (!Number.isSafeInteger(table) || table < minimumBuyIn) {
 			showSettings = true;
@@ -72,7 +84,7 @@
 			displayToast('Pick a smaller boot or more starting chips (boot ≤ 1/20 of chips)', 'error');
 			return;
 		}
-		busy = withBots ? 'bots' : 'start';
+		busy = forInvite ? 'invite' : withBots ? 'bots' : 'start';
 		// Teen Patti rooms seat players ready, show the turn clock and use the chosen boot.
 		const tableArgs = gameType === 'teen-patti' ? [{ boot, autoReady: true, potLimit }] : [];
 		const result = await socket.command(
@@ -85,10 +97,39 @@
 			displayToast(result.error || 'Could not start a table — try again', 'error');
 			return;
 		}
+		stageJoinName(result.roomName, name);
+		if (forInvite) {
+			inviteRoom = result.roomName;
+			inviteUrl = new URL(`/${result.roomName}`, window.location.origin).href;
+			copied = false;
+			return;
+		}
 		onclose?.();
 		const practice =
 			withBots && gameType === 'teen-patti' ? `?bots=${botCount}&level=${botLevel}` : '';
 		await goto(`/${result.roomName}${practice}`);
+	}
+
+	async function copyInvite() {
+		try {
+			await navigator.clipboard.writeText(inviteUrl);
+			copied = true;
+		} catch {
+			displayToast('Select and copy the invite link below', 'error');
+		}
+	}
+
+	async function shareInvite() {
+		if (!navigator.share) return copyInvite();
+		try {
+			await navigator.share({
+				title: 'Chalo, let’s play!',
+				text: 'Join me for a game. Your seat is waiting!',
+				url: inviteUrl
+			});
+		} catch (error) {
+			if (!(error instanceof Error && error.name === 'AbortError')) await copyInvite();
+		}
 	}
 
 	async function join(code: string) {
@@ -100,6 +141,7 @@
 			displayToast(access.error, 'error');
 			return;
 		}
+		stageJoinName(code, name);
 		onclose?.();
 		await goto(`/${code}`);
 	}
@@ -146,6 +188,55 @@
 				<small>Invite your friends next</small>
 			</span>
 		</button>
+		{#if inviteRoom}
+			<section class="invite-card" aria-label="Invite friends">
+				<div class="invite-heading">
+					<span class="invite-icon"><Users size={20} /></span>
+					<div>
+						<h3>Your table is ready</h3>
+						<p>Good cards. Better company.</p>
+					</div>
+				</div>
+				<label class="invite-link"
+					><span>Send your friends this link</span><input
+						aria-label="Your table invite link"
+						readonly
+						value={inviteUrl}
+						onclick={(event) => event.currentTarget.select()}
+					/></label
+				>
+				<div class="invite-tools">
+					<button type="button" onclick={copyInvite}
+						>{#if copied}<Check size={15} />{:else}<Copy size={15} />{/if}{copied
+							? 'Copied!'
+							: 'Copy link'}</button
+					>
+					<button type="button" onclick={shareInvite}><Share2 size={15} />Share invite</button>
+				</div>
+				<span class="invite-note" role="status"
+					>{copied
+						? 'Link copied. Send it to your friends.'
+						: 'Anyone with the link can join your table.'}</span
+				>
+				<button type="button" class="enter-table" disabled={!!busy} onclick={() => join(inviteRoom)}
+					>Go to table<ArrowRight size={16} /></button
+				>
+			</section>
+		{:else}
+			<button
+				type="button"
+				class="invite-card invite-trigger"
+				onclick={() => create(false, true)}
+				disabled={!socket.connected || !!busy}
+			>
+				<span class="invite-icon"><Users size={21} /></span>
+				<span class="invite-copy"
+					><strong>{busy === 'invite' ? 'Getting your table ready…' : 'Invite friends'}</strong
+					><small>A private table. Your favourite people.</small></span
+				>
+				<ArrowRight size={18} class="invite-arrow" />
+			</button>
+		{/if}
 		{#if gameType === 'teen-patti'}
 			<button
 				class="big"
@@ -296,6 +387,129 @@
 </div>
 
 <style>
+	.invite-card {
+		border: 1px solid rgb(226 184 98 / 28%);
+		border-radius: 1rem;
+		background: linear-gradient(120deg, #203c2e, #14271f);
+		padding: 1rem;
+		color: #f1ebdc;
+	}
+	.invite-trigger,
+	.invite-heading {
+		display: flex;
+		align-items: center;
+		gap: 0.85rem;
+		text-align: left;
+	}
+	.invite-trigger {
+		width: 100%;
+		cursor: pointer;
+		transition:
+			border-color 160ms ease,
+			background 160ms ease;
+	}
+	.invite-trigger:hover:not(:disabled) {
+		border-color: #e2b862;
+		background: #254633;
+	}
+	.invite-trigger:disabled {
+		opacity: 0.6;
+		cursor: wait;
+	}
+	.invite-icon {
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		width: 2.6rem;
+		height: 2.6rem;
+		border-radius: 0.8rem;
+		background: rgb(226 184 98 / 10%);
+		color: #edca80;
+	}
+	.invite-copy {
+		flex: 1;
+		min-width: 0;
+	}
+	.invite-copy strong,
+	.invite-heading h3 {
+		display: block;
+		color: #f4d68c;
+		font-size: 1rem;
+		font-weight: 750;
+	}
+	.invite-copy small,
+	.invite-heading p {
+		display: block;
+		margin-top: 0.15rem;
+		color: #b6c6b8;
+		font-size: 0.75rem;
+	}
+	.invite-trigger :global(.invite-arrow) {
+		flex-shrink: 0;
+		color: #edca80;
+	}
+	.invite-link {
+		display: block;
+		margin-top: 1rem;
+	}
+	.invite-link > span {
+		display: block;
+		margin-bottom: 0.4rem;
+		color: #b6c6b8;
+		font-size: 0.75rem;
+	}
+	.invite-link input {
+		min-width: 0;
+		padding: 0.65rem;
+		font-size: 0.8rem;
+	}
+	.invite-tools {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: 0.6rem;
+	}
+	.invite-tools button,
+	.enter-table {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.45rem;
+		border-radius: 0.65rem;
+		padding: 0.65rem;
+		font-size: 0.8rem;
+		font-weight: 650;
+		cursor: pointer;
+	}
+	.invite-tools button {
+		flex: 1;
+		border: 1px solid rgb(226 184 98 / 25%);
+		color: #f4d68c;
+	}
+	.invite-tools button:hover {
+		background: rgb(226 184 98 / 10%);
+	}
+	.invite-note {
+		display: block;
+		margin-top: 0.65rem;
+		color: #b6c6b8;
+		font-size: 0.7rem;
+	}
+	.enter-table {
+		width: 100%;
+		margin-top: 0.8rem;
+		background: #f4d68c;
+		color: #24180a;
+	}
+	.enter-table:disabled {
+		opacity: 0.6;
+		cursor: wait;
+	}
+	button:focus-visible {
+		outline: 2px solid #f4d68c;
+		outline-offset: 3px;
+	}
+
 	.start-panel {
 		display: flex;
 		flex-direction: column;
@@ -409,6 +623,10 @@
 		opacity: 0.6;
 	}
 	.status {
+		display: block;
+		width: 100%;
+		height: auto;
+		white-space: normal;
 		color: rgb(241 235 220 / 60%);
 		font-size: 0.82rem;
 		text-align: center;

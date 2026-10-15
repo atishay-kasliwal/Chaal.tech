@@ -15,7 +15,12 @@
 	import { VARIANT_BY_VERSION, VARIANT_CATALOG, type RulesVersion } from '#lib/variant-catalog.js';
 	import RoomMedia from '#lib/components/RoomMedia.svelte';
 	import TeenPattiTable from '#lib/teen-patti/TeenPattiTable.svelte';
-	import { savedName, saveName } from '#lib/start/player-name.js';
+	import {
+		clearPendingJoinName,
+		pendingJoinName,
+		savedName,
+		saveName
+	} from '#lib/start/player-name.js';
 	import type { MediaState } from '#lib/media/controller.js';
 	let mediaState = $state.raw<MediaState | null>(null);
 	import { LogOut, Play, Crown, Swords, Copy } from '@lucide/svelte';
@@ -145,7 +150,12 @@
 		}
 		const me = snapshot.usersList.find((user) => user.id === socket.playerId);
 		usernameCreated = !!me && !me.hasLeft;
-		username = me?.username || '';
+		if (me) {
+			username = me.username;
+			clearPendingJoinName(data.roomName);
+		} else if (!username) {
+			username = pendingJoinName(data.roomName) || savedName();
+		}
 		if (lastRevision !== snapshot.revision) {
 			raiseTo = Math.min(
 				snapshot.legalActions.minRaiseTo ?? 4,
@@ -160,13 +170,16 @@
 	let autoJoinBusy = false;
 	$effect(() => {
 		if (usernameCreated || autoJoinBusy || autoJoinAttempts >= 5 || !socket.connected) return;
-		const name = savedName();
+		const name = pendingJoinName(data.roomName) || savedName();
 		if (!name) return;
 		autoJoinBusy = true;
 		void socket.command('joinRoom', [name, data.roomName], false).then((reply) => {
 			if (reply.ok) {
 				autoJoinBusy = false;
 				usernameCreated = true;
+				username = name;
+				saveName(name);
+				clearPendingJoinName(data.roomName);
 				return;
 			}
 			// A game answer (room full, hand in progress) stops here and shows the seat form.
@@ -184,7 +197,10 @@
 	});
 	// First time here (typed into the seat form): remember the name for next time.
 	$effect(() => {
-		if (usernameCreated && username && !savedName()) saveName(username);
+		if (usernameCreated && username) {
+			saveName(username);
+			clearPendingJoinName(data.roomName);
+		}
 	});
 
 	/** Practice tables from the create page: seat the requested bots, then deal once. */
@@ -218,6 +234,7 @@
 		} catch {
 			/* Default to dealing automatically. */
 		}
+		username = pendingJoinName(data.roomName) || savedName();
 		socket.enterRoom(data.roomName);
 		return () => {
 			socket.disconnect();
