@@ -1,7 +1,6 @@
 import { browser } from '$app/env';
-import { io } from 'socket.io-client';
-import customParser from 'socket.io-msgpack-parser';
 import { serverConfigError, serverURL } from '#lib/config.js';
+import { GameSocket } from './game-socket.js';
 
 interface Reply {
 	ok: boolean;
@@ -18,15 +17,18 @@ class SocketStore {
 	error = $state('');
 	private roomName = '';
 	private token: string | undefined;
-
-	socket = io(serverURL, {
-		parser: customParser,
-		transports: ['websocket', 'polling'],
-		autoConnect: false,
-		auth: (callback) => callback(this.token ? { token: this.token } : {})
-	});
+	socket: GameSocket;
 
 	constructor() {
+		this.socket = new GameSocket(serverURL, () => this.token, (session) => {
+			this.token = session.token;
+			this.playerId = session.playerId;
+			try {
+				localStorage.setItem(sessionKey, session.token);
+			} catch {
+				/* Refresh recovery requires browser storage. */
+			}
+		});
 		if (browser) {
 			try {
 				this.token = localStorage.getItem(sessionKey) || undefined;
@@ -34,21 +36,14 @@ class SocketStore {
 				/* Memory-only session if storage is unavailable. */
 			}
 		}
-		this.socket.on('session', ({ token, playerId }: { token: string; playerId: string }) => {
-			this.token = token;
-			this.playerId = playerId;
-			try {
-				localStorage.setItem(sessionKey, token);
-			} catch {
-				/* Refresh recovery requires browser storage. */
-			}
-		});
 		this.socket.on('connect', () => {
 			this.connected = true;
 			this.error = '';
 			if (this.roomName) this.resume();
 		});
-		this.socket.on('roomData', (snapshot: RoomData) => {
+		this.socket.on('roomData', (value: unknown) => {
+			if (!value || typeof value !== 'object') return;
+			const snapshot = value as RoomData;
 			if (snapshot.name !== this.roomName) return;
 			// The owned server sends complete recipient views. Replacement clears old hands.
 			this.roomData = snapshot;
@@ -57,21 +52,8 @@ class SocketStore {
 		this.socket.on('disconnect', () => {
 			this.connected = false;
 		});
-		this.socket.on('connect_error', (error: Error) => {
-			const code = (error as Error & { data?: { code?: string } }).data?.code;
-			if (code === 'INVALID_SESSION' && this.token) {
-				this.token = undefined;
-				this.playerId = '';
-				try {
-					localStorage.removeItem(sessionKey);
-				} catch {
-					/* Continue with a fresh in-memory identity. */
-				}
-				this.error = 'Your saved player session expired. Starting a new session.';
-				this.socket.connect();
-				return;
-			}
-			this.error = error.message;
+		this.socket.on('connect_error', (error: unknown) => {
+			this.error = error instanceof Error ? error.message : 'Game connection failed';
 		});
 		this.socket.on('sessionReplaced', () => {
 			this.error = 'This player is connected in another tab. Reconnect here to take over.';
@@ -84,7 +66,7 @@ class SocketStore {
 			this.error = serverConfigError;
 			return;
 		}
-		if (!this.socket.connected) this.socket.connect();
+		if (!this.socket.connected) this.socket.connect(this.roomName);
 	}
 	disconnect() {
 		this.socket.disconnect();
@@ -94,17 +76,23 @@ class SocketStore {
 	enterRoom(name: string) {
 		if (this.roomName !== name) this.roomData = null;
 		this.roomName = name;
-		this.connect();
-		if (this.socket.connected) this.resume();
+		if (!serverURL) {
+			this.error = serverConfigError;
+			return;
+		}
+		this.socket.connect(name);
 	}
 
 	private resume() {
-		this.socket
+		void this.socket
 			.timeout(8000)
-			.emit('resumeRoom', this.roomName, (error: Error | null, reply: Reply) => {
-				if (error) this.error = 'Could not restore the room. Reconnect to try again.';
-				else if (!reply.ok && reply.code !== 'NOT_MEMBER')
+			.emitWithAck('resumeRoom', this.roomName)
+			.then((reply: Reply) => {
+				if (!reply.ok && reply.code !== 'NOT_MEMBER')
 					this.error = reply.error || 'Could not restore the room';
+			})
+			.catch(() => {
+				this.error = 'Could not restore the room. Reconnect to try again.';
 			});
 	}
 
@@ -120,10 +108,11 @@ class SocketStore {
 		// Retry only the same command ID. A lost acknowledgement cannot double a bet.
 		for (let attempt = 0; attempt < 2; attempt++) {
 			try {
-				const reply = (await this.socket.timeout(8000).emitWithAck(event, ...args, meta)) as Reply;
+				const reply = await this.socket.timeout(8000).emitWithAck(event, ...args, meta);
 				if (reply.ok && event === 'leaveRoom') {
 					this.roomName = '';
 					this.roomData = null;
+					this.socket.clearRoom();
 				}
 				return reply;
 			} catch {

@@ -1,55 +1,89 @@
 # Cloudflare deployment
 
-The production shape keeps the existing SvelteKit frontend and Node game server separate:
-
-- Cloudflare Pages serves the web application.
-- Render runs the Node.js 24+ game server from [`Dockerfile`](../Dockerfile) and [`render.yaml`](../render.yaml), with SQLite on an attached persistent disk.
-- `VITE_SERVER_URL` points the frontend to the public game server URL.
-- Cloudflare DNS maps `chaal.tech` to the Pages project and can map `api.chaal.tech` to the Node host.
-
-The game server uses Node's HTTP/Socket.IO stack and `node:sqlite`; it is not deployed as a Pages Function or a basic Worker. Media remains optional. Configure LiveKit secrets only on the game server if media is enabled.
-
-Run exactly one game-server process with this SQLite database. Do not enable horizontal autoscaling or multiple workers: presence and Socket.IO room broadcasts are process-local. Scale-out requires shared presence/broadcast infrastructure and a database designed for concurrent room ownership.
-
-## Deploy the Pages project
-
-The `chaal-tech` Pages project was created with Wrangler Direct Upload. Deploy updates from the repository with `npm run deploy:pages -- --project-name=chaal-tech --branch=main`. This uploads the build from the current checkout; it does not automatically deploy GitHub commits.
-
-Production builds require `VITE_SERVER_URL` to point to the public HTTPS origin of the game server. The build rejects a missing value, localhost, and non-HTTPS endpoints so visitors cannot receive a bundle that tries to connect to their own computer. For example:
-
-```sh
-VITE_SERVER_URL=https://api.chaal.tech npm run deploy:pages -- --project-name=chaal-tech --branch=main
-```
-
-If you want Cloudflare to deploy automatically from GitHub, create a separate Git-integrated Pages project for this repository; the existing project is Direct Upload.
-
-The repository also has a `wrangler.toml` and `npm run deploy:pages` for a CLI deployment. Git-connected Pages deployment is preferred so pushes to `main` deploy automatically.
-
-## Deploy the game server
-
-Create a Render Blueprint from this repository and review the service before applying it: [open the Chaal.tech Blueprint in Render](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fatishay-kasliwal%2Fteenpatti). The Blueprint creates one paid web-service instance and a 1 GB persistent disk. Persistent disks are required because the game server stores room state in SQLite; Render documents that the default filesystem is ephemeral and that persistent disks are available on paid services ([Render persistent-disk docs](https://render.com/docs/disks)). The service health check uses `/ready`.
-
-The Blueprint configures:
+Chaal.tech uses Cloudflare for both the existing SvelteKit frontend and the authoritative game service. The frontend remains on the current Pages project. The game service is a Cloudflare Worker whose Durable Object namespace assigns one SQLite-backed object to each room.
 
 ```text
-HOST=0.0.0.0
-GAME_DATABASE=/var/data/chaal.sqlite
-ALLOWED_ORIGINS=https://chaal-tech.pages.dev,https://chaal.tech,https://www.chaal.tech
-HOST_GRACE_MS=30000
+Browser
+  ├─ HTTPS pages → Cloudflare Pages → existing SvelteKit/Svelte UI
+  └─ HTTPS + WebSocket → Cloudflare Worker → room Durable Object
+                                             ├─ durable SQLite room snapshot
+                                             ├─ command receipts and chip ledger
+                                             ├─ authoritative game transitions
+                                             └─ per-room connected players
 ```
 
-After Render creates the service, use its `onrender.com` hostname for the Cloudflare DNS record `api.chaal.tech` and for the frontend's `VITE_SERVER_URL`. Keep the SQLite directory private. Configure LiveKit credentials in Render as backend-only secrets; never use `VITE_` names for secrets. LiveKit Cloud URLs automatically enable revocation of cached participant tokens on leave or takeover; set `LIVEKIT_REVOKE_TOKENS=true` for another provider that supports the same API. Self-hosted LiveKit does not provide this revocation guarantee, though issued tokens expire after 60 seconds.
+The game rules, variant modules, game components, room layout, and visual styling are reused. The transport boundary in the existing socket store now uses WebSocket messages with acknowledged commands. Room snapshots, command receipts, and the chip ledger are committed atomically in the room's Durable Object storage. The Node/Socket.IO server and file-backed `Store` remain available for the existing regression suite; production traffic goes to the Cloudflare Worker.
 
-The current Pages project uses Direct Upload, so the frontend is deployed from this checkout after the backend hostname is known:
+Each room is independently addressed from its invite code. A room object owns its private cards and deck; HTTP room previews return only public room metadata. Durable Object alarms handle expired turns, host recovery, and inactive-room retention. WebSockets use the hibernation API, so presence is restored from each live connection attachment and game state is loaded from durable storage after a restart.
+
+## Local development and tests
+
+Run the game Worker and SvelteKit dev server in separate terminals:
 
 ```sh
-VITE_SERVER_URL=https://api.chaal.tech npm run deploy:pages -- --project-name=chaal-tech --branch=main
+npm run dev:backend
+npm run dev
 ```
 
-Then connect `chaal.tech` and `www.chaal.tech` to the Pages project in Cloudflare, create `api.chaal.tech` as a proxied CNAME to the Render hostname, and confirm DNS is active. Verify room creation, joining from a second browser, game actions, refresh/reconnection, and optional media before inviting players.
+The frontend defaults to `http://127.0.0.1:8787` for its game endpoint in development. Wrangler loads local values from `.dev.vars` and `.env`; provide a development-only `SESSION_SECRET` with at least 32 bytes. Do not reuse the production value locally.
 
-The game server runs a daily retention sweep by default (`RETENTION_SWEEP_MS=86400000`). Rooms with fewer than three historical joiners expire after 30 inactive days; rooms with three or more expire after 365 inactive days. Connected rooms and unfinished hands are protected. Idempotency receipts expire after 30 days, ledger entries after 365 days, and old player identities are removed only when no retained room references them. On the first startup after the schema migration, existing rooms, sessions, and receipts receive fresh timestamps so the upgrade itself does not trigger cleanup.
+The Cloudflare integration suite starts an isolated Wrangler runtime and exercises the session endpoint, room creation and idempotency, origin checks, two-player WebSocket synchronization, ready/start flow, and private-card projections:
 
-## DNS handoff
+```sh
+npm run test:cloudflare
+```
 
-The Cloudflare authorization currently connected to Wrangler has Pages write access but only read access to DNS. A Cloudflare account admin can complete the custom-domain activation in the dashboard, or reauthorize Wrangler with DNS edit access for this zone. For the apex `chaal.tech`, Cloudflare must be authoritative for the domain; if the domain's nameservers are elsewhere, change them at the registrar to the Cloudflare nameservers shown for this zone. Add `api.chaal.tech` only after the game-server host provides its DNS target.
+The existing `npm test` suite continues to test the shared game engines through the Node test server. Run `npm run lint`, `npm run check`, `npm test`, `npm run test:cloudflare`, and `npm run build` before deployment.
+
+## Production deployment
+
+Wrangler must be authenticated to the Cloudflare account. The `SESSION_SECRET` is a production-only signing key for stable guest identities and unguessable, retry-safe room codes. Generate and upload it without putting its value in shell history:
+
+```sh
+openssl rand -hex 48 | node_modules/.bin/wrangler secret put SESSION_SECRET --config wrangler.game.toml
+```
+
+Deploy the backend and its SQLite Durable Object migration:
+
+```sh
+npm run deploy:backend
+```
+
+Wrangler prints the Worker URL, normally `https://chaal-game.<account-subdomain>.workers.dev`. Set that exact origin as `VITE_SERVER_URL` when building and deploying the existing Pages project:
+
+```sh
+VITE_SERVER_URL=https://chaal-game.<account-subdomain>.workers.dev npm run deploy:pages -- --project-name=chaal-tech --branch=main
+```
+
+The Worker allowlist currently permits `chaal.tech`, `www.chaal.tech`, the existing `chaal-tech.pages.dev` site, and localhost development origins. If the Pages project URL changes, update `ALLOWED_ORIGINS` in `wrangler.game.toml` and redeploy the Worker.
+
+The first production deployment is live at `https://chaal-tech.pages.dev`; the game Worker is `https://chaal-game.s6-backend-spike.workers.dev`. The Pages project has `chaal.tech` and `www.chaal.tech` attached, but both remain pending until DNS points at Pages. Add these records in the `chaal.tech` Cloudflare DNS zone:
+
+| Type | Name | Target | Proxy |
+| --- | --- | --- | --- |
+| CNAME | `@` | `chaal-tech.pages.dev` | Proxied |
+| CNAME | `www` | `chaal-tech.pages.dev` | Proxied |
+
+Use Auto TTL. The current Cloudflare login can manage Workers and Pages but has Zone read access only, so it cannot create those DNS records through the API. The game API can stay on its `workers.dev` hostname; a custom `api.chaal.tech` hostname is optional.
+
+After each deploy, verify `/health` and `/ready`, create a room from the deployed site, join from a second browser, start a hand, refresh and reconnect, and confirm that opponent cards remain masked before reveal. The automated Cloudflare suite covers the same protocol locally.
+
+## Optional LiveKit media
+
+Camera and microphone remain independent of game state. The Worker issues LiveKit credentials only for an authenticated player with an active seat. Missing LiveKit credentials do not stop room creation or gameplay; the frontend reports media as unavailable and keeps the card game usable.
+
+Configure the following Worker secrets only after the LiveKit project is ready:
+
+```sh
+node_modules/.bin/wrangler secret put LIVEKIT_URL --config wrangler.game.toml
+node_modules/.bin/wrangler secret put LIVEKIT_API_KEY --config wrangler.game.toml
+node_modules/.bin/wrangler secret put LIVEKIT_API_SECRET --config wrangler.game.toml
+```
+
+The Worker issues short-lived room/identity-scoped tokens using the game engine's `playerId`, `roomId`, and server-owned seat. It calls LiveKit's participant removal endpoint on an explicit game-room leave. No LiveKit state is stored in the room snapshot or used to authorize a card action.
+
+## Data and rollout notes
+
+Room state is private to its room Durable Object. A room's current snapshot, idempotency receipts, and chip movements share a transactional SQLite database. Session tokens are signed guest credentials; no global session database or user account system is required. Rotating `SESSION_SECRET` invalidates existing guest sessions and changes deterministic room-code derivation for future creates, so keep it stable and backed up in Cloudflare's secret store.
+
+This rollout starts with an empty Cloudflare Durable Object namespace. The prior SQLite file was a local/test deployment artifact and is not imported. The Node SQLite store and Docker/Render deployment are no longer part of the production path.

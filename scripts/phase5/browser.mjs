@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
-import parser from 'socket.io-msgpack-parser';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { watchRoomData } from '../game-frames.mjs';
 
 
 const base = process.env.PHASE5_BASE_URL || 'http://127.0.0.1:5174',
@@ -82,8 +82,8 @@ async function geometry(page, expected, desktop = true) {
 try {
 	for (const count of playerCounts) {
 		const pages = [],
-			views = new Map(),
-			room = `layout-${count}-${Date.now().toString(36)}`;
+			views = new Map();
+		let room = '';
 		for (let i = 0; i < count; i++) {
 			const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 			contexts.push(context);
@@ -91,23 +91,13 @@ try {
 			pages.push(page);
 			page.on('pageerror', (error) => report.errors.push(String(error)));
 			page.on('websocket', (ws) => {
-				const decoder = new parser.Decoder();
-				decoder.on('decoded', (packet) => {
-					if (packet.data?.[0] === 'roomData') views.set(i, packet.data[1]);
-				});
-				ws.on('framereceived', (frame) => {
-					if (typeof frame.payload !== 'string')
-						try {
-							decoder.add(frame.payload);
-						} catch {
-							/* Non-game frame. */
-						}
-				});
+				watchRoomData(ws, (snapshot) => views.set(i, snapshot));
 			});
 			if (i === 0) {
 				await page.goto(`${base}/create-room`, { waitUntil: 'networkidle' });
-				await page.locator('#roomName').fill(room);
 				await page.locator('#create-room-btn').click();
+				await page.waitForURL((url) => /^\/[a-f0-9]{32}$/.test(url.pathname));
+				room = new URL(page.url()).pathname.slice(1);
 			} else await page.goto(`${base}/${room}`, { waitUntil: 'networkidle' });
 			await page.locator('#username').fill(`friend-${i + 1}-`.padEnd(24, 'x'));
 			await page

@@ -1,11 +1,11 @@
 import { chromium } from 'playwright';
-import parser from 'socket.io-msgpack-parser';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { getVariant } from '../../server/variants/index.mjs';
+import { watchRoomData } from '../game-frames.mjs';
 
 const base = 'http://127.0.0.1:5174';
-const room = `phase1-${Date.now().toString(36)}`;
+let room = '';
 const directory = process.env.CAPTURE_DIRECTORY || 'visual-baselines/phase1';
 const rulesVersion = process.env.VARIANT_RULES_VERSION || 'classic-1';
 assert.ok(['classic-1', 'muflis-1'].includes(rulesVersion));
@@ -38,18 +38,7 @@ function track(page, index) {
 			external.add(url.origin);
 	});
 	page.on('websocket', (ws) => {
-		const decoder = new parser.Decoder();
-		decoder.on('decoded', (packet) => {
-			if (packet.data?.[0] === 'roomData') views.set(index, packet.data[1]);
-		});
-		ws.on('framereceived', (frame) => {
-			if (typeof frame.payload !== 'string')
-				try {
-					decoder.add(frame.payload);
-				} catch {
-					/* Not a Socket.IO game frame. */
-				}
-		});
+		watchRoomData(ws, (snapshot) => views.set(index, snapshot));
 	});
 }
 async function until(check) {
@@ -90,8 +79,10 @@ async function addPlayer(index) {
 		);
 		await screenshot(page, '03-mobile-create');
 		await page.setViewportSize({ width: 1440, height: 1000 });
-		await page.locator('#roomName').fill(room);
 		await page.locator('#create-room-btn').click();
+		await page.waitForURL((url) => /^\/[a-f0-9]{32}$/.test(url.pathname));
+		room = new URL(page.url()).pathname.slice(1);
+		report.room = room;
 	} else await page.goto(`${base}/${room}`, { waitUntil: 'networkidle' });
 	await page.getByRole('heading', { name: 'Take a Seat' }).waitFor();
 	await page.locator('#username').fill(`Baseline ${index + 1}`);
@@ -106,6 +97,11 @@ try {
 	for (let i = 0; i < 6; i++) await addPlayer(i);
 	await until(() => views.get(0)?.usersList.length === 6);
 	assert.ok([...views.values()].every((v) => v.rulesVersion === rulesVersion));
+	for (let i = 0; i < pages.length; i++) {
+		const playerId = views.get(i).selfId;
+		await pages[i].getByTestId('ready-toggle').click();
+		await until(() => views.get(0)?.usersList.find((player) => player.id === playerId)?.ready === true);
+	}
 	const host = pages[0];
 	assert.equal(await host.getByTestId('variant-label').count(), 1);
 	assert.match(

@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
-import parser from 'socket.io-msgpack-parser';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { watchRoomData } from '../game-frames.mjs';
 
 const base = process.env.PHASE10_BASE_URL || 'http://127.0.0.1:5174';
 const directory = 'visual-baselines/phase10/poker';
@@ -31,25 +31,13 @@ async function capture(page, name) {
 
 function observeRoom(page, index, views) {
 	page.on('websocket', (ws) => {
-		const decoder = new parser.Decoder();
-		decoder.on('decoded', (packet) => {
-			if (packet.data?.[0] === 'roomData') views.set(index, packet.data[1]);
-		});
-		ws.on('framereceived', (frame) => {
-			if (typeof frame.payload !== 'string') {
-				try {
-					decoder.add(frame.payload);
-				} catch {
-					/* Ignore non-game websocket packets. */
-				}
-			}
-		});
+		watchRoomData(ws, (snapshot) => views.set(index, snapshot));
 	});
 }
 
 try {
 	const count = 6;
-	const room = `poker-six-${Date.now().toString(36)}`;
+	let room = '';
 	const pages = [];
 	const views = new Map();
 	for (let index = 0; index < count; index++) {
@@ -62,8 +50,9 @@ try {
 		if (index === 0) {
 			await page.goto(`${base}/create-room`, { waitUntil: 'networkidle' });
 			await page.locator('#gameType').selectOption('texas-holdem');
-			await page.locator('#roomName').fill(room);
 			await page.locator('#create-room-btn').click();
+			await page.waitForURL((url) => /^\/[a-f0-9]{32}$/.test(url.pathname));
+			room = new URL(page.url()).pathname.slice(1);
 		} else await page.goto(`${base}/${room}`, { waitUntil: 'networkidle' });
 		await page.locator('#username').fill(`poker-friend-${index + 1}`);
 		await page

@@ -10,7 +10,7 @@ export default defineConfig(({ command, mode }) => {
 		const endpoint = loadEnv(mode, process.cwd(), 'VITE_').VITE_SERVER_URL?.trim();
 		if (!isPublicServerOrigin(endpoint)) {
 			throw new Error(
-				'VITE_SERVER_URL must be a public HTTPS origin, such as https://api.chaal.tech.'
+				'VITE_SERVER_URL must be a public HTTPS origin, such as your deployed Cloudflare Worker URL.'
 			);
 		}
 	}

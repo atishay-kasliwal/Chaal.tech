@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
-import parser from 'socket.io-msgpack-parser';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { watchRoomData } from '../game-frames.mjs';
 
 const base = process.env.PHASE6_BASE_URL || 'http://127.0.0.1:5174',
 	directory = 'visual-baselines/phase10/table';
@@ -121,9 +121,9 @@ async function mobileGeometry(page, count) {
 
 try {
 	for (const count of playerCounts) {
-		const room = `phase6-${count}-${Date.now().toString(36)}`;
 		const pages = [],
 			views = new Map();
+		let room = '';
 		for (let index = 0; index < count; index++) {
 			const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
 			contexts.push(context);
@@ -131,23 +131,13 @@ try {
 			pages.push(page);
 			page.on('pageerror', (error) => report.errors.push(String(error)));
 			page.on('websocket', (ws) => {
-				const decoder = new parser.Decoder();
-				decoder.on('decoded', (packet) => {
-					if (packet.data?.[0] === 'roomData') views.set(index, packet.data[1]);
-				});
-				ws.on('framereceived', (frame) => {
-					if (typeof frame.payload !== 'string')
-						try {
-							decoder.add(frame.payload);
-						} catch {
-							/* Non-game frame. */
-						}
-				});
+				watchRoomData(ws, (snapshot) => views.set(index, snapshot));
 			});
 			if (index === 0) {
 				await page.goto(`${base}/create-room`, { waitUntil: 'networkidle' });
-				await page.locator('#roomName').fill(room);
 				await page.locator('#create-room-btn').click();
+				await page.waitForURL((url) => /^\/[a-f0-9]{32}$/.test(url.pathname));
+				room = new URL(page.url()).pathname.slice(1);
 			} else await page.goto(`${base}/${room}`, { waitUntil: 'networkidle' });
 			await page.locator('#username').fill(`mobile-${index + 1}`);
 			await page

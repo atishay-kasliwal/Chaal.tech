@@ -1,13 +1,13 @@
 import { chromium } from 'playwright';
-import parser from 'socket.io-msgpack-parser';
 import { RoomServiceClient } from 'livekit-server-sdk';
 import { getVariant } from '../../server/variants/index.mjs';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { watchRoomData } from '../game-frames.mjs';
 
 const base = 'http://127.0.0.1:5174';
 const directory = process.env.CAPTURE_DIRECTORY || 'visual-baselines/phase4';
-const room = `media-${Date.now().toString(36)}`;
+let room = '';
 const admin = new RoomServiceClient('http://127.0.0.1:7880', 'devkey', 'secret', {
 	requestTimeout: 4
 });
@@ -91,25 +91,15 @@ try {
 		pages.push(page);
 		page.on('pageerror', (error) => report.errors.push(String(error)));
 		page.on('websocket', (ws) => {
-			if (!ws.url().includes(':8080')) return;
-			const decoder = new parser.Decoder();
-			decoder.on('decoded', (packet) => {
-				if (packet.data?.[0] === 'roomData') views.set(i, packet.data[1]);
-			});
-			ws.on('framereceived', (frame) => {
-				if (typeof frame.payload !== 'string')
-					try {
-						decoder.add(frame.payload);
-					} catch {
-						/* Non-game frame. */
-					}
-			});
+			if (!ws.url().includes(':8787')) return;
+			watchRoomData(ws, (snapshot) => views.set(i, snapshot));
 		});
 		if (i === 0) {
 			await page.goto(`${base}/create-room`, { waitUntil: 'networkidle' });
-			await page.locator('#roomName').fill(room);
 			await page.locator('#variant').selectOption('muflis-1');
 			await page.locator('#create-room-btn').click();
+			await page.waitForURL((url) => /^\/[a-f0-9]{32}$/.test(url.pathname));
+			room = new URL(page.url()).pathname.slice(1);
 		} else await page.goto(`${base}/${room}`, { waitUntil: 'networkidle' });
 		await page.locator('#username').fill(`Media ${i + 1}`);
 		await page

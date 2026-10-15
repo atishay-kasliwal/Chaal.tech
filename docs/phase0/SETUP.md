@@ -1,5 +1,7 @@
 > Historical Phase 0 baseline. The current application now uses the owned Phase 1 backend; use [Phase 1 setup](../phase1/IMPLEMENTATION.md) for current commands. Re-run original captures only against a separate checkout of the pinned original frontend.
 
+> This file records the imported app's original Render/Socket.IO setup. It is an audit artifact, not the current deployment guide. The original capture command has been removed because it speaks the retired protocol and targets an external backend; use [Cloudflare deployment](../cloudflare-deployment.md) for the current app.
+
 # Phase 0: original application setup
 
 The original Teen Patti frontend is imported from `mustafa-kapadia1483/teen-patti` at commit `3f0cb69a71d922557f9b17a08a78f413b2e90774`. The existing repository history and planning documents are retained. No frontend source or static asset was changed for Phase 0.

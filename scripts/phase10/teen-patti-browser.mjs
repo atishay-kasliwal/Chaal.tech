@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
-import parser from 'socket.io-msgpack-parser';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { watchRoomData } from '../game-frames.mjs';
 
 const base = process.env.PHASE10_TEEN_PATTI_BASE_URL || 'http://127.0.0.1:5176';
 const directory = 'visual-baselines/phase10/table';
@@ -26,19 +26,7 @@ const contexts = [];
 
 function watch(page, index, views) {
 	page.on('websocket', (ws) => {
-		const decoder = new parser.Decoder();
-		decoder.on('decoded', (packet) => {
-			if (packet.data?.[0] === 'roomData') views.set(index, packet.data[1]);
-		});
-		ws.on('framereceived', (frame) => {
-			if (typeof frame.payload !== 'string') {
-				try {
-					decoder.add(frame.payload);
-				} catch {
-					/* Ignore non-game websocket packets. */
-				}
-			}
-		});
+		watchRoomData(ws, (snapshot) => views.set(index, snapshot));
 	});
 }
 
@@ -52,7 +40,7 @@ async function until(check, label) {
 }
 
 try {
-	const room = `round-choice-${Date.now().toString(36)}`;
+	let room = '';
 	const pages = [];
 	const views = new Map();
 	for (let index = 0; index < 2; index++) {
@@ -69,8 +57,9 @@ try {
 				0,
 				'room creation should not require choosing a variant'
 			);
-			await page.locator('#roomName').fill(room);
 			await page.locator('#create-room-btn').click();
+			await page.waitForURL((url) => /^\/[a-f0-9]{32}$/.test(url.pathname));
+			room = new URL(page.url()).pathname.slice(1);
 		} else await page.goto(`${base}/${room}`, { waitUntil: 'networkidle' });
 		await page.locator('#username').fill(`round-player-${index + 1}`);
 		await page
