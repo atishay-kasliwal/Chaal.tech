@@ -54,6 +54,50 @@ export const VARIANT_CATALOG = [
 		tableLabel: '4 Card · best three of four',
 		description: 'Deal four cards and use the best three-card Teen Patti hand.',
 		cardsPerPlayer: 4
+	},
+	{
+		rulesVersion: 'highest-joker-1',
+		selectionLabel: 'Highest Joker — your highest card is wild',
+		tableLabel: 'Highest Joker · your highest rank is wild',
+		description: 'All cards of the highest rank in your own hand are wild for you.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'one-eyed-jack-1',
+		selectionLabel: 'One-Eyed Jack — J♥ and J♠ are wild',
+		tableLabel: 'One-Eyed Jack · J♥ and J♠ are wild',
+		description: 'The two one-eyed Jacks (hearts and spades) are wild. J♦ and J♣ are normal.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'color-joker-1',
+		selectionLabel: 'Color Joker — one colour is wild',
+		tableLabel: 'Color Joker · an open card picks the wild colour',
+		description: 'An open card picks red or black. Every card of that colour is wild.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'lallan-kallan-1',
+		selectionLabel: 'Lallan Kallan — odd colour out is wild',
+		tableLabel: 'Lallan Kallan · odd-coloured card is wild',
+		description:
+			'Two cards of one colour and one of the other? The odd-coloured card is your joker.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'pot-blind-1',
+		selectionLabel: 'Pot Blind — nobody looks',
+		tableLabel: 'Pot Blind · everyone plays blind',
+		description: 'Nobody can see their cards. Everyone bets blind until the Show.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'discard-one-1',
+		selectionLabel: 'Discard One — get four, throw one',
+		tableLabel: 'Discard One · look, then throw one away',
+		description:
+			'Get four cards. After you look, throw one away and play three. Stay blind and your first three count.',
+		cardsPerPlayer: 4
 	}
 ] as const;
 

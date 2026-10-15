@@ -1,4 +1,4 @@
-import { freshDeck } from '../classic.mjs';
+import { freshDeck, evaluateHand as evaluateClassic } from '../classic.mjs';
 
 export function validateCards(cards, count) {
 	if (!Array.isArray(cards) || cards.length !== count)
@@ -26,13 +26,22 @@ export function compareVectors(left, right) {
 	return Math.sign(left.length - right.length);
 }
 
-/** Replace selected ranks with distinct physical cards and return the best score. */
-export function bestWildHand(cards, wildRanks, evaluateNatural, cardCount = 3) {
+/**
+ * Replace wild cards with distinct physical cards and return the best score.
+ * `wild` is a Set of wild ranks or a predicate for card-specific jokers.
+ */
+export function bestWildHand(cards, wild, evaluateNatural, cardCount = 3) {
 	validateCards(cards, cardCount);
-	const isWild = (card) => wildRanks.has(card.rank);
+	const isWild = typeof wild === 'function' ? wild : (card) => wild.has(card.rank);
 	const natural = cards.filter((card) => !isWild(card));
 	const wildCount = cards.length - natural.length;
 	if (!wildCount) return evaluateNatural(cards);
+	// Classic shortcuts: with two jokers the best hand is a trail of the natural card;
+	// with three, a trail of Aces. Avoids searching ~22,000 combinations per hand.
+	if (evaluateNatural === evaluateClassic && cardCount === 3) {
+		if (wildCount === 3) return [5, 14];
+		if (wildCount === 2) return [5, natural[0].rank];
+	}
 
 	const unavailable = new Set(natural.map(cardKey));
 	const candidates = freshDeck().filter((card) => !unavailable.has(cardKey(card)));
@@ -62,4 +71,22 @@ export function bestThreeOfFour(cards, evaluateThree) {
 		if (!best || compareVectors(score, best) > 0) best = score;
 	}
 	return best;
+}
+
+export const isRed = ({ suit }) => suit === 'hearts' || suit === 'diamonds';
+
+const rankName = (rank) =>
+	({ 14: 'Ace', 13: 'King', 12: 'Queen', 11: 'Jack', 13.5: 'A-2-3' })[rank] ?? String(rank);
+const plural = (rank) => (rank === 6 ? 'Sixes' : `${rankName(rank)}s`);
+
+/** Plain-language name of a Classic rank vector, e.g. [1, 9, 4] -> "Pair of 9s". */
+export function describeClassic(vector) {
+	const [category, top] = vector;
+	if (category === 5) return `Trail of ${plural(top)}`;
+	if (category === 4)
+		return top === 13.5 ? 'Pure sequence A-2-3' : `Pure sequence, ${rankName(top)} high`;
+	if (category === 3) return top === 13.5 ? 'Sequence A-2-3' : `Sequence, ${rankName(top)} high`;
+	if (category === 2) return `Colour, ${rankName(top)} high`;
+	if (category === 1) return `Pair of ${plural(top)}`;
+	return `High card ${rankName(top)}`;
 }

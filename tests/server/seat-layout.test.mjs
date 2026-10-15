@@ -56,6 +56,7 @@ test('Phase 5 module baselines remain intact except approved room layout and var
 			file === 'src/routes/[roomName]/+page.svelte' ||
 			file === 'src/routes/+layout.svelte' ||
 			file === 'src/lib/components/SeatVideo.svelte' ||
+			file === 'src/lib/components/RoomMedia.svelte' || // Compact icon controls for the Teen Patti top bar.
 			file === 'src/lib/components/TableScene.svelte' ||
 			file === 'src/lib/components/PlayerSeat.svelte' ||
 			file === 'src/lib/components/CardFan.svelte' ||
@@ -112,7 +113,7 @@ test('Phase 5 module baselines remain intact except approved room layout and var
 	assert.match(seatVideo, /use:attachTrack=\{participant\.video\}/);
 	assert.match(seatVideo, /object-cover/);
 	const createRoom = await readFile('src/routes/create-room/+page.svelte', 'utf8');
-	assert.match(createRoom, /\['', table, rulesVersion, gameType\]/);
+	assert.match(createRoom, /\['', table, rulesVersion, gameType, \.\.\.tableArgs\]/);
 	assert.match(createRoom, /Start with Classic Teen Patti/);
 	assert.doesNotMatch(createRoom, /Game Variant/);
 	const catalog = await readFile('src/lib/variant-catalog.ts', 'utf8');

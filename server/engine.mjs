@@ -1,6 +1,7 @@
 import { freshDeck } from './classic.mjs';
 import { DEFAULT_RULES_VERSION, getVariant } from './variants/index.mjs';
 import { getGameEngine } from './games/index.mjs';
+import { describeHand, wildIndexes } from './variants/describe.mjs';
 
 export class GameError extends Error {
 	constructor(message, code = 'INVALID_ACTION') {
@@ -18,10 +19,14 @@ function variantFor(room) {
 }
 const seated = (room) =>
 	room.players.filter((p) => p.seatNumber !== null).sort((a, b) => a.seatNumber - b.seatNumber);
+// Dealt players still in the hand. Discard variants shrink hands, so any dealt hand counts.
 const active = (room) => {
-	const cardCount = variantFor(room).cardsPerPlayer ?? 3;
-	return seated(room).filter((p) => p.cards.length === cardCount && !p.isPacked && !p.departed);
+	variantFor(room);
+	return seated(room).filter((p) => p.cards.length > 0 && !p.isPacked && !p.departed);
 };
+/** A seen player in a discard variant must throw cards away before betting or Show. */
+const mustDiscard = (variant, player) =>
+	Number.isInteger(variant.discardTo) && !player.isBlind && player.cards.length > variant.discardTo;
 export const playing = (room) => room.isStarted && !room.gameShow;
 
 export function roomName(value) {
@@ -31,15 +36,27 @@ export function roomName(value) {
 		), 'Use a room name of 3–32 lowercase letters, numbers or hyphens');
 	return value;
 }
-export function newRoom(name, table, hostId, rulesVersion = DEFAULT_RULES_VERSION) {
+// Rooms created without table options keep the original 1-chip boot and explicit ready flow.
+export function tableOptions(table, options) {
+	if (options === undefined || options === null) return {};
+	require(typeof options === 'object' && !Array.isArray(options), 'Invalid table options');
+	const boot = options.boot ?? 1;
+	require(Number.isSafeInteger(boot) &&
+		boot >= 1 &&
+		boot * 20 <= table, 'Boot must be an integer from 1 to 1/20 of the starting chips');
+	return { boot, autoReady: options.autoReady === true };
+}
+export function newRoom(name, table, hostId, rulesVersion = DEFAULT_RULES_VERSION, options) {
 	roomName(name);
 	require(typeof rulesVersion === 'string' &&
 		getVariant(rulesVersion), 'Unsupported game rules version', 'UNSUPPORTED_RULES');
 	require(Number.isSafeInteger(table) &&
 		table >= 50 &&
 		table <= 1_000_000, 'Starting chips must be an integer from 50 to 1000000');
+	const { boot, autoReady } = tableOptions(table, options);
 	return {
 		schema: 1,
+		...(boot === undefined ? {} : { boot, autoReady }),
 		rulesVersion,
 		name,
 		table,
@@ -60,6 +77,7 @@ export function newRoom(name, table, hostId, rulesVersion = DEFAULT_RULES_VERSIO
 		result: null
 	};
 }
+const bootOf = (room) => room.boot ?? 1;
 export function limits(room, player) {
 	return player.isBlind
 		? { min: Math.ceil(room.maxStake / 2), max: room.maxStake }
@@ -70,6 +88,7 @@ function nextTurn(room, afterSeat, ctx) {
 	const player = candidates.find((p) => p.seatNumber > afterSeat) || candidates[0];
 	room.currentPlayerId = player?.id ?? null;
 	room.deadline = player ? ctx.now + ctx.turnMs : null;
+	if (room.boot !== undefined) room.turnMs = player ? ctx.turnMs : null;
 }
 function settle(room, winner, reason, revealed = []) {
 	require(!room.result, 'Hand already settled');
@@ -79,6 +98,7 @@ function settle(room, winner, reason, revealed = []) {
 	room.gameShow = true;
 	room.currentPlayerId = null;
 	room.deadline = null;
+	if (room.boot !== undefined) room.turnMs = null;
 	room.result = {
 		winnerId: winner.id,
 		winnerName: winner.username,
@@ -143,7 +163,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				cards: [],
 				isBlind: true,
 				isPacked: false,
-				ready: false,
+				ready: room.autoReady === true,
 				departed: false
 			};
 			room.players.push(player);
@@ -155,10 +175,11 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				cards: [],
 				isPacked: false,
 				isBlind: true,
-				ready: false,
+				ready: room.autoReady === true,
 				departed: false
 			});
 		}
+		if (room.autoReady) room.readyEnabled = true;
 		if (!room.hostId) room.hostId = id;
 	} else {
 		require(player &&
@@ -179,11 +200,17 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				payload.cutAt >= 0 &&
 				payload.cutAt <= 51, 'Invalid deck cut');
 			for (const p of room.players) if (p.departed) p.seatNumber = null;
+			const boot = bootOf(room);
+			// Auto-ready tables deal everyone who has not chosen to sit out.
 			const participants = seated(room).filter(
-				(p) => !p.departed && p.balance >= 1 && ctx.connected.has(p.id)
+				(p) =>
+					!p.departed &&
+					p.balance >= boot &&
+					ctx.connected.has(p.id) &&
+					(!room.autoReady || p.ready !== false)
 			);
 			require(participants.length >= 2, 'At least two connected players with chips are required');
-			if (ctx.requireReady)
+			if (ctx.requireReady && !room.autoReady)
 				require(participants.every((p) => p.ready), 'Every connected player must be ready');
 			const canonical = new Set(freshDeck().map((c) => `${c.rank}:${c.suit}`));
 			require(Array.isArray(ctx.deck) &&
@@ -201,18 +228,18 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			room.isStarted = true;
 			room.gameShow = false;
 			room.pot = 0;
-			room.maxStake = 2;
+			room.maxStake = boot * 2;
 			for (const p of room.players) {
 				p.cards = [];
 				p.handBet = 0;
 				p.isBlind = true;
 				p.isPacked = true;
-				p.ready = false;
+				if (!room.autoReady) p.ready = false;
 			}
 			for (const p of participants) {
-				p.balance--;
-				p.handBet++;
-				room.pot++;
+				p.balance -= boot;
+				p.handBet += boot;
+				room.pot += boot;
 				p.isPacked = false;
 			}
 			for (let card = 0; card < cardsPerPlayer; card++)
@@ -230,7 +257,8 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			// Original first hand advances from the initiator to the next seat.
 			nextTurn(room, player.seatNumber, ctx);
 		} else if (action === 'ready') {
-			require(!playing(room), 'Readiness is locked during a hand');
+			// Auto-ready tables let players choose to sit out the next hand at any time.
+			require(!playing(room) || room.autoReady, 'Readiness is locked during a hand');
 			require(typeof payload.ready === 'boolean', 'Invalid ready state');
 			room.readyEnabled = true;
 			player.ready = payload.ready;
@@ -246,11 +274,18 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			if (room.hostId === id) room.hostId = seated(room).find((p) => !p.departed)?.id ?? null;
 		} else {
 			require(playing(room), 'No active hand');
-			require(!player.isPacked &&
-				player.cards.length === (variant.cardsPerPlayer ?? 3), 'You are not active in this hand');
+			require(!player.isPacked && player.cards.length > 0, 'You are not active in this hand');
 			if (action === 'see') {
+				require(variant.allowSee !==
+					false, `${variant.name} keeps every hand blind until the Show`);
 				require(player.isBlind, 'Cards already seen');
 				player.isBlind = false;
+			} else if (action === 'discard') {
+				require(mustDiscard(variant, player), 'There is nothing to discard');
+				require(Number.isInteger(payload.index) &&
+					payload.index >= 0 &&
+					payload.index < player.cards.length, 'Choose one of your cards to discard');
+				player.cards.splice(payload.index, 1);
 			} else {
 				require(room.currentPlayerId === id, 'It is not your turn', 'OUT_OF_TURN');
 				require(ctx.now < room.deadline || action === 'timeout', 'Turn has expired', 'STALE_TURN');
@@ -259,6 +294,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					player.isPacked = true;
 					afterPack(room, player.seatNumber, ctx);
 				} else if (action === 'bet') {
+					require(!mustDiscard(variant, player), 'Discard a card before you bet');
 					const { min, max } = limits(room, player);
 					require(Number.isSafeInteger(payload.amount) &&
 						payload.amount >= min &&
@@ -270,6 +306,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					room.maxStake = player.isBlind ? payload.amount * 2 : payload.amount;
 					nextTurn(room, player.seatNumber, ctx);
 				} else if (action === 'show') {
+					require(!mustDiscard(variant, player), 'Discard a card before you Show');
 					const candidates = active(room);
 					require(candidates.length === 2, 'Show requires exactly two active players');
 					const other = candidates.find((p) => p.id !== id);
@@ -314,9 +351,14 @@ export function projection(room, id, connected) {
 	const list = seated(room);
 	const reveal = new Set(room.result?.revealedPlayerIds || []);
 	const myTurn = playing(room) && room.currentPlayerId === id && !player.isPacked;
+	const variant = getVariant(room.rulesVersion);
+	const explain = room.boot !== undefined;
 	return {
 		name: room.name,
 		table: room.table,
+		...(room.boot === undefined
+			? {}
+			: { boot: room.boot, autoReady: room.autoReady === true, turnMs: room.turnMs ?? null }),
 		selfId: id,
 		hostId: room.hostId,
 		revision: room.revision,
@@ -338,7 +380,10 @@ export function projection(room, id, connected) {
 					winnerName: room.result.winnerName,
 					amount: room.result.amount,
 					reason: room.result.reason,
-					handId: room.result.handId
+					handId: room.result.handId,
+					...(room.boot === undefined
+						? {}
+						: { revealedPlayerIds: [...(room.result.revealedPlayerIds ?? [])] })
 				}
 			: null,
 		usersList: list.map((p) => ({
@@ -355,18 +400,31 @@ export function projection(room, id, connected) {
 			cardsInHand:
 				(p.id === id && !p.isBlind) || reveal.has(p.id)
 					? structuredClone(p.cards)
-					: p.cards.map(() => ({ rank: 0, suit: '' }))
+					: p.cards.map(() => ({ rank: 0, suit: '' })),
+			// Names and joker positions only for hands this viewer may already see.
+			...(explain && ((p.id === id && !p.isBlind) || reveal.has(p.id)) && p.cards.length
+				? {
+						handName: describeHand(variant, p.cards, room.variantState),
+						wildCards: wildIndexes(variant, p.cards, room.variantState)
+					}
+				: {})
 		})),
 		legalActions: {
 			start: id === room.hostId && !playing(room),
-			...(ctxReadySupported(room) ? { ready: !playing(room) } : {}),
-			see: playing(room) && !player.isPacked && player.isBlind,
+			...(ctxReadySupported(room) ? { ready: !playing(room) || room.autoReady === true } : {}),
+			see: playing(room) && !player.isPacked && player.isBlind && variant.allowSee !== false,
+			...(explain
+				? {
+						discard: playing(room) && !player.isPacked && mustDiscard(variant, player)
+					}
+				: {}),
 			pack: myTurn,
-			bet: myTurn && player.balance >= limits(room, player).min,
+			bet: myTurn && player.balance >= limits(room, player).min && !mustDiscard(variant, player),
 			minBet: limits(room, player).min,
 			maxBet: Math.min(player.balance, limits(room, player).max),
 			show:
 				myTurn &&
+				!mustDiscard(variant, player) &&
 				active(room).length === 2 &&
 				(player.isBlind || active(room).every((p) => !p.isBlind)) &&
 				player.balance >= limits(room, player).min
@@ -387,13 +445,16 @@ export function movements(before, after, kind) {
 		const issuedDelta = after.issuedChips - (before?.issuedChips ?? 0);
 		if (issuedDelta) accounts.set('issued', -issuedDelta);
 		const rummyLosses = after.result?.losses;
-		if (Array.isArray(rummyLosses)) for (const loss of rummyLosses) {
-			const previous = before?.players.find((candidate) => candidate.id === loss.playerId);
-			const original = previous?.balance ?? 0;
-			const final = after.players.find((candidate) => candidate.id === loss.playerId)?.balance ?? 0;
-			const settlementDelta = final - original - (accounts.get(loss.playerId) ?? 0);
-			if (settlementDelta) accounts.set(loss.playerId, (accounts.get(loss.playerId) ?? 0) + settlementDelta);
-		}
+		if (Array.isArray(rummyLosses))
+			for (const loss of rummyLosses) {
+				const previous = before?.players.find((candidate) => candidate.id === loss.playerId);
+				const original = previous?.balance ?? 0;
+				const final =
+					after.players.find((candidate) => candidate.id === loss.playerId)?.balance ?? 0;
+				const settlementDelta = final - original - (accounts.get(loss.playerId) ?? 0);
+				if (settlementDelta)
+					accounts.set(loss.playerId, (accounts.get(loss.playerId) ?? 0) + settlementDelta);
+			}
 		const entries = [...accounts].map(([account, delta]) => ({ account, delta }));
 		if (entries.reduce((sum, entry) => sum + entry.delta, 0) !== 0) {
 			const conservationDelta = entries.reduce((sum, entry) => sum + entry.delta, 0);

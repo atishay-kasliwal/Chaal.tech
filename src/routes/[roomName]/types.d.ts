@@ -12,6 +12,10 @@ interface User {
 	seatNumber: number;
 	/** Hidden cards are rank-zero placeholders; no private identities are transmitted. */
 	cardsInHand: Card[];
+	/** Server-written name of a hand this viewer may see, e.g. "Pair of 9s". */
+	handName?: string | null;
+	/** Indexes of jokers in a visible hand. */
+	wildCards?: number[];
 	isBlind: boolean;
 	isPacked: boolean;
 	connected: boolean;
@@ -33,7 +37,7 @@ interface RoomData {
 	handId: string | null;
 	rulesVersion: string;
 	gameType?: 'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy';
-	variantState?: { wildRank: number; indicator: Card };
+	variantState?: { wildRank: number; indicator: Card } & { wildColor?: 'red' | 'black' };
 	stage?: string;
 	board?: Card[];
 	dealerCards?: Card[];
@@ -55,6 +59,10 @@ interface RoomData {
 	maxStake: number;
 	pot: number;
 	table: number;
+	/** Present on rooms created with table options (boot, auto-ready, visible turn timer). */
+	boot?: number;
+	autoReady?: boolean;
+	turnMs?: number | null;
 	deadline: number | null;
 	usersList: User[];
 	result: {
@@ -63,6 +71,7 @@ interface RoomData {
 		amount: number;
 		reason: string;
 		handId: string;
+		revealedPlayerIds?: string[];
 	} | null;
 	legalActions: {
 		start: boolean;
@@ -88,5 +97,6 @@ interface RoomData {
 		drawDiscard?: boolean;
 		discard?: boolean;
 		declare?: boolean;
+		discard?: boolean;
 	};
 }

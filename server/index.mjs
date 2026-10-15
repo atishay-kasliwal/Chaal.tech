@@ -307,7 +307,7 @@ export function createGameServer({
 		}
 		let room, before, action, payload, text;
 		if (event === 'createRoom') {
-			const [requestedName, table, rulesVersion, requestedGameType] = args;
+			const [requestedName, table, rulesVersion, requestedGameType, options] = args;
 			const gameType = requestedGameType ?? 'teen-patti';
 			if (!listGameTypes().includes(gameType))
 				throw new GameError('Unsupported game type', 'UNSUPPORTED_GAME');
@@ -321,7 +321,7 @@ export function createGameServer({
 				throw new GameError('Room capacity reached');
 			room =
 				gameType === 'teen-patti'
-					? newRoom(name, table, id, rulesVersion)
+					? newRoom(name, table, id, rulesVersion, options)
 					: createGameRoom(gameType, name, table, id);
 			room.revision = 1;
 			text = `A new Room is created :- "${name}"`;
@@ -383,6 +383,10 @@ export function createGameServer({
 					action = 'see';
 					payload = {};
 					text = 'Cards seen';
+				} else if (event === 'discardCard') {
+					action = 'discard';
+					payload = { index: args[0] };
+					text = null;
 				} else if (event === 'play') {
 					if (typeof args[0] !== 'boolean') throw new GameError('Invalid play action');
 					action = args[0] ? 'pack' : 'bet';
@@ -529,6 +533,7 @@ export function createGameServer({
 			'ready',
 			'start',
 			'seeCards',
+			'discardCard',
 			'play',
 			'pokerAction',
 			'blackjackBet',

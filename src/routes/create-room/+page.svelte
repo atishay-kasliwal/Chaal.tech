@@ -21,10 +21,14 @@
 
 	let roomName = $state<string>('');
 
-	let table = $state<number>(50);
+	let table = $state<number>(1000);
+	/** Teen Patti boot: every player's entry per hand, and the first blind stake. */
+	let boot = $state<number>(10);
+	const BOOTS = [5, 10, 20, 50, 100];
 	// Every Teen Patti room opens with Classic. Variant choice belongs between hands.
 	let rulesVersion: RulesVersion = 'classic-1';
 	let gameType = $state<'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy'>('teen-patti');
+	const minimumBuyIn = $derived(gameType === 'teen-patti' ? 1000 : 50);
 
 	onMount(() => {
 		// Connect here so the "Create Room" button becomes visible once connected.
@@ -36,9 +40,22 @@
 
 	async function createRoomHanlder(e: MouseEvent) {
 		e.preventDefault();
+		if (!Number.isSafeInteger(table) || table < minimumBuyIn) {
+			displayToast(
+				`Starting chips must be at least ₹${minimumBuyIn.toLocaleString('en-IN')}`,
+				'error'
+			);
+			return;
+		}
+		if (gameType === 'teen-patti' && boot * 20 > table) {
+			displayToast('Pick a smaller boot or more starting chips (boot ≤ 1/20 of chips)', 'error');
+			return;
+		}
+		// Teen Patti rooms seat players ready, show the turn clock and use the chosen boot.
+		const tableArgs = gameType === 'teen-patti' ? [{ boot, autoReady: true }] : [];
 		const result = await socket.command(
 			'createRoom',
-			['', table, rulesVersion, gameType],
+			['', table, rulesVersion, gameType, ...tableArgs],
 			false
 		);
 		if (result.ok && result.roomName) {
@@ -181,20 +198,48 @@
 					<label class="input w-full">
 						<IndianRupee class="text-primary/60 h-4 w-4" />
 						<input
-							min="50"
+							min={minimumBuyIn}
 							max="1000000"
 							step="1"
 							bind:value={table}
 							id="table"
 							type="number"
-							placeholder="50"
+							placeholder="1000"
 							class="grow"
 						/>
 					</label>
 					<p class="fieldset-label text-base-content/30 flex items-center gap-1">
-						Starting chips per player (<IndianRupee class="h-3 w-3" />50–1,000,000)
+						Starting chips per player (<IndianRupee class="h-3 w-3" />{minimumBuyIn.toLocaleString(
+							'en-IN'
+						)}–10,00,000)
 					</p>
 				</fieldset>
+
+				{#if gameType === 'teen-patti'}
+					<fieldset class="fieldset gap-1">
+						<legend
+							class="fieldset-legend text-primary/80 flex items-center gap-1 text-xs font-semibold tracking-widest uppercase"
+						>
+							<Coins class="h-3 w-3" /> Boot (chaal starts here)
+						</legend>
+						<div class="join w-full" role="radiogroup" aria-label="Boot amount">
+							{#each BOOTS as amount (amount)}
+								<button
+									type="button"
+									role="radio"
+									aria-checked={boot === amount}
+									class="btn join-item flex-1 {boot === amount ? 'btn-primary' : 'btn-outline'}"
+									disabled={amount * 20 > table}
+									onclick={() => (boot = amount)}>₹{amount}</button
+								>
+							{/each}
+						</div>
+						<p class="fieldset-label text-base-content/40">
+							Each hand starts with ₹{boot} from everyone. Blind bets ₹{boot}–₹{boot * 2}; seen bets
+							₹{boot * 2}–₹{boot * 4}. 60 seconds per turn.
+						</p>
+					</fieldset>
+				{/if}
 
 				{#if gameType === 'texas-holdem'}
 					<p class="text-base-content/50 text-sm">
@@ -219,13 +264,13 @@
 						>
 							<Sparkles class="h-4 w-4" /> Create Room
 						</button>
-			{:else if socket.error}
-				<div class="space-y-3" role="alert">
-					<p class="text-error text-center text-sm">{socket.error}</p>
-					<button class="btn btn-outline w-full" onclick={() => socket.connect()} type="button">
-						Retry connection
-					</button>
-				</div>
+					{:else if socket.error}
+						<div class="space-y-3" role="alert">
+							<p class="text-error text-center text-sm">{socket.error}</p>
+							<button class="btn btn-outline w-full" onclick={() => socket.connect()} type="button">
+								Retry connection
+							</button>
+						</div>
 					{:else}
 						<div class="btn btn-disabled w-full" aria-busy="true" aria-label="Connecting...">
 							<span class="loading loading-spinner loading-sm"></span>
@@ -239,7 +284,7 @@
 			<p
 				class="text-base-content/25 mt-1 flex items-center justify-center gap-1 text-center text-xs"
 			>
-			<Users class="h-3 w-3" /> New rooms get a private invite code you can share with friends
+				<Users class="h-3 w-3" /> New rooms get a private invite code you can share with friends
 			</p>
 		</div>
 	</div>

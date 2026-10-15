@@ -22,7 +22,13 @@ test('AK47 is registered without changing the Classic default or other variants'
 			'lowest-joker-1',
 			'999-1',
 			'2-card-1',
-			'4-card-1'
+			'4-card-1',
+			'highest-joker-1',
+			'one-eyed-jack-1',
+			'color-joker-1',
+			'lallan-kallan-1',
+			'pot-blind-1',
+			'discard-one-1'
 		]
 	);
 	assert.equal(getVariant('classic-1').id, 'classic');

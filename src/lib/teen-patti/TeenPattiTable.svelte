@@ -1,0 +1,1624 @@
+<script lang="ts">
+	import { onMount, untrack, type Snippet } from 'svelte';
+	import { fade, fly } from 'svelte/transition';
+	import {
+		Copy,
+		LogOut,
+		Volume2,
+		VolumeX,
+		BookOpen,
+		Trophy,
+		Settings,
+		X,
+		Pause,
+		Play,
+		UserPlus,
+		Sparkles,
+		Mail,
+		Share2
+	} from '@lucide/svelte';
+	import type { MediaState } from '#lib/media/controller.js';
+	import { VARIANT_BY_VERSION, type RulesVersion } from '#lib/variant-catalog.js';
+	import { arrangeSeats } from '#lib/seat-layout.js';
+	import TpSeat from './TpSeat.svelte';
+	import SeatVideo from '#lib/components/SeatVideo.svelte';
+	import ActionDock from './ActionDock.svelte';
+	import { money, signedMoney, rankLabel } from './format.js';
+	import { handName, NAMED_VARIANTS, HAND_RANKINGS } from './hands.js';
+	import { describeChange, type FeedEvent } from './feed.js';
+	import { opponentPoints, SELF_POINT, POT_POINT } from './layout.js';
+	import { play, soundEnabled, setSoundEnabled } from './sound.js';
+
+	let {
+		room,
+		selfId,
+		connected,
+		mediaState,
+		autoDeal = $bindable(true),
+		media,
+		settings,
+		send,
+		ondeal,
+		oninvite,
+		onleave,
+		emailInvites
+	}: {
+		room: RoomData;
+		selfId: string;
+		connected: boolean;
+		mediaState: MediaState | null;
+		/** Host preference: deal the next hand automatically after a short pause. */
+		autoDeal?: boolean;
+		media: Snippet;
+		settings: Snippet;
+		send: (event: string, args?: unknown[]) => Promise<boolean>;
+		ondeal: () => Promise<boolean>;
+		oninvite: () => void;
+		onleave: () => void;
+		/** Sends (or, with no addresses, lists) email invites through the room server. */
+		emailInvites: (emails: string[]) => Promise<InviteReply>;
+	} = $props();
+
+	type InviteReply = {
+		ok: boolean;
+		error?: string;
+		sent?: string[];
+		skipped?: string[];
+		invites?: { email: string; at: number }[];
+	};
+
+	// ——— Derived table state ———
+	const me = $derived(room.usersList.find((user) => user.id === selfId));
+	const isHost = $derived(room.hostId === selfId);
+	const boot = $derived(room.boot ?? 1);
+	const live = $derived(room.isStarted && !room.gameShow);
+	const current = $derived(live ? room.usersList[room.currentPlayer] : undefined);
+	const myTurn = $derived(!!me && current?.id === me.id);
+	const opponents = $derived(
+		arrangeSeats(room.usersList, selfId).filter((entry) => entry.user.id !== selfId)
+	);
+	const variant = $derived(VARIANT_BY_VERSION[room.rulesVersion as RulesVersion]);
+	const namesHands = $derived(NAMED_VARIANTS.has(room.rulesVersion));
+	const inHand = (user: User) => user.cardsInHand.length > 0;
+	// The server names hands for every variant; the local namer covers older rooms.
+	const nameOf = (user: User | undefined) =>
+		user?.handName ??
+		(user && namesHands && user.cardsInHand.length === 3 ? handName(user.cardsInHand) : null);
+	const eligible = $derived(
+		room.usersList.filter(
+			(user) =>
+				user.connected &&
+				!user.hasLeft &&
+				user.balance >= boot &&
+				(room.autoReady ? user.ready !== false : user.ready === true)
+		)
+	);
+	const canDeal = $derived(
+		isHost &&
+			connected &&
+			room.legalActions.start &&
+			eligible.length >= 2 &&
+			(room.autoReady ||
+				room.usersList
+					.filter((user) => user.connected && !user.hasLeft && user.balance > 0)
+					.every((user) => user.ready === true))
+	);
+	const result = $derived(room.result);
+	const revealed = $derived(new Set(result?.revealedPlayerIds ?? []));
+	const winner = $derived(
+		result ? room.usersList.find((user) => user.id === result.winnerId) : undefined
+	);
+	const resultDetail = $derived.by(() => {
+		if (!result) return '';
+		if (result.reason === 'last-player') return 'Everyone else packed';
+		// Only the two hands compared at the Show; a player who looked and then packed is not one.
+		const shown = room.usersList.filter((user) =>
+			revealed.size ? revealed.has(user.id) : user.cardsInHand.some((c) => c.rank > 0)
+		);
+		const loser = shown.find((user) => user.id !== result.winnerId);
+		const winName = nameOf(winner);
+		const loseName = nameOf(loser);
+		const lowest = room.rulesVersion === 'muflis-1' ? ' (lowest hand wins)' : '';
+		if (result.reason === 'show-tie-requester-loses')
+			return 'Equal hands — whoever asked for the Show loses';
+		if (winName && loseName && winName === loseName)
+			return `Both have ${winName} — won on the higher side card${lowest}`;
+		if (winName && loseName) return `${winName} beats ${loseName}${lowest}`;
+		return 'Won at the show';
+	});
+	const net = $derived(me ? me.balance - room.table : 0);
+	const blindStake = $derived(Math.ceil(room.maxStake / 2));
+	const seenStake = $derived(room.maxStake);
+
+	// ——— Clock, turn timer and auto-deal ———
+	let now = $state(Date.now());
+	let turnEnds = $state<number | null>(null);
+	let lastDeadline: number | null = null;
+	let sawSnapshot = false;
+	const total = $derived(room.turnMs ?? 60000);
+	const remaining = $derived(turnEnds === null ? 0 : Math.max(0, turnEnds - now));
+
+	$effect(() => {
+		const deadline = room.deadline;
+		untrack(() => {
+			if (deadline === lastDeadline) return;
+			lastDeadline = deadline;
+			if (!deadline) turnEnds = null;
+			// A turn that starts while we watch runs the full length from now; one we join
+			// mid-way trusts the server deadline, clamped against clock skew.
+			else if (sawSnapshot) turnEnds = Date.now() + total - 150;
+			else turnEnds = Math.min(Math.max(deadline, Date.now()), Date.now() + total);
+			sawSnapshot = true;
+		});
+	});
+
+	let dealAt = $state<number | null>(null);
+	let paused = $state(false);
+	let dealingFor: string | null = null;
+	let dealError = $state('');
+	let lastResultHand: string | null = null;
+	const dealIn = $derived(dealAt === null ? null : Math.max(0, Math.ceil((dealAt - now) / 1000)));
+
+	$effect(() => {
+		const handId = result?.handId ?? null;
+		const reason = result?.reason;
+		untrack(() => {
+			if (handId === lastResultHand) return;
+			lastResultHand = handId;
+			dealError = '';
+			dealAt = handId ? Date.now() + (reason === 'last-player' ? 5000 : 8000) : null;
+		});
+	});
+
+	$effect(() => {
+		if (dealAt === null || now < dealAt || !isHost || !autoDeal || paused) return;
+		const key = result?.handId ?? 'lobby';
+		if (dealingFor === key) return;
+		untrack(() => {
+			if (!canDeal) {
+				dealError =
+					eligible.length < 2
+						? 'Waiting for at least two players with chips'
+						: 'Waiting for players';
+				return;
+			}
+			dealingFor = key;
+			void ondeal().then((ok) => {
+				if (!ok) dealingFor = null;
+			});
+		});
+	});
+
+	async function dealNow() {
+		dealError = '';
+		if (!(await ondeal())) dealError = 'Could not deal — check the players at the table';
+	}
+
+	// ——— Narration, chips and sounds ———
+	let feed = $state<FeedEvent[]>([]);
+	let flights = $state<
+		{ id: number; from: { x: number; y: number }; to: { x: number; y: number }; amount: number }[]
+	>([]);
+	let previous: RoomData | null = null;
+	let portrait = $state(false);
+	let arenaW = $state(1200);
+	let arenaH = $state(600);
+	/**
+	 * Video tiles are the heart of the table, so seats are sized from the space the
+	 * arena actually has: as large as possible without colliding with each other.
+	 */
+	/** Room the pot and action line need between or below the tiles. */
+	const POT_SPACE = 132;
+	/** Phones with three or more friends use a two-column grid with the pot underneath. */
+	const phoneGrid = $derived(portrait && opponents.length >= 3);
+	const gridRows = $derived(Math.ceil(opponents.length / 2));
+	const seatW = $derived.by(() => {
+		const n = opponents.length;
+		if (phoneGrid) {
+			const byHeight = ((arenaH - POT_SPACE) / gridRows - 30 - 30) / 0.75;
+			return Math.max(96, Math.min(arenaW * 0.485, byHeight));
+		}
+		const [wShare, hShare] = portrait
+			? [n <= 1 ? 0.8 : 0.64, n <= 1 ? 0.46 : 0.33]
+			: [
+					n <= 1 ? 0.44 : n === 2 ? 0.38 : n === 3 ? 0.25 : 0.2,
+					n <= 2 ? 0.64 : n === 3 ? 0.44 : 0.38
+				];
+		const byHeight = (arenaH * hShare - 30) / 0.75;
+		return Math.max(96, Math.min(arenaW * wShare, byHeight, 36 * 16));
+	});
+	const seatH = $derived(seatW * 0.75 + 30);
+	const seatPositions = $derived.by(() => {
+		const n = opponents.length;
+		if (portrait && n === 2)
+			// Two friends on a phone: staggered diagonally so each face gets most of the width.
+			return [
+				{ left: seatW / 2 + 4, top: seatH / 2 + 2 },
+				{ left: arenaW - seatW / 2 - 4, top: seatH * 1.5 + 14 }
+			];
+		if (phoneGrid) {
+			// Clockwise from you: up the left column, an odd friend centred on top, down the right.
+			const rowTop = (row: number) => row * (seatH + 30) + seatH / 2 + 2;
+			const odd = n % 2 === 1;
+			const side = Math.floor(n / 2);
+			const firstRow = odd ? 1 : 0;
+			const leftX = seatW / 2 + 2;
+			const rightX = arenaW - seatW / 2 - 2;
+			const left = Array.from({ length: side }, (_, k) => ({
+				left: leftX,
+				top: rowTop(firstRow + side - 1 - k)
+			}));
+			const right = Array.from({ length: side }, (_, k) => ({
+				left: rightX,
+				top: rowTop(firstRow + k)
+			}));
+			return [...left, ...(odd ? [{ left: arenaW / 2, top: rowTop(0) }] : []), ...right];
+		}
+		return opponentPoints(n, portrait).map((point) => ({
+			left: Math.min(Math.max((point.x / 100) * arenaW, seatW / 2 + 4), arenaW - seatW / 2 - 4),
+			top: Math.min(Math.max((point.y / 100) * arenaH, seatH / 2 + 2), arenaH - seatH / 2 - 2)
+		}));
+	});
+	/**
+	 * The pot sits below whichever tiles share its column, centred in the space left,
+	 * so a friend's video never covers it.
+	 */
+	const centerTop = $derived.by(() => {
+		if (!seatPositions.length) return arenaH * 0.5;
+		const potHalfWidth = portrait ? 120 : 210;
+		const blocking = seatPositions.filter(
+			(seat) => phoneGrid || Math.abs(seat.left - arenaW / 2) < seatW / 2 + potHalfWidth
+		);
+		if (!blocking.length) return arenaH * 0.52;
+		const below = Math.max(...blocking.map((seat) => seat.top + seatH / 2)) + 34;
+		return Math.min(below + Math.max(0, arenaH - below) / 2, arenaH - 70);
+	});
+	const potPoint = () => ({ x: 50, y: (centerTop / arenaH) * 100 - 4 });
+	const pointFor = (playerId: string | undefined) => {
+		if (!playerId || playerId === selfId) return SELF_POINT;
+		const index = opponents.findIndex((entry) => entry.user.id === playerId);
+		const seat = seatPositions[index];
+		return seat ? { x: (seat.left / arenaW) * 100, y: (seat.top / arenaH) * 100 } : POT_POINT;
+	};
+
+	$effect(() => {
+		const snapshot = room;
+		untrack(() => {
+			const events = describeChange(previous, snapshot);
+			previous = snapshot;
+			if (!events.length) return;
+			feed = [...feed, ...events].slice(-40);
+			for (const event of events) {
+				if (event.kind === 'blind' || event.kind === 'chaal' || event.kind === 'raise') {
+					launch(pointFor(event.playerId), potPoint(), event.amount ?? 0);
+					play('chip');
+				} else if (event.kind === 'win') {
+					launch(potPoint(), pointFor(event.playerId), event.amount ?? 0);
+					play(event.playerId === selfId ? 'win' : 'chip');
+				} else if (event.kind === 'see' || event.kind === 'deal' || event.kind === 'show')
+					play('card');
+				else if (event.kind === 'pack') play('pack');
+			}
+		});
+	});
+
+	function launch(from: { x: number; y: number }, to: { x: number; y: number }, amount: number) {
+		const id = Math.random();
+		flights = [...flights, { id, from, to, amount }];
+		setTimeout(() => (flights = flights.filter((flight) => flight.id !== id)), 900);
+	}
+
+	// Your-turn cue, last-seconds tick and a tab title that tells you when you are needed.
+	let lastTurnKey = '';
+	let lastTick = -1;
+	const baseTitle = 'Chaal.tech';
+	$effect(() => {
+		const key = myTurn ? `${room.handId}:${room.deadline}` : '';
+		untrack(() => {
+			if (key && key !== lastTurnKey) {
+				play('turn');
+				if (document.hidden) navigator.vibrate?.(180);
+			}
+			lastTurnKey = key;
+		});
+	});
+	$effect(() => {
+		const secs = Math.ceil(remaining / 1000);
+		if (!myTurn || secs > 5 || secs === lastTick) return;
+		lastTick = secs;
+		if (secs > 0) play('tick');
+	});
+	$effect(() => {
+		document.title = myTurn ? `● Your turn · ${baseTitle}` : `${room.name} · ${baseTitle}`;
+	});
+
+	// ——— Actions ———
+	let confirmingPack = $state(false);
+	let packTimer: ReturnType<typeof setTimeout> | undefined;
+	function pack() {
+		if (!room.legalActions.pack) return;
+		if (!confirmingPack) {
+			confirmingPack = true;
+			clearTimeout(packTimer);
+			packTimer = setTimeout(() => (confirmingPack = false), 2500);
+			return;
+		}
+		confirmingPack = false;
+		void send('play', [true]);
+	}
+	const see = () => room.legalActions.see && void send('seeCards');
+	const discard = (index: number) => room.legalActions.discard && void send('discardCard', [index]);
+	const bet = (amount: number) => room.legalActions.bet && void send('play', [false, amount]);
+	const show = () => room.legalActions.show && void send('show', [room.name]);
+	const sitOut = (value: boolean) => void send('ready', [!value]);
+	const low = $derived(room.legalActions.minBet ?? 0);
+	const high = $derived(Math.min(room.legalActions.maxBet ?? 0, me?.balance ?? 0));
+
+	function onkeydown(event: KeyboardEvent) {
+		const target = event.target as HTMLElement | null;
+		if (event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
+		const key = event.key.toLowerCase();
+		// Esc always closes overlays, even from inside a form field.
+		if (key === 'escape') {
+			panel = null;
+			spotlight = null;
+			return;
+		}
+		if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+		// Game shortcuts pause while a side panel or spotlight is open.
+		if (panel || spotlight || !live || !me || me.isPacked) return;
+		if (key === 's') see();
+		else if (key === 'c' && myTurn) bet(low);
+		else if (key === 'r' && myTurn && high > low) bet(high);
+		else if (key === 'p' && myTurn) pack();
+		else if (key === 'w' && myTurn) show();
+		else return;
+		event.preventDefault();
+	}
+
+	// ——— Panels and preferences ———
+	let panel = $state<'scores' | 'rules' | 'settings' | 'invite' | null>(null);
+
+	// ——— Invites ———
+	let inviteText = $state('');
+	let inviteBusy = $state(false);
+	let inviteNote = $state<{ kind: 'ok' | 'error'; text: string } | null>(null);
+	let invited = $state<{ email: string; at: number }[]>([]);
+	const inviteLink = $derived(
+		typeof window === 'undefined' ? `/${room.name}` : `${window.location.origin}/${room.name}`
+	);
+	const canShare = $derived(typeof navigator !== 'undefined' && 'share' in navigator);
+	const typedEmails = $derived(
+		inviteText
+			.split(/[\s,;]+/)
+			.map((value) => value.trim())
+			.filter(Boolean)
+	);
+	function openInvite() {
+		panel = 'invite';
+		inviteNote = null;
+		void emailInvites([]).then((reply) => {
+			if (reply.ok && reply.invites) invited = reply.invites;
+		});
+	}
+	async function sendInvites(event: Event) {
+		event.preventDefault();
+		if (!typedEmails.length || inviteBusy) return;
+		inviteBusy = true;
+		inviteNote = null;
+		const reply = await emailInvites(typedEmails);
+		inviteBusy = false;
+		if (!reply.ok) {
+			inviteNote = { kind: 'error', text: reply.error ?? 'Could not send invites' };
+			return;
+		}
+		if (reply.invites) invited = reply.invites;
+		const sent = reply.sent?.length ?? 0;
+		const skipped = reply.skipped?.length ?? 0;
+		inviteText = '';
+		inviteNote = {
+			kind: 'ok',
+			text: [
+				sent ? `Invite sent to ${sent} ${sent === 1 ? 'person' : 'people'}.` : '',
+				skipped ? `${skipped} already invited in the last 10 minutes.` : ''
+			]
+				.filter(Boolean)
+				.join(' ')
+		};
+	}
+	async function shareLink() {
+		try {
+			await navigator.share({
+				title: 'Teen Patti on Chaal',
+				text: `Join my Teen Patti table — boot ₹${boot}, buy-in ₹${room.table}`,
+				url: inviteLink
+			});
+		} catch {
+			/* Closing the share sheet is not an error. */
+		}
+	}
+	let spotlight = $state<string | null>(null);
+	const spotlightUser = $derived(
+		room.usersList.find((user) => user.id === spotlight && !user.hasLeft)
+	);
+	let sound = $state(true);
+	let arena: HTMLElement | undefined = $state();
+
+	onMount(() => {
+		sound = soundEnabled();
+		const tick = setInterval(() => (now = Date.now()), 250);
+		const observer = new ResizeObserver(([entry]) => {
+			arenaW = entry.contentRect.width;
+			arenaH = Math.max(entry.contentRect.height, 1);
+			portrait = arenaW / arenaH < 1.15;
+		});
+		if (arena) observer.observe(arena);
+		return () => {
+			clearInterval(tick);
+			observer.disconnect();
+			clearTimeout(packTimer);
+			document.title = baseTitle;
+		};
+	});
+
+	const standings = $derived(
+		[...room.usersList]
+			.sort((a, b) => b.balance - a.balance)
+			.map((user) => ({ user, net: user.balance - room.table }))
+	);
+	// Only this hand's story: a new deal wipes the ticker clean.
+	const recent = $derived.by(() => {
+		const start = feed.findLastIndex((event) => event.kind === 'deal');
+		return feed.slice(Math.max(start, 0)).slice(-3).reverse();
+	});
+</script>
+
+<svelte:window {onkeydown} />
+
+<div class="tp-shell" data-testid="table-scene" data-game="teen-patti">
+	<header class="topbar">
+		<div class="brand">
+			<span class="logo" aria-hidden="true">♠</span>
+			<button class="room-code" onclick={openInvite} title="Invite friends">
+				<span class="code">{room.name}</span>
+				<Copy class="h-3.5 w-3.5" />
+			</button>
+		</div>
+		<div class="variant" data-testid="variant-label">
+			<span class="variant-name">{variant?.selectionLabel.split(' — ')[0] ?? 'Teen Patti'}</span>
+			<span class="dot">·</span>
+			<span>Boot {money(boot)}</span>
+			{#if room.variantState?.indicator}
+				<span class="dot">·</span>
+				<span class="wild" data-testid="joker-indicator"
+					>{room.variantState.wildColor
+						? `Wild: ${room.variantState.wildColor} cards`
+						: `Wild ${rankLabel(room.variantState.wildRank)}`}</span
+				>
+			{/if}
+		</div>
+		<div class="tools">
+			{@render media()}
+			<span class="sep" aria-hidden="true"></span>
+			<button
+				class="tool"
+				onclick={() => {
+					sound = !sound;
+					setSoundEnabled(sound);
+				}}
+				title={sound ? 'Mute table sounds' : 'Turn table sounds on'}
+				aria-label={sound ? 'Mute table sounds' : 'Turn table sounds on'}
+				>{#if sound}<Volume2 class="h-4 w-4" />{:else}<VolumeX class="h-4 w-4" />{/if}</button
+			>
+			<button
+				class="tool"
+				onclick={() => (panel = 'rules')}
+				title="Hand rankings"
+				aria-label="Hand rankings"><BookOpen class="h-4 w-4" /></button
+			>
+			<button
+				class="tool"
+				onclick={() => (panel = 'scores')}
+				title="Scores and hand log"
+				aria-label="Scores and hand log"><Trophy class="h-4 w-4" /></button
+			>
+			{#if isHost}
+				<button
+					class="tool"
+					onclick={() => (panel = 'settings')}
+					title="Table settings"
+					aria-label="Table settings"><Settings class="h-4 w-4" /></button
+				>
+			{/if}
+			<button class="tool leave" onclick={onleave} title="Leave table" aria-label="Leave table"
+				><LogOut class="h-4 w-4" /></button
+			>
+		</div>
+	</header>
+
+	{#if !connected}
+		<div class="offline" role="status">Reconnecting — actions are paused</div>
+	{/if}
+
+	<main class="arena" class:portrait bind:this={arena}>
+		<div class="felt" aria-hidden="true">
+			<div class="felt-inner"></div>
+		</div>
+
+		{#each opponents as entry, index (entry.user.id)}
+			{@const point = seatPositions[index]}
+			<div
+				class="seat-slot"
+				style:left="{point.left}px"
+				style:top="{point.top}px"
+				style:--seat-w="{seatW}px"
+			>
+				<TpSeat
+					user={entry.user}
+					{boot}
+					active={current?.id === entry.user.id}
+					host={room.hostId === entry.user.id}
+					inHand={inHand(entry.user)}
+					showdown={!!result}
+					winner={!!result && result.winnerId === entry.user.id}
+					loser={!!result && revealed.has(entry.user.id) && result.winnerId !== entry.user.id}
+					handLabel={nameOf(entry.user)}
+					remaining={current?.id === entry.user.id ? remaining : 0}
+					{total}
+					dealKey={room.handId}
+					showMedia={!!mediaState && ['connected', 'reconnecting'].includes(mediaState.status)}
+					mediaParticipant={mediaState?.participants.find((p) => p.identity === entry.user.id)}
+					onspotlight={() => (spotlight = entry.user.id)}
+				/>
+			</div>
+		{/each}
+
+		{#if spotlightUser}
+			<button
+				class="spotlight"
+				onclick={() => (spotlight = null)}
+				aria-label="Close large video"
+				transition:fade={{ duration: 150 }}
+			>
+				<span class="spotlight-frame">
+					<SeatVideo
+						participant={mediaState?.participants.find((p) => p.identity === spotlightUser.id)}
+						name={spotlightUser.username}
+					/>
+					<span class="spotlight-name"
+						>{spotlightUser.username} · {money(spotlightUser.balance)}</span
+					>
+				</span>
+			</button>
+		{/if}
+
+		{#if opponents.length === 0}
+			<div class="empty-seats" style:left="50%" style:top={portrait ? '18%' : '22%'}>
+				<button class="invite-big" onclick={openInvite}>
+					<UserPlus class="h-5 w-5" /> Invite friends
+				</button>
+				<p>Share the link — up to 6 players</p>
+			</div>
+		{/if}
+
+		<div class="center" data-testid="table-center" style:top="{centerTop}px">
+			{#if result}
+				<div class="result" in:fly={{ y: 12, duration: 350 }} role="status" aria-live="polite">
+					<Trophy class="trophy h-7 w-7" />
+					<p class="result-title">
+						{result.winnerId === selfId ? 'You win' : `${result.winnerName} wins`}
+						<span>{money(result.amount)}</span>
+					</p>
+					<p class="result-detail">{resultDetail}</p>
+					{#if dealIn !== null}
+						<div class="next" data-testid="next-round-controls">
+							{#if isHost}
+								{#if autoDeal && !paused}
+									<span>Next hand in {dealIn}s</span>
+									<button class="mini" onclick={() => (paused = true)}
+										><Pause class="h-3.5 w-3.5" /> Pause</button
+									>
+								{:else}
+									<span>Paused</span>
+								{/if}
+								<button
+									class="mini gold"
+									onclick={dealNow}
+									disabled={!canDeal}
+									data-testid="next-round-start"><Play class="h-3.5 w-3.5" /> Deal now</button
+								>
+							{:else if autoDeal}
+								<span>Next hand in {dealIn}s</span>
+							{:else}
+								<span>Waiting for the host to deal</span>
+							{/if}
+						</div>
+						{#if dealError}<p class="deal-error">{dealError}</p>{/if}
+					{/if}
+				</div>
+			{:else if !room.isStarted}
+				<div class="lobby" in:fade>
+					<p class="lobby-title">
+						<Sparkles class="h-4 w-4" />
+						{eligible.length < 2 ? 'Waiting for players' : 'Table is ready'}
+					</p>
+					<p class="lobby-sub">
+						{room.usersList.length}/6 seated · {money(room.table)} buy-in · boot {money(boot)}
+					</p>
+					{#if isHost}
+						<button class="deal-btn" onclick={dealNow} disabled={!canDeal} data-testid="deal-first">
+							<Play class="h-4 w-4" /> Deal first hand
+						</button>
+						{#if !canDeal}
+							<p class="lobby-hint">
+								{eligible.length < 2
+									? 'Need at least 2 players at the table'
+									: 'Waiting for everyone to switch on “Deal me in”'}
+							</p>
+						{/if}
+						{#if dealError}<p class="deal-error">{dealError}</p>{/if}
+					{:else}
+						<p class="lobby-hint">The host deals when everyone is here</p>
+					{/if}
+				</div>
+			{:else}
+				<div class="pot" aria-live="polite">
+					<span class="pot-label">Pot</span>
+					{#key room.pot}
+						<span class="pot-amount" in:fly={{ y: -8, duration: 260 }}>{money(room.pot)}</span>
+					{/key}
+					<span class="stakes">
+						Blind {money(blindStake)} · Seen {money(seenStake)}
+					</span>
+				</div>
+			{/if}
+			<ol class="feed" class:hidden-feed={!!result} aria-label="Recent actions">
+				{#each recent as event, index (event.id)}
+					<li
+						class="feed-line k-{event.kind}"
+						style:opacity={1 - index * 0.32}
+						in:fly={{ y: 6, duration: 220 }}
+					>
+						{event.text}
+					</li>
+				{/each}
+			</ol>
+		</div>
+
+		{#each flights as flight (flight.id)}
+			<span
+				class="flying-chip"
+				style:--fx="{flight.from.x}%"
+				style:--fy="{flight.from.y}%"
+				style:--tx="{flight.to.x}%"
+				style:--ty="{flight.to.y}%"
+				aria-hidden="true"
+			></span>
+		{/each}
+	</main>
+
+	{#if me}
+		<ActionDock
+			{me}
+			{room}
+			inHand={inHand(me)}
+			{myTurn}
+			waitingOn={current?.username ?? null}
+			remaining={myTurn ? remaining : 0}
+			{total}
+			{connected}
+			handLabel={nameOf(me)}
+			{net}
+			dealKey={room.handId}
+			{confirmingPack}
+			showMedia={!!mediaState && ['connected', 'reconnecting'].includes(mediaState.status)}
+			mediaParticipant={mediaState?.participants.find((p) => p.identity === selfId)}
+			onsee={see}
+			ondiscard={discard}
+			onpack={pack}
+			onbet={bet}
+			onshow={show}
+			onsitout={sitOut}
+		/>
+	{/if}
+
+	{#if panel}
+		<div
+			class="scrim"
+			onclick={() => (panel = null)}
+			aria-hidden="true"
+			transition:fade={{ duration: 150 }}
+		></div>
+		<div
+			class="sheet"
+			role="dialog"
+			aria-modal="true"
+			tabindex="-1"
+			aria-label={panel}
+			transition:fly={{ x: 40, duration: 200 }}
+		>
+			<header class="sheet-head">
+				<h2>
+					{panel === 'scores'
+						? 'Tonight'
+						: panel === 'rules'
+							? 'Hand rankings'
+							: panel === 'invite'
+								? 'Invite friends'
+								: 'Table settings'}
+				</h2>
+				<button class="tool" onclick={() => (panel = null)} aria-label="Close"
+					><X class="h-4 w-4" /></button
+				>
+			</header>
+			<div class="sheet-body">
+				{#if panel === 'invite'}
+					<p class="muted">
+						Up to 6 players sit at a table. Friends join straight from the link — no app, no
+						sign-up.
+					</p>
+					<div class="link-box">
+						<span class="link-text">{inviteLink}</span>
+						<button class="mini gold" onclick={oninvite}><Copy class="h-3.5 w-3.5" /> Copy</button>
+					</div>
+					{#if canShare}
+						<button class="mini share" onclick={shareLink}
+							><Share2 class="h-3.5 w-3.5" /> Share via WhatsApp, SMS…</button
+						>
+					{/if}
+					<h3>Invite by email</h3>
+					<form class="invite-form" onsubmit={sendInvites}>
+						<textarea
+							bind:value={inviteText}
+							rows="3"
+							placeholder="rahul@gmail.com, priya@gmail.com"
+							aria-label="Email addresses"
+							autocomplete="email"></textarea>
+						<button
+							class="mini gold send"
+							type="submit"
+							disabled={!typedEmails.length || inviteBusy || !connected}
+						>
+							<Mail class="h-3.5 w-3.5" />
+							{inviteBusy
+								? 'Sending…'
+								: typedEmails.length > 1
+									? `Send ${typedEmails.length} invites`
+									: 'Send invite'}
+						</button>
+					</form>
+					{#if inviteNote}
+						<p class="invite-note" class:error={inviteNote.kind === 'error'} role="status">
+							{inviteNote.text}
+						</p>
+					{/if}
+					<p class="muted small">Each table can email up to 10 people.</p>
+					{#if invited.length}
+						<h3>Invited</h3>
+						<ul class="invited">
+							{#each invited as entry (entry.email)}
+								<li>
+									<span>{entry.email}</span>
+									<small
+										>{new Date(entry.at).toLocaleTimeString([], {
+											hour: 'numeric',
+											minute: '2-digit'
+										})}</small
+									>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				{:else if panel === 'scores'}
+					<ol class="standings">
+						{#each standings as { user, net: delta }, index (user.id)}
+							<li>
+								<span class="place">{index + 1}</span>
+								<span class="who">{user.username}{user.id === selfId ? ' (you)' : ''}</span>
+								<span class="amt">{money(user.balance)}</span>
+								<span class="delta" class:up={delta > 0} class:down={delta < 0}
+									>{signedMoney(delta)}</span
+								>
+							</li>
+						{/each}
+					</ol>
+					<h3>Hand log</h3>
+					<ol class="log">
+						{#each [...feed].reverse() as event (event.id)}
+							<li class="k-{event.kind}">{event.text}</li>
+						{:else}
+							<li class="muted">Actions appear here as the game goes.</li>
+						{/each}
+					</ol>
+				{:else if panel === 'rules'}
+					<p class="muted">Highest to lowest. {variant?.description ?? ''}</p>
+					<ol class="rankings">
+						{#each HAND_RANKINGS as rank, index (rank.name)}
+							<li>
+								<span class="place">{index + 1}</span>
+								<span class="who">{rank.name}<small>{rank.hint}</small></span>
+								<span class="mini-cards">
+									{#each rank.cards as card (card)}
+										<span class:red={card.includes('♥') || card.includes('♦')}>{card}</span>
+									{/each}
+								</span>
+							</li>
+						{/each}
+					</ol>
+					<h3>How betting works</h3>
+					<ul class="howto">
+						<li>
+							<strong>Blind</strong> players haven’t looked; they bet half of what seen players bet.
+						</li>
+						<li>
+							<strong>Chaal</strong> matches the current stake. <strong>Raise</strong> doubles it.
+						</li>
+						<li>
+							<strong>Show</strong> is allowed when two players remain; cards are compared and the pot
+							is settled.
+						</li>
+						<li>
+							You have <strong>{Math.round(total / 1000)} seconds</strong> per turn. If time runs out
+							you pack automatically.
+						</li>
+					</ul>
+					<h3>Shortcuts</h3>
+					<p class="muted">S see · C chaal · R raise · P pack (press twice) · W show · Esc close</p>
+				{:else}
+					<label class="setting">
+						<input
+							type="checkbox"
+							class="toggle toggle-sm toggle-primary"
+							bind:checked={autoDeal}
+						/>
+						<span
+							>Deal the next hand automatically<small
+								>A short pause after each hand, then cards are dealt</small
+							></span
+						>
+					</label>
+					{#if paused}
+						<button class="mini gold" onclick={() => (paused = false)}
+							><Play class="h-3.5 w-3.5" /> Resume auto-deal</button
+						>
+					{/if}
+					{@render settings()}
+				{/if}
+			</div>
+		</div>
+	{/if}
+</div>
+
+<style>
+	:global(.toast) {
+		z-index: 80;
+	}
+	.tp-shell {
+		--tp-gold: #e2b862;
+		--tp-felt-glow: rgb(233 191 98 / 60%);
+		position: fixed;
+		inset: 0;
+		z-index: 40;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		background: radial-gradient(ellipse 80% 60% at 50% 40%, #16261f 0%, #0c1411 60%, #08100d 100%);
+		padding: 0.5rem max(0.75rem, env(safe-area-inset-right)) 0.75rem
+			max(0.75rem, env(safe-area-inset-left));
+		color: #f1ebdc;
+		overflow: clip;
+	}
+	.tp-shell > :global([data-testid='action-dock']) {
+		flex: none;
+	}
+	.tp-shell > :global(*) {
+		width: 100%;
+		max-width: 92rem;
+		margin-inline: auto;
+	}
+	/* Top bar */
+	.topbar {
+		flex: none;
+		display: flex;
+		min-width: 0;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding-top: env(safe-area-inset-top);
+	}
+	.brand {
+		display: flex;
+		min-width: 0;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.logo {
+		display: grid;
+		width: 2.1rem;
+		height: 2.1rem;
+		flex-shrink: 0;
+		place-items: center;
+		border-radius: 0.7rem;
+		background: linear-gradient(150deg, #f4d68c, #b98030);
+		color: #1c1408;
+		font-size: 1.1rem;
+	}
+	.room-code {
+		display: inline-flex;
+		min-width: 0;
+		align-items: center;
+		gap: 0.4rem;
+		border-radius: 999px;
+		background: rgb(255 255 255 / 5%);
+		padding: 0.35rem 0.75rem;
+		color: rgb(241 235 220 / 75%);
+		font-size: 0.8rem;
+		cursor: pointer;
+	}
+	.room-code:hover {
+		background: rgb(255 255 255 / 10%);
+		color: #f1ebdc;
+	}
+	.code {
+		overflow: hidden;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.variant {
+		display: flex;
+		min-width: 0;
+		align-items: center;
+		gap: 0.4rem;
+		color: rgb(241 235 220 / 65%);
+		font-size: 0.82rem;
+		white-space: nowrap;
+	}
+	.variant-name {
+		color: #f4d68c;
+		font-weight: 700;
+	}
+	.wild {
+		color: #b5dcff;
+		font-weight: 650;
+	}
+	.dot {
+		opacity: 0.4;
+	}
+	.tools {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+	}
+	.sep {
+		width: 1px;
+		height: 1.3rem;
+		margin-inline: 0.2rem;
+		background: rgb(255 255 255 / 12%);
+	}
+	.tool {
+		display: inline-grid;
+		width: 2.1rem;
+		height: 2.1rem;
+		place-items: center;
+		border: 1px solid rgb(241 235 220 / 14%);
+		border-radius: 999px;
+		background: rgb(255 255 255 / 5%);
+		color: #f1ebdc;
+		cursor: pointer;
+		transition: background 150ms ease;
+	}
+	.tool:hover {
+		background: rgb(255 255 255 / 11%);
+	}
+	.tool.leave {
+		color: #f0a898;
+	}
+	.offline {
+		position: absolute;
+		top: 3.4rem;
+		left: 50%;
+		z-index: 5;
+		width: auto;
+		translate: -50% 0;
+		border-radius: 999px;
+		background: #5b2c1f;
+		padding: 0.3rem 0.9rem;
+		color: #ffd9cf;
+		font-size: 0.8rem;
+	}
+	/* Arena and felt */
+	.arena {
+		position: relative;
+		container-type: size;
+		flex: 1 1 0;
+		min-height: 0;
+		isolation: isolate;
+	}
+	.felt {
+		position: absolute;
+		inset: 14% 5% 2% 5%;
+		z-index: -1;
+		border-radius: 50% / 50%;
+		background: linear-gradient(160deg, #5a3a1c, #2e1c0c 60%, #4a2f15);
+		padding: clamp(0.5rem, 1.4vw, 1.1rem);
+		box-shadow:
+			0 2rem 4rem rgb(0 0 0 / 55%),
+			inset 0 1px 0 rgb(255 220 160 / 20%);
+	}
+	.felt-inner {
+		height: 100%;
+		border-radius: inherit;
+		background:
+			radial-gradient(ellipse 60% 55% at 50% 45%, rgb(255 255 255 / 7%), transparent 70%),
+			radial-gradient(ellipse at center, #1d6a45 0%, #145034 55%, #0e3b26 100%);
+		box-shadow:
+			inset 0 0 0 2px rgb(240 200 120 / 22%),
+			inset 0 0 3rem rgb(0 0 0 / 45%);
+	}
+	.arena.portrait .felt {
+		inset: 5% 3% 2% 3%;
+		border-radius: 42% / 26%;
+	}
+	.seat-slot,
+	.empty-seats {
+		position: absolute;
+		z-index: 2;
+		width: var(--seat-w);
+		translate: -50% -50%;
+		transition:
+			left 400ms ease,
+			top 400ms ease,
+			width 400ms ease;
+	}
+	.empty-seats {
+		display: flex;
+		width: auto;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		color: rgb(241 235 220 / 55%);
+		font-size: 0.8rem;
+	}
+	.invite-big {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		border: 1px dashed rgb(240 200 110 / 55%);
+		border-radius: 999px;
+		background: rgb(6 12 10 / 40%);
+		padding: 0.7rem 1.3rem;
+		color: #f4d68c;
+		font-weight: 700;
+		cursor: pointer;
+	}
+	.center {
+		position: absolute;
+		top: 54%;
+		left: 50%;
+		z-index: 1;
+		display: flex;
+		width: min(26rem, 46%);
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		translate: -50% -50%;
+		text-align: center;
+	}
+	.arena.portrait .center {
+		top: 52%;
+		width: min(15rem, 44%);
+	}
+	.pot {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		border-radius: 1.2rem;
+		background: rgb(4 20 12 / 45%);
+		padding: 0.6rem 1.4rem 0.7rem;
+		box-shadow: inset 0 0 0 1px rgb(240 200 120 / 18%);
+	}
+	.pot-label {
+		color: rgb(244 227 181 / 70%);
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.2em;
+		text-transform: uppercase;
+	}
+	.pot-amount {
+		color: #f7dc95;
+		font-size: clamp(1.6rem, 3.2vw, 2.5rem);
+		font-variant-numeric: tabular-nums;
+		font-weight: 850;
+		line-height: 1.1;
+		text-shadow: 0 2px 10px rgb(0 0 0 / 45%);
+	}
+	.stakes {
+		margin-top: 0.15rem;
+		color: rgb(241 235 220 / 70%);
+		font-size: 0.75rem;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+	.feed {
+		display: flex;
+		min-height: 3.6rem;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.1rem;
+	}
+	.hidden-feed {
+		display: none;
+	}
+	.feed-line {
+		color: #f1ebdc;
+		font-size: 0.85rem;
+		line-height: 1.2;
+	}
+	.feed-line:first-child {
+		font-weight: 650;
+	}
+	.k-raise {
+		color: #f4d68c;
+	}
+	.k-pack {
+		color: #f0a898;
+	}
+	.k-win {
+		color: #f7dc95;
+	}
+	.k-see {
+		color: #b5dcff;
+	}
+	.result {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.2rem;
+		border-radius: 1.2rem;
+		background: rgb(4 20 12 / 62%);
+		padding: 0.8rem 1.2rem;
+		box-shadow:
+			inset 0 0 0 1px rgb(240 200 120 / 35%),
+			0 0 3rem rgb(240 200 110 / 15%);
+	}
+	.result :global(.trophy) {
+		color: #f4d68c;
+	}
+	.result-title {
+		font-size: clamp(1.05rem, 2vw, 1.4rem);
+		font-weight: 800;
+	}
+	.result-title span {
+		color: #f7dc95;
+	}
+	.result-detail {
+		color: rgb(241 235 220 / 80%);
+		font-size: 0.85rem;
+	}
+	.next {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		margin-top: 0.35rem;
+		color: rgb(241 235 220 / 70%);
+		font-size: 0.8rem;
+		font-variant-numeric: tabular-nums;
+	}
+	.mini {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		border: 1px solid rgb(241 235 220 / 18%);
+		border-radius: 999px;
+		background: rgb(255 255 255 / 6%);
+		padding: 0.25rem 0.7rem;
+		color: #f1ebdc;
+		font-size: 0.75rem;
+		font-weight: 650;
+		cursor: pointer;
+	}
+	.mini.gold {
+		border-color: transparent;
+		background: linear-gradient(160deg, #f4d68c, #c99236);
+		color: #24180a;
+	}
+	.mini:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
+	}
+	.deal-error {
+		color: #f0cc78;
+		font-size: 0.75rem;
+	}
+	.lobby {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.lobby-title {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: #f4d68c;
+		font-size: 1.15rem;
+		font-weight: 800;
+	}
+	.lobby-sub,
+	.lobby-hint {
+		color: rgb(241 235 220 / 65%);
+		font-size: 0.8rem;
+	}
+	.deal-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.4rem;
+		border-radius: 999px;
+		background: linear-gradient(160deg, #f4d68c, #c99236);
+		padding: 0.75rem 1.6rem;
+		color: #24180a;
+		font-size: 1rem;
+		font-weight: 800;
+		box-shadow: 0 0.5rem 1.5rem rgb(201 146 54 / 35%);
+		cursor: pointer;
+	}
+	.deal-btn:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
+		box-shadow: none;
+	}
+	.spotlight {
+		position: absolute;
+		inset: 0;
+		z-index: 8;
+		display: grid;
+		place-items: center;
+		background: rgb(4 8 6 / 72%);
+		cursor: zoom-out;
+		backdrop-filter: blur(4px);
+	}
+	.spotlight-frame {
+		position: relative;
+		width: min(94cqw, 120cqh);
+		overflow: hidden;
+		border-radius: 1.2rem;
+		box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 60%);
+	}
+	.spotlight-frame :global(.seat-video) {
+		aspect-ratio: 4 / 3;
+	}
+	.spotlight-name {
+		position: absolute;
+		top: 0.7rem;
+		left: 0.7rem;
+		z-index: 2;
+		border-radius: 999px;
+		background: rgb(8 14 12 / 78%);
+		padding: 0.25rem 0.8rem;
+		font-weight: 700;
+	}
+	.flying-chip {
+		position: absolute;
+		z-index: 6;
+		width: 1.4rem;
+		height: 1.4rem;
+		translate: -50% -50%;
+		border-radius: 999px;
+		background:
+			radial-gradient(circle, #c7382f 0 36%, transparent 37%),
+			repeating-conic-gradient(#f3e6c4 0 30deg, #c7382f 30deg 60deg);
+		box-shadow: 0 3px 8px rgb(0 0 0 / 55%);
+		animation: tp-chip 650ms cubic-bezier(0.35, 0.7, 0.3, 1) forwards;
+		pointer-events: none;
+	}
+	@keyframes tp-chip {
+		from {
+			left: var(--fx);
+			top: var(--fy);
+			opacity: 1;
+		}
+		85% {
+			opacity: 1;
+		}
+		to {
+			left: var(--tx);
+			top: var(--ty);
+			opacity: 0;
+		}
+	}
+	/* Side sheet */
+	.scrim {
+		position: fixed;
+		inset: 0;
+		z-index: 60;
+		max-width: none;
+		background: rgb(0 0 0 / 45%);
+	}
+	.sheet {
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 61;
+		display: flex;
+		width: min(24rem, 100%);
+		max-width: none;
+		flex-direction: column;
+		margin: 0;
+		background: #111b17;
+		box-shadow: -1rem 0 3rem rgb(0 0 0 / 45%);
+	}
+	.sheet-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		border-bottom: 1px solid rgb(255 255 255 / 8%);
+		padding: 1rem 1.1rem;
+	}
+	.sheet-head h2 {
+		color: #f4d68c;
+		font-size: 1.1rem;
+		font-weight: 800;
+	}
+	.sheet-body {
+		display: flex;
+		flex-direction: column;
+		gap: 0.8rem;
+		overflow-y: auto;
+		padding: 1rem 1.1rem 2rem;
+	}
+	.sheet-body h3 {
+		margin-top: 0.6rem;
+		color: rgb(241 235 220 / 60%);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+	.muted {
+		color: rgb(241 235 220 / 55%);
+		font-size: 0.85rem;
+	}
+	.standings,
+	.rankings {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.standings li,
+	.rankings li {
+		display: grid;
+		grid-template-columns: 1.5rem 1fr auto auto;
+		align-items: center;
+		gap: 0.6rem;
+		border-radius: 0.7rem;
+		background: rgb(255 255 255 / 4%);
+		padding: 0.55rem 0.7rem;
+		font-size: 0.9rem;
+	}
+	.rankings li {
+		grid-template-columns: 1.5rem 1fr auto;
+	}
+	.place {
+		color: rgb(241 235 220 / 45%);
+		font-weight: 700;
+	}
+	.who {
+		display: flex;
+		min-width: 0;
+		flex-direction: column;
+		overflow: hidden;
+		font-weight: 650;
+		text-overflow: ellipsis;
+	}
+	.who small {
+		color: rgb(241 235 220 / 50%);
+		font-size: 0.72rem;
+		font-weight: 500;
+	}
+	.amt {
+		color: #f0d18c;
+		font-variant-numeric: tabular-nums;
+		font-weight: 700;
+	}
+	.delta {
+		min-width: 4.5rem;
+		color: rgb(241 235 220 / 55%);
+		font-size: 0.8rem;
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+	}
+	.delta.up {
+		color: #8fd6a5;
+	}
+	.delta.down {
+		color: #ee9a8c;
+	}
+	.mini-cards {
+		display: flex;
+		gap: 0.2rem;
+	}
+	.mini-cards span {
+		border-radius: 0.3rem;
+		background: #f6f0e2;
+		padding: 0.1rem 0.25rem;
+		color: #1a1a1a;
+		font-size: 0.72rem;
+		font-weight: 700;
+	}
+	.mini-cards span.red {
+		color: #c7261b;
+	}
+	.log {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		font-size: 0.85rem;
+	}
+	.howto {
+		display: flex;
+		flex-direction: column;
+		gap: 0.45rem;
+		padding-left: 1rem;
+		color: rgb(241 235 220 / 80%);
+		font-size: 0.85rem;
+		list-style: disc;
+	}
+	.link-box {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		border-radius: 0.8rem;
+		background: rgb(255 255 255 / 5%);
+		padding: 0.5rem 0.5rem 0.5rem 0.8rem;
+	}
+	.link-text {
+		min-width: 0;
+		flex: 1;
+		overflow: hidden;
+		color: rgb(241 235 220 / 80%);
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 0.75rem;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.mini.share {
+		align-self: flex-start;
+		padding: 0.45rem 0.9rem;
+	}
+	.invite-form {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.invite-form textarea {
+		resize: vertical;
+		border: 1px solid rgb(241 235 220 / 16%);
+		border-radius: 0.8rem;
+		background: rgb(0 0 0 / 25%);
+		padding: 0.6rem 0.75rem;
+		color: #f1ebdc;
+		font-size: 0.9rem;
+	}
+	.invite-form textarea:focus {
+		border-color: rgb(240 200 110 / 60%);
+		outline: none;
+	}
+	.mini.send {
+		align-self: flex-end;
+		padding: 0.45rem 1rem;
+		font-size: 0.82rem;
+	}
+	.invite-note {
+		color: #8fd6a5;
+		font-size: 0.82rem;
+	}
+	.invite-note.error {
+		color: #f0a898;
+	}
+	.small {
+		font-size: 0.75rem;
+	}
+	.invited {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+	.invited li {
+		display: flex;
+		justify-content: space-between;
+		gap: 0.5rem;
+		border-radius: 0.6rem;
+		background: rgb(255 255 255 / 4%);
+		padding: 0.45rem 0.7rem;
+		font-size: 0.85rem;
+	}
+	.invited small {
+		color: rgb(241 235 220 / 50%);
+	}
+	.setting {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.7rem;
+		cursor: pointer;
+	}
+	.setting span {
+		display: flex;
+		flex-direction: column;
+		font-size: 0.9rem;
+		font-weight: 650;
+	}
+	.setting small {
+		color: rgb(241 235 220 / 55%);
+		font-weight: 500;
+	}
+	@media (max-width: 959px) {
+		.tp-shell {
+			gap: 0.25rem;
+			padding: 0.4rem 0.5rem 0;
+		}
+		.variant {
+			display: none;
+		}
+		.tp-shell > :global([data-testid='action-dock']) {
+			margin-inline: -0.5rem;
+			width: calc(100% + 1rem);
+			max-width: none;
+		}
+	}
+	@media (max-width: 639px) {
+		.room-code {
+			max-width: 7.5rem;
+		}
+		.sep {
+			display: none;
+		}
+		.tool,
+		.tools :global(.mc-btn) {
+			width: 1.95rem;
+			height: 1.95rem;
+		}
+		.tools {
+			gap: 0.2rem;
+		}
+		.pot {
+			padding: 0.4rem 0.8rem 0.5rem;
+		}
+		.stakes {
+			font-size: 0.62rem;
+		}
+		.feed {
+			min-height: 2.8rem;
+		}
+		.feed-line:nth-child(3) {
+			display: none;
+		}
+		.feed-line {
+			font-size: 0.7rem;
+		}
+		.result {
+			padding: 0.55rem 0.7rem;
+		}
+		.result-detail,
+		.next {
+			font-size: 0.68rem;
+		}
+	}
+	@media (max-width: 420px) {
+		.logo {
+			display: none;
+		}
+		.tools :global(.mc-btn:nth-of-type(3)) {
+			display: none;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.flying-chip {
+			display: none;
+		}
+	}
+</style>

@@ -6,13 +6,14 @@ import { shuffledDeck } from '../classic.mjs';
 import { freshRummyDeck } from '../rummy/rummy.mjs';
 import { getVariant, listVariants } from '../variants/index.mjs';
 import { secureRandomInt, toHex } from '../random.mjs';
+import { inviteEmails, planInvites, inviteMessage, sendWithResend } from './invites.mjs';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SMALL_ROOM_RETENTION_MS = 30 * DAY_MS;
 const ROOM_RETENTION_MS = 365 * DAY_MS;
 const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
-	'joinRoom', 'ready', 'start', 'seeCards', 'play', 'show', 'pokerAction',
+	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
 	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom'
 ]);
 
@@ -202,13 +203,13 @@ export class RoomDurableObject {
 				return json(prior.result);
 			}
 			if (this.room()) throw new GameError('Room already exists', 'ROOM_EXISTS');
-			const [requestedName, table, rulesVersion, requestedGameType] = args;
+			const [requestedName, table, rulesVersion, requestedGameType, options] = args;
 			void requestedName;
 			const gameType = requestedGameType ?? 'teen-patti';
 			if (!listGameTypes().includes(gameType))
 				throw new GameError('Unsupported game type', 'UNSUPPORTED_GAME');
 			const room = gameType === 'teen-patti'
-				? newRoom(name, table, playerId, rulesVersion)
+				? newRoom(name, table, playerId, rulesVersion, options)
 				: createGameRoom(gameType, name, table, playerId);
 			room.revision = 1;
 			const result = { ok: true, roomName: room.name, revision: room.revision, handId: room.handId };
@@ -275,6 +276,11 @@ export class RoomDurableObject {
 		try {
 			if (packet.event === 'resumeRoom') {
 				const reply = await this.resume(socket, attachment, packet.args?.[0]);
+				this.sendAck(socket, packet.id, reply);
+				return;
+			}
+			if (packet.event === 'sendInvites' || packet.event === 'listInvites') {
+				const reply = await this.invites(socket, attachment, packet.event, packet.args ?? []);
 				this.sendAck(socket, packet.id, reply);
 				return;
 			}
@@ -398,6 +404,10 @@ export class RoomDurableObject {
 				action = 'see';
 				payload = {};
 				text = 'Cards seen';
+			} else if (event === 'discardCard') {
+				action = 'discard';
+				payload = { index: args[0] };
+				text = null;
 			} else if (event === 'play') {
 				if (typeof args[0] !== 'boolean') throw new GameError('Invalid play action');
 				action = args[0] ? 'pack' : 'bet';
@@ -649,6 +659,56 @@ export class RoomDurableObject {
 				current.mediaBusy = false;
 				socket.serializeAttachment(current);
 			}
+		}
+	}
+
+	inviteSettings() {
+		const origin = String(this.env.PUBLIC_APP_URL ?? 'https://chaal.tech').replace(/\/+$/, '');
+		return {
+			apiKey: this.env.RESEND_API_KEY,
+			from: this.env.INVITE_FROM ?? 'Chaal <invites@chaal.tech>',
+			origin
+		};
+	}
+
+	/** Email invites go through the open game socket, so only seated players can send them. */
+	async invites(socket, attachment, event, [requestedRoom, emails]) {
+		try {
+			const player = this.mediaMember(socket, requestedRoom, attachment.playerId);
+			const invited = () => (this.getMeta('invites') ?? []).map(({ email, at }) => ({ email, at }));
+			if (event === 'listInvites') return { ok: true, invites: invited() };
+			const settings = this.inviteSettings();
+			if (!settings.apiKey)
+				throw new GameError('Email invites are not set up yet. Share the link instead.', 'INVITES_UNAVAILABLE');
+			const current = socket.deserializeAttachment();
+			if (Date.now() - (current.inviteLast ?? -Infinity) < 5000)
+				throw new GameError('Wait a few seconds before sending more invites', 'RATE_LIMIT');
+			current.inviteLast = Date.now();
+			socket.serializeAttachment(current);
+			const plan = planInvites(this.getMeta('invites'), inviteEmails(emails), player.id, Date.now());
+			if (plan.send.length) {
+				const room = this.room().snapshot;
+				await sendWithResend({
+					apiKey: settings.apiKey,
+					from: settings.from,
+					emails: plan.send,
+					message: inviteMessage({
+						inviter: player.username,
+						link: `${settings.origin}/${room.name}`,
+						boot: room.boot ?? 1,
+						buyIn: room.table
+					})
+				});
+				this.setMeta('invites', plan.record);
+			}
+			return { ok: true, sent: plan.send, skipped: plan.skipped, invites: invited() };
+		} catch (error) {
+			if (!(error instanceof GameError)) console.error('Invite email failed:', error?.message ?? 'Error');
+			return {
+				ok: false,
+				code: error instanceof GameError ? error.code : 'INVITES_UNAVAILABLE',
+				error: error instanceof GameError ? error.message : 'Could not send the email right now. Share the link instead.'
+			};
 		}
 	}
 

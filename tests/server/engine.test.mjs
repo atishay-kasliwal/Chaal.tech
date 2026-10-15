@@ -297,3 +297,31 @@ test('A departed seat is released after a six-player hand, so rejoin preserves t
 	);
 	invariant(room);
 });
+
+test('Table options set the boot, scale the betting bands and seat players ready', () => {
+	assert.throws(() => newRoom('boot-room', 1000, 'a', 'classic-1', { boot: 51 }), /Boot/);
+	assert.throws(() => newRoom('boot-room', 1000, 'a', 'classic-1', { boot: 2.5 }), /Boot/);
+	let room = newRoom('boot-room', 1000, 'a', 'classic-1', { boot: 10, autoReady: true });
+	for (const id of ['a', 'b', 'c']) room = transition(room, id, 'join', { username: id }, context);
+	assert.ok(room.players.every((p) => p.ready === true));
+	assert.equal(projection(room, 'a', context.connected).boot, 10);
+	room = transition(room, 'c', 'ready', { ready: false }, context);
+	room = transition(room, 'a', 'start', { cutAt: 0, cardsToDeal: 3 }, { ...context, requireReady: true });
+	assert.equal(room.pot, 20);
+	assert.equal(room.maxStake, 20);
+	assert.equal(room.players.find((p) => p.id === 'c').isPacked, true);
+	assert.equal(room.players.find((p) => p.id === 'c').balance, 1000);
+	const view = projection(room, 'b', context.connected);
+	assert.equal(view.legalActions.minBet, 10);
+	assert.equal(view.legalActions.maxBet, 20);
+	assert.equal(view.turnMs, 60000);
+	assert.equal(view.legalActions.ready, true);
+	room = transition(room, 'c', 'ready', { ready: true }, context);
+	room = transition(room, 'b', 'see', {}, context);
+	assert.equal(projection(room, 'b', context.connected).legalActions.minBet, 20);
+	assert.equal(projection(room, 'b', context.connected).legalActions.maxBet, 40);
+	room = transition(room, 'b', 'bet', { amount: 40 }, context);
+	assert.equal(room.maxStake, 40);
+	assert.ok(room.players.every((p) => p.ready === true));
+	invariant(room);
+});
