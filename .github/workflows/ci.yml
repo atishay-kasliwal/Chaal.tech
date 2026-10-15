@@ -11,6 +11,8 @@ on:
 
 env:
   GAME_SERVER_URL: https://chaal-game.s6-backend-spike.workers.dev
+  # Public OAuth client for Google sign-in (not a secret; the browser uses it).
+  GOOGLE_CLIENT_ID: 709960924053-es3kqp1l01a4s7n2hiv7idtkvop8odjf.apps.googleusercontent.com
 
 jobs:
   test:
@@ -29,6 +31,7 @@ jobs:
       - run: npm run build
         env:
           VITE_SERVER_URL: ${{ env.GAME_SERVER_URL }}
+          VITE_GOOGLE_CLIENT_ID: ${{ env.GOOGLE_CLIENT_ID }}
 
   deploy:
     needs: test
@@ -68,6 +71,7 @@ jobs:
         run: npm run deploy:pages -- --project-name=chaal-tech --branch=main --commit-dirty=true
         env:
           VITE_SERVER_URL: ${{ env.GAME_SERVER_URL }}
+          VITE_GOOGLE_CLIENT_ID: ${{ env.GOOGLE_CLIENT_ID }}
       - name: Smoke-check production
         if: steps.creds.outputs.ready == 'true'
         run: |

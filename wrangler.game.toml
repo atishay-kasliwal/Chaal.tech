@@ -31,3 +31,4 @@ INVITE_FROM = "Chaal <invites@chaal.tech>"
 # Private club. GOOGLE_CLIENT_ID is public (the browser uses it too); set it here or as a var.
 # MONGODB_URI is a secret: npx wrangler secret put MONGODB_URI --config wrangler.game.toml
 MONGODB_DB = "chaal"
+GOOGLE_CLIENT_ID = "709960924053-es3kqp1l01a4s7n2hiv7idtkvop8odjf.apps.googleusercontent.com"
