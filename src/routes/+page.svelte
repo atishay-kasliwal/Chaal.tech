@@ -7,24 +7,6 @@
 	import { openStart } from '#lib/start/start-modal.svelte.js';
 
 	let mounted = $state(false);
-	let now = $state(new Date());
-	const clock = (timeZone: string) =>
-		now.toLocaleTimeString('en-IN', { timeZone, hour: 'numeric', minute: '2-digit' });
-	const hourIn = (timeZone: string) =>
-		Number(now.toLocaleString('en-US', { timeZone, hour: 'numeric', hour12: false })) % 24;
-	/** A playful line for whatever time it is over there. */
-	const mood = (hour: number) =>
-		hour < 5
-			? 'Way past bedtime. One more hand.'
-			: hour < 11
-				? 'Chai first, then chaal.'
-				: hour < 14
-					? 'Lunch-break blind round?'
-					: hour < 18
-						? 'Pretending to work. Playing seen.'
-						: hour < 22
-							? 'Dinner done. Chips out.'
-							: 'Prime card-night hours.';
 	let activeMechanic = $state(-1);
 
 	function activateMechanic(index: number, event: KeyboardEvent) {
@@ -35,15 +17,12 @@
 
 	onMount(() => {
 		mounted = true;
-		const minute = setInterval(() => (now = new Date()), 30_000);
-
 		const interval = setInterval(() => {
 			activeMechanic = (activeMechanic + 1) % 4; // 0, 1, 2, and 3 (none)
 		}, 3000);
 
 		return () => {
 			clearInterval(interval);
-			clearInterval(minute);
 		};
 	});
 
@@ -115,12 +94,8 @@
 	<div class="mx-auto max-w-6xl space-y-8">
 		<!-- Hero Section -->
 		<div
-			class="from-primary/90 to-secondary/90 relative overflow-hidden rounded-3xl bg-gradient-to-br shadow-2xl"
+			class="landing-hero relative overflow-hidden rounded-3xl shadow-2xl"
 		>
-			<!-- Abstract background elements -->
-			<div class="absolute -top-12 -right-12 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
-			<div class="absolute -bottom-16 -left-16 h-80 w-80 rounded-full bg-white/10 blur-3xl"></div>
-
 			<div
 				class="relative z-10 flex flex-col items-center p-8 text-center md:flex-row md:p-12 md:text-left"
 			>
@@ -128,18 +103,16 @@
 					<div
 						class="mb-2 inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-sm font-medium text-white backdrop-blur-md"
 					>
-						<Sparkles class="mr-2 h-4 w-4" /> Est. hostel room · now on video
+						<Sparkles class="mr-2 h-4 w-4" /> Teen Patti · now on video
 					</div>
 					<h1 class="mb-4 text-5xl font-extrabold tracking-tight text-white md:text-7xl">
 						Chaal chal, yaar!
 					</h1>
 					<p class="mb-3 text-lg text-white/90 md:text-xl">
-						Four of us learned Teen Patti on a hostel floor in college. Now two of us are in the US,
-						two are in India — and the game never stopped.
+						Play Teen Patti with friends on video. Cards, chips, one table.
 					</p>
 					<p class="mb-7 text-base text-white/80 md:text-lg">
-						So we built a table for it. Cards, chips, and everyone’s face on video. No app, no
-						sign-up, no “who’s dealing?” arguments.
+						No download or sign-up.
 					</p>
 					<div class="flex flex-wrap justify-center gap-3 md:justify-start">
 						<button class="hero-cta gold" onclick={openStart} data-testid="hero-start">
@@ -197,32 +170,6 @@
 				</div>
 			</div>
 		</div>
-
-		<!-- Two countries, one table -->
-		<section class="card bg-base-100 shadow-xl" aria-labelledby="story-title">
-			<div class="card-body gap-6">
-				<div>
-					<h2 id="story-title" class="text-primary text-3xl font-extrabold">
-						Two countries. One table.
-					</h2>
-					<p class="text-base-content/70 mt-1 text-lg">
-						Somebody is always up past bedtime. That’s not a bug — that’s tradition.
-					</p>
-				</div>
-				<div class="grid gap-4 sm:grid-cols-2">
-					{#each [{ flag: '🇮🇳', place: 'India', zone: 'Asia/Kolkata' }, { flag: '🇺🇸', place: 'USA (Eastern)', zone: 'America/New_York' }] as spot (spot.zone)}
-						<div class="time-card">
-							<span class="flag" aria-hidden="true">{spot.flag}</span>
-							<div>
-								<p class="place">{spot.place}</p>
-								<p class="time">{mounted ? clock(spot.zone) : '—'}</p>
-								<p class="mood">{mounted ? mood(hourIn(spot.zone)) : ''}</p>
-							</div>
-						</div>
-					{/each}
-				</div>
-			</div>
-		</section>
 
 		<!-- Three taps -->
 		<section class="grid gap-4 md:grid-cols-3" aria-label="How to start">
@@ -583,13 +530,29 @@
 		</div>
 
 		<footer class="landing-footer">
-			<p>Made for hostel nostalgia, bad bluffs, and that one friend who always packs. ♠</p>
+			<p>Cards out. One more hand. ♠</p>
 			<button class="hero-cta gold small" onclick={openStart}>Deal me in</button>
 		</footer>
 	</div>
 </article>
 
 <style>
+	.landing-hero {
+		background-color: #07110b;
+		background-image:
+			linear-gradient(90deg, rgb(4 12 8 / 91%) 0%, rgb(4 12 8 / 82%) 45%, rgb(4 12 8 / 58%) 100%),
+			url('/email/invite-table.jpg');
+		background-position: center;
+		background-size: cover;
+	}
+	@media (max-width: 767px) {
+		.landing-hero {
+			background-image:
+				linear-gradient(180deg, rgb(4 12 8 / 72%) 0%, rgb(4 12 8 / 72%) 55%, rgb(4 12 8 / 86%) 100%),
+				url('/email/invite-table-phone.jpg');
+			background-position: center;
+		}
+	}
 	.hero-cta {
 		border: 1px solid rgb(255 255 255 / 45%);
 		border-radius: 999px;
@@ -616,33 +579,6 @@
 	}
 	.hero-cta.small {
 		padding: 0.6rem 1.2rem;
-		font-size: 0.95rem;
-	}
-	.time-card {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		border-radius: 1rem;
-		background: rgb(255 255 255 / 4%);
-		padding: 1rem 1.2rem;
-	}
-	.flag {
-		font-size: 2.4rem;
-	}
-	.place {
-		color: rgb(241 235 220 / 60%);
-		font-size: 0.8rem;
-		font-weight: 700;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-	}
-	.time {
-		font-size: 1.8rem;
-		font-variant-numeric: tabular-nums;
-		font-weight: 800;
-	}
-	.mood {
-		color: #f4d68c;
 		font-size: 0.95rem;
 	}
 	.step-card {
