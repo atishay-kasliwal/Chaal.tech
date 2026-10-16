@@ -13,6 +13,14 @@ import {
 	gameTime
 } from './beta-emails.mjs';
 import { currentPoll, pollNights, personalLink } from './availability.mjs';
+import { getVariant } from '../variants/index.mjs';
+
+/** Most games a night's lineup can hold. */
+export const LINEUP_MAX = 30;
+const cleanLineup = (lineup) =>
+	Array.isArray(lineup)
+		? lineup.filter((v) => typeof v === 'string' && getVariant(v)).slice(0, LINEUP_MAX)
+		: [];
 
 export const SETTINGS = 'club_settings';
 
@@ -66,7 +74,24 @@ export function normalizeSettings(input = {}) {
 
 export async function clubSettings(db) {
 	const saved = await db.collection(SETTINGS).findOne({ _id: 'club' });
-	return normalizeSettings(saved ?? DEFAULT_SETTINGS);
+	// The night's lineup: Teen Patti variants in play order. Empty means every game.
+	return { ...normalizeSettings(saved ?? DEFAULT_SETTINGS), lineup: cleanLineup(saved?.lineup) };
+}
+
+/** Set the night's lineup (owners only, checked by the caller). */
+export async function saveLineup(db, lineup, byMemberId, now = new Date()) {
+	if (!Array.isArray(lineup) || lineup.length > LINEUP_MAX)
+		throw invalid(`A lineup holds up to ${LINEUP_MAX} games`);
+	const clean = cleanLineup(lineup);
+	if (clean.length !== lineup.length) throw invalid('Unknown game in the lineup');
+	await db
+		.collection(SETTINGS)
+		.updateOne(
+			{ _id: 'club' },
+			{ $set: { lineup: clean, lineupUpdatedAt: now, lineupUpdatedBy: byMemberId } },
+			{ upsert: true }
+		);
+	return clean;
 }
 
 /** Save club settings. Unknown or out-of-range values are rejected rather than silently changed. */

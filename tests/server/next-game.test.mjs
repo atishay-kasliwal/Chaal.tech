@@ -6,6 +6,7 @@ import {
 	transition,
 	projection,
 	nextHandChoice,
+	nextInLineup,
 	CHOOSE_MS,
 	SOLO_CHOOSE_MS,
 	playing
@@ -80,4 +81,18 @@ test('alone with bots, the pick window is shorter', () => {
 	room = finish(deal(room));
 	assert.equal(room.chooser.playerId, 'a');
 	assert.equal(room.chooser.deadline, ctx.now + SOLO_CHOOSE_MS);
+});
+
+test('a lineup sets what comes next, narrows random, and a timeout follows it', () => {
+	const lineup = ['classic-1', 'muflis-1', 'ak47-1'];
+	assert.equal(nextInLineup(lineup, 'classic-1'), 'muflis-1');
+	assert.equal(nextInLineup(lineup, 'ak47-1'), 'classic-1');
+	assert.equal(nextInLineup(lineup, 'joker-1'), 'classic-1');
+	let room = finish(deal(table()));
+	assert.deepEqual(nextHandChoice(room, ctx.now + CHOOSE_MS, lineup), {
+		mode: 'selected',
+		rulesVersion: 'muflis-1'
+	});
+	room = transition(room, 'a', 'chooseNext', { choice: 'random' }, ctx);
+	assert.deepEqual(nextHandChoice(room, ctx.now, lineup), { mode: 'random', pool: lineup });
 });

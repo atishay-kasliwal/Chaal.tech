@@ -45,6 +45,8 @@ interface ChipRequest {
 }
 interface RoomData {
 	name: string;
+	/** Tonight's lineup from the club, in play order (absent when there is none). */
+	lineup?: string[];
 	/** Who picks the next game between hands, until when, and what they picked. */
 	chooser?: { playerId: string; handId: string; deadline: number; choice: string | null };
 	/** Open chip requests this viewer sent or received. */

@@ -93,7 +93,7 @@ const bootOf = (room) => room.boot ?? 1;
 export const CHOOSE_MS = 60 * 1000;
 /** Alone with bots, the pick is yours every hand: a shorter window keeps the game moving. */
 export const SOLO_CHOOSE_MS = 15 * 1000;
-const CHOICES = new Set(['keep', 'random']);
+const CHOICES = new Set(['keep', 'next', 'random']);
 
 /**
  * Hand over the pick to the next person in seat order after the last chooser (bots never pick).
@@ -121,15 +121,29 @@ function assignChooser(room, now) {
  * What the next deal should play, from the chooser's pick: { mode, rulesVersion }, or null when
  * nobody is picking. Throws while the pick is still open. A pick that times out keeps the game.
  */
-export function nextHandChoice(room, now) {
+/** The game after the current one in a lineup; the first when the current one isn't in it. */
+export function nextInLineup(lineup, current) {
+	if (!lineup?.length) return null;
+	const at = lineup.indexOf(current);
+	return lineup[(at + 1) % lineup.length];
+}
+
+export function nextHandChoice(room, now, lineup = []) {
 	const chooser = room.chooser;
 	if (!chooser) return null;
 	if (!chooser.choice && now < chooser.deadline) {
 		const name = room.players.find((p) => p.id === chooser.playerId)?.username ?? 'Someone';
 		throw new GameError(`${name} is picking the next game`, 'PICKING');
 	}
-	const choice = chooser.choice ?? 'keep';
-	if (choice === 'random') return { mode: 'random' };
+	// No pick in time follows the lineup when there is one, otherwise keeps the game.
+	const choice = chooser.choice ?? (lineup.length ? 'next' : 'keep');
+	if (choice === 'random')
+		return lineup.length ? { mode: 'random', pool: lineup } : { mode: 'random' };
+	if (choice === 'next')
+		return {
+			mode: 'selected',
+			rulesVersion: nextInLineup(lineup, room.rulesVersion) ?? room.rulesVersion
+		};
 	return { mode: 'selected', rulesVersion: choice === 'keep' ? room.rulesVersion : choice };
 }
 

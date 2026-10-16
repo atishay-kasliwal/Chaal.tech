@@ -14,7 +14,8 @@ import {
 	setMemberRole,
 	sendDueBeta,
 	decideGameNight,
-	betaDecision
+	betaDecision,
+	saveLineup
 } from '../../server/club/admin.mjs';
 
 const mongo = await MongoMemoryServer.create();
@@ -32,7 +33,7 @@ test.after(async () => {
 const idOf = async (email) => String((await members.findOne({ email }))._id);
 
 test('settings default sensibly, keep the boot within 1/20 of the chips, and reject bad saves', async () => {
-	assert.deepEqual(await clubSettings(db), DEFAULT_SETTINGS);
+	assert.deepEqual(await clubSettings(db), { ...DEFAULT_SETTINGS, lineup: [] });
 	assert.equal(
 		normalizeSettings({ table: { chips: 1000, boot: 100, potLimit: 0 } }).table.boot,
 		50
@@ -42,7 +43,7 @@ test('settings default sensibly, keep the boot within 1/20 of the chips, and rej
 		look: { felt: 'onyx', cardBack: 'crimson' }
 	};
 	assert.deepEqual(await saveClubSettings(db, wanted, 'owner'), wanted);
-	assert.deepEqual(await clubSettings(db), wanted);
+	assert.deepEqual(await clubSettings(db), { ...wanted, lineup: [] });
 	await assert.rejects(
 		saveClubSettings(db, { ...wanted, table: { chips: 10, boot: 5, potLimit: 0 } }, 'owner'),
 		/Starting chips/
@@ -95,4 +96,17 @@ test('beta emails need the email key, and the game night is set once', async () 
 		/already set/
 	);
 	await assert.rejects(decideGameNight(db, 'someday', 'https://chaal.tech'), /date and time/);
+});
+
+test('owners set the lineup for the night; unknown games are refused', async () => {
+	assert.deepEqual(await saveLineup(db, ['classic-1', 'muflis-1', 'folding-joker-1'], 'owner'), [
+		'classic-1',
+		'muflis-1',
+		'folding-joker-1'
+	]);
+	assert.deepEqual((await clubSettings(db)).lineup, ['classic-1', 'muflis-1', 'folding-joker-1']);
+	await assert.rejects(saveLineup(db, ['poker'], 'owner'), /Unknown game/);
+	await assert.rejects(saveLineup(db, 'classic-1', 'owner'), /up to/);
+	await saveLineup(db, [], 'owner');
+	assert.deepEqual((await clubSettings(db)).lineup, []);
 });

@@ -19,7 +19,9 @@
 		Bot,
 		RotateCcw,
 		Shuffle,
-		LayoutGrid
+		LayoutGrid,
+		ListOrdered,
+		SkipForward
 	} from '@lucide/svelte';
 	import type { MediaState } from '#lib/media/controller.js';
 	import { VARIANT_BY_VERSION, VARIANT_CATALOG, type RulesVersion } from '#lib/variant-catalog.js';
@@ -28,6 +30,7 @@
 	import CasinoChip from '#lib/components/CasinoChip.svelte';
 	import ChipStack from '#lib/components/ChipStack.svelte';
 	import FriendPicker from '#lib/club/FriendPicker.svelte';
+	import LineupEditor from '#lib/club/LineupEditor.svelte';
 	import { club } from '#lib/club/club.svelte.js';
 	import BotAvatar from './BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
@@ -191,6 +194,30 @@
 		});
 	});
 
+	// ——— Tonight's lineup (set by club owners; everyone sees it) ———
+	const isOwner = $derived(club.member?.role === 'owner');
+	const lineup = $derived(
+		(isOwner ? club.settings.lineup : (room.lineup ?? club.settings.lineup)) ?? []
+	);
+	const upNext = $derived.by(() => {
+		if (!lineup.length) return null;
+		const at = lineup.indexOf(room.rulesVersion);
+		return lineup[(at + 1) % lineup.length];
+	});
+	let savingLineup = $state(false);
+	async function saveLineup(next: string[]) {
+		savingLineup = true;
+		try {
+			const { response, body } = await club.request('/admin', {
+				method: 'POST',
+				body: JSON.stringify({ action: 'lineup', lineup: next })
+			});
+			if (response.ok && body.settings) club.applySettings(body.settings);
+		} finally {
+			savingLineup = false;
+		}
+	}
+
 	// ——— Picking the next game: one person at a time, round robin, up to a minute ———
 	const chooser = $derived(room.chooser ?? null);
 	const chooserName = $derived(
@@ -208,10 +235,14 @@
 		!chooser
 			? nextVariant
 			: chooser.choice === 'random'
-				? 'A random game'
-				: chooser.choice && chooser.choice !== 'keep'
-					? nameOfVariant(chooser.choice)
-					: nameOfVariant(room.rulesVersion)
+				? lineup.length
+					? 'A random game from the lineup'
+					: 'A random game'
+				: chooser.choice === 'next' || (!chooser.choice && upNext)
+					? nameOfVariant(upNext ?? room.rulesVersion)
+					: chooser.choice && chooser.choice !== 'keep'
+						? nameOfVariant(chooser.choice)
+						: nameOfVariant(room.rulesVersion)
 	);
 	let pickTotal = $state(60);
 	let pickHand: string | null = null;
@@ -520,7 +551,8 @@
 	}
 
 	// ——— Panels and preferences ———
-	let panel = $state<'scores' | 'rules' | 'settings' | 'invite' | 'pick' | null>(null);
+	let panel = $state<'scores' | 'rules' | 'settings' | 'invite' | 'pick' | 'lineup' | null>(null);
+
 
 	// ——— Invites ———
 	/** Club friends picked in the invite panel. */
@@ -687,6 +719,13 @@
 			>
 			<button
 				class="tool"
+				class:has-lineup={lineup.length > 0}
+				onclick={() => (panel = 'lineup')}
+				title="Tonight's lineup"
+				aria-label="Tonight's lineup"><ListOrdered class="h-4 w-4" /></button
+			>
+			<button
+				class="tool"
 				onclick={() => (panel = 'scores')}
 				title="Scores and hand log"
 				aria-label="Scores and hand log"><Trophy class="h-4 w-4" /></button
@@ -828,8 +867,15 @@
 									<p class="pick-sub">Everyone plays what you choose</p>
 								</div>
 							</div>
-							<div class="pick-options">
-								<button class="pick-option keep" onclick={() => pick('keep')}>
+							<div class="pick-options" class:four={!!upNext}>
+								{#if upNext}
+									<button class="pick-option keep" onclick={() => pick('next')}>
+										<SkipForward class="h-5 w-5" />
+										<strong>Next up</strong>
+										<small>{nameOfVariant(upNext)}</small>
+									</button>
+								{/if}
+								<button class="pick-option" class:keep={!upNext} onclick={() => pick('keep')}>
 									<RotateCcw class="h-5 w-5" />
 									<strong>Keep</strong>
 									<small>{nameOfVariant(room.rulesVersion)}</small>
@@ -862,6 +908,19 @@
 									· picked by {myPick ? 'you' : chooserName}</small
 								>{/if}
 						</p>
+					{/if}
+					{#if lineup.length}
+						<button class="lineup-strip" onclick={() => (panel = 'lineup')}>
+							<ListOrdered class="h-3.5 w-3.5" />
+							{#each lineup.slice(0, 5) as version, index (index + version)}
+								{#if index}<span class="arrow">›</span>{/if}
+								<span
+									class:current={version === room.rulesVersion}
+									class:upnext={version === upNext}>{nameOfVariant(version)}</span
+								>
+							{/each}
+							{#if lineup.length > 5}<span class="arrow">+{lineup.length - 5}</span>{/if}
+						</button>
 					{/if}
 					{#if dealIn !== null}
 						<div class="next" data-testid="next-round-controls">
@@ -1030,22 +1089,32 @@
 		>
 			<header class="sheet-head">
 				<h2>
-					{panel === 'pick'
-						? 'Pick the next game'
-						: panel === 'scores'
-							? 'Tonight'
-							: panel === 'rules'
-								? 'Hand rankings'
-								: panel === 'invite'
-									? 'Invite friends'
-									: 'Table settings'}
+					{panel === 'lineup'
+						? 'Tonight’s lineup'
+						: panel === 'pick'
+							? 'Pick the next game'
+							: panel === 'scores'
+								? 'Tonight'
+								: panel === 'rules'
+									? 'Hand rankings'
+									: panel === 'invite'
+										? 'Invite friends'
+										: 'Table settings'}
 				</h2>
 				<button class="tool" onclick={() => (panel = null)} aria-label="Close"
 					><X class="h-4 w-4" /></button
 				>
 			</header>
 			<div class="sheet-body">
-				{#if panel === 'pick'}
+				{#if panel === 'lineup'}
+					<LineupEditor
+						{lineup}
+						current={room.rulesVersion}
+						editable={isOwner}
+						saving={savingLineup}
+						onsave={saveLineup}
+					/>
+				{:else if panel === 'pick'}
 					{#if chooser && picking && myPick}
 						<p class="pick-drawer-clock">
 							<span class="pick-ring small" style:--left={pickFraction}>{pickSecondsLeft}</span>
@@ -1469,6 +1538,40 @@
 		border-color: #f4d68c;
 		background: rgb(244 214 140 / 14%);
 	}
+	.pick-options.four {
+		grid-template-columns: repeat(4, 1fr);
+	}
+	.tool.has-lineup {
+		border-color: rgb(244 214 140 / 55%);
+		color: #f4d68c;
+	}
+	/* Tonight's lineup at the bottom of the result card; tap to open it. */
+	.lineup-strip {
+		display: flex;
+		max-width: 100%;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.3rem;
+		margin-top: 0.35rem;
+		border-radius: 999px;
+		background: rgb(255 255 255 / 5%);
+		padding: 0.25rem 0.75rem;
+		color: rgb(241 235 220 / 60%);
+		font-size: 0.75rem;
+		cursor: pointer;
+	}
+	.lineup-strip .arrow {
+		color: rgb(241 235 220 / 30%);
+	}
+	.lineup-strip .current {
+		color: #f1ebdc;
+		font-weight: 700;
+	}
+	.lineup-strip .upnext {
+		color: #f4d68c;
+		font-weight: 700;
+	}
 	/* Phones: a compact pick so it clears your raised hand. */
 	.arena.portrait .result {
 		gap: 0.15rem;
@@ -1504,6 +1607,9 @@
 	}
 	.arena.portrait .pick-option small {
 		display: none;
+	}
+	.arena.portrait .pick-options.four {
+		grid-template-columns: repeat(2, 1fr);
 	}
 	.arena.portrait .pick-option strong {
 		font-size: 0.85rem;

@@ -32,6 +32,7 @@ import {
 	sendDueBeta,
 	sendDueBetaToAll,
 	resetGameNight,
+	saveLineup,
 	decideGameNight
 } from '../club/admin.mjs';
 import { openPoll, publicPoll, saveAvailability, pollSummary } from '../club/availability.mjs';
@@ -313,6 +314,10 @@ export default {
 							});
 						else if (action === 'role') await setMemberRole(db, body.memberId, body.role);
 						else if (action === 'settings') await saveClubSettings(db, body.settings, actorId);
+						else if (action === 'lineup') {
+							await saveLineup(db, body.lineup, actorId);
+							notice = 'Lineup saved. Every table follows it from the next hand.';
+						}
 						else if (action === 'beta-send') {
 							const steps = await sendDueBeta(db, body.memberId, betaSettings(env));
 							notice = steps.length

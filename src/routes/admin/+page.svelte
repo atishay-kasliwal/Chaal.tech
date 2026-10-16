@@ -2,6 +2,7 @@
 	import { asset } from '$app/paths';
 	import ClubGate from '#lib/club/ClubGate.svelte';
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
+	import LineupEditor from '#lib/club/LineupEditor.svelte';
 	import { club, DEFAULT_CLUB_SETTINGS, type ClubSettings } from '#lib/club/club.svelte.js';
 
 	/** Owner tools: the guest list, live tables, table defaults, the table look and beta emails. */
@@ -32,6 +33,7 @@
 	const TABS = [
 		['members', 'Members'],
 		['tables', 'Live tables'],
+		['lineup', 'Lineup'],
 		['defaults', 'Table defaults'],
 		['look', 'Look'],
 		['beta', 'Game night']
@@ -332,6 +334,20 @@
 							{/each}
 						</ul>
 					{/if}
+				</section>
+			{:else if tab === 'lineup'}
+				<section class="card">
+					<h2>Tonight’s lineup</h2>
+					<p class="note">
+						The games in play order. Every table follows it; whoever picks the next game can still
+						choose another. Everyone sees it from the lineup button at the table.
+					</p>
+					<LineupEditor
+						lineup={club.settings.lineup ?? []}
+						editable
+						saving={busy}
+						onsave={(lineup) => void send({ action: 'lineup', lineup })}
+					/>
 				</section>
 			{:else if tab === 'defaults'}
 				<section class="card">

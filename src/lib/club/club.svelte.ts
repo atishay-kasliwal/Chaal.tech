@@ -22,6 +22,8 @@ export interface ClubSettings {
 		felt: 'emerald' | 'sapphire' | 'crimson' | 'onyx';
 		cardBack: 'navy' | 'crimson' | 'forest';
 	};
+	/** Tonight's games in play order; empty means any game. */
+	lineup?: string[];
 }
 export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
 	table: { chips: 1000, boot: 10, potLimit: 128 },

@@ -21,6 +21,7 @@ import { verifyGameToken } from './security.mjs';
 import { clubDirectory } from './club-directory.mjs';
 import { trackClubHand, archiveHands } from '../club/history.mjs';
 import { withClubDatabase, invitableEmails, emailsForMembers } from '../club/members.mjs';
+import { clubSettings } from '../club/admin.mjs';
 import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
 
 const secureRandom = () => secureRandomInt(0x1_0000_0000) / 0x1_0000_0000;
@@ -399,7 +400,7 @@ export class RoomDurableObject {
 		if (!stored || stored.snapshot.name !== requestedName)
 			throw new GameError('Room not found', 'NOT_MEMBER');
 		const room = stored.snapshot;
-		const view = projection(room, attachment.playerId, this.connectedRoom(room.name));
+		const view = this.view(room, attachment.playerId, this.connectedRoom(room.name));
 		attachment.roomName = room.name;
 		socket.serializeAttachment(attachment);
 		const hostRecovery = this.getMeta('hostRecovery');
@@ -458,13 +459,14 @@ export class RoomDurableObject {
 				if (before.gameType === 'texas-holdem') {
 					payload = { cutAt: args[1], cardsToDeal: args[2], rulesVersion: args[3] };
 				} else if (!before.gameType || before.gameType === 'teen-patti') {
-					const picked = nextHandChoice(before, Date.now());
+					const picked = nextHandChoice(before, Date.now(), await this.lineup());
 					const mode = picked?.mode ?? args[4] ?? 'selected';
 					if (mode !== 'selected' && mode !== 'random')
 						throw new GameError('Choose a variant or random mode', 'INVALID_ACTION');
 					const availableVariants = listVariants();
+					const pool = picked?.pool ?? availableVariants.map((variant) => variant.rulesVersion);
 					const rulesVersion = mode === 'random'
-						? availableVariants[secureRandomInt(availableVariants.length)].rulesVersion
+						? pool[secureRandomInt(pool.length)]
 						: (picked?.rulesVersion ?? args[3] ?? before.rulesVersion);
 					const variant = getVariant(rulesVersion);
 					if (!variant) throw new GameError('Unsupported game rules version', 'UNSUPPORTED_RULES');
@@ -610,13 +612,15 @@ export class RoomDurableObject {
 			const room = this.room()?.snapshot;
 			const attachment = socket.deserializeAttachment();
 			if (room?.name === name && !this.authExpired(socket, attachment))
-				this.sendEvent(socket, 'roomData', projection(room, attachment.playerId, this.connectedRoom(name)));
+				this.sendEvent(socket, 'roomData', this.view(room, attachment.playerId, this.connectedRoom(name)));
 		} catch (error) {
 			if (!(error instanceof GameError)) console.error('Room snapshot unavailable:', error?.name ?? 'Error');
 		}
 	}
 
 	publish(name, text) {
+		// Keep tonight's lineup fresh; the next update carries any change.
+		if (!this.lineupCache || Date.now() - this.lineupCache.at >= 15000) this.ctx.waitUntil(this.lineup());
 		if (!name) return;
 		const room = this.room()?.snapshot;
 		if (!room || room.name !== name) return;
@@ -624,7 +628,7 @@ export class RoomDurableObject {
 		for (const socket of this.ctx.getWebSockets()) {
 			const attachment = socket.deserializeAttachment();
 			if (attachment?.roomName !== name || this.authExpired(socket, attachment)) continue;
-			this.sendEvent(socket, 'roomData', projection(room, attachment.playerId, connected));
+			this.sendEvent(socket, 'roomData', this.view(room, attachment.playerId, connected));
 			if (text) this.sendEvent(socket, 'message', { text });
 		}
 		this.reportToLobby(room);
@@ -699,6 +703,26 @@ export class RoomDurableObject {
 
 	webSocketError(socket) {
 		try { socket.close(1011, 'Room service error'); } catch { /* Already closed. */ }
+	}
+
+	/** The club's lineup for tonight, cached for a few seconds; empty when unreachable. */
+	async lineup() {
+		const cached = this.lineupCache;
+		if (cached && Date.now() - cached.at < 15000) return cached.lineup;
+		try {
+			const settings = await withClubDatabase(this.env, (db) => clubSettings(db));
+			this.lineupCache = { at: Date.now(), lineup: settings.lineup ?? [] };
+		} catch {
+			this.lineupCache = { at: Date.now(), lineup: cached?.lineup ?? [] };
+		}
+		return this.lineupCache.lineup;
+	}
+
+	/** A player's view of the room, with tonight's lineup when there is one. */
+	view(room, playerId, connected) {
+		const view = projection(room, playerId, connected);
+		if (this.lineupCache?.lineup?.length) view.lineup = this.lineupCache.lineup;
+		return view;
 	}
 
 	idleCloseMs() {
