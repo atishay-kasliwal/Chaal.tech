@@ -198,6 +198,20 @@ export async function activeRoster(db) {
 	return members.map(rosterEntry);
 }
 
+/** Emails of members picked from the friends list (invited or active), for table invites. */
+export async function emailsForMembers(db, memberIds) {
+	const ids = [...new Set(memberIds)].filter((id) => typeof id === 'string' && id.length <= 64);
+	if (!ids.length) return [];
+	const members = await db
+		.collection(MEMBERS)
+		.find(
+			{ status: { $in: ['invited', 'active'] }, $or: ids.map(idQuery) },
+			{ projection: { email: 1 } }
+		)
+		.toArray();
+	return members.map((member) => normalizeEmail(member.email)).filter(Boolean);
+}
+
 /** Table invites may only reach people already on the guest list; they never add anyone. */
 export async function invitableEmails(db, emails) {
 	if (!emails.length) return [];

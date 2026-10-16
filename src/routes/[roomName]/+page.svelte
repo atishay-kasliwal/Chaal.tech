@@ -15,7 +15,7 @@
 	import RoomMedia from '#lib/components/RoomMedia.svelte';
 	import { hasChips } from '#lib/teen-patti/format.js';
 	import TeenPattiTable from '#lib/teen-patti/TeenPattiTable.svelte';
-	import { clearPendingJoinName, takeInviteEmails } from '#lib/start/player-name.js';
+	import { clearPendingJoinName, takeInviteFriends } from '#lib/start/player-name.js';
 	import ClubGate from '#lib/club/ClubGate.svelte';
 	import { club } from '#lib/club/club.svelte.js';
 	import { validateRoomAccess } from '#lib/utils/room.js';
@@ -91,13 +91,15 @@
 	}
 	/** Email invites ride the game socket so the server knows who is asking. */
 	async function sendEmailInvites(
-		emails: string[]
+		emails: string[],
+		memberIds: string[] = []
 	): Promise<{ ok: boolean; error?: string; sent?: string[] }> {
 		if (!socket.connected) return { ok: false, error: 'Reconnect before sending invites' };
+		const sending = emails.length > 0 || memberIds.length > 0;
 		try {
 			return await socket.socket
 				.timeout(15000)
-				.emitWithAck(emails.length ? 'sendInvites' : 'listInvites', data.roomName, emails);
+				.emitWithAck(sending ? 'sendInvites' : 'listInvites', data.roomName, emails, memberIds);
 		} catch {
 			return { ok: false, error: 'No reply from the game server. Share the link instead.' };
 		}
@@ -206,9 +208,9 @@
 	$effect(() => {
 		if (!usernameCreated || !username) return;
 		clearPendingJoinName(data.roomName);
-		const emails = takeInviteEmails(data.roomName);
-		if (!emails.length) return;
-		void sendEmailInvites(emails).then((reply) => {
+		const friends = takeInviteFriends(data.roomName);
+		if (!friends.length) return;
+		void sendEmailInvites([], friends).then((reply) => {
 			if (!reply.ok) {
 				displayToast(reply.error ?? 'Could not send invites. Share the link instead.', 'error');
 				return;

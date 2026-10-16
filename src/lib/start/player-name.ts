@@ -59,36 +59,25 @@ export function roomCodeFrom(text: string): string | null {
 	return /^[a-z0-9][a-z0-9-]{2,31}$/.test(bare) ? bare : null;
 }
 
-const pendingInvitesPrefix = 'chaal-pending-invites-v1:';
+const pendingFriendsPrefix = 'chaal-pending-invite-friends-v1:';
 
-/** Email addresses typed into the start flow. Invites only go out once you are seated. */
-export function inviteEmailsFrom(text: string): string[] {
-	return text
-		.split(/[\s,;]+/)
-		.map((value) => value.trim().toLowerCase())
-		.filter(Boolean);
-}
-
-export function looksLikeEmail(value: string) {
-	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-export function stageInviteEmails(roomName: string, emails: string[]) {
-	if (!roomName || !emails.length) return;
+/** Friends picked on the start page (club member IDs); invited once you are seated. */
+export function stageInviteFriends(roomName: string, memberIds: string[]) {
+	if (!roomName || !memberIds.length) return;
 	try {
-		sessionStorage.setItem(`${pendingInvitesPrefix}${roomName}`, JSON.stringify(emails));
+		sessionStorage.setItem(`${pendingFriendsPrefix}${roomName}`, JSON.stringify(memberIds));
 	} catch {
-		/* The host can still send invites from the table when session storage is blocked. */
+		/* The host can still invite from the table when session storage is blocked. */
 	}
 }
 
-/** Read and forget the invites staged for this room, so they are sent once. */
-export function takeInviteEmails(roomName: string): string[] {
+/** Read and forget the friends staged for this room, so they are invited once. */
+export function takeInviteFriends(roomName: string): string[] {
 	try {
-		const key = `${pendingInvitesPrefix}${roomName}`;
-		const emails = JSON.parse(sessionStorage.getItem(key) ?? '[]');
+		const key = `${pendingFriendsPrefix}${roomName}`;
+		const ids = JSON.parse(sessionStorage.getItem(key) ?? '[]');
 		sessionStorage.removeItem(key);
-		return Array.isArray(emails) ? emails.filter((email) => typeof email === 'string') : [];
+		return Array.isArray(ids) ? ids.filter((id) => typeof id === 'string') : [];
 	} catch {
 		return [];
 	}

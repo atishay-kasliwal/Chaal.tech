@@ -18,7 +18,7 @@ import { secureRandomInt, toHex } from '../random.mjs';
 import { inviteEmails, planInvites, inviteMessage, sendWithResend } from './invites.mjs';
 import { verifyGameToken } from './security.mjs';
 import { clubDirectory } from './club-directory.mjs';
-import { withClubDatabase, invitableEmails } from '../club/members.mjs';
+import { withClubDatabase, invitableEmails, emailsForMembers } from '../club/members.mjs';
 import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
 
 const secureRandom = () => secureRandomInt(0x1_0000_0000) / 0x1_0000_0000;
@@ -868,7 +868,7 @@ export class RoomDurableObject {
 	}
 
 	/** Email invites go through the open game socket, so only seated players can send them. */
-	async invites(socket, attachment, event, [requestedRoom, emails]) {
+	async invites(socket, attachment, event, [requestedRoom, emails, memberIds]) {
 		try {
 			const player = this.mediaMember(socket, requestedRoom, attachment.playerId);
 			const invited = () => (this.getMeta('invites') ?? []).map(({ email, at }) => ({ email, at }));
@@ -881,7 +881,11 @@ export class RoomDurableObject {
 				throw new GameError('Wait a few seconds before sending more invites', 'RATE_LIMIT');
 			current.inviteLast = Date.now();
 			socket.serializeAttachment(current);
-			const requested = inviteEmails(emails);
+			// Friends picked from the club list arrive as member IDs; their emails stay on the server.
+			const picked = Array.isArray(memberIds) && memberIds.length
+				? await withClubDatabase(this.env, (db) => emailsForMembers(db, memberIds.slice(0, 20)))
+				: null;
+			const requested = inviteEmails(picked ?? emails);
 			const members = await withClubDatabase(this.env, (db) => invitableEmails(db, requested));
 			const outsiders = requested.filter((email) => !members.includes(email));
 			if (!members.length)

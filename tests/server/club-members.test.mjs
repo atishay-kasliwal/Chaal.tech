@@ -11,6 +11,7 @@ import {
 	updateProfile,
 	publicProfile,
 	invitableEmails,
+	emailsForMembers,
 	activeRoster,
 	assertActive
 } from '../../server/club/members.mjs';
@@ -34,16 +35,19 @@ const invite = (email, extra = {}) =>
 
 test('an invited email is claimed once by its verified Google account, with a stable player', async () => {
 	await invite('Raju@Example.com', { nickname: 'Raju' });
-	const first = await claimMembership(db, { sub: 'google-1', email: 'raju@example.com', givenName: 'R' });
+	const first = await claimMembership(db, {
+		sub: 'google-1',
+		email: 'raju@example.com',
+		givenName: 'R'
+	});
 	assert.equal(first.status, 'active');
 	assert.equal(first.nickname, 'Raju');
 	assert.match(first.playerId, /^[a-f0-9-]{36}$/);
 	const again = await claimMembership(db, { sub: 'google-1', email: 'raju@example.com' });
 	assert.equal(again.playerId, first.playerId);
-	await assert.rejects(
-		claimMembership(db, { sub: 'google-2', email: 'raju@example.com' }),
-		{ code: 'WRONG_ACCOUNT' }
-	);
+	await assert.rejects(claimMembership(db, { sub: 'google-2', email: 'raju@example.com' }), {
+		code: 'WRONG_ACCOUNT'
+	});
 });
 
 test('concurrent claims of one invite bind exactly one Google account', async () => {
@@ -74,7 +78,11 @@ test('uninvited and suspended accounts get no membership', async () => {
 
 test('a Google first name is stored as text, never read as a database expression', async () => {
 	await invite('dollar@example.com');
-	const member = await claimMembership(db, { sub: 'd', email: 'dollar@example.com', givenName: '$email' });
+	const member = await claimMembership(db, {
+		sub: 'd',
+		email: 'dollar@example.com',
+		givenName: '$email'
+	});
 	assert.equal(member.nickname, '$email');
 });
 
@@ -85,13 +93,21 @@ test('members edit only cosmetic fields, within limits', async () => {
 	const updated = await updateProfile(
 		db,
 		id,
-		{ nickname: '  Big   Boss  ', characterId: 'owl', reducedMotion: true, role: 'owner', status: 'active' },
+		{
+			nickname: '  Big   Boss  ',
+			characterId: 'owl',
+			reducedMotion: true,
+			role: 'owner',
+			status: 'active'
+		},
 		{ onboard: true }
 	);
 	assert.equal(updated.nickname, 'Big Boss');
 	assert.equal(updated.role, 'member');
 	assert.equal(publicProfile(updated).onboarded, true);
-	await assert.rejects(updateProfile(db, id, { characterId: 'dragon' }), { code: 'INVALID_PROFILE' });
+	await assert.rejects(updateProfile(db, id, { characterId: 'dragon' }), {
+		code: 'INVALID_PROFILE'
+	});
 	await assert.rejects(updateProfile(db, id, { nickname: '   ' }), { code: 'INVALID_PROFILE' });
 	assert.equal((await updateProfile(db, id, { nickname: 'x'.repeat(40) })).nickname.length, 24);
 	const profile = publicProfile(await memberById(db, id));
@@ -111,8 +127,24 @@ test('table invites reach only people on the guest list; the roster hides emails
 	assert.deepEqual(Object.keys(roster[0]).sort(), ['characterId', 'memberId', 'nickname']);
 });
 
+test('picked friends resolve to emails on the server, never suspended or unknown ones', async () => {
+	await invite('picked@example.com');
+	await invite('paused@example.com', { status: 'suspended' });
+	const ids = await members
+		.find({ email: { $in: ['picked@example.com', 'paused@example.com'] } })
+		.map((member) => String(member._id))
+		.toArray();
+	assert.deepEqual(await emailsForMembers(db, [...ids, 'not-a-member', 42]), [
+		'picked@example.com'
+	]);
+	assert.deepEqual(await emailsForMembers(db, []), []);
+});
+
 test('server character IDs match the client catalog', async () => {
-	const source = await readFile(new URL('../../src/lib/club/characters.ts', import.meta.url), 'utf8');
+	const source = await readFile(
+		new URL('../../src/lib/club/characters.ts', import.meta.url),
+		'utf8'
+	);
 	const clientIds = [...source.matchAll(/\{ id: '([a-z-]+)'/g)].map((match) => match[1]);
 	assert.deepEqual(clientIds, CHARACTER_IDS);
 });

@@ -24,6 +24,7 @@
 	import TpSeat from './TpSeat.svelte';
 	import CasinoChip from '#lib/components/CasinoChip.svelte';
 	import ChipStack from '#lib/components/ChipStack.svelte';
+	import FriendPicker from '#lib/club/FriendPicker.svelte';
 	import BotAvatar from './BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import ActionDock from './ActionDock.svelte';
@@ -69,7 +70,7 @@
 		oninvite: () => void;
 		onleave: () => void;
 		/** Sends (or, with no addresses, lists) email invites through the room server. */
-		emailInvites: (emails: string[]) => Promise<InviteReply>;
+		emailInvites: (emails: string[], memberIds?: string[]) => Promise<InviteReply>;
 	} = $props();
 
 	type InviteReply = {
@@ -430,7 +431,8 @@
 	let panel = $state<'scores' | 'rules' | 'settings' | 'invite' | null>(null);
 
 	// ——— Invites ———
-	let inviteText = $state('');
+	/** Club friends picked in the invite panel. */
+	let pickedFriends = $state<string[]>([]);
 	let inviteBusy = $state(false);
 	let inviteNote = $state<{ kind: 'ok' | 'error'; text: string } | null>(null);
 	let invited = $state<{ email: string; at: number }[]>([]);
@@ -438,12 +440,6 @@
 		typeof window === 'undefined' ? `/${room.name}` : `${window.location.origin}/${room.name}`
 	);
 	const canShare = $derived(typeof navigator !== 'undefined' && 'share' in navigator);
-	const typedEmails = $derived(
-		inviteText
-			.split(/[\s,;]+/)
-			.map((value) => value.trim())
-			.filter(Boolean)
-	);
 	function openInvite() {
 		panel = 'invite';
 		inviteNote = null;
@@ -453,10 +449,10 @@
 	}
 	async function sendInvites(event: Event) {
 		event.preventDefault();
-		if (!typedEmails.length || inviteBusy) return;
+		if (!pickedFriends.length || inviteBusy) return;
 		inviteBusy = true;
 		inviteNote = null;
-		const reply = await emailInvites(typedEmails);
+		const reply = await emailInvites([], pickedFriends);
 		inviteBusy = false;
 		if (!reply.ok) {
 			inviteNote = { kind: 'error', text: reply.error ?? 'Could not send invites' };
@@ -465,7 +461,7 @@
 		if (reply.invites) invited = reply.invites;
 		const sent = reply.sent?.length ?? 0;
 		const skipped = reply.skipped?.length ?? 0;
-		inviteText = '';
+		pickedFriends = [];
 		inviteNote = {
 			kind: 'ok',
 			text: [
@@ -894,25 +890,20 @@
 							><Share2 class="h-3.5 w-3.5" /> Share via WhatsApp, SMS…</button
 						>
 					{/if}
-					<h3>Invite by email</h3>
+					<h3>Invite your friends</h3>
 					<form class="invite-form" onsubmit={sendInvites}>
-						<textarea
-							bind:value={inviteText}
-							rows="3"
-							placeholder="rahul@gmail.com, priya@gmail.com"
-							aria-label="Email addresses"
-							autocomplete="email"></textarea>
+						<FriendPicker bind:selected={pickedFriends} />
 						<button
 							class="mini gold send"
 							type="submit"
-							disabled={!typedEmails.length || inviteBusy || !connected}
+							disabled={!pickedFriends.length || inviteBusy || !connected}
 						>
 							<Mail class="h-3.5 w-3.5" />
 							{inviteBusy
 								? 'Sending…'
-								: typedEmails.length > 1
-									? `Send ${typedEmails.length} invites`
-									: 'Send invite'}
+								: pickedFriends.length > 1
+									? `Invite ${pickedFriends.length} friends`
+									: 'Invite'}
 						</button>
 					</form>
 					{#if inviteNote}
@@ -920,7 +911,7 @@
 							{inviteNote.text}
 						</p>
 					{/if}
-					<p class="muted small">Each table can email up to 10 people.</p>
+					<p class="muted small">They get an email with a link straight to this table.</p>
 					{#if isHost}
 						<h3>No one free? Add a bot</h3>
 						<p class="muted">
@@ -1891,19 +1882,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-	}
-	.invite-form textarea {
-		resize: vertical;
-		border: 1px solid rgb(241 235 220 / 16%);
-		border-radius: 0.8rem;
-		background: rgb(0 0 0 / 25%);
-		padding: 0.6rem 0.75rem;
-		color: #f1ebdc;
-		font-size: 0.9rem;
-	}
-	.invite-form textarea:focus {
-		border-color: rgb(240 200 110 / 60%);
-		outline: none;
 	}
 	.mini.send {
 		align-self: flex-end;

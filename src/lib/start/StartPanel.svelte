@@ -18,14 +18,9 @@
 	} from '@lucide/svelte';
 	import { club } from '#lib/club/club.svelte.js';
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
+	import FriendPicker from '#lib/club/FriendPicker.svelte';
 	import { profileModal } from '#lib/club/profile-modal.svelte.js';
-	import {
-		stageJoinName,
-		roomCodeFrom,
-		inviteEmailsFrom,
-		looksLikeEmail,
-		stageInviteEmails
-	} from './player-name.js';
+	import { stageJoinName, roomCodeFrom, stageInviteFriends } from './player-name.js';
 
 	/**
 	 * Everything needed to get to a table: you (from your club profile), one tap to start (or play bots),
@@ -40,8 +35,8 @@
 	let inviteRoom = $state('');
 	let inviteUrl = $state('');
 	let copied = $state(false);
-	let inviteText = $state('');
-	const typedEmails = $derived(inviteEmailsFrom(inviteText));
+	/** Club friends picked in the invite card; invited once you are seated. */
+	let pickedFriends = $state<string[]>([]);
 	/** Set when an invite link was opened without a name on this device. */
 	let joinCode = $state('');
 	let showSettings = $state(false);
@@ -139,16 +134,7 @@
 	}
 
 	async function enterInviteTable() {
-		const invalid = typedEmails.filter((email) => !looksLikeEmail(email));
-		if (invalid.length) {
-			displayToast(`Check this email address: ${invalid[0]}`, 'error');
-			return;
-		}
-		if (typedEmails.length > 10) {
-			displayToast('Invite up to 10 people at a time', 'error');
-			return;
-		}
-		stageInviteEmails(inviteRoom, typedEmails);
+		stageInviteFriends(inviteRoom, pickedFriends);
 		await join(inviteRoom);
 	}
 
@@ -250,22 +236,14 @@
 							? 'Link copied. Send it to your friends.'
 							: 'Anyone with the link can join your table.'}</span
 					>
-					<label class="invite-link"
-						><span>Or invite by email</span><input
-							bind:value={inviteText}
-							type="text"
-							inputmode="email"
-							autocomplete="off"
-							spellcheck="false"
-							placeholder="friend@example.com, another@example.com"
-							aria-label="Friends' email addresses"
-							onkeydown={(event) => event.key === 'Enter' && enterInviteTable()}
-						/></label
-					>
+					<div class="invite-link">
+						<span>Or invite your friends</span>
+						<FriendPicker bind:selected={pickedFriends} />
+					</div>
 					<button type="button" class="enter-table" disabled={!!busy} onclick={enterInviteTable}
-						>{#if typedEmails.length}<Mail size={16} />Send {typedEmails.length === 1
-								? 'invite'
-								: `${typedEmails.length} invites`} &amp; go to table{:else}Go to table<ArrowRight
+						>{#if pickedFriends.length}<Mail size={16} />Invite {pickedFriends.length === 1
+								? '1 friend'
+								: `${pickedFriends.length} friends`} &amp; go to table{:else}Go to table<ArrowRight
 								size={16}
 							/>{/if}</button
 					>
