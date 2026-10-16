@@ -124,7 +124,7 @@ test('table invites reach only people on the guest list; the roster hides emails
 	await claimMembership(db, { sub: 'f', email: 'friend@example.com', givenName: 'Friend' });
 	const roster = await activeRoster(db);
 	assert.equal(roster.length, 1);
-	assert.deepEqual(Object.keys(roster[0]).sort(), ['characterId', 'memberId', 'nickname', 'photoDataUrl', 'playerId']);
+	assert.deepEqual(Object.keys(roster[0]).sort(), ['characterId', 'joined', 'memberId', 'nickname', 'photoDataUrl', 'playerId']);
 });
 
 test('picked friends resolve to emails on the server, never suspended or unknown ones', async () => {

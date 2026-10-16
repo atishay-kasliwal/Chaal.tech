@@ -10,6 +10,8 @@
 		memberId: string;
 		nickname: string;
 		characterId: string;
+		/** False until an invited friend first signs in. */
+		joined?: boolean;
 	}
 	interface LobbyTable {
 		name: string;
@@ -119,7 +121,9 @@
 	const nameOf = (id: string) =>
 		members.find((member) => member.memberId === id)?.nickname ?? 'A friend';
 	function rank(id: string) {
-		return atTable.has(id) ? 2 : online.includes(id) ? 1 : 0;
+		if (atTable.has(id)) return 3;
+		if (online.includes(id)) return 2;
+		return members.find((member) => member.memberId === id)?.joined === false ? 0 : 1;
 	}
 	const gameName: Record<string, string> = {
 		'teen-patti': 'Teen Patti',
@@ -444,7 +448,9 @@
 										? 'At the table'
 										: online.includes(friend.memberId)
 											? 'Online'
-											: 'Away'}</span
+											: friend.joined === false
+												? 'Invited · not joined yet'
+												: 'Away'}</span
 								>
 							</li>{/each}
 					</ul>

@@ -98,7 +98,15 @@ export function publicProfile(member) {
 /** Lobby roster entry: only what friends see of each other. */
 export function rosterEntry(member) {
 	const { memberId, playerId, nickname, characterId, photoDataUrl } = publicProfile(member);
-	return { memberId, playerId, nickname, characterId, photoDataUrl };
+	// Invited people show in the club too, marked as not joined until they first sign in.
+	return {
+		memberId,
+		playerId,
+		nickname,
+		characterId,
+		photoDataUrl,
+		joined: member.status === 'active'
+	};
 }
 
 export function assertActive(member) {
@@ -204,7 +212,7 @@ export async function activeRoster(db) {
 	const members = await db
 		.collection(MEMBERS)
 		.find(
-			{ status: 'active' },
+			{ status: { $in: ['active', 'invited'] } },
 			{ projection: { playerId: 1, nickname: 1, characterId: 1, photoDataUrl: 1, status: 1 } }
 		)
 		.limit(100)
