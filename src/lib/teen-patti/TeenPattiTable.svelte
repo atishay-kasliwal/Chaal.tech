@@ -25,6 +25,7 @@
 	import CasinoChip from '#lib/components/CasinoChip.svelte';
 	import ChipStack from '#lib/components/ChipStack.svelte';
 	import FriendPicker from '#lib/club/FriendPicker.svelte';
+	import { club } from '#lib/club/club.svelte.js';
 	import BotAvatar from './BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import ActionDock from './ActionDock.svelte';
@@ -629,7 +630,7 @@
 				{/each}
 			</div>
 		{/if}
-		<div class="felt" aria-hidden="true">
+		<div class="felt" data-felt={club.settings.look.felt} aria-hidden="true">
 			<div class="felt-inner"></div>
 			<span class="rail-logo">chaal<small>.tech</small></span>
 		</div>
@@ -1237,6 +1238,31 @@
 		min-height: 0;
 		isolation: isolate;
 	}
+	/* Cloth colours an owner can pick on the Admin page; emerald is the default. */
+	.felt {
+		--felt-1: #1f7a4c;
+		--felt-2: #15603a;
+		--felt-3: #0c4127;
+		--felt-4: #08311d;
+	}
+	.felt[data-felt='sapphire'] {
+		--felt-1: #22568f;
+		--felt-2: #1a4474;
+		--felt-3: #102e52;
+		--felt-4: #0a203d;
+	}
+	.felt[data-felt='crimson'] {
+		--felt-1: #8c2633;
+		--felt-2: #701c28;
+		--felt-3: #50131c;
+		--felt-4: #3a0d14;
+	}
+	.felt[data-felt='onyx'] {
+		--felt-1: #33403b;
+		--felt-2: #26302c;
+		--felt-3: #19201d;
+		--felt-4: #111614;
+	}
 	/* Padded leather rail, lit from above, casting a shadow on the floor. */
 	.felt {
 		--rail: clamp(0.9rem, 2.6vw, 2rem);
@@ -1281,7 +1307,13 @@
 		background:
 			radial-gradient(ellipse 55% 50% at 50% 40%, rgb(255 240 200 / 13%), transparent 72%),
 			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-			radial-gradient(ellipse at 50% 45%, #1f7a4c 0%, #15603a 50%, #0c4127 85%, #08311d 100%);
+			radial-gradient(
+				ellipse at 50% 45%,
+				var(--felt-1) 0%,
+				var(--felt-2) 50%,
+				var(--felt-3) 85%,
+				var(--felt-4) 100%
+			);
 		/* Polished wood trim between rail and cloth, and the rail's shadow on the felt. */
 		box-shadow:
 			0 0 0 3px #8a5a2c,

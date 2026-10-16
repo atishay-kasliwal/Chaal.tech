@@ -34,7 +34,10 @@
 		{#if club.member && page.route.id !== '/club'}
 			<a href="/club" class="btn btn-ghost rounded-full">Club</a>
 		{/if}
-		{#if page.route.id !== '/create-room'}
+		{#if club.member?.role === 'owner' && page.route.id !== '/admin'}
+			<a href="/admin" class="btn btn-ghost rounded-full">Admin</a>
+		{/if}
+		{#if page.route.id !== '/create-room' && page.route.id !== '/'}
 			<!-- Opens the pop-up; the link still works without JavaScript. -->
 			<a
 				href="/create-room"

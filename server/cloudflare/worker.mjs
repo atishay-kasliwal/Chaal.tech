@@ -20,6 +20,17 @@ import {
 	activeRoster
 } from '../club/members.mjs';
 import { verifyGoogleCredential } from '../club/google.mjs';
+import {
+	clubSettings,
+	saveClubSettings,
+	adminMembers,
+	addMember,
+	setMemberPaused,
+	setMemberRole,
+	betaDecision,
+	sendDueBeta,
+	decideGameNight
+} from '../club/admin.mjs';
 
 export { RoomDurableObject, ClubDirectory };
 
@@ -48,9 +59,12 @@ function response(body, status = 200, origin = null, env = {}) {
 }
 
 function allowedOrigins(env) {
-	const configured = typeof env.ALLOWED_ORIGINS === 'string'
-		? env.ALLOWED_ORIGINS.split(',').map((value) => value.trim()).filter(Boolean)
-		: [];
+	const configured =
+		typeof env.ALLOWED_ORIGINS === 'string'
+			? env.ALLOWED_ORIGINS.split(',')
+					.map((value) => value.trim())
+					.filter(Boolean)
+			: [];
 	return configured.length ? configured : DEFAULT_ORIGINS;
 }
 
@@ -84,14 +98,56 @@ async function signedInMember(request, env, db) {
 	const club = await verifyClubToken(bearer(request), env.SESSION_SECRET);
 	if (!club) throw new ClubError('Sign in to continue.', 'SIGN_IN', 401);
 	const member = assertActive(await memberById(db, club.memberId));
-	if ((member.sessionVersion ?? 1) !== club.version) throw new ClubError('Sign in again to continue.', 'SIGN_IN', 401);
+	if ((member.sessionVersion ?? 1) !== club.version)
+		throw new ClubError('Sign in again to continue.', 'SIGN_IN', 401);
 	return member;
 }
 
+/** The signed-in member, only if they are an owner. */
+async function signedInOwner(request, env, db) {
+	const member = await signedInMember(request, env, db);
+	if (member.role !== 'owner')
+		throw new ClubError('Only club owners can do that.', 'FORBIDDEN', 403);
+	return member;
+}
+
+function betaSettings(env) {
+	return {
+		apiKey: env.RESEND_API_KEY,
+		from: env.BETA_FROM || env.INVITE_FROM || 'Chaal <invites@chaal.tech>',
+		formUrl: env.BETA_FORM_URL,
+		appUrl: env.PUBLIC_APP_URL || 'https://chaal.tech'
+	};
+}
+
+/** Everything the Admin page shows, read fresh. */
+async function adminState(env, db) {
+	const [members, settings, beta, lobby] = await Promise.all([
+		adminMembers(db),
+		clubSettings(db),
+		betaDecision(db, betaSettings(env).appUrl),
+		clubDirectory(env)
+			.fetch('https://club.internal/lobby')
+			.then((result) => result.json())
+	]);
+	return { members, settings, beta, tables: lobby.tables ?? [], online: lobby.online ?? [] };
+}
+
 function clubFailure(error, origin, env) {
-	if (error instanceof ClubError) return response({ ok: false, code: error.code, error: error.message }, error.status, origin, env);
+	if (error instanceof ClubError)
+		return response(
+			{ ok: false, code: error.code, error: error.message },
+			error.status,
+			origin,
+			env
+		);
 	console.error('Club request failed:', error?.name ?? 'Error');
-	return response({ ok: false, code: 'CLUB_UNAVAILABLE', error: 'The club is unreachable right now. Try again.' }, 503, origin, env);
+	return response(
+		{ ok: false, code: 'CLUB_UNAVAILABLE', error: 'The club is unreachable right now. Try again.' },
+		503,
+		origin,
+		env
+	);
 }
 
 /** Lobby roster is cosmetic: a minute-old copy is fine and spares the database. */
@@ -121,14 +177,18 @@ export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
 		const origin = request.headers.get('Origin');
-		if (origin && !originAllowed(request, env)) return response({ error: 'Origin not allowed' }, 403);
+		if (origin && !originAllowed(request, env))
+			return response({ error: 'Origin not allowed' }, 403);
 		if (request.method === 'OPTIONS') {
 			if (!originAllowed(request, env, true)) return response({ error: 'Origin not allowed' }, 403);
-			const result = new Response(null, { status: 204, headers: {
-				'Access-Control-Allow-Origin': origin,
-				'Access-Control-Allow-Credentials': 'true',
-				'Vary': 'Origin'
-			} });
+			const result = new Response(null, {
+				status: 204,
+				headers: {
+					'Access-Control-Allow-Origin': origin,
+					'Access-Control-Allow-Credentials': 'true',
+					Vary: 'Origin'
+				}
+			});
 			result.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 			result.headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
 			result.headers.set('Access-Control-Max-Age', '86400');
@@ -142,7 +202,8 @@ export default {
 			return response({ error: 'Game service is not configured' }, 503, origin, env);
 		if (url.pathname === '/auth/google' && request.method === 'POST') {
 			// Browsers always send Origin on this POST; a missing one is not a signed-in page.
-			if (!originAllowed(request, env, true)) return response({ error: 'Origin not allowed' }, 403, origin, env);
+			if (!originAllowed(request, env, true))
+				return response({ error: 'Origin not allowed' }, 403, origin, env);
 			try {
 				const body = await jsonBody(request);
 				const identity = await verifyGoogleCredential(body?.credential, env);
@@ -159,13 +220,19 @@ export default {
 		if (url.pathname === '/me' && (request.method === 'GET' || request.method === 'POST')) {
 			try {
 				const body = request.method === 'POST' ? await jsonBody(request) : null;
-				const member = await withClubDatabase(env, async (db) => {
+				const { member, settings } = await withClubDatabase(env, async (db) => {
 					const current = await signedInMember(request, env, db);
-					if (request.method === 'GET') return current;
-					return updateProfile(db, String(current._id), body?.profile, { onboard: body?.onboard === true });
+					const updated =
+						request.method === 'GET'
+							? current
+							: await updateProfile(db, String(current._id), body?.profile, {
+									onboard: body?.onboard === true
+								});
+					// Club-wide table look and defaults travel with the profile.
+					return { member: updated, settings: await clubSettings(db) };
 				});
 				if (request.method === 'POST') rosterCache.at = 0;
-				return response({ ok: true, member: publicProfile(member) }, 200, origin, env);
+				return response({ ok: true, member: publicProfile(member), settings }, 200, origin, env);
 			} catch (error) {
 				return clubFailure(error, origin, env);
 			}
@@ -181,26 +248,68 @@ export default {
 				return clubFailure(error, origin, env);
 			}
 		}
+		if (url.pathname === '/admin' && (request.method === 'GET' || request.method === 'POST')) {
+			try {
+				const body = request.method === 'POST' ? await jsonBody(request) : null;
+				const result = await withClubDatabase(env, async (db) => {
+					const owner = await signedInOwner(request, env, db);
+					const actorId = String(owner._id);
+					let notice = '';
+					if (request.method === 'POST') {
+						const action = body?.action;
+						if (action === 'add') await addMember(db, body);
+						else if (action === 'pause' || action === 'restore')
+							await setMemberPaused(db, body.memberId, action === 'pause', {
+								actorId,
+								apiKey: env.RESEND_API_KEY
+							});
+						else if (action === 'role') await setMemberRole(db, body.memberId, body.role);
+						else if (action === 'settings') await saveClubSettings(db, body.settings, actorId);
+						else if (action === 'beta-send') {
+							const steps = await sendDueBeta(db, body.memberId, betaSettings(env));
+							notice = steps.length
+								? `Sent beta email day ${steps.join(', ')}.`
+								: 'Nothing due for them.';
+						} else if (action === 'beta-night')
+							notice = `Beta night set for ${await decideGameNight(db, body.start, betaSettings(env).appUrl)}.`;
+						else throw new ClubError('Unknown admin action', 'INVALID_ADMIN_REQUEST', 400);
+					}
+					return { ...(await adminState(env, db)), notice };
+				});
+				if (request.method === 'POST') rosterCache.at = 0;
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) {
+				return clubFailure(error, origin, env);
+			}
+		}
 		if (url.pathname === '/club' && request.method === 'GET') {
 			const player = await authenticatedPlayer(request, env);
 			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
 			try {
 				const [members, lobby] = await Promise.all([
 					roster(env),
-					clubDirectory(env).fetch('https://club.internal/lobby').then((result) => result.json())
+					clubDirectory(env)
+						.fetch('https://club.internal/lobby')
+						.then((result) => result.json())
 				]);
 				return response({ ok: true, members, ...lobby }, 200, origin, env);
 			} catch (error) {
 				return clubFailure(error, origin, env);
 			}
 		}
-		if ((url.pathname === '/club/heartbeat' || url.pathname === '/club/leave') && request.method === 'POST') {
+		if (
+			(url.pathname === '/club/heartbeat' || url.pathname === '/club/leave') &&
+			request.method === 'POST'
+		) {
 			const player = await authenticatedPlayer(request, env);
 			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
-			await clubDirectory(env).fetch(`https://club.internal/${url.pathname.slice('/club/'.length)}`, {
-				method: 'POST',
-				body: JSON.stringify({ memberId: player.memberId })
-			});
+			await clubDirectory(env).fetch(
+				`https://club.internal/${url.pathname.slice('/club/'.length)}`,
+				{
+					method: 'POST',
+					body: JSON.stringify({ memberId: player.memberId })
+				}
+			);
 			return response({ ok: true }, 200, origin, env);
 		}
 		if (url.pathname === '/rooms' && request.method === 'POST') {
@@ -208,7 +317,12 @@ export default {
 			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
 			const playerId = player.playerId;
 			const body = await jsonBody(request);
-			if (!body || body.event !== 'createRoom' || !Array.isArray(body.args) || !body.meta?.commandId)
+			if (
+				!body ||
+				body.event !== 'createRoom' ||
+				!Array.isArray(body.args) ||
+				!body.meta?.commandId
+			)
 				return response({ error: 'Invalid room request' }, 400, origin, env);
 			try {
 				const name = await roomCodeFor(env.SESSION_SECRET, playerId, body.meta.commandId);
@@ -242,9 +356,14 @@ export default {
 		}
 
 		const socketMatch = /^\/socket\/([^/]+)$/.exec(url.pathname);
-		if (socketMatch && request.method === 'GET' && request.headers.get('Upgrade')?.toLowerCase() === 'websocket') {
+		if (
+			socketMatch &&
+			request.method === 'GET' &&
+			request.headers.get('Upgrade')?.toLowerCase() === 'websocket'
+		) {
 			// Browsers always send Origin; non-browser clients may omit it but still need a signed token.
-			if (!originAllowed(request, env)) return response({ error: 'Origin not allowed' }, 403, origin, env);
+			if (!originAllowed(request, env))
+				return response({ error: 'Origin not allowed' }, 403, origin, env);
 			const token = tokenFromWebSocketProtocols(request.headers.get('Sec-WebSocket-Protocol'));
 			const player = await verifyGameToken(token, env.SESSION_SECRET);
 			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);

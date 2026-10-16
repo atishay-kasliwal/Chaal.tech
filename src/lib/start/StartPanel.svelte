@@ -41,10 +41,22 @@
 	let joinCode = $state('');
 	let showSettings = $state(false);
 
-	// Table settings (folded away). Defaults: Teen Patti, ₹1,000, ₹10 boot, 128 × boot limit.
-	let table = $state<number>(1000);
-	let boot = $state<number>(10);
-	let potLimit = $state<number>(128);
+	// Table settings (folded away). Defaults come from the club owner's Admin page.
+	let table = $state<number>(club.settings.table.chips);
+	let boot = $state<number>(club.settings.table.boot);
+	let potLimit = $state<number>(club.settings.table.potLimit);
+	// Follow the club defaults as they load, until you open Table settings to change them.
+	let customized = false;
+	$effect(() => {
+		if (showSettings) customized = true;
+	});
+	$effect(() => {
+		const defaults = club.settings.table;
+		if (customized || showSettings) return;
+		table = defaults.chips;
+		boot = defaults.boot;
+		potLimit = defaults.potLimit;
+	});
 	let botCount = $state(3);
 	let botLevel = $state<'easy' | 'normal' | 'hard'>('normal');
 	const BOOTS = [5, 10, 20, 50, 100];

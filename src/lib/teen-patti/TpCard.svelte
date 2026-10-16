@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { asset } from '$app/paths';
+	import { club } from '#lib/club/club.svelte.js';
 	import ClassicCard from '#lib/components/ClassicCard.svelte';
 
 	/**
@@ -44,7 +45,7 @@
 	{:else}
 		<img
 			class="back"
-			src={asset('cards/back-navy.svg')}
+			src={asset(`cards/back-${club.settings.look.cardBack}.svg`)}
 			alt=""
 			aria-hidden="true"
 			draggable="false"

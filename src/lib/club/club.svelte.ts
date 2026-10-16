@@ -12,6 +12,21 @@ export interface Member {
 }
 export type ProfileChange = Partial<Pick<Member, 'nickname' | 'characterId' | 'reducedMotion'>>;
 
+/** Club-wide choices an owner makes on the Admin page. */
+export interface ClubSettings {
+	table: { chips: number; boot: number; potLimit: number };
+	look: {
+		felt: 'emerald' | 'sapphire' | 'crimson' | 'onyx';
+		cardBack: 'navy' | 'crimson' | 'forest';
+	};
+}
+export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
+	table: { chips: 1000, boot: 10, potLimit: 128 },
+	look: { felt: 'emerald', cardBack: 'navy' }
+};
+/** Last known club settings, so the table opens in the chosen look before the server answers. */
+const settingsKey = 'chaal-club-settings-v1';
+
 const tokenKey = 'chaal-club-session-v1';
 /** Last known profile, so a returning friend sees their name at once instead of a blank form. */
 const memberKey = 'chaal-club-member-v1';
@@ -44,6 +59,7 @@ const messages: Record<string, string> = {
 class Club {
 	status = $state<'loading' | 'signedOut' | 'signedIn'>('loading');
 	member = $state<Member | null>(null);
+	settings = $state<ClubSettings>(DEFAULT_CLUB_SETTINGS);
 	/** Why the last sign-in ended or failed, in words for the sign-in card. */
 	notice = $state('');
 	busy = $state(false);
@@ -60,6 +76,12 @@ class Club {
 		if (!browser || this.started) return;
 		this.started = true;
 		this.token = read(tokenKey) ?? undefined;
+		try {
+			const cachedSettings = JSON.parse(read(settingsKey) ?? 'null');
+			if (cachedSettings?.look && cachedSettings?.table) this.settings = cachedSettings;
+		} catch {
+			/* Defaults until the server answers. */
+		}
 		if (!this.token) {
 			this.status = 'signedOut';
 			return;
@@ -94,12 +116,24 @@ class Club {
 		applyMotion(member.reducedMotion);
 	}
 
+	applySettings(settings: ClubSettings) {
+		this.settings = settings;
+		write(settingsKey, JSON.stringify(settings));
+	}
+
+	/** A signed-in request to the club server, for owner tools such as the Admin page. */
+	async request(path: string, init: RequestInit = {}) {
+		return this.call(path, init);
+	}
+
 	async refresh() {
 		try {
 			const { response, body } = await this.call('/me');
 			if (response.status === 401 || response.status === 403) return this.expire(body);
-			if (response.ok && body.member) this.accept(body.member);
-			else if (!this.member) this.status = 'signedOut';
+			if (response.ok && body.member) {
+				this.accept(body.member);
+				if (body.settings) this.applySettings(body.settings);
+			} else if (!this.member) this.status = 'signedOut';
 		} catch {
 			// Offline: keep a cached profile; the game connection retries on its own.
 			if (!this.member) {
