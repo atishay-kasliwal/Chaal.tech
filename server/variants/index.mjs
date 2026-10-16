@@ -12,6 +12,7 @@ import { colorJoker } from './color-joker.mjs';
 import { lallanKallan } from './lallan-kallan.mjs';
 import { potBlind } from './pot-blind.mjs';
 import { discardOne } from './discard-one.mjs';
+import { FOUR_CARD_VARIANTS } from './four-discard.mjs';
 
 /**
  * Current variant boundary:
@@ -42,7 +43,8 @@ const variants = Object.freeze([
 	colorJoker,
 	lallanKallan,
 	potBlind,
-	discardOne
+	discardOne,
+	...FOUR_CARD_VARIANTS
 ]);
 const registry = new Map(variants.map((variant) => [variant.rulesVersion, variant]));
 export const DEFAULT_RULES_VERSION = classic.rulesVersion;

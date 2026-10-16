@@ -26,7 +26,10 @@ const active = (room) => {
 };
 /** A seen player in a discard variant must throw cards away before betting or Show. */
 const mustDiscard = (variant, player) =>
-	Number.isInteger(variant.discardTo) && !player.isBlind && player.cards.length > variant.discardTo;
+	Number.isInteger(variant.discardTo) &&
+	!player.isBlind &&
+	!player.folded &&
+	player.cards.length > variant.discardTo;
 export const playing = (room) => room.isStarted && !room.gameShow;
 /** Bots are seated by the server and never disconnect. */
 const present = (p, connected) => !!p.bot || connected.has(p.id);
@@ -353,6 +356,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				p.cards = [];
 				p.handBet = 0;
 				p.isBlind = true;
+				delete p.folded;
 				p.isPacked = true;
 				if (!room.autoReady) p.ready = false;
 			}
@@ -512,7 +516,12 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				require(Number.isInteger(payload.index) &&
 					payload.index >= 0 &&
 					payload.index < player.cards.length, 'Choose one of your cards to discard');
-				player.cards.splice(payload.index, 1);
+				const [thrown] = player.cards.splice(payload.index, 1);
+				// Folding Joker keeps the folded card, last, face down: it is the player's joker.
+				if (variant.foldsToEnd) {
+					player.cards.push(thrown);
+					player.folded = true;
+				}
 			} else {
 				require(room.currentPlayerId === id, 'It is not your turn', 'OUT_OF_TURN');
 				require(ctx.now < room.deadline || action === 'timeout', 'Turn has expired', 'STALE_TURN');
@@ -665,16 +674,20 @@ export function projection(room, id, connected) {
 			connected: present(p, connected),
 			...(p.bot ? { bot: p.bot.level } : {}),
 			hasLeft: p.departed,
+			...(p.folded ? { folded: true } : {}),
 			cardsInHand:
 				(p.id === id && !p.isBlind) || reveal.has(p.id)
 					? structuredClone(p.cards)
 					: p.cards.map(() => ({ rank: 0, suit: '' })),
 			// Names and joker positions only for hands this viewer may already see.
 			...(explain && ((p.id === id && !p.isBlind) || reveal.has(p.id)) && p.cards.length
-				? {
-						handName: describeHand(variant, p.cards, room.variantState),
-						wildCards: wildIndexes(variant, p.cards, room.variantState)
-					}
+				? variant.foldsToEnd && !p.folded && playing(room) && !p.isPacked
+					? // Folding Joker before the fold: no hand yet, the folded card decides the joker.
+						{ handName: 'Fold one card: it becomes your joker', wildCards: [] }
+					: {
+							handName: describeHand(variant, p.cards, room.variantState),
+							wildCards: wildIndexes(variant, p.cards, room.variantState)
+						}
 				: {})
 		})),
 		legalActions: {

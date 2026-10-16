@@ -8,6 +8,9 @@ import { playedCards } from './discard-one.mjs';
  */
 export function describeHand(variant, cards, handState) {
 	if (!variant || !Array.isArray(cards) || cards.some((card) => !card.rank)) return null;
+	// Four-card games built on a three-card game: name the three that play, in that game's terms.
+	if (variant.base && variant.played)
+		return describeHand(variant.base, variant.played(cards), handState);
 	try {
 		switch (variant.rulesVersion) {
 			case '999-1':
@@ -34,6 +37,8 @@ export function describeHand(variant, cards, handState) {
 export function wildIndexes(variant, cards, handState) {
 	if (!variant || cards.some((card) => !card.rank)) return [];
 	if (variant.wildIndexes) return variant.wildIndexes(cards, handState);
+	if (variant.base && variant.played)
+		return wildIndexes(variant.base, variant.played(cards), handState);
 	const ranks =
 		variant.rulesVersion === 'ak47-1'
 			? new Set([4, 7, 13, 14])

@@ -28,6 +28,8 @@ interface User {
 	connected: boolean;
 	ready?: boolean;
 	hasLeft: boolean;
+	/** Folding Joker: this player has folded their joker card (kept last in hand). */
+	folded?: boolean;
 	folded?: boolean;
 	isAllIn?: boolean;
 	streetBet?: number;

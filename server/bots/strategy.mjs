@@ -36,7 +36,7 @@ export function winChance(cards, variant, handState, random, known = []) {
 	const pool = freshDeck().filter((card) => !taken.has(key(card)));
 	const size = cards.length;
 	// Discard One keeps card order (the first three play); every other variant is order-free.
-	const ordered = variant.rulesVersion === 'discard-one-1';
+	const ordered = Number.isInteger(variant.discardTo);
 	const mine = ordered ? variant.evaluateHand(cards, handState) : score(variant, cards, handState);
 	let total = 0;
 	for (let n = 0; n < SAMPLES; n++) {
@@ -63,7 +63,11 @@ export function bestDiscard(cards, variant, handState) {
 	let bestScore;
 	for (let index = 0; index < cards.length; index++) {
 		const kept = cards.filter((_, i) => i !== index);
-		const score = variant.evaluateHand(kept, handState);
+		// Folding Joker scores the kept three with the thrown card last, as the joker.
+		const score = variant.evaluateHand(
+			variant.foldsToEnd ? [...kept, cards[index]] : kept,
+			handState
+		);
 		if (!bestScore || compare(score, bestScore) > 0) {
 			best = index;
 			bestScore = score;

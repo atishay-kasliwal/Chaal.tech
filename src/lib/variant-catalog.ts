@@ -98,6 +98,49 @@ export const VARIANT_CATALOG = [
 		description:
 			'Get four cards. After you look, throw one away and play three. Stay blind and your first three count.',
 		cardsPerPlayer: 4
+	},
+	{
+		rulesVersion: 'folding-joker-1',
+		selectionLabel: 'Folding Joker — your folded card is the joker',
+		tableLabel: 'Folding Joker · fold one, its rank is wild for you',
+		description:
+			'Get four cards. Fold one face down: cards of its rank in your hand are wild. Stay blind and your fourth card is the joker.',
+		cardsPerPlayer: 4
+	},
+	{
+		rulesVersion: 'muflis-4-1',
+		selectionLabel: 'Muflis 4 — four cards, lowest wins',
+		tableLabel: 'Muflis 4 · throw one, lowest three wins',
+		description: 'Get four, throw one. The lowest three-card hand wins.',
+		cardsPerPlayer: 4
+	},
+	{
+		rulesVersion: 'joker-4-1',
+		selectionLabel: 'Joker 4 — four cards, common joker',
+		tableLabel: 'Joker 4 · throw one, revealed rank is wild',
+		description: 'Get four, throw one. A revealed card sets the wild rank for everyone.',
+		cardsPerPlayer: 4
+	},
+	{
+		rulesVersion: 'lowest-joker-4-1',
+		selectionLabel: 'Lowest Joker 4 — four cards, lowest is wild',
+		tableLabel: 'Lowest Joker 4 · throw one, your lowest rank is wild',
+		description: 'Get four, throw one. The lowest rank in the three you keep is wild.',
+		cardsPerPlayer: 4
+	},
+	{
+		rulesVersion: 'highest-joker-4-1',
+		selectionLabel: 'Highest Joker 4 — four cards, highest is wild',
+		tableLabel: 'Highest Joker 4 · throw one, your highest rank is wild',
+		description: 'Get four, throw one. The highest rank in the three you keep is wild.',
+		cardsPerPlayer: 4
+	},
+	{
+		rulesVersion: 'color-joker-4-1',
+		selectionLabel: 'Color Joker 4 — four cards, a colour is wild',
+		tableLabel: 'Color Joker 4 · throw one, a colour is wild',
+		description: 'Get four, throw one. An open card picks red or black; that colour is wild.',
+		cardsPerPlayer: 4
 	}
 ] as const;
 

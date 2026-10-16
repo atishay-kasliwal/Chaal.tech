@@ -75,6 +75,8 @@
 	const revealed = $derived(me.cardsInHand.some((card) => card.rank > 0));
 	const sittingOut = $derived(me.ready === false);
 	const discarding = $derived(!!legal.discard && revealed);
+	/** Folding Joker: the card you give up stays in hand, face down, as your joker. */
+	const folding = $derived(room.rulesVersion === 'folding-joker-1');
 	let chosen = $state<number | null>(null);
 	$effect(() => {
 		if (!discarding) chosen = null;
@@ -131,11 +133,17 @@
 								class="pick"
 								class:chosen={chosen === index}
 								onclick={() => (chosen = index)}
-								aria-label="Throw away card {index + 1}"
+								aria-label="{folding ? 'Fold' : 'Throw away'} card {index + 1}"
 								aria-pressed={chosen === index}
 							>
 								<TpCard {card} faceUp wild={me.wildCards?.includes(index) ?? false} />
 							</button>
+						{:else if me.folded && index === me.cardsInHand.length - 1}
+							<!-- The folded card: set aside, its rank is your joker. -->
+							<span class="folded-card" title="Folded: its rank is your joker">
+								<TpCard {card} faceUp={revealed} dim />
+								<span class="folded-tag">Joker</span>
+							</span>
 						{:else}
 							<TpCard
 								{card}
@@ -165,10 +173,12 @@
 			<p class="hand-name">
 				{#if discarding}
 					{#if chosen === null}
-						Tap the card you want to throw away
+						{folding
+							? 'Tap the card to fold: its rank becomes your joker'
+							: 'Tap the card you want to throw away'}
 					{:else}
 						<button class="throw" onclick={() => chosen !== null && ondiscard(chosen)}
-							>Throw this card away</button
+							>{folding ? 'Fold this card as my joker' : 'Throw this card away'}</button
 						>
 					{/if}
 				{:else if me.isPacked && !legal.peek && !legal.reveal}
@@ -510,6 +520,26 @@
 	.after-btn:disabled {
 		opacity: 0.5;
 		cursor: default;
+	}
+	.folded-card {
+		position: relative;
+		display: block;
+		margin-left: calc(var(--card-h) * 0.12);
+		rotate: 8deg;
+		opacity: 0.85;
+	}
+	.folded-tag {
+		position: absolute;
+		bottom: 0.4rem;
+		left: 50%;
+		translate: -50% 0;
+		border-radius: 999px;
+		background: linear-gradient(150deg, #f7df9d, #c08a34);
+		padding: 0.05rem 0.5rem;
+		color: #24180a;
+		font-size: 0.7rem;
+		font-weight: 800;
+		box-shadow: 0 2px 6px rgb(0 0 0 / 45%);
 	}
 	.hand-name {
 		min-height: 1.4rem;
