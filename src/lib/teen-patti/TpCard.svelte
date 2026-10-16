@@ -36,6 +36,7 @@
 	class:deal={deal >= 0}
 	class:dim
 	class:highlight
+	class:wild={wild && showFace}
 	style:--deal-delay="{Math.max(deal, 0) * 90}ms"
 	data-face={showFace ? 'up' : 'down'}
 >
@@ -91,23 +92,31 @@
 		content: '';
 		pointer-events: none;
 	}
+	/* A joker: a gold ring round the card and a small star on its bottom edge, clear of the
+	   corner indexes so everyone can still read the card. */
+	.tp-card.wild {
+		box-shadow:
+			0 0 0 2px #e2b862,
+			0 0 calc(var(--h) * 0.18) rgb(226 184 98 / 45%),
+			0 calc(var(--h) * 0.04) calc(var(--h) * 0.12) rgb(0 0 0 / 45%);
+	}
 	.joker {
 		position: absolute;
-		/* Top-left stays visible when the next card overlaps from the right. */
-		top: -0.35em;
-		left: -0.35em;
+		bottom: calc(var(--h) * -0.06);
+		left: 50%;
 		z-index: 2;
 		display: grid;
-		width: calc(var(--h) * 0.24);
-		height: calc(var(--h) * 0.24);
-		min-width: 1rem;
-		min-height: 1rem;
+		width: calc(var(--h) * 0.15);
+		height: calc(var(--h) * 0.15);
+		min-width: 0.9rem;
+		min-height: 0.9rem;
+		translate: -50% 0;
 		place-items: center;
 		border-radius: 999px;
 		background: linear-gradient(150deg, #f7df9d, #c08a34);
 		box-shadow: 0 1px 4px rgb(0 0 0 / 50%);
 		color: #24180a;
-		font-size: max(0.6rem, calc(var(--h) * 0.14));
+		font-size: max(0.55rem, calc(var(--h) * 0.09));
 		line-height: 1;
 	}
 	.tp-card.dim {

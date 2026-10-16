@@ -19,7 +19,7 @@
 		Bot
 	} from '@lucide/svelte';
 	import type { MediaState } from '#lib/media/controller.js';
-	import { VARIANT_BY_VERSION, type RulesVersion } from '#lib/variant-catalog.js';
+	import { VARIANT_BY_VERSION, VARIANT_CATALOG, type RulesVersion } from '#lib/variant-catalog.js';
 	import { arrangeSeats } from '#lib/seat-layout.js';
 	import TpSeat from './TpSeat.svelte';
 	import CasinoChip from '#lib/components/CasinoChip.svelte';
@@ -188,6 +188,34 @@
 		});
 	});
 
+	// ——— Picking the next game: one person at a time, round robin, up to a minute ———
+	const chooser = $derived(room.chooser ?? null);
+	const chooserName = $derived(
+		room.usersList.find((user) => user.id === chooser?.playerId)?.username ?? 'Someone'
+	);
+	const myPick = $derived(chooser?.playerId === selfId);
+	const picking = $derived(!!chooser && !chooser.choice && now < chooser.deadline);
+	const pickSecondsLeft = $derived(
+		chooser ? Math.max(0, Math.ceil((chooser.deadline - now) / 1000)) : 0
+	);
+	const nameOfVariant = (version: string) =>
+		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(' — ')[0] ?? 'Teen Patti';
+	/** What the next hand will be, in words. */
+	const nextGame = $derived(
+		!chooser
+			? nextVariant
+			: chooser.choice === 'random'
+				? 'A random game'
+				: chooser.choice && chooser.choice !== 'keep'
+					? nameOfVariant(chooser.choice)
+					: nameOfVariant(room.rulesVersion)
+	);
+	let changingGame = $state(false);
+	const pick = (choice: string) => {
+		changingGame = false;
+		void send('chooseNext', [choice]);
+	};
+
 	let dealAt = $state<number | null>(null);
 	let paused = $state(false);
 	let dealingFor: string | null = null;
@@ -203,6 +231,18 @@
 			lastResultHand = handId;
 			dealError = '';
 			dealAt = handId ? Date.now() + (reason === 'last-player' ? 5000 : 8000) : null;
+		});
+	});
+	// While someone picks the next game, wait for them (up to their minute); once they pick,
+	// deal a few seconds later.
+	$effect(() => {
+		const deadline = chooser?.deadline;
+		const choice = chooser?.choice;
+		untrack(() => {
+			if (!deadline || dealAt === null) return;
+			dealAt = choice
+				? Math.min(Math.max(dealAt, Date.now() + 4000), Date.now() + 5000)
+				: deadline + 500;
 		});
 	});
 
@@ -756,10 +796,53 @@
 						{/if}
 					</p>
 					<p class="result-detail">{resultDetail}</p>
+					{#if chooser && picking && myPick}
+						<div class="pick" data-testid="pick-next-game">
+							<p class="pick-title">
+								Your pick for the next game <span class="pick-clock">{pickSecondsLeft}s</span>
+							</p>
+							<div class="pick-buttons">
+								<button class="mini gold" onclick={() => pick('keep')}
+									>Keep {nameOfVariant(room.rulesVersion)}</button
+								>
+								<button class="mini" onclick={() => pick('random')}>Random</button>
+								<button
+									class="mini"
+									aria-expanded={changingGame}
+									onclick={() => (changingGame = !changingGame)}>Change game</button
+								>
+							</div>
+							{#if changingGame}
+								<div class="pick-list" role="listbox" aria-label="Next game">
+									{#each VARIANT_CATALOG as option (option.rulesVersion)}
+										<button
+											role="option"
+											aria-selected="false"
+											onclick={() => pick(option.rulesVersion)}
+											title={option.description}>{option.selectionLabel.split(' — ')[0]}</button
+										>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{:else if chooser && picking}
+						<p class="next-game waiting">
+							<span class="pulse" aria-hidden="true"></span>
+							<strong>{chooserName}</strong> is picking the next game · {pickSecondsLeft}s
+						</p>
+					{:else}
+						<p class="next-game">
+							Next game: <strong>{nextGame}</strong>{#if chooser?.choice}<small>
+									· picked by {myPick ? 'you' : chooserName}</small
+								>{/if}
+						</p>
+					{/if}
 					{#if dealIn !== null}
 						<div class="next" data-testid="next-round-controls">
 							{#if isHost}
-								{#if autoDeal && !paused}
+								{#if picking}
+									<span>Dealing once the game is picked</span>
+								{:else if autoDeal && !paused}
 									<span>Next hand in {dealIn}s</span>
 									<button class="mini" onclick={() => (paused = true)}
 										><Pause class="h-3.5 w-3.5" /> Pause</button
@@ -770,10 +853,12 @@
 								<button
 									class="mini gold"
 									onclick={dealNow}
-									disabled={!canDeal}
+									disabled={!canDeal || picking}
 									data-testid="next-round-start"><Play class="h-3.5 w-3.5" /> Deal now</button
 								>
-								{@render variantChip()}
+								{#if !chooser}{@render variantChip()}{/if}
+							{:else if picking}
+								<span>Dealing once the game is picked</span>
 							{:else if autoDeal}
 								<span>Next hand in {dealIn}s</span>
 							{:else}
@@ -782,7 +867,7 @@
 						</div>
 						{#if dealError}<p class="deal-error">{dealError}</p>{/if}
 					{/if}
-					{#if isHost && canAddBot}<div class="result-bots">{@render botAdder()}</div>{/if}
+					{#if isHost && canAddBot && !changingGame}<div class="result-bots">{@render botAdder()}</div>{/if}
 				</div>
 			{:else if !room.isStarted}
 				<div class="lobby" in:fade>
@@ -1220,9 +1305,95 @@
 		font-size: 0.82rem;
 		white-space: nowrap;
 	}
+	/* What's being played, on a gold pill so it reads at a glance. */
 	.variant-name {
-		color: #f4d68c;
+		border: 1px solid rgb(240 209 140 / 45%);
+		border-radius: 999px;
+		background: linear-gradient(180deg, rgb(244 214 140 / 22%), rgb(244 214 140 / 10%));
+		padding: 0.18rem 0.75rem;
+		color: #f7dc95;
+		font-size: 0.95rem;
+		font-weight: 750;
+		letter-spacing: 0.01em;
+		box-shadow: 0 0 1rem rgb(244 214 140 / 12%);
+	}
+	/* Picking the next game, inside the result panel. */
+	.next-game {
+		color: rgb(241 235 220 / 75%);
+		font-size: 0.88rem;
+	}
+	.next-game strong {
+		color: #f7dc95;
+	}
+	.next-game small {
+		color: rgb(241 235 220 / 50%);
+	}
+	.next-game.waiting {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		border-radius: 999px;
+		background: rgb(244 214 140 / 10%);
+		padding: 0.3rem 0.8rem;
+	}
+	.pulse {
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 999px;
+		background: #f4d68c;
+		animation: tp-pick-pulse 1.2s ease-in-out infinite;
+	}
+	@keyframes tp-pick-pulse {
+		50% {
+			opacity: 0.3;
+		}
+	}
+	.pick {
+		display: grid;
+		justify-items: center;
+		gap: 0.45rem;
+		border: 1px solid rgb(244 214 140 / 35%);
+		border-radius: 1rem;
+		background: rgb(244 214 140 / 8%);
+		padding: 0.6rem 0.75rem;
+	}
+	.pick-title {
+		color: #f7dc95;
+		font-size: 0.9rem;
 		font-weight: 700;
+	}
+	.pick-clock {
+		margin-left: 0.3rem;
+		color: rgb(241 235 220 / 60%);
+		font-variant-numeric: tabular-nums;
+		font-weight: 500;
+	}
+	.pick-buttons {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.4rem;
+	}
+	.pick-list {
+		display: flex;
+		max-width: 26rem;
+		max-height: 6.2rem;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.3rem;
+		overflow-y: auto;
+	}
+	.pick-list button {
+		border: 1px solid rgb(240 209 140 / 22%);
+		border-radius: 999px;
+		padding: 0.15rem 0.55rem;
+		color: #f1ebdc;
+		font-size: 0.78rem;
+		cursor: pointer;
+	}
+	.pick-list button:hover {
+		border-color: #f4d68c;
+		color: #f4d68c;
 	}
 	.wild {
 		color: #b5dcff;

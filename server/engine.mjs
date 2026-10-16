@@ -86,6 +86,48 @@ export function newRoom(name, table, hostId, rulesVersion = DEFAULT_RULES_VERSIO
 }
 const bootOf = (room) => room.boot ?? 1;
 
+/** Between hands, one player at a time picks the next game, for up to this long. */
+export const CHOOSE_MS = 60 * 1000;
+const CHOICES = new Set(['keep', 'random']);
+
+/**
+ * Hand over the pick to the next person in seat order after the last chooser (bots never pick).
+ * Only tables created with options take part; older tables keep the host choosing.
+ */
+function assignChooser(room, now) {
+	const people = seated(room)
+		.filter((p) => !p.bot && !p.departed)
+		.sort((a, b) => a.seatNumber - b.seatNumber);
+	if (!people.length) {
+		delete room.chooser;
+		return;
+	}
+	const lastSeat = room.players.find((p) => p.id === room.lastChooserId)?.seatNumber ?? -1;
+	const next = people.find((p) => p.seatNumber > lastSeat) ?? people[0];
+	room.chooser = {
+		playerId: next.id,
+		handId: room.result.handId,
+		deadline: now + CHOOSE_MS,
+		choice: null
+	};
+}
+
+/**
+ * What the next deal should play, from the chooser's pick: { mode, rulesVersion }, or null when
+ * nobody is picking. Throws while the pick is still open. A pick that times out keeps the game.
+ */
+export function nextHandChoice(room, now) {
+	const chooser = room.chooser;
+	if (!chooser) return null;
+	if (!chooser.choice && now < chooser.deadline) {
+		const name = room.players.find((p) => p.id === chooser.playerId)?.username ?? 'Someone';
+		throw new GameError(`${name} is picking the next game`, 'PICKING');
+	}
+	const choice = chooser.choice ?? 'keep';
+	if (choice === 'random') return { mode: 'random' };
+	return { mode: 'selected', rulesVersion: choice === 'keep' ? room.rulesVersion : choice };
+}
+
 /** Players below 10% of the buy-in may ask a friend at the table for chips. */
 export const CHIP_REQUEST_SHARES = [10, 25, 50];
 export const chipRequestAmounts = (room) =>
@@ -296,6 +338,11 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			room.initiator = id;
 			room.result = null;
 			delete room.shownIds;
+			// The pick is used up; the next one goes to whoever sits after this chooser.
+			if (room.chooser) {
+				room.lastChooserId = room.chooser.playerId;
+				delete room.chooser;
+			}
 			room.isStarted = true;
 			room.gameShow = false;
 			room.pot = 0;
@@ -356,6 +403,15 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				bot: { level: payload.level, rebuys: 0 }
 			});
 			room.issuedChips += room.table;
+		} else if (action === 'chooseNext') {
+			require(room.chooser && !playing(room), 'Nobody is picking the next game right now');
+			const picker = room.players.find((p) => p.id === room.chooser.playerId);
+			require(room.chooser.playerId ===
+				id, `It’s ${picker?.username ?? 'someone else'}’s turn to pick`);
+			require(CHOICES.has(payload.choice) ||
+				(typeof payload.choice === 'string' &&
+					getVariant(payload.choice)), 'Pick keep, random or a Teen Patti variant');
+			room.chooser.choice = payload.choice;
 		} else if (action === 'setPotLimit') {
 			require(id === room.hostId, 'Only the host can change the pot limit', 'FORBIDDEN');
 			require(room.boot !== undefined, 'Pot limits need a table created with table options');
@@ -418,6 +474,9 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 		} else if (action === 'leave') {
 			const wasTurn = room.currentPlayerId === id;
 			player.departed = true;
+			// A chooser who leaves forfeits the pick: the current game carries on.
+			if (room.chooser?.playerId === id && !room.chooser.choice)
+				room.chooser.deadline = ctx.now ?? 0;
 			if (room.chipRequests)
 				room.chipRequests = room.chipRequests.filter((r) => r.from !== id && r.to !== id);
 			if (playing(room) && !player.isPacked) {
@@ -495,6 +554,15 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			}
 		}
 	}
+	// A hand just ended on a table with options: open the pick for the next game.
+	if (
+		room.boot !== undefined &&
+		!playing(room) &&
+		room.result &&
+		room.chooser?.handId !== room.result.handId &&
+		Number.isFinite(ctx?.now)
+	)
+		assignChooser(room, ctx.now);
 	room.revision++;
 	invariant(room);
 	return room;
@@ -543,6 +611,8 @@ export function projection(room, id, connected) {
 		currentPlayer: list.findIndex((p) => p.id === room.currentPlayerId),
 		pot: room.pot,
 		maxStake: room.maxStake,
+		// Who picks the next game, until when, and what they picked (null while undecided).
+		...(room.chooser ? { chooser: { ...room.chooser } } : {}),
 		// Chip requests are private to the two players involved.
 		...(room.chipRequests?.some((r) => r.from === id || r.to === id)
 			? {

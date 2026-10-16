@@ -76,7 +76,7 @@
 		return result.ok;
 	}
 	async function leaveRoomHandler() {
-		if (await sendAction('leaveRoom')) goto('/create-room');
+		if (await sendAction('leaveRoom')) goto('/club');
 	}
 	async function toggleReady() {
 		await sendAction('ready', [!selfReady]);
@@ -192,7 +192,7 @@
 				autoJoinBusy = false;
 				autoJoinAttempts = 5;
 				displayToast(reply.error || 'Could not join the table', 'error');
-				void goto('/create-room', { replaceState: true });
+				void goto('/club', { replaceState: true });
 				return;
 			}
 			// A connection hiccup — e.g. still switching to this room's socket — retries shortly.
@@ -200,7 +200,7 @@
 				autoJoinBusy = false;
 				if (++autoJoinAttempts < 5 || usernameCreated) return;
 				displayToast(reply.error || 'Could not reach the table — try again', 'error');
-				void goto('/create-room', { replaceState: true });
+				void goto('/club', { replaceState: true });
 			}, 800);
 		});
 	});
@@ -225,7 +225,7 @@
 	$effect(() => {
 		if (!socket.tableClosed) return;
 		displayToast(socket.tableClosed, 'info');
-		void goto('/create-room', { replaceState: true });
+		void goto('/club', { replaceState: true });
 	});
 
 	/** Practice tables from the create page: seat the requested bots, then deal once. */

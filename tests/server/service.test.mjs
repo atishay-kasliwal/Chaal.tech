@@ -877,6 +877,11 @@ test('Bots seated by the host play their own turns over the real server, and pau
 	// With nobody connected, bots wait instead of playing on.
 	// Deal only once the host has seen the finished hand (commands carry the revision).
 	await waitFor(() => host.view?.revision === app.store.room('bots-room').revision);
+	// Between hands the next game is picked first; the host is the only person, so it's theirs.
+	assert.equal(host.view.chooser?.playerId, host.id);
+	assert.equal((await host.send('start', ['bots-room', 0, 3, 'classic-1'])).ok, false);
+	assert.equal((await host.send('chooseNext', ['keep'])).ok, true);
+	await waitFor(() => host.view?.chooser?.choice === 'keep');
 	assert.equal((await host.send('start', ['bots-room', 0, 3, 'classic-1'])).ok, true);
 	await pause();
 	const dealt = app.store.room('bots-room');

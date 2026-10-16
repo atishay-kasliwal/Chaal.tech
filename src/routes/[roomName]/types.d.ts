@@ -43,6 +43,8 @@ interface ChipRequest {
 }
 interface RoomData {
 	name: string;
+	/** Who picks the next game between hands, until when, and what they picked. */
+	chooser?: { playerId: string; handId: string; deadline: number; choice: string | null };
 	/** Open chip requests this viewer sent or received. */
 	chipRequests?: ChipRequest[];
 	/** Amounts this viewer may ask for; present only when they are below 10% of the buy-in. */

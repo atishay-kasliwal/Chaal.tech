@@ -9,6 +9,7 @@ import {
 	movements,
 	playing,
 	chipGiftText,
+	nextHandChoice,
 	GameError
 } from '../engine.mjs';
 import { shuffledDeck } from '../classic.mjs';
@@ -35,7 +36,7 @@ const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
 	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
 	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit',
-	'setBalanceHidden', 'showCards', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
+	'setBalanceHidden', 'showCards', 'chooseNext', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
 ]);
 
 const hash = async (value) => {
@@ -457,13 +458,14 @@ export class RoomDurableObject {
 				if (before.gameType === 'texas-holdem') {
 					payload = { cutAt: args[1], cardsToDeal: args[2], rulesVersion: args[3] };
 				} else if (!before.gameType || before.gameType === 'teen-patti') {
-					const mode = args[4] ?? 'selected';
+					const picked = nextHandChoice(before, Date.now());
+					const mode = picked?.mode ?? args[4] ?? 'selected';
 					if (mode !== 'selected' && mode !== 'random')
 						throw new GameError('Choose a variant or random mode', 'INVALID_ACTION');
 					const availableVariants = listVariants();
 					const rulesVersion = mode === 'random'
 						? availableVariants[secureRandomInt(availableVariants.length)].rulesVersion
-						: (args[3] ?? before.rulesVersion);
+						: (picked?.rulesVersion ?? args[3] ?? before.rulesVersion);
 					const variant = getVariant(rulesVersion);
 					if (!variant) throw new GameError('Unsupported game rules version', 'UNSUPPORTED_RULES');
 					payload = { cutAt: args[1], cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion };
@@ -494,6 +496,10 @@ export class RoomDurableObject {
 			} else if (event === 'setBalanceHidden') {
 				action = 'setBalanceHidden';
 				payload = { hidden: args[0] };
+				text = null;
+			} else if (event === 'chooseNext') {
+				action = 'chooseNext';
+				payload = { choice: args[0] };
 				text = null;
 			} else if (event === 'showCards') {
 				action = 'reveal';

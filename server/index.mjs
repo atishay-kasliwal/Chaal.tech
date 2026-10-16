@@ -12,6 +12,7 @@ import {
 	movements,
 	playing,
 	chipGiftText,
+	nextHandChoice,
 	GameError
 } from './engine.mjs';
 import { nextBotMove, botDue, pickBotName, botDelay, humansPresent } from './bots/runner.mjs';
@@ -354,14 +355,15 @@ export function createGameServer({
 					if (before.gameType === 'texas-holdem') {
 						payload = { cutAt: args[1], cardsToDeal: args[2], rulesVersion: args[3] };
 					} else if (!before.gameType || before.gameType === 'teen-patti') {
-						const mode = args[4] ?? 'selected';
+						const picked = nextHandChoice(before, clock());
+					const mode = picked?.mode ?? args[4] ?? 'selected';
 						if (mode !== 'selected' && mode !== 'random')
 							throw new GameError('Choose a variant or random mode', 'INVALID_ACTION');
 						const availableVariants = listVariants();
 						const rulesVersion =
 							mode === 'random'
 								? availableVariants[variantRandomInt(0, availableVariants.length)].rulesVersion
-								: (args[3] ?? before.rulesVersion);
+								: (picked?.rulesVersion ?? args[3] ?? before.rulesVersion);
 						const variant = getVariant(rulesVersion);
 						if (!variant)
 							throw new GameError('Unsupported game rules version', 'UNSUPPORTED_RULES');
@@ -400,6 +402,10 @@ export function createGameServer({
 				} else if (event === 'setBalanceHidden') {
 					action = 'setBalanceHidden';
 					payload = { hidden: args[0] };
+					text = null;
+				} else if (event === 'chooseNext') {
+					action = 'chooseNext';
+					payload = { choice: args[0] };
 					text = null;
 				} else if (event === 'showCards') {
 					action = 'reveal';
@@ -577,6 +583,7 @@ export function createGameServer({
 			'setPotLimit',
 			'setBalanceHidden',
 			'showCards',
+			'chooseNext',
 			'requestChips',
 			'cancelChipRequest',
 			'answerChipRequest',
