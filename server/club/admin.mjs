@@ -4,7 +4,7 @@
  */
 import { ObjectId } from 'mongodb';
 import { MEMBERS, ClubError, normalizeEmail } from './members.mjs';
-import { CHARACTER_IDS } from './characters.mjs';
+import { CHARACTER_IDS, defaultCharacterFor } from './characters.mjs';
 import {
 	plannedSteps,
 	sendBetaEmails,
@@ -115,7 +115,10 @@ export async function adminMembers(db) {
 		nickname: member.nickname ?? '',
 		role: member.role === 'owner' ? 'owner' : 'member',
 		status: member.status,
-		characterId: CHARACTER_IDS.includes(member.characterId) ? member.characterId : null,
+		// Never-chosen characters show the same stable default the member themselves would see.
+		characterId: CHARACTER_IDS.includes(member.characterId)
+			? member.characterId
+			: defaultCharacterFor(String(member._id)),
 		signedIn: Boolean(member.claimedAt),
 		betaOptOut: member.betaOptOut === true,
 		betaSteps: [...new Set((member.betaInvite?.emails ?? []).map((email) => email.step))].sort()
@@ -143,6 +146,9 @@ export async function addMember(db, { email, nickname, role }, now = new Date())
 				email: address,
 				status: 'invited',
 				createdAt: now,
+				// A random character to start with; they can change it when they first sign in.
+				characterId:
+					CHARACTER_IDS[crypto.getRandomValues(new Uint32Array(1))[0] % CHARACTER_IDS.length],
 				...(owner ? {} : { role: 'member' })
 			}
 		},
