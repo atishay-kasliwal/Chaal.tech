@@ -292,7 +292,7 @@
 		</div>
 	{/if}
 	{#if !socket.connected}
-		<p class="status" role="status">
+		<p class="connect-status" role="status">
 			{socket.error ? socket.error : 'Connecting to the table…'}
 			{#if socket.error}<button class="text-btn" onclick={() => socket.connect()}>Retry</button
 				>{/if}
@@ -672,11 +672,8 @@
 		cursor: wait;
 		opacity: 0.6;
 	}
-	.status {
-		display: block;
-		width: 100%;
-		height: auto;
-		white-space: normal;
+	/* Not ".status": the UI library styles that class as a square indicator dot. */
+	.connect-status {
 		color: rgb(241 235 220 / 60%);
 		font-size: 0.82rem;
 		text-align: center;

@@ -97,6 +97,10 @@ interface RoomData {
 		start: boolean;
 		ready?: boolean;
 		see?: boolean;
+		/** Out of the hand (packed or it ended): look at your own cards. */
+		peek?: boolean;
+		/** Out of the hand: show your cards to everyone. */
+		reveal?: boolean;
 		pack?: boolean;
 		bet?: boolean;
 		show?: boolean;

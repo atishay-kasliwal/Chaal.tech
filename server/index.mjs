@@ -401,6 +401,10 @@ export function createGameServer({
 					action = 'setBalanceHidden';
 					payload = { hidden: args[0] };
 					text = null;
+				} else if (event === 'showCards') {
+					action = 'reveal';
+					payload = {};
+					text = null;
 				} else if (event === 'requestChips') {
 					action = 'requestChips';
 					payload = { to: args[0], amount: args[1] };
@@ -572,6 +576,7 @@ export function createGameServer({
 			'removeBot',
 			'setPotLimit',
 			'setBalanceHidden',
+			'showCards',
 			'requestChips',
 			'cancelChipRequest',
 			'answerChipRequest',

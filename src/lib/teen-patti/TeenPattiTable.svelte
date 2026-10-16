@@ -39,7 +39,8 @@
 		prefersHiddenBalance,
 		rememberHiddenBalance
 	} from './format.js';
-	import { handName, NAMED_VARIANTS, HAND_RANKINGS } from './hands.js';
+	import { handName, NAMED_VARIANTS, HAND_RANKINGS, RANKING_EXAMPLES } from './hands.js';
+	import ClassicCard from '#lib/components/ClassicCard.svelte';
 	import { describeChange, type FeedEvent } from './feed.js';
 	import { opponentPoints, SELF_POINT, POT_POINT } from './layout.js';
 	import { play, soundEnabled, setSoundEnabled } from './sound.js';
@@ -52,6 +53,7 @@
 		autoDeal = $bindable(true),
 		media,
 		settings,
+		nextVariant = 'Classic',
 		send,
 		ondeal,
 		oninvite,
@@ -66,6 +68,8 @@
 		autoDeal?: boolean;
 		media: Snippet;
 		settings: Snippet;
+		/** Name of the variant the host will deal next ("Random" when the server picks). */
+		nextVariant?: string;
 		send: (event: string, args?: unknown[]) => Promise<boolean>;
 		ondeal: () => Promise<boolean>;
 		oninvite: () => void;
@@ -228,6 +232,35 @@
 
 	// ——— Narration, chips and sounds ———
 	let feed = $state<FeedEvent[]>([]);
+	/** The log as hands, newest first: each starts at its deal, with the winner pulled out. */
+	const handsLog = $derived.by(() => {
+		const hands: {
+			id: number;
+			deal: FeedEvent | null;
+			events: FeedEvent[];
+			win: FeedEvent | null;
+		}[] = [];
+		for (const event of feed) {
+			if (event.kind === 'deal' || !hands.length)
+				hands.push({
+					id: event.id,
+					deal: event.kind === 'deal' ? event : null,
+					events: [],
+					win: null
+				});
+			const hand = hands[hands.length - 1];
+			if (event.kind === 'win') hand.win = event;
+			else if (event.kind !== 'deal') hand.events.push(event);
+		}
+		return hands.reverse();
+	});
+	const initials = (name: string) =>
+		name
+			.split(/\s+/)
+			.map((part) => part[0])
+			.join('')
+			.slice(0, 2)
+			.toUpperCase();
 	let flights = $state<
 		{ id: number; from: { x: number; y: number }; to: { x: number; y: number }; amount: number }[]
 	>([]);
@@ -339,7 +372,7 @@
 	function launch(from: { x: number; y: number }, to: { x: number; y: number }, amount: number) {
 		const id = Math.random();
 		flights = [...flights, { id, from, to, amount }];
-		setTimeout(() => (flights = flights.filter((flight) => flight.id !== id)), 900);
+		setTimeout(() => (flights = flights.filter((flight) => flight.id !== id)), 1500);
 	}
 
 	// Your-turn cue, last-seconds tick and a tab title that tells you when you are needed.
@@ -520,6 +553,18 @@
 		return feed.slice(Math.max(start, 0)).slice(-3).reverse();
 	});
 </script>
+
+<!-- The host picks the Teen Patti variant for the next hand right where they deal. -->
+{#snippet variantChip()}
+	<button
+		type="button"
+		class="mini variant-chip"
+		onclick={() => (panel = 'settings')}
+		data-testid="choose-variant"
+		title="Choose the variant for the next hand"
+		>Next: <strong>{nextVariant}</strong> · change</button
+	>
+{/snippet}
 
 <svelte:window {onkeydown} />
 
@@ -727,6 +772,7 @@
 									disabled={!canDeal}
 									data-testid="next-round-start"><Play class="h-3.5 w-3.5" /> Deal now</button
 								>
+								{@render variantChip()}
 							{:else if autoDeal}
 								<span>Next hand in {dealIn}s</span>
 							{:else}
@@ -750,6 +796,7 @@
 						<button class="deal-btn" onclick={dealNow} disabled={!canDeal} data-testid="deal-first">
 							<Play class="h-4 w-4" /> Deal first hand
 						</button>
+						{@render variantChip()}
 						{@render botAdder()}
 						{#if !canDeal}
 							<p class="lobby-hint">
@@ -777,7 +824,9 @@
 					{/if}
 					<span class="pot-label">Pot</span>
 					{#key room.pot}
-						<span class="pot-amount" in:fly={{ y: -8, duration: 260 }}>{money(room.pot)}</span>
+						<span class="pot-amount" in:fly={{ y: -10, duration: 600, delay: 900 }}
+							>{money(room.pot)}</span
+						>
 					{/key}
 					<span class="stakes">
 						Blind {money(blindStake)} · Seen {money(seenStake)}
@@ -844,6 +893,8 @@
 			onbalancehidden={setBalanceHidden}
 			onaskchips={askChips}
 			oncancelask={cancelAsk}
+			onpeek={() => void send('seeCards')}
+			onshowcards={() => void send('showCards')}
 		/>
 	{/if}
 
@@ -856,6 +907,7 @@
 		></div>
 		<div
 			class="sheet"
+			class:wide={panel === 'rules'}
 			role="dialog"
 			aria-modal="true"
 			tabindex="-1"
@@ -939,36 +991,71 @@
 				{:else if panel === 'scores'}
 					<ol class="standings">
 						{#each standings as { user, net: delta }, index (user.id)}
-							<li>
+							<li class:leader={index === 0 && (delta ?? 0) > 0} class:me={user.id === selfId}>
 								<span class="place">{index + 1}</span>
-								<span class="who">{user.username}{user.id === selfId ? ' (you)' : ''}</span>
-								<span class="amt">{balanceLabel(user)}</span>
-								<span class="delta" class:up={(delta ?? 0) > 0} class:down={(delta ?? 0) < 0}
-									>{delta === null ? '—' : signedMoney(delta)}</span
+								<span class="initials" aria-hidden="true">{initials(user.username)}</span>
+								<span class="who"
+									>{user.username}{#if user.id === selfId}<small>You</small>{/if}</span
 								>
+								<span class="score">
+									<span class="amt">{balanceLabel(user)}</span>
+									<span class="delta" class:up={(delta ?? 0) > 0} class:down={(delta ?? 0) < 0}
+										>{delta === null ? '—' : signedMoney(delta)}</span
+									>
+								</span>
 							</li>
 						{/each}
 					</ol>
 					<h3>Hand log</h3>
-					<ol class="log">
-						{#each [...feed].reverse() as event (event.id)}
-							<li class="k-{event.kind}">{event.text}</li>
-						{:else}
-							<li class="muted">Actions appear here as the game goes.</li>
-						{/each}
-					</ol>
-				{:else if panel === 'rules'}
-					<p class="muted">Highest to lowest. {variant?.description ?? ''}</p>
-					<ol class="rankings">
-						{#each HAND_RANKINGS as rank, index (rank.name)}
-							<li>
-								<span class="place">{index + 1}</span>
-								<span class="who">{rank.name}<small>{rank.hint}</small></span>
-								<span class="mini-cards">
-									{#each rank.cards as card (card)}
-										<span class:red={card.includes('♥') || card.includes('♦')}>{card}</span>
+					{#each handsLog as hand, index (hand.id)}
+						<section class="hand-card" class:current={index === 0 && !hand.win}>
+							<header>
+								{#if hand.win}
+									<strong class="hand-win">{hand.win.text}</strong>
+								{:else}
+									<strong>{index === 0 ? 'This hand' : 'Earlier'}</strong>
+								{/if}
+								{#if hand.deal}<small>{hand.deal.text.replace('New hand · ', '')}</small>{/if}
+							</header>
+							{#if hand.events.length}
+								<ol class="log">
+									{#each hand.events as event (event.id)}
+										<li class="k-{event.kind}">{event.text}</li>
 									{/each}
-								</span>
+								</ol>
+							{/if}
+						</section>
+					{:else}
+						<p class="muted">Actions appear here as the game goes.</p>
+					{/each}
+				{:else if panel === 'rules'}
+					<p class="muted">
+						Strongest hand on the left, weakest on the right. {variant?.description ?? ''}
+					</p>
+					<ol class="ranks">
+						{#each HAND_RANKINGS as rank, index (rank.name)}
+							{@const example = RANKING_EXAMPLES[rank.name]}
+							<li>
+								<p class="rank-title">
+									<span>{index + 1}.</span>
+									{rank.name} <small>{rank.hint}</small>
+								</p>
+								<div class="rank-row" aria-label="Best to weakest {rank.name}">
+									{#each [example.best, example.worst] as hand, side (side)}
+										{#if side === 1}<span class="rank-gap" aria-hidden="true"></span>{/if}
+										<span class="fan" title={side === 0 ? 'Strongest' : 'Weakest'}>
+											{#each hand as card, i (i)}
+												<span class="fan-card"
+													><ClassicCard
+														rank={card.rank}
+														suit={card.suit}
+														class="!h-full !w-full"
+													/></span
+												>
+											{/each}
+										</span>
+									{/each}
+								</div>
 							</li>
 						{/each}
 					</ol>
@@ -1072,6 +1159,10 @@
 		width: 100%;
 		max-width: 92rem;
 		margin-inline: auto;
+	}
+	/* The top bar runs edge to edge: room code far left, tools far right. */
+	.tp-shell > .topbar {
+		max-width: none;
 	}
 	/* Top bar */
 	.topbar {
@@ -1180,6 +1271,12 @@
 		padding: 0.3rem 0.9rem;
 		color: #ffd9cf;
 		font-size: 0.8rem;
+	}
+	.variant-chip {
+		color: #f4d68c;
+	}
+	.variant-chip strong {
+		font-weight: 750;
 	}
 	/* A friend asking you for chips: a small card over the top of the table. */
 	.chip-prompts {
@@ -1657,7 +1754,8 @@
 		translate: -50% -50%;
 		border-radius: 999px;
 		box-shadow: 0 4px 10px rgb(0 0 0 / 55%);
-		animation: tp-chip 650ms cubic-bezier(0.35, 0.7, 0.3, 1) forwards;
+		/* Slow and weighty: the chip slides into the pot rather than snapping. */
+		animation: tp-chip 1300ms cubic-bezier(0.45, 0.05, 0.25, 1) forwards;
 		pointer-events: none;
 	}
 	@keyframes tp-chip {
@@ -1697,6 +1795,9 @@
 		background: #111b17;
 		box-shadow: -1rem 0 3rem rgb(0 0 0 / 45%);
 	}
+	.sheet.wide {
+		width: min(30rem, 100%);
+	}
 	.sheet-head {
 		display: flex;
 		align-items: center;
@@ -1728,25 +1829,70 @@
 		color: rgb(241 235 220 / 55%);
 		font-size: 0.85rem;
 	}
-	.standings,
-	.rankings {
+	.standings {
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
 	}
-	.standings li,
-	.rankings li {
+	.standings li {
 		display: grid;
-		grid-template-columns: 1.5rem 1fr auto auto;
+		grid-template-columns: 1.1rem 2rem 1fr auto;
 		align-items: center;
 		gap: 0.6rem;
-		border-radius: 0.7rem;
+		border: 1px solid transparent;
+		border-radius: 0.9rem;
 		background: rgb(255 255 255 / 4%);
-		padding: 0.55rem 0.7rem;
+		padding: 0.55rem 0.75rem;
 		font-size: 0.9rem;
 	}
-	.rankings li {
-		grid-template-columns: 1.5rem 1fr auto;
+	.standings li.me {
+		border-color: rgb(240 209 140 / 22%);
+		background: rgb(240 209 140 / 7%);
+	}
+	.standings li.leader {
+		border-color: rgb(240 209 140 / 45%);
+		background: linear-gradient(100deg, rgb(240 200 110 / 18%), rgb(240 200 110 / 4%));
+	}
+	.standings li.leader .place {
+		color: #f4d68c;
+	}
+	.initials {
+		display: grid;
+		width: 2rem;
+		height: 2rem;
+		place-items: center;
+		border-radius: 999px;
+		background: rgb(255 255 255 / 8%);
+		color: #f1ebdc;
+		font-size: 0.72rem;
+		font-weight: 750;
+	}
+	.leader .initials {
+		background: linear-gradient(150deg, #f7df9d, #c08a34);
+		color: #24180a;
+	}
+	.standings .who {
+		flex-direction: row;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.standings .who small {
+		border-radius: 999px;
+		background: rgb(240 209 140 / 14%);
+		padding: 0 0.4rem;
+		color: #f4d68c;
+		font-size: 0.65rem;
+		font-weight: 650;
+	}
+	.score {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		line-height: 1.2;
+	}
+	.score .delta {
+		min-width: 0;
+		font-size: 0.75rem;
 	}
 	.place {
 		color: rgb(241 235 220 / 45%);
@@ -1783,26 +1929,123 @@
 	.delta.down {
 		color: #ee9a8c;
 	}
-	.mini-cards {
+	/* One card per hand: the result on top, then a timeline of what happened. */
+	.hand-card {
+		margin-bottom: 0.55rem;
+		border: 1px solid rgb(255 255 255 / 6%);
+		border-radius: 0.9rem;
+		background: rgb(255 255 255 / 3%);
+		padding: 0.6rem 0.75rem 0.65rem;
+	}
+	.hand-card.current {
+		border-color: rgb(127 212 155 / 30%);
+	}
+	.hand-card header {
 		display: flex;
-		gap: 0.2rem;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.2rem 0.6rem;
+		margin-bottom: 0.4rem;
 	}
-	.mini-cards span {
-		border-radius: 0.3rem;
-		background: #f6f0e2;
-		padding: 0.1rem 0.25rem;
-		color: #1a1a1a;
+	.hand-card header strong {
+		font-size: 0.88rem;
+	}
+	.hand-card.current header strong {
+		color: #8fd6a5;
+	}
+	.hand-win {
+		color: #f7dc95;
+	}
+	.hand-card header small {
+		color: rgb(241 235 220 / 45%);
 		font-size: 0.72rem;
-		font-weight: 700;
-	}
-	.mini-cards span.red {
-		color: #c7261b;
 	}
 	.log {
 		display: flex;
 		flex-direction: column;
-		gap: 0.3rem;
-		font-size: 0.85rem;
+		gap: 0.15rem;
+		border-left: 1px solid rgb(255 255 255 / 10%);
+		margin-left: 0.25rem;
+		padding-left: 0.75rem;
+		color: rgb(241 235 220 / 80%);
+		font-size: 0.82rem;
+	}
+	.log li {
+		position: relative;
+	}
+	/* A dot on the timeline, coloured by what happened. */
+	.log li::before {
+		position: absolute;
+		top: 0.5em;
+		left: calc(-0.75rem - 3.5px);
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: rgb(241 235 220 / 35%);
+		content: '';
+	}
+	.log li.k-raise::before {
+		background: #f4d68c;
+	}
+	.log li.k-pack::before {
+		background: #ee9a8c;
+	}
+	.log li.k-see::before {
+		background: #b5dcff;
+	}
+	.log li.k-show::before {
+		background: #f7dc95;
+	}
+	/* Hand rankings: each kind with its strongest and weakest hand, as real cards. */
+	.ranks {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.ranks li {
+		border-radius: 0.9rem;
+		background:
+			radial-gradient(ellipse at 50% 0%, rgb(46 125 80 / 30%), transparent 75%),
+			rgb(255 255 255 / 3%);
+		padding: 0.6rem 0.75rem 0.75rem;
+	}
+	.rank-title {
+		margin-bottom: 0.45rem;
+		font-size: 0.9rem;
+		font-weight: 700;
+	}
+	.rank-title span {
+		color: #f4d68c;
+	}
+	.rank-title small {
+		margin-left: 0.3rem;
+		color: rgb(241 235 220 / 50%);
+		font-size: 0.75rem;
+		font-weight: 500;
+	}
+	.rank-row {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+	.rank-gap {
+		flex: 1;
+		border-top: 2px dashed rgb(241 235 220 / 25%);
+	}
+	.fan {
+		display: flex;
+		flex-shrink: 0;
+	}
+	.fan-card {
+		display: block;
+		width: 3.3rem;
+		height: 4.7rem;
+		border-radius: 0.3rem;
+		box-shadow: 0 2px 6px rgb(0 0 0 / 40%);
+	}
+	.fan-card + .fan-card {
+		margin-left: -1.1rem;
 	}
 	.howto {
 		display: flex;

@@ -38,3 +38,34 @@ export const HAND_RANKINGS = [
 	{ name: 'Pair', hint: 'Two of a kind', cards: ['9♠', '9♥', '3♣'] },
 	{ name: 'High card', hint: 'Nothing else', cards: ['K♠', '8♦', '4♣'] }
 ] as const;
+
+type ExampleCard = { rank: number; suit: 'spades' | 'hearts' | 'diamonds' | 'clubs' };
+const c = (rank: number, suit: ExampleCard['suit']): ExampleCard => ({ rank, suit });
+
+/** The strongest and the weakest hand of each kind, for the rankings drawer. A is 14. */
+export const RANKING_EXAMPLES: Record<string, { best: ExampleCard[]; worst: ExampleCard[] }> = {
+	Trail: {
+		best: [c(14, 'hearts'), c(14, 'spades'), c(14, 'clubs')],
+		worst: [c(2, 'diamonds'), c(2, 'hearts'), c(2, 'spades')]
+	},
+	'Pure sequence': {
+		best: [c(14, 'diamonds'), c(13, 'diamonds'), c(12, 'diamonds')],
+		worst: [c(4, 'diamonds'), c(3, 'diamonds'), c(2, 'diamonds')]
+	},
+	Sequence: {
+		best: [c(14, 'spades'), c(13, 'hearts'), c(12, 'diamonds')],
+		worst: [c(4, 'clubs'), c(3, 'spades'), c(2, 'clubs')]
+	},
+	Colour: {
+		best: [c(14, 'diamonds'), c(13, 'diamonds'), c(11, 'diamonds')],
+		worst: [c(5, 'diamonds'), c(3, 'diamonds'), c(2, 'diamonds')]
+	},
+	Pair: {
+		best: [c(14, 'clubs'), c(14, 'diamonds'), c(13, 'spades')],
+		worst: [c(2, 'hearts'), c(2, 'spades'), c(3, 'spades')]
+	},
+	'High card': {
+		best: [c(14, 'spades'), c(13, 'spades'), c(11, 'clubs')],
+		worst: [c(5, 'hearts'), c(3, 'diamonds'), c(2, 'spades')]
+	}
+};

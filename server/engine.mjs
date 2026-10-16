@@ -295,6 +295,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			room.handId = ctx.handId;
 			room.initiator = id;
 			room.result = null;
+			delete room.shownIds;
 			room.isStarted = true;
 			room.gameShow = false;
 			room.pot = 0;
@@ -427,7 +428,17 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			if (!playing(room)) player.seatNumber = null;
 			if (room.hostId === id)
 				room.hostId = seated(room).find((p) => !p.departed && !p.bot)?.id ?? null;
+		} else if (
+			(action === 'see' || action === 'reveal') &&
+			player.cards.length > 0 &&
+			(player.isPacked || !playing(room))
+		) {
+			// Out of the hand (packed, or the hand is over): you may still look at your own
+			// cards, and choose to show them to the whole table.
+			player.isBlind = false;
+			if (action === 'reveal') room.shownIds = [...new Set([...(room.shownIds ?? []), id])];
 		} else {
+			require(action !== 'reveal', 'You can show your cards after you pack or the hand ends');
 			require(playing(room), 'No active hand');
 			require(!player.isPacked && player.cards.length > 0, 'You are not active in this hand');
 			if (action === 'see') {
@@ -505,7 +516,8 @@ export function projection(room, id, connected) {
 		player.seatNumber !== null &&
 		!player.departed, 'Not a room member', 'NOT_MEMBER');
 	const list = seated(room);
-	const reveal = new Set(room.result?.revealedPlayerIds || []);
+	// Cards everyone may see: hands compared at a Show, and hands a player chose to show.
+	const reveal = new Set([...(room.result?.revealedPlayerIds || []), ...(room.shownIds || [])]);
 	const myTurn = playing(room) && room.currentPlayerId === id && !player.isPacked;
 	const variant = getVariant(room.rulesVersion);
 	const explain = room.boot !== undefined;
@@ -597,6 +609,13 @@ export function projection(room, id, connected) {
 			start: id === room.hostId && !playing(room),
 			...(ctxReadySupported(room) ? { ready: !playing(room) || room.autoReady === true } : {}),
 			see: playing(room) && !player.isPacked && player.isBlind && variant.allowSee !== false,
+			// Out of the hand: peek at your own cards, or show them to everyone.
+			...(explain && player.cards.length && (player.isPacked || !playing(room))
+				? {
+						peek: player.isBlind,
+						reveal: !(room.shownIds ?? []).includes(id) && !reveal.has(id)
+					}
+				: {}),
 			...(explain
 				? {
 						discard: playing(room) && !player.isPacked && mustDiscard(variant, player),

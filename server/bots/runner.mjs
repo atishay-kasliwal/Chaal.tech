@@ -25,8 +25,12 @@ export function pickBotName(room, random) {
 }
 
 /** Human-feeling pause before a bot acts. Looking or discarding is quicker than betting. */
+/**
+ * How long a bot "thinks". The table should feel unhurried: at least 2 seconds before the turn
+ * passes to a bot's move, and at least 1 second between a bot looking at its cards and betting.
+ */
 export function botDelay(random, quick = false) {
-	return quick ? 700 + Math.floor(random() * 700) : 1500 + Math.floor(random() * 2200);
+	return quick ? 1000 + Math.floor(random() * 700) : 2000 + Math.floor(random() * 2000);
 }
 
 /** True when at least one person (not a bot) is connected, so bots are worth running. */

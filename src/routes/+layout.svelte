@@ -17,6 +17,7 @@
 
 <nav
 	class="navbar bg-base-100 relative z-20 container mx-auto"
+	class:club-route={page.route.id === '/club'}
 	class:room-route={page.route.id === '/[roomName]'}
 >
 	<div class="navbar-start min-w-0 flex-1">
@@ -37,7 +38,7 @@
 		{#if club.member?.role === 'owner' && page.route.id !== '/admin'}
 			<a href="/admin" class="btn btn-ghost rounded-full">Admin</a>
 		{/if}
-		{#if page.route.id !== '/create-room' && page.route.id !== '/'}
+		{#if page.route.id !== '/create-room' && page.route.id !== '/' && page.route.id !== '/club'}
 			<!-- Opens the pop-up; the link still works without JavaScript. -->
 			<a
 				href="/create-room"
@@ -62,6 +63,7 @@
 
 <main
 	class="container mx-auto min-h-[calc(100vh-4rem)] px-2"
+	class:club-main={page.route.id === '/club'}
 	class:room-main={page.route.id === '/[roomName]'}
 >
 	<div class="relative grid w-full">
@@ -82,6 +84,21 @@
 <ProfilePanel />
 
 <style>
+	.club-route {
+		max-width: none;
+		height: 72px;
+		min-height: 72px;
+		padding-inline: max(1rem, calc((100vw - 1240px) / 2));
+		background: #07140e;
+		border-bottom: 1px solid #e7c78418;
+	}
+	.club-main {
+		max-width: none;
+		width: 100%;
+		min-height: 0;
+		padding: 0;
+	}
+
 	.brand-logo {
 		display: block;
 		width: 176px;

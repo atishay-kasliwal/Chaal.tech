@@ -29,7 +29,9 @@
 		onsitout,
 		onbalancehidden,
 		onaskchips,
-		oncancelask
+		oncancelask,
+		onpeek,
+		onshowcards
 	}: {
 		me: User;
 		room: RoomData;
@@ -54,6 +56,10 @@
 		onbalancehidden: (hidden: boolean) => void;
 		onaskchips: (to: string, amount: number) => void;
 		oncancelask: () => void;
+		/** Look at your own cards after packing or after the hand. */
+		onpeek: () => void;
+		/** Show your cards to the whole table after packing or after the hand. */
+		onshowcards: () => void;
 	} = $props();
 
 	const legal = $derived(room.legalActions);
@@ -160,8 +166,23 @@
 							>Throw this card away</button
 						>
 					{/if}
-				{:else if me.isPacked}
-					You packed this hand
+				{:else if me.isPacked && !legal.peek && !legal.reveal}
+					You packed this hand{#if handLabel}&nbsp;· {handLabel}{/if}
+				{:else if legal.peek || legal.reveal}
+					<span class="after-hand">
+						{#if me.isPacked}<span>You packed</span>{:else if handLabel}<span>{handLabel}</span
+							>{/if}
+						{#if legal.peek}
+							<button class="after-btn" onclick={onpeek} disabled={!connected}
+								><Eye size={14} /> See my cards</button
+							>
+						{/if}
+						{#if legal.reveal}
+							<button class="after-btn gold" onclick={onshowcards} disabled={!connected}
+								>Show to table</button
+							>
+						{/if}
+					</span>
 				{:else if revealed && handLabel}
 					{handLabel}
 				{:else if playing}
@@ -455,6 +476,35 @@
 		font-size: 0.9rem;
 		font-weight: 750;
 		cursor: pointer;
+	}
+	/* After packing or after the hand: look at your cards, or show them to everyone. */
+	.after-hand {
+		display: inline-flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+	}
+	.after-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		border: 1px solid rgb(240 209 140 / 35%);
+		border-radius: 999px;
+		padding: 0.25rem 0.8rem;
+		color: #f4d68c;
+		font-size: 0.82rem;
+		font-weight: 650;
+		cursor: pointer;
+	}
+	.after-btn.gold {
+		border-color: transparent;
+		background: #f4d68c;
+		color: #24180a;
+	}
+	.after-btn:disabled {
+		opacity: 0.5;
+		cursor: default;
 	}
 	.hand-name {
 		min-height: 1.4rem;

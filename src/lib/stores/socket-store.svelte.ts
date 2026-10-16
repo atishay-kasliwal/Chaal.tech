@@ -17,6 +17,8 @@ class SocketStore {
 	playerId = $state('');
 	roomData = $state<RoomData | null>(null);
 	error = $state('');
+	/** Set when the server closed this table (nobody else there for 5 minutes). */
+	tableClosed = $state('');
 	private roomName = '';
 	socket: GameSocket;
 
@@ -67,6 +69,11 @@ class SocketStore {
 		this.socket.on('connect_error', (error: unknown) => {
 			this.error = error instanceof Error ? error.message : 'Game connection failed';
 		});
+		this.socket.on('tableClosed', (value: unknown) => {
+			const text = (value as { text?: string } | undefined)?.text;
+			this.tableClosed = text || 'This table closed.';
+			this.connected = false;
+		});
 		this.socket.on('sessionReplaced', () => {
 			this.error = 'You continued in another tab or device. Reconnect here to take over.';
 			this.connected = false;
@@ -101,6 +108,7 @@ class SocketStore {
 
 	enterRoom(name: string) {
 		if (this.roomName !== name) this.roomData = null;
+		this.tableClosed = '';
 		this.roomName = name;
 		if (!serverURL) {
 			this.error = serverConfigError;

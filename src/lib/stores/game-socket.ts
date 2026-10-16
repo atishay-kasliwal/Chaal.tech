@@ -180,6 +180,8 @@ export class GameSocket {
 				this.connected = false;
 				this.rejectPending(new Error('Game connection closed'));
 				if (event.code === 4001) this.dispatch('sessionReplaced');
+				// 4004: the table closed itself (nobody else there); it no longer exists, so stay off.
+				if (event.code === 4004) this.intentionalClose = true;
 				// 4003: the credential lapsed (e.g. the laptop slept). Reconnect with a fresh one.
 				if (event.code === 4003) this.session = null;
 				this.dispatch('disconnect');

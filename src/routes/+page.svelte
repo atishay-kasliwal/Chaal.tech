@@ -1,13 +1,21 @@
 <script lang="ts">
 	import { EyeOff, Eye, Swords, Sparkles, Coins } from '@lucide/svelte';
 	import PlayingCard from '#lib/components/PlayingCard.svelte';
-	import { fly } from 'svelte/transition';
+	import { fade, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import { onMount } from 'svelte';
 	import { openStart } from '#lib/start/start-modal.svelte.js';
 
 	let mounted = $state(false);
 	let activeMechanic = $state(-1);
+	let activeHand = $state(0);
+	let rankingsPaused = $state(false);
+	let rankingsHovered = $state(false);
+	let rankingsFocused = $state(false);
+
+	function changeHand(offset: number) {
+		activeHand = (activeHand + offset + hands.length) % hands.length;
+	}
 
 	function activateMechanic(index: number, event: KeyboardEvent) {
 		if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -21,7 +29,14 @@
 			activeMechanic = (activeMechanic + 1) % 4; // 0, 1, 2, and 3 (none)
 		}, 3000);
 
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+		rankingsPaused = reducedMotion.matches;
+		const rankingsInterval = setInterval(() => {
+			if (!rankingsPaused && !rankingsHovered && !rankingsFocused) changeHand(1);
+		}, 5000);
+
 		return () => {
+			clearInterval(rankingsInterval);
 			clearInterval(interval);
 		};
 	});
@@ -93,9 +108,7 @@
 <article class="bg-base-200/50 min-h-screen p-4 md:p-8">
 	<div class="mx-auto max-w-6xl space-y-8">
 		<!-- Hero Section -->
-		<div
-			class="landing-hero relative overflow-hidden rounded-3xl shadow-2xl"
-		>
+		<div class="landing-hero relative overflow-hidden rounded-3xl shadow-2xl">
 			<div
 				class="relative z-10 flex flex-col items-center p-8 text-center md:flex-row md:p-12 md:text-left"
 			>
@@ -111,13 +124,8 @@
 					<p class="mb-3 text-lg text-white/90 md:text-xl">
 						Play Teen Patti with friends on video. Cards, chips, one table.
 					</p>
-					<p class="mb-7 text-base text-white/80 md:text-lg">
-						No download or sign-up.
-					</p>
+					<p class="mb-7 text-base text-white/80 md:text-lg">No download or sign-up.</p>
 					<div class="flex flex-wrap justify-center gap-3 md:justify-start">
-						<button class="hero-cta gold" onclick={openStart} data-testid="hero-start">
-							♠ Start a table
-						</button>
 						<button class="hero-cta" onclick={openStart}>🤖 Play vs bots</button>
 					</div>
 					<p class="mt-4 text-sm text-white/70">
@@ -171,15 +179,85 @@
 			</div>
 		</div>
 
-		<!-- Three taps -->
-		<section class="grid gap-4 md:grid-cols-3" aria-label="How to start">
-			{#each [{ n: 1, title: 'Type your name', text: 'Once. We remember it after that.' }, { n: 2, title: 'Tap “Start a table”', text: 'Boot ₹10, pot limit set — sensible defaults, change them if you like.' }, { n: 3, title: 'Send the link on WhatsApp', text: 'Friends tap it and they’re seated. Cameras on, bakwaas begins.' }] as step (step.n)}
-				<div class="step-card">
-					<span class="step-n">{step.n}</span>
-					<h3>{step.title}</h3>
-					<p>{step.text}</p>
+		<section
+			class="card bg-base-100 shadow-xl"
+			aria-label="Hand rankings"
+			aria-roledescription="carousel"
+			onmouseenter={() => (rankingsHovered = true)}
+			onmouseleave={() => (rankingsHovered = false)}
+			onfocusin={() => (rankingsFocused = true)}
+			onfocusout={(event) => {
+				if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+					rankingsFocused = false;
+			}}
+		>
+			<div class="card-body gap-5">
+				<div class="flex flex-wrap items-center justify-between gap-3">
+					<div>
+						<h2 class="text-primary text-2xl font-bold sm:text-3xl">Hand Rankings</h2>
+						<p class="text-base-content/70 mt-2 text-sm">
+							Best hand: Trail (Three of a kind)<br />Highest sequence: A-K-Q followed by A-2-3
+						</p>
+					</div>
+					<button
+						class="btn btn-ghost btn-sm"
+						onclick={() => (rankingsPaused = !rankingsPaused)}
+						aria-label={rankingsPaused
+							? 'Resume hand ranking rotation'
+							: 'Pause hand ranking rotation'}>{rankingsPaused ? 'Resume' : 'Pause'}</button
+					>
 				</div>
-			{/each}
+				<div
+					class="grid"
+					aria-live={rankingsPaused || rankingsFocused ? 'polite' : 'off'}
+					aria-atomic="true"
+				>
+					{#key activeHand}
+						<div
+							class="ranking-slide"
+							role="group"
+							aria-roledescription="slide"
+							aria-label="{activeHand + 1} of {hands.length}"
+							in:fade={{ duration: 180 }}
+							out:fade={{ duration: 180 }}
+						>
+							<div>
+								<p class="text-primary mb-2 text-sm font-bold">
+									{hands[activeHand].rank} / {hands.length}
+								</p>
+								<h3 class="text-2xl font-bold">{hands[activeHand].name}</h3>
+								<p class="text-base-content/70 mt-2">{hands[activeHand].desc}</p>
+							</div>
+							<div class="flex justify-center gap-2 sm:gap-3">
+								{#each hands[activeHand].cards as card (`${card.r}-${card.s}`)}
+									<PlayingCard rank={card.r} suit={card.s} class="!h-28 !w-20 sm:!h-36 sm:!w-24" />
+								{/each}
+							</div>
+						</div>
+					{/key}
+				</div>
+				<div class="flex items-center justify-center gap-3">
+					<button
+						class="btn btn-circle btn-ghost btn-sm"
+						aria-label="Previous hand"
+						onclick={() => changeHand(-1)}>←</button
+					>
+					{#each hands as hand, index (hand.rank)}
+						<button
+							class="ranking-dot"
+							class:selected={index === activeHand}
+							aria-label="Show {hand.name}"
+							aria-current={index === activeHand ? 'true' : undefined}
+							onclick={() => (activeHand = index)}
+						></button>
+					{/each}
+					<button
+						class="btn btn-circle btn-ghost btn-sm"
+						aria-label="Next hand"
+						onclick={() => changeHand(1)}>→</button
+					>
+				</div>
+			</div>
 		</section>
 
 		<!-- How to Play Mechanics -->
@@ -477,58 +555,6 @@
 			</div>
 		</div>
 
-		<div class="card bg-base-100 shadow-xl">
-			<div class="card-body">
-				<h2 class="card-title text-primary text-3xl font-bold">Hand Rankings</h2>
-				<p class="text-base-content/80 text-lg">
-					Best hand: Trail (Three of a kind)<br />
-					Highest sequence: A-K-Q followed by A-2-3
-				</p>
-
-				<div class="divider">Visual Guide</div>
-
-				<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{#each hands as hand (hand.rank)}
-						<div
-							class="group border-base-300 bg-base-200/30 hover:bg-base-200 relative rounded-xl border p-6 transition-all hover:shadow-lg"
-						>
-							<div
-								class="bg-primary text-primary-content absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full font-bold shadow-sm"
-							>
-								{hand.rank}
-							</div>
-							<h3 class="text-base-content mb-1 text-xl font-bold">{hand.name}</h3>
-							<p class="text-base-content/70 mb-6 h-10 text-sm">{hand.desc}</p>
-
-							<div class="flex justify-center pt-2 pb-4">
-								<div class="relative flex h-32 w-full justify-center">
-									{#each hand.cards as card, j (`${card.r}-${card.s}`)}
-										<div
-											class="absolute origin-bottom drop-shadow-lg transition-all duration-500 ease-out
-											{j === 0
-												? '-translate-x-6 translate-y-2 -rotate-12 group-hover:-translate-x-10 group-hover:-translate-y-2 group-hover:-rotate-[25deg] group-focus:-translate-x-10 group-focus:-translate-y-2 group-focus:-rotate-[25deg]'
-												: ''}
-											{j === 1 ? 'z-10 group-hover:-translate-y-6 group-focus:-translate-y-6' : ''}
-											{j === 2
-												? 'z-20 translate-x-6 translate-y-2 rotate-12 group-hover:translate-x-10 group-hover:-translate-y-2 group-hover:rotate-[25deg] group-focus:translate-x-10 group-focus:-translate-y-2 group-focus:rotate-[25deg]'
-												: ''}
-										"
-										>
-											<PlayingCard
-												rank={card.r}
-												suit={card.s}
-												class="!h-24 !w-16 sm:!h-28 sm:!w-20"
-											/>
-										</div>
-									{/each}
-								</div>
-							</div>
-						</div>
-					{/each}
-				</div>
-			</div>
-		</div>
-
 		<footer class="landing-footer">
 			<p>Cards out. One more hand. ♠</p>
 			<button class="hero-cta gold small" onclick={openStart}>Deal me in</button>
@@ -548,7 +574,12 @@
 	@media (max-width: 767px) {
 		.landing-hero {
 			background-image:
-				linear-gradient(180deg, rgb(4 12 8 / 72%) 0%, rgb(4 12 8 / 72%) 55%, rgb(4 12 8 / 86%) 100%),
+				linear-gradient(
+					180deg,
+					rgb(4 12 8 / 72%) 0%,
+					rgb(4 12 8 / 72%) 55%,
+					rgb(4 12 8 / 86%) 100%
+				),
 				url('/email/invite-table-phone.jpg');
 			background-position: center;
 		}
@@ -581,31 +612,40 @@
 		padding: 0.6rem 1.2rem;
 		font-size: 0.95rem;
 	}
-	.step-card {
-		position: relative;
-		border-radius: 1.2rem;
-		background: var(--color-base-100);
-		padding: 1.4rem 1.3rem 1.2rem;
-		box-shadow: 0 0.6rem 1.6rem rgb(0 0 0 / 25%);
-	}
-	.step-n {
+	.ranking-slide {
+		grid-area: 1 / 1;
 		display: grid;
-		width: 2.2rem;
-		height: 2.2rem;
-		margin-bottom: 0.6rem;
-		place-items: center;
+		align-items: center;
+		gap: 1.5rem;
+		border: 1px solid var(--color-base-300);
+		border-radius: 1rem;
+		padding: 1.5rem 0.75rem;
+		text-align: center;
+	}
+	.ranking-dot {
+		width: 0.75rem;
+		height: 0.75rem;
 		border-radius: 999px;
+		background: var(--color-base-content);
+		opacity: 0.3;
+		cursor: pointer;
+	}
+	.ranking-dot.selected {
 		background: var(--color-primary);
-		color: var(--color-primary-content);
-		font-weight: 800;
+		opacity: 1;
 	}
-	.step-card h3 {
-		font-size: 1.15rem;
-		font-weight: 800;
+	.ranking-dot:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 4px;
 	}
-	.step-card p {
-		color: rgb(241 235 220 / 70%);
+	@media (min-width: 640px) {
+		.ranking-slide {
+			grid-template-columns: 1fr 1fr;
+			padding: 2rem;
+			text-align: left;
+		}
 	}
+
 	.landing-footer {
 		display: flex;
 		flex-direction: column;

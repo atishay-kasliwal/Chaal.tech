@@ -221,6 +221,13 @@
 		});
 	});
 
+	// The server closes a table left with one or no players for 5 minutes.
+	$effect(() => {
+		if (!socket.tableClosed) return;
+		displayToast(socket.tableClosed, 'info');
+		void goto('/create-room', { replaceState: true });
+	});
+
 	/** Practice tables from the create page: seat the requested bots, then deal once. */
 	let practiceDone = false;
 	$effect(() => {
@@ -291,6 +298,9 @@
 			bind:autoDeal
 			send={sendAction}
 			ondeal={dealTeenPatti}
+			nextVariant={nextVariantMode === 'random'
+				? 'Random'
+				: (VARIANT_BY_VERSION[nextRulesVersion]?.selectionLabel.split(' — ')[0] ?? 'Classic')}
 			oninvite={copyInviteLink}
 			onleave={leaveRoomHandler}
 			emailInvites={sendEmailInvites}

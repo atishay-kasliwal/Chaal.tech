@@ -1,3 +1,4 @@
+import { clubHistory } from '../club/history.mjs';
 import { roomName } from '../engine.mjs';
 import {
 	issueClubToken,
@@ -281,6 +282,18 @@ export default {
 			} catch (error) {
 				return clubFailure(error, origin, env);
 			}
+		}
+		if (url.pathname === '/club/history' && request.method === 'GET') {
+			const player = await authenticatedPlayer(request, env);
+			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
+			const period = url.searchParams.get('period') ?? 'all';
+			const page = Number(url.searchParams.get('page') ?? 0);
+			if (!['all', 'month', 'today'].includes(period) || !Number.isSafeInteger(page) || page < 0 || page > 10000)
+				return response({ error: 'Invalid history filter' }, 400, origin, env);
+			try {
+				const history = await withClubDatabase(env, (db) => clubHistory(db, { period, page, playerId: player.playerId }));
+				return response({ ok: true, ...history }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
 		}
 		if (url.pathname === '/club' && request.method === 'GET') {
 			const player = await authenticatedPlayer(request, env);

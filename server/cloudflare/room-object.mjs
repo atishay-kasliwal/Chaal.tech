@@ -18,6 +18,7 @@ import { secureRandomInt, toHex } from '../random.mjs';
 import { inviteEmails, planInvites, inviteMessage, sendWithResend } from './invites.mjs';
 import { verifyGameToken } from './security.mjs';
 import { clubDirectory } from './club-directory.mjs';
+import { trackClubHand, archiveHands } from '../club/history.mjs';
 import { withClubDatabase, invitableEmails, emailsForMembers } from '../club/members.mjs';
 import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
 
@@ -27,12 +28,14 @@ const secureRandom = () => secureRandomInt(0x1_0000_0000) / 0x1_0000_0000;
 const MAX_PLAYERS = 6;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SMALL_ROOM_RETENTION_MS = 30 * DAY_MS;
+/** A table with one or no players (bots count) for this long closes itself. */
+const IDLE_CLOSE_MS = 5 * 60 * 1000;
 const ROOM_RETENTION_MS = 365 * DAY_MS;
 const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
 	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
 	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit',
-	'setBalanceHidden', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
+	'setBalanceHidden', 'showCards', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
 ]);
 
 const hash = async (value) => {
@@ -83,6 +86,11 @@ export class RoomDurableObject {
 		this.ctx = ctx;
 		this.env = env;
 		this.sql = ctx.storage.sql;
+		this.ensureSchema();
+	}
+
+	/** Create the room's tables. Also run after deleteAll, so a closed room answers "not found". */
+	ensureSchema() {
 		this.sql.exec(`
 			CREATE TABLE IF NOT EXISTS room_state (
 				name TEXT PRIMARY KEY,
@@ -106,6 +114,7 @@ export class RoomDurableObject {
 				entries TEXT NOT NULL,
 				created_at INTEGER NOT NULL
 			);
+			CREATE TABLE IF NOT EXISTS history_outbox (id TEXT PRIMARY KEY, payload TEXT NOT NULL);
 			CREATE TABLE IF NOT EXISTS room_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 			CREATE INDEX IF NOT EXISTS receipts_created_at_idx ON receipts(created_at);
 			CREATE INDEX IF NOT EXISTS ledger_created_at_idx ON ledger(created_at);
@@ -137,6 +146,10 @@ export class RoomDurableObject {
 			) {
 				throw new GameError('Room changed before commit', 'PERSISTENCE_CONFLICT');
 			}
+			const tracked = trackClubHand(this.getMeta('clubHand'), current?.snapshot, room, movement, now);
+			if (tracked.progress) this.setMeta('clubHand', tracked.progress);
+			else this.deleteMeta('clubHand');
+			if (tracked.completed) this.sql.exec('INSERT OR IGNORE INTO history_outbox(id,payload) VALUES (?,?)', tracked.completed._id, JSON.stringify(tracked.completed));
 			this.sql.exec(
 				'INSERT INTO room_state(name,snapshot,updated_at) VALUES (?,?,?) ON CONFLICT(name) DO UPDATE SET snapshot=excluded.snapshot, updated_at=excluded.updated_at',
 				room.name,
@@ -162,6 +175,25 @@ export class RoomDurableObject {
 					now
 				);
 		});
+		if (this.hasPendingHistory()) this.ctx.waitUntil(this.flushHistory());
+	}
+
+	async flushHistory() {
+		if (!this.env.MONGODB_URI) return;
+		if (this.historyFlush) return this.historyFlush;
+		this.historyFlush = (async () => {
+			const pending = this.sql.exec('SELECT id,payload FROM history_outbox LIMIT 20').toArray();
+			if (!pending.length) return;
+			try {
+				await withClubDatabase(this.env, (db) => archiveHands(db, pending.map((row) => JSON.parse(row.payload))));
+				for (const row of pending) this.sql.exec('DELETE FROM history_outbox WHERE id=?', row.id);
+			} catch { /* Durable outbox retries on the next alarm. */ }
+		})();
+		try { await this.historyFlush; } finally { this.historyFlush = null; }
+	}
+
+	hasPendingHistory() {
+		return !!first(this.sql.exec('SELECT id FROM history_outbox LIMIT 1'));
 	}
 
 	connectedPlayers() {
@@ -463,6 +495,10 @@ export class RoomDurableObject {
 				action = 'setBalanceHidden';
 				payload = { hidden: args[0] };
 				text = null;
+			} else if (event === 'showCards') {
+				action = 'reveal';
+				payload = {};
+				text = null;
 			} else if (event === 'requestChips') {
 				action = 'requestChips';
 				payload = { to: args[0], amount: args[1] };
@@ -659,6 +695,34 @@ export class RoomDurableObject {
 		try { socket.close(1011, 'Room service error'); } catch { /* Already closed. */ }
 	}
 
+	idleCloseMs() {
+		const value = Number(this.env.IDLE_CLOSE_MS ?? IDLE_CLOSE_MS);
+		return Number.isSafeInteger(value) && value >= 1000 ? value : IDLE_CLOSE_MS;
+	}
+
+	/** People at the table right now: connected players plus seated bots (a solo game vs bots stays open). */
+	peopleAtTable(room) {
+		const bots = room.players.filter((player) => player.bot && player.seatNumber !== null && !player.departed).length;
+		return this.connectedRoom(room.name).size + bots;
+	}
+
+	/** Tell everyone still here, then close the table for good. */
+	async closeTable(room, reason) {
+		await this.flushHistory();
+		if (this.hasPendingHistory()) {
+			await this.ctx.storage.setAlarm(Date.now() + 60_000);
+			return;
+		}
+		for (const socket of this.ctx.getWebSockets()) {
+			if (socket.deserializeAttachment()?.roomName !== room.name) continue;
+			this.sendEvent(socket, 'tableClosed', { text: reason });
+			try { socket.close(4004, 'Table closed'); } catch { /* Already closed. */ }
+		}
+		this.reportToLobby(room, true);
+		await this.ctx.storage.deleteAll();
+		this.ensureSchema();
+	}
+
 	turnMs() {
 		const value = Number(this.env.TURN_TIMEOUT_MS ?? 60000);
 		return Number.isSafeInteger(value) && value >= 100 && value <= 3600000 ? value : 60000;
@@ -744,13 +808,20 @@ export class RoomDurableObject {
 		}
 		const room = stored.snapshot;
 		const deadlines = [];
+		if (this.hasPendingHistory()) deadlines.push(Date.now() + 60_000);
 		const botTurn = this.planBot(room);
 		if (botTurn) deadlines.push(botTurn.at);
 		if (playing(room) && Number.isSafeInteger(room.deadline)) deadlines.push(room.deadline);
 		const hostRecovery = this.getMeta('hostRecovery');
 		if (hostRecovery?.at) deadlines.push(hostRecovery.at);
+		// Start (or stop) the idle clock: one or no players for idleCloseMs() closes the table.
+		if (this.peopleAtTable(room) <= 1) {
+			const since = this.getMeta('lonelySince') ?? Date.now();
+			if (!this.getMeta('lonelySince')) this.setMeta('lonelySince', since);
+			deadlines.push(since + this.idleCloseMs());
+		} else if (this.getMeta('lonelySince')) this.deleteMeta('lonelySince');
 		const connected = this.connectedRoom(room.name);
-		if (connected.size === 0 && (!room.isStarted || room.gameShow)) {
+		if (connected.size === 0 && (!room.isStarted || room.gameShow) && !this.hasPendingHistory()) {
 			const joiners = new Set(room.players.map((player) => player.id)).size;
 			deadlines.push(stored.updatedAt + (joiners < 3 ? SMALL_ROOM_RETENTION_MS : ROOM_RETENTION_MS));
 		}
@@ -759,6 +830,7 @@ export class RoomDurableObject {
 	}
 
 	async alarm() {
+		await this.flushHistory();
 		const stored = this.room();
 		if (!stored) return;
 		let room = stored.snapshot;
@@ -816,13 +888,21 @@ export class RoomDurableObject {
 			this.deleteMeta('hostRecovery');
 		}
 
+		const lonelySince = this.getMeta('lonelySince');
+		const current = this.room();
+		if (current && lonelySince && lonelySince + this.idleCloseMs() <= now && this.peopleAtTable(current.snapshot) <= 1) {
+			await this.closeTable(current.snapshot, 'This table closed: nobody else was here for 5 minutes.');
+			return;
+		}
+
 		const latest = this.room();
 		if (latest && this.connectedRoom(latest.snapshot.name).size === 0 && (!latest.snapshot.isStarted || latest.snapshot.gameShow)) {
 			const joiners = new Set(latest.snapshot.players.map((player) => player.id)).size;
 			const retentionMs = joiners < 3 ? SMALL_ROOM_RETENTION_MS : ROOM_RETENTION_MS;
-			if (latest.updatedAt + retentionMs <= now) {
+			if (latest.updatedAt + retentionMs <= now && !this.hasPendingHistory()) {
 				this.reportToLobby(latest.snapshot, true);
 				await this.ctx.storage.deleteAll();
+		this.ensureSchema();
 				return;
 			}
 		}
