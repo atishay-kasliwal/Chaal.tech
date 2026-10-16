@@ -16,7 +16,10 @@
 		Sparkles,
 		Mail,
 		Share2,
-		Bot
+		Bot,
+		RotateCcw,
+		Shuffle,
+		LayoutGrid
 	} from '@lucide/svelte';
 	import type { MediaState } from '#lib/media/controller.js';
 	import { VARIANT_BY_VERSION, VARIANT_CATALOG, type RulesVersion } from '#lib/variant-catalog.js';
@@ -210,9 +213,24 @@
 					? nameOfVariant(chooser.choice)
 					: nameOfVariant(room.rulesVersion)
 	);
-	let changingGame = $state(false);
+	let pickTotal = $state(60);
+	let pickHand: string | null = null;
+	$effect(() => {
+		const hand = chooser?.handId ?? null;
+		const left = chooser ? chooser.deadline - Date.now() : 0;
+		untrack(() => {
+			if (hand === pickHand) return;
+			pickHand = hand;
+			if (panel === 'pick') panel = null;
+			if (hand) pickTotal = Math.max(1, Math.round(left / 1000));
+		});
+	});
+	const pickFraction = $derived(Math.min(1, pickSecondsLeft / pickTotal));
+	$effect(() => {
+		if (panel === 'pick' && !(picking && myPick)) untrack(() => (panel = null));
+	});
 	const pick = (choice: string) => {
-		changingGame = false;
+		if (panel === 'pick') panel = null;
 		void send('chooseNext', [choice]);
 	};
 
@@ -502,7 +520,7 @@
 	}
 
 	// ——— Panels and preferences ———
-	let panel = $state<'scores' | 'rules' | 'settings' | 'invite' | null>(null);
+	let panel = $state<'scores' | 'rules' | 'settings' | 'invite' | 'pick' | null>(null);
 
 	// ——— Invites ———
 	/** Club friends picked in the invite panel. */
@@ -798,32 +816,40 @@
 					<p class="result-detail">{resultDetail}</p>
 					{#if chooser && picking && myPick}
 						<div class="pick" data-testid="pick-next-game">
-							<p class="pick-title">
-								Your pick for the next game <span class="pick-clock">{pickSecondsLeft}s</span>
-							</p>
-							<div class="pick-buttons">
-								<button class="mini gold" onclick={() => pick('keep')}
-									>Keep {nameOfVariant(room.rulesVersion)}</button
+							<div class="pick-head">
+								<span
+									class="pick-ring"
+									style:--left={pickFraction}
+									role="timer"
+									aria-label="{pickSecondsLeft} seconds to pick">{pickSecondsLeft}</span
 								>
-								<button class="mini" onclick={() => pick('random')}>Random</button>
-								<button
-									class="mini"
-									aria-expanded={changingGame}
-									onclick={() => (changingGame = !changingGame)}>Change game</button
-								>
-							</div>
-							{#if changingGame}
-								<div class="pick-list" role="listbox" aria-label="Next game">
-									{#each VARIANT_CATALOG as option (option.rulesVersion)}
-										<button
-											role="option"
-											aria-selected="false"
-											onclick={() => pick(option.rulesVersion)}
-											title={option.description}>{option.selectionLabel.split(' — ')[0]}</button
-										>
-									{/each}
+								<div>
+									<p class="pick-title">Your pick for the next game</p>
+									<p class="pick-sub">Everyone plays what you choose</p>
 								</div>
-							{/if}
+							</div>
+							<div class="pick-options">
+								<button class="pick-option keep" onclick={() => pick('keep')}>
+									<RotateCcw class="h-5 w-5" />
+									<strong>Keep</strong>
+									<small>{nameOfVariant(room.rulesVersion)}</small>
+								</button>
+								<button class="pick-option" onclick={() => pick('random')}>
+									<Shuffle class="h-5 w-5" />
+									<strong>Random</strong>
+									<small>Surprise us</small>
+								</button>
+								<button
+									class="pick-option"
+									class:on={panel === 'pick'}
+									aria-haspopup="dialog"
+									onclick={() => (panel = 'pick')}
+								>
+									<LayoutGrid class="h-5 w-5" />
+									<strong>Change</strong>
+									<small>{VARIANT_CATALOG.length} games</small>
+								</button>
+							</div>
 						</div>
 					{:else if chooser && picking}
 						<p class="next-game waiting">
@@ -867,7 +893,9 @@
 						</div>
 						{#if dealError}<p class="deal-error">{dealError}</p>{/if}
 					{/if}
-					{#if isHost && canAddBot && !changingGame}<div class="result-bots">{@render botAdder()}</div>{/if}
+					{#if isHost && canAddBot}<div class="result-bots">
+							{@render botAdder()}
+						</div>{/if}
 				</div>
 			{:else if !room.isStarted}
 				<div class="lobby" in:fade>
@@ -1002,20 +1030,49 @@
 		>
 			<header class="sheet-head">
 				<h2>
-					{panel === 'scores'
-						? 'Tonight'
-						: panel === 'rules'
-							? 'Hand rankings'
-							: panel === 'invite'
-								? 'Invite friends'
-								: 'Table settings'}
+					{panel === 'pick'
+						? 'Pick the next game'
+						: panel === 'scores'
+							? 'Tonight'
+							: panel === 'rules'
+								? 'Hand rankings'
+								: panel === 'invite'
+									? 'Invite friends'
+									: 'Table settings'}
 				</h2>
 				<button class="tool" onclick={() => (panel = null)} aria-label="Close"
 					><X class="h-4 w-4" /></button
 				>
 			</header>
 			<div class="sheet-body">
-				{#if panel === 'invite'}
+				{#if panel === 'pick'}
+					{#if chooser && picking && myPick}
+						<p class="pick-drawer-clock">
+							<span class="pick-ring small" style:--left={pickFraction}>{pickSecondsLeft}</span>
+							Everyone plays what you choose. Tap a game.
+						</p>
+						<div class="pick-list" role="listbox" aria-label="Next game">
+							{#each VARIANT_CATALOG as option (option.rulesVersion)}
+								<button
+									role="option"
+									aria-selected={option.rulesVersion === room.rulesVersion}
+									class:current={option.rulesVersion === room.rulesVersion}
+									onclick={() => pick(option.rulesVersion)}
+								>
+									<strong
+										>{option.selectionLabel.split(
+											' — '
+										)[0]}{#if option.rulesVersion === room.rulesVersion}<em>Now playing</em
+											>{/if}</strong
+									>
+									<small>{option.description}</small>
+								</button>
+							{/each}
+						</div>
+					{:else}
+						<p class="muted">The pick for the next game has closed.</p>
+					{/if}
+				{:else if panel === 'invite'}
 					<p class="muted">
 						Up to 6 players sit at a table. Friends join straight from the link — no app, no
 						sign-up.
@@ -1318,9 +1375,202 @@
 		box-shadow: 0 0 1rem rgb(244 214 140 / 12%);
 	}
 	/* Picking the next game, inside the result panel. */
+	.pick {
+		display: grid;
+		width: 100%;
+		gap: 0.75rem;
+		margin-top: 0.45rem;
+		border: 1px solid rgb(244 214 140 / 30%);
+		border-radius: 1.15rem;
+		background: linear-gradient(180deg, rgb(244 214 140 / 10%), rgb(244 214 140 / 4%));
+		padding: 0.85rem;
+	}
+	.pick-head {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.75rem;
+		text-align: left;
+	}
+	/* Countdown ring: gold drains as the minute runs out. */
+	.pick-ring {
+		display: grid;
+		width: 2.6rem;
+		height: 2.6rem;
+		flex-shrink: 0;
+		place-items: center;
+		border-radius: 999px;
+		background:
+			radial-gradient(closest-side, #0c1f15 78%, transparent 80% 100%),
+			conic-gradient(#f4d68c calc(var(--left) * 1turn), rgb(255 255 255 / 10%) 0);
+		color: #f7dc95;
+		font-size: 0.9rem;
+		font-variant-numeric: tabular-nums;
+		font-weight: 800;
+		transition: background 300ms linear;
+	}
+	.pick-title {
+		color: #f7dc95;
+		font-size: 1.05rem;
+		font-weight: 800;
+	}
+	.pick-sub {
+		color: rgb(241 235 220 / 55%);
+		font-size: 0.78rem;
+	}
+	.pick-options {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.5rem;
+	}
+	.pick-option {
+		display: grid;
+		justify-items: center;
+		gap: 0.15rem;
+		border: 1px solid rgb(240 209 140 / 22%);
+		border-radius: 0.95rem;
+		background: rgb(255 255 255 / 4%);
+		padding: 0.7rem 0.4rem 0.6rem;
+		color: #f4d68c;
+		cursor: pointer;
+		transition:
+			transform 140ms ease,
+			border-color 140ms ease,
+			background 140ms ease;
+	}
+	.pick-option strong {
+		color: #f1ebdc;
+		font-size: 0.95rem;
+	}
+	.pick-option small {
+		max-width: 100%;
+		overflow: hidden;
+		color: rgb(241 235 220 / 55%);
+		font-size: 0.72rem;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.pick-option:hover {
+		border-color: #f4d68c;
+		background: rgb(244 214 140 / 10%);
+		transform: translateY(-2px);
+	}
+	.pick-option.keep {
+		border-color: transparent;
+		background: linear-gradient(180deg, #f3d996, #c9963d);
+		box-shadow: 0 0.5rem 1.2rem rgb(201 150 61 / 30%);
+		color: #24180a;
+	}
+	.pick-option.keep strong,
+	.pick-option.keep small {
+		color: #24180a;
+	}
+	.pick-option.on {
+		border-color: #f4d68c;
+		background: rgb(244 214 140 / 14%);
+	}
+	/* Phones: a compact pick so it clears your raised hand. */
+	.arena.portrait .result {
+		gap: 0.15rem;
+		padding: 0.6rem 0.7rem 0.55rem;
+	}
+	.arena.portrait .result :global(.trophy) {
+		display: none;
+	}
+	.arena.portrait .result-title {
+		font-size: 1.1rem;
+	}
+	.arena.portrait .pick {
+		gap: 0.45rem;
+		margin-top: 0.25rem;
+		padding: 0.55rem;
+	}
+	.arena.portrait .pick-ring {
+		width: 2rem;
+		height: 2rem;
+		font-size: 0.75rem;
+	}
+	.arena.portrait .pick-title {
+		font-size: 0.9rem;
+	}
+	.arena.portrait .pick-sub {
+		display: none;
+	}
+	.arena.portrait .pick-option {
+		grid-auto-flow: column;
+		gap: 0.3rem;
+		align-items: center;
+		padding: 0.45rem 0.3rem;
+	}
+	.arena.portrait .pick-option small {
+		display: none;
+	}
+	.arena.portrait .pick-option strong {
+		font-size: 0.85rem;
+	}
+	/* The full list of games, in the side drawer. */
+	.pick-drawer-clock {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		color: rgb(241 235 220 / 70%);
+		font-size: 0.85rem;
+	}
+	.pick-ring.small {
+		width: 2.1rem;
+		height: 2.1rem;
+		font-size: 0.78rem;
+	}
+	.pick-list {
+		display: grid;
+		gap: 0.45rem;
+	}
+	.pick-list button {
+		display: grid;
+		gap: 0.15rem;
+		border: 1px solid rgb(240 209 140 / 18%);
+		border-radius: 0.9rem;
+		background: rgb(255 255 255 / 4%);
+		padding: 0.7rem 0.85rem;
+		color: #f1ebdc;
+		text-align: left;
+		cursor: pointer;
+		transition:
+			border-color 140ms ease,
+			background 140ms ease;
+	}
+	.pick-list button strong {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		font-size: 0.95rem;
+	}
+	.pick-list button em {
+		border-radius: 999px;
+		background: rgb(244 214 140 / 16%);
+		padding: 0.05rem 0.5rem;
+		color: #f4d68c;
+		font-size: 0.68rem;
+		font-style: normal;
+		font-weight: 650;
+	}
+	.pick-list button small {
+		color: rgb(241 235 220 / 55%);
+		font-size: 0.78rem;
+		line-height: 1.35;
+	}
+	.pick-list button:hover {
+		border-color: #f4d68c;
+		background: rgb(244 214 140 / 10%);
+	}
+	.pick-list button.current {
+		border-color: rgb(244 214 140 / 45%);
+	}
 	.next-game {
+		margin-top: 0.3rem;
 		color: rgb(241 235 220 / 75%);
-		font-size: 0.88rem;
+		font-size: 0.95rem;
 	}
 	.next-game strong {
 		color: #f7dc95;
@@ -1347,53 +1597,6 @@
 		50% {
 			opacity: 0.3;
 		}
-	}
-	.pick {
-		display: grid;
-		justify-items: center;
-		gap: 0.45rem;
-		border: 1px solid rgb(244 214 140 / 35%);
-		border-radius: 1rem;
-		background: rgb(244 214 140 / 8%);
-		padding: 0.6rem 0.75rem;
-	}
-	.pick-title {
-		color: #f7dc95;
-		font-size: 0.9rem;
-		font-weight: 700;
-	}
-	.pick-clock {
-		margin-left: 0.3rem;
-		color: rgb(241 235 220 / 60%);
-		font-variant-numeric: tabular-nums;
-		font-weight: 500;
-	}
-	.pick-buttons {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 0.4rem;
-	}
-	.pick-list {
-		display: flex;
-		max-width: 26rem;
-		max-height: 6.2rem;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 0.3rem;
-		overflow-y: auto;
-	}
-	.pick-list button {
-		border: 1px solid rgb(240 209 140 / 22%);
-		border-radius: 999px;
-		padding: 0.15rem 0.55rem;
-		color: #f1ebdc;
-		font-size: 0.78rem;
-		cursor: pointer;
-	}
-	.pick-list button:hover {
-		border-color: #f4d68c;
-		color: #f4d68c;
 	}
 	.wild {
 		color: #b5dcff;
@@ -1787,23 +1990,31 @@
 	.k-see {
 		color: #b5dcff;
 	}
+	/* The end-of-hand card: wider than the centre column, gold-edged, glowing like the pot. */
 	.result {
 		display: flex;
+		width: max(100%, min(32rem, 92cqw));
 		flex-direction: column;
 		align-items: center;
-		gap: 0.2rem;
-		border-radius: 1.2rem;
-		background: rgb(4 20 12 / 62%);
-		padding: 0.8rem 1.2rem;
+		gap: 0.3rem;
+		border-radius: 1.5rem;
+		background:
+			radial-gradient(ellipse 80% 60% at 50% 0%, rgb(244 214 140 / 14%), transparent 70%),
+			linear-gradient(180deg, rgb(10 30 20 / 92%), rgb(5 16 11 / 92%));
+		padding: 1.1rem 1.3rem 1rem;
 		box-shadow:
-			inset 0 0 0 1px rgb(240 200 120 / 35%),
-			0 0 3rem rgb(240 200 110 / 15%);
+			inset 0 0 0 1px rgb(240 200 120 / 40%),
+			inset 0 1px 0 rgb(255 240 200 / 12%),
+			0 1.2rem 2.8rem rgb(0 0 0 / 50%),
+			0 0 3.5rem rgb(240 200 110 / 16%);
+		backdrop-filter: blur(6px);
 	}
 	.result :global(.trophy) {
 		color: #f4d68c;
+		filter: drop-shadow(0 0 0.6rem rgb(244 214 140 / 55%));
 	}
 	.result-title {
-		font-size: clamp(1.05rem, 2vw, 1.4rem);
+		font-size: clamp(1.25rem, 2.4vw, 1.7rem);
 		font-weight: 800;
 	}
 	.result-title span {
