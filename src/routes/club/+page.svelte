@@ -214,18 +214,18 @@
 		<div class="personal-record" aria-label="Your record for the selected period">
 			<div>
 				<span>Your net winnings</span><strong class:negative={personal.net < 0}
-					>{historyLoaded && !historyError && !historyBusy ? chips(personal.net) : '—'}
+					>{historyLoaded && !historyError && !historyBusy ? chips(personal.net) : '-'}
 					<small>chips</small></strong
 				>
 			</div>
 			<div>
 				<span>Hands won</span><strong
-					>{historyLoaded && !historyError && !historyBusy ? personal.wins : '—'}</strong
+					>{historyLoaded && !historyError && !historyBusy ? personal.wins : '-'}</strong
 				>
 			</div>
 			<div>
 				<span>Hands played</span><strong
-					>{historyLoaded && !historyError && !historyBusy ? personal.hands : '—'}</strong
+					>{historyLoaded && !historyError && !historyBusy ? personal.hands : '-'}</strong
 				>
 			</div>
 			<div class="record-period">

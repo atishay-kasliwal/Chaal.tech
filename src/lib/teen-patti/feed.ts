@@ -60,7 +60,7 @@ export function describeChange(before: RoomData | null, after: RoomData): FeedEv
 		const { winnerName, amount, reason, winnerId, winners } = after.result;
 		if (reason.startsWith('show')) push({ kind: 'show', text: 'Show! Cards on the table' });
 		if (reason.startsWith('pot-limit'))
-			push({ kind: 'show', text: 'Pot limit reached — everyone shows' });
+			push({ kind: 'show', text: 'Pot limit reached: everyone shows' });
 		if (winners?.length)
 			for (const share of winners)
 				push({

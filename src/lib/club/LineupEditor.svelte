@@ -33,9 +33,9 @@
 	});
 	const changed = $derived(JSON.stringify(draft) !== JSON.stringify(lineup));
 	const nameOf = (version: string) =>
-		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(' — ')[0] ?? version;
+		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(': ')[0] ?? version;
 	const hintOf = (version: string) =>
-		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(' — ')[1] ?? '';
+		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(': ')[1] ?? '';
 	const at = $derived(draft.indexOf(current));
 	const nextIndex = $derived(draft.length ? (at + 1) % draft.length : -1);
 

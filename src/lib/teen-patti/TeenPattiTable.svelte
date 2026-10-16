@@ -137,9 +137,9 @@
 		if (!result) return '';
 		if (result.reason === 'last-player') return 'Everyone else packed';
 		if (result.reason === 'pot-limit-split')
-			return `Pot limit reached — equal best hands${nameOf(winner) ? ` (${nameOf(winner)})` : ''}, pot split`;
+			return `Pot limit reached: equal best hands${nameOf(winner) ? ` (${nameOf(winner)})` : ''}, pot split`;
 		if (result.reason === 'pot-limit')
-			return `Pot limit reached — everyone showed${nameOf(winner) ? `; ${nameOf(winner)} is best` : ''}`;
+			return `Pot limit reached: everyone showed${nameOf(winner) ? `; ${nameOf(winner)} is best` : ''}`;
 		// Only the two hands compared at the Show; a player who looked and then packed is not one.
 		const shown = room.usersList.filter((user) =>
 			revealed.size ? revealed.has(user.id) : user.cardsInHand.some((c) => c.rank > 0)
@@ -149,9 +149,9 @@
 		const loseName = nameOf(loser);
 		const lowest = room.rulesVersion === 'muflis-1' ? ' (lowest hand wins)' : '';
 		if (result.reason === 'show-tie-requester-loses')
-			return 'Equal hands — whoever asked for the Show loses';
+			return 'Equal hands, so whoever asked for the Show loses';
 		if (winName && loseName && winName === loseName)
-			return `Both have ${winName} — won on the higher side card${lowest}`;
+			return `Both have ${winName}, won on the higher side card${lowest}`;
 		if (winName && loseName) return `${winName} beats ${loseName}${lowest}`;
 		return 'Won at the show';
 	});
@@ -229,7 +229,7 @@
 		chooser ? Math.max(0, Math.ceil((chooser.deadline - now) / 1000)) : 0
 	);
 	const nameOfVariant = (version: string) =>
-		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(' — ')[0] ?? 'Teen Patti';
+		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(': ')[0] ?? 'Teen Patti';
 	/** The mode a pick left standing (random stays random), and who set it. */
 	const standing = $derived(room.standing ?? null);
 	/** What decides the next hand: this hand's pick, else the standing one, else the lineup. */
@@ -329,7 +329,7 @@
 
 	async function dealNow() {
 		dealError = '';
-		if (!(await ondeal())) dealError = 'Could not deal — check the players at the table';
+		if (!(await ondeal())) dealError = 'Could not deal. Check the players at the table';
 	}
 
 	// ——— Narration, chips and sounds ———
@@ -612,7 +612,7 @@
 		try {
 			await navigator.share({
 				title: 'Teen Patti on Chaal',
-				text: `Join my Teen Patti table — boot ₹${boot}, buy-in ₹${room.table}`,
+				text: `Join my Teen Patti table: boot ₹${boot}, buy-in ₹${room.table}`,
 				url: inviteLink
 			});
 		} catch {
@@ -698,7 +698,7 @@
 			</button>
 		</div>
 		<div class="variant" data-testid="variant-label">
-			<span class="variant-name">{variant?.selectionLabel.split(' — ')[0] ?? 'Teen Patti'}</span>
+			<span class="variant-name">{variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti'}</span>
 			<span class="dot">·</span>
 			<span>Boot {money(boot)}</span>
 			{#if room.variantState?.indicator}
@@ -757,7 +757,7 @@
 	</header>
 
 	{#if !connected}
-		<div class="offline" role="status">Reconnecting — actions are paused</div>
+		<div class="offline" role="status">Reconnecting. Actions are paused</div>
 	{/if}
 
 	<main class="arena" class:portrait bind:this={arena} style:--seat-w="{seatW}px">
@@ -847,7 +847,7 @@
 				<button class="invite-big" onclick={openInvite}>
 					<UserPlus class="h-5 w-5" /> Invite friends
 				</button>
-				<p>Share the link — up to 6 players</p>
+				<p>Share the link. Up to 6 players</p>
 			</div>
 		{/if}
 
@@ -1136,7 +1136,7 @@
 								>
 									<strong
 										>{option.selectionLabel.split(
-											' — '
+											': '
 										)[0]}{#if option.rulesVersion === room.rulesVersion}<em>Now playing</em
 											>{/if}</strong
 									>
@@ -1149,8 +1149,7 @@
 					{/if}
 				{:else if panel === 'invite'}
 					<p class="muted">
-						Up to 6 players sit at a table. Friends join straight from the link — no app, no
-						sign-up.
+						Up to 6 players sit at a table. Friends join straight from the link. No app, no sign-up.
 					</p>
 					<div class="link-box">
 						<span class="link-text">{inviteLink}</span>
@@ -1218,7 +1217,7 @@
 								<span class="score">
 									<span class="amt">{balanceLabel(user)}</span>
 									<span class="delta" class:up={(delta ?? 0) > 0} class:down={(delta ?? 0) < 0}
-										>{delta === null ? '—' : signedMoney(delta)}</span
+										>{delta === null ? '-' : signedMoney(delta)}</span
 									>
 								</span>
 							</li>

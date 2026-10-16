@@ -107,7 +107,7 @@
 		);
 		busy = null;
 		if (!result.ok || !result.roomName) {
-			displayToast(result.error || 'Could not start a table — try again', 'error');
+			displayToast(result.error || 'Could not start a table. Try again', 'error');
 			return;
 		}
 		stageJoinName(result.roomName, name);

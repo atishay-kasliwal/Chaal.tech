@@ -46,16 +46,16 @@ test('Preserved landing, theme, waiting table, toast and unbranded original file
 					.toString()
 					.replace('width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width')
 					.replace(
-						'Chaal.tech — gather your friends for Teen Patti and Poker around one virtual table.',
+						'Chaal.tech: gather your friends for Teen Patti and Poker around one virtual table.',
 						'Create room and play teen patti with your friends'
 					)
-					.replace('Chaal.tech — Social Card Games', 'Teen Patti Multiplayer')
+					.replace('Chaal.tech · Social Card Games', 'Teen Patti Multiplayer')
 			);
 		if (entry.path === 'static/site.webmanifest')
 			bytes = Buffer.from(
 				bytes
 					.toString()
-					.replace('"name": "Chaal.tech — Social Card Games"', '"name": ""')
+					.replace('"name": "Chaal.tech · Social Card Games"', '"name": ""')
 					.replace('"short_name": "Chaal.tech"', '"short_name": ""')
 			);
 		if (entry.path === 'src/routes/+page.svelte')

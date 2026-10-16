@@ -199,7 +199,7 @@
 			setTimeout(() => {
 				autoJoinBusy = false;
 				if (++autoJoinAttempts < 5 || usernameCreated) return;
-				displayToast(reply.error || 'Could not reach the table — try again', 'error');
+				displayToast(reply.error || 'Could not reach the table. Try again', 'error');
 				void goto('/club', { replaceState: true });
 			}, 800);
 		});
@@ -300,7 +300,7 @@
 			ondeal={dealTeenPatti}
 			nextVariant={nextVariantMode === 'random'
 				? 'Random'
-				: (VARIANT_BY_VERSION[nextRulesVersion]?.selectionLabel.split(' — ')[0] ?? 'Classic')}
+				: (VARIANT_BY_VERSION[nextRulesVersion]?.selectionLabel.split(': ')[0] ?? 'Classic')}
 			oninvite={copyInviteLink}
 			onleave={leaveRoomHandler}
 			emailInvites={sendEmailInvites}
@@ -348,7 +348,7 @@
 										disabled={!socket.connected}
 									/>
 									<span>
-										<strong>{variant.selectionLabel.split(' — ')[0]}</strong>
+										<strong>{variant.selectionLabel.split(': ')[0]}</strong>
 										<small>{variant.description}</small>
 									</span>
 								</label>
@@ -446,7 +446,7 @@
 
 		{#if !socket.connected || socket.error}
 			<div class="alert alert-info mt-4" role="status">
-				<span>{socket.error || 'Reconnecting — game actions are paused.'}</span>
+				<span>{socket.error || 'Reconnecting. Game actions are paused.'}</span>
 				<button class="btn btn-sm btn-outline" onclick={() => socket.connect()}>Reconnect</button>
 			</div>
 		{/if}
@@ -581,7 +581,7 @@
 							{/each}
 						</div>
 						<p class="mt-1 text-sm">
-							Dealer total: {table.dealerTotal ?? '—'}
+							Dealer total: {table.dealerTotal ?? '-'}
 							<span class="text-base-content/50">· Pot: {table.pot}</span>
 						</p>
 						{#if table.currentPlayer === table.usersList.findIndex((user) => user.id === socket.playerId)}
@@ -594,7 +594,7 @@
 								{table.result.winnerName === 'Dealer'
 									? 'Dealer wins this round'
 									: table.result.winnerName === 'Push'
-										? 'Push — bets returned'
+										? 'Push: bets returned'
 										: `${table.result.winnerName} wins`}
 							</div>
 							<div class="mt-2 flex justify-center gap-2">
@@ -624,7 +624,7 @@
 										rank={table.discardPile[0].rank}
 										suit={table.discardPile[0].suit}
 										class="!h-14 !w-10"
-									/>{:else}<span>—</span>{/if}
+									/>{:else}<span>-</span>{/if}
 							</div>
 						</div>
 						<p class="mt-2 text-xs">

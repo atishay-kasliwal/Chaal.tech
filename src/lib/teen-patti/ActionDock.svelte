@@ -228,7 +228,7 @@
 			{:else if playing && waitingOn}
 				<span class="wait-text">Waiting for <strong>{waitingOn}</strong>…</span>
 			{:else if live && me.isPacked}
-				<span class="wait-text">Packed — watch the rest of the hand</span>
+				<span class="wait-text">Packed. Watch the rest of the hand</span>
 			{:else}
 				<label class="sit-toggle">
 					<input

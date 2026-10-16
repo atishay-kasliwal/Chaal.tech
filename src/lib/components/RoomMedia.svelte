@@ -75,7 +75,7 @@
 				class="mc-btn"
 				disabled={view.status !== 'connected' || view.cameraBusy || view.microphoneBusy}
 				onclick={() => controller?.audioOnly()}
-				title="Audio only — saves battery and data"
+				title="Audio only: saves battery and data"
 				aria-label="Audio only"><Headphones class="h-4 w-4" /></button
 			>
 			<button

@@ -131,7 +131,7 @@ class SocketStore {
 	}
 
 	async command(event: string, args: unknown[] = [], needsState = true): Promise<Reply> {
-		if (!this.connected) return { ok: false, error: 'Reconnecting — wait before playing' };
+		if (!this.connected) return { ok: false, error: 'Reconnecting. Wait before playing' };
 		const snapshot = this.roomData;
 		if (needsState && !snapshot) return { ok: false, error: 'Waiting for the room state' };
 		const meta = {

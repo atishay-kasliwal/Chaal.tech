@@ -287,7 +287,7 @@
 					</div>
 					<h2 class="card-title text-2xl font-bold">Andhe mein chaal</h2>
 					<p class="text-base-content/70">
-						Play blind — bet without looking. Half the price, double the drama, and everyone wonders
+						Play blind: bet without looking. Half the price, double the drama, and everyone wonders
 						what you’ve got.
 					</p>
 					<div class="relative mt-4 flex justify-center -space-x-4">
@@ -371,7 +371,7 @@
 					</div>
 					<h2 class="card-title text-2xl font-bold">Dekh ke khelo</h2>
 					<p class="text-base-content/70">
-						Peek at your cards, then chaal, raise or pack. Poker face optional — the camera is on.
+						Peek at your cards, then chaal, raise or pack. Poker face optional, the camera is on.
 					</p>
 					<div class="relative mt-4 flex justify-center -space-x-4 [perspective:1000px]">
 						<!-- Badge -->

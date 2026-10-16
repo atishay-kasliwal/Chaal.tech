@@ -42,7 +42,7 @@
 >
 	{#if showFace && card}
 		<ClassicCard rank={card.rank} suit={card.suit} class="!h-full !w-full" />
-		{#if wild}<span class="joker" title="Joker — counts as any card">★</span>{/if}
+		{#if wild}<span class="joker" title="Joker: counts as any card">★</span>{/if}
 	{:else}
 		<img
 			class="back"

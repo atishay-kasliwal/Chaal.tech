@@ -281,7 +281,7 @@ export class GameSocket {
 		}
 		const socket = this.ws;
 		if (!socket || socket.readyState !== WebSocket.OPEN)
-			return { ok: false, error: 'Reconnecting — wait before playing' };
+			return { ok: false, error: 'Reconnecting. Wait before playing' };
 		const id = crypto.randomUUID();
 		return new Promise((resolve, reject) => {
 			const timer = setTimeout(() => {
