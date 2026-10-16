@@ -88,6 +88,8 @@ const bootOf = (room) => room.boot ?? 1;
 
 /** Between hands, one player at a time picks the next game, for up to this long. */
 export const CHOOSE_MS = 60 * 1000;
+/** Alone with bots, the pick is yours every hand: a shorter window keeps the game moving. */
+export const SOLO_CHOOSE_MS = 15 * 1000;
 const CHOICES = new Set(['keep', 'random']);
 
 /**
@@ -107,7 +109,7 @@ function assignChooser(room, now) {
 	room.chooser = {
 		playerId: next.id,
 		handId: room.result.handId,
-		deadline: now + CHOOSE_MS,
+		deadline: now + (people.length === 1 ? SOLO_CHOOSE_MS : CHOOSE_MS),
 		choice: null
 	};
 }

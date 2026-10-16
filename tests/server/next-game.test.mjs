@@ -7,6 +7,7 @@ import {
 	projection,
 	nextHandChoice,
 	CHOOSE_MS,
+	SOLO_CHOOSE_MS,
 	playing
 } from '../../server/engine.mjs';
 
@@ -70,4 +71,13 @@ test('no pick in a minute keeps the game; a chooser who leaves forfeits the pick
 	});
 	room = transition(room, 'a', 'leave', {}, ctx);
 	assert.deepEqual(nextHandChoice(room, ctx.now), { mode: 'selected', rulesVersion: 'classic-1' });
+});
+
+test('alone with bots, the pick window is shorter', () => {
+	let room = newRoom('solo-room', 1000, 'a', 'classic-1', { boot: 10, autoReady: true });
+	room = transition(room, 'a', 'join', { username: 'a' }, ctx);
+	room = transition(room, 'a', 'addBot', { botId: 'bot-0002', name: 'Bunty', level: 'easy' }, ctx);
+	room = finish(deal(room));
+	assert.equal(room.chooser.playerId, 'a');
+	assert.equal(room.chooser.deadline, ctx.now + SOLO_CHOOSE_MS);
 });
