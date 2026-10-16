@@ -122,13 +122,16 @@ export async function adminMembers(db) {
 	}));
 }
 
-/** Add someone to the guest list (or update their nickname/role). Sends nothing by itself. */
+/**
+ * Add someone to the guest list (or update their nickname/role). Sends nothing by itself.
+ * Returns the member and whether they were new, so the caller can welcome new people.
+ */
 export async function addMember(db, { email, nickname, role }, now = new Date()) {
 	const address = normalizeEmail(email);
 	if (!EMAIL.test(address) || address.length > 254) throw invalid('Enter a valid email address');
 	const name = typeof nickname === 'string' ? nickname.trim().slice(0, 24) : '';
 	const owner = role === 'owner';
-	await db.collection(MEMBERS).updateOne(
+	const result = await db.collection(MEMBERS).updateOne(
 		{ email: address },
 		{
 			$set: {
@@ -145,6 +148,10 @@ export async function addMember(db, { email, nickname, role }, now = new Date())
 		},
 		{ upsert: true }
 	);
+	return {
+		added: result.upsertedCount > 0,
+		member: await db.collection(MEMBERS).findOne({ email: address })
+	};
 }
 
 async function activeOwners(db) {

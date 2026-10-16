@@ -90,7 +90,7 @@ function availabilityMessage({ nickname, formUrl, nights, host, appUrl }) {
 	const form = new URL(formUrl).href;
 	const name = displayName(nickname);
 	const from = displayName(host, 'Atishay');
-	const subject = 'Teen Patti night next weekend?';
+	const subject = `Teen Patti night: ${nights}?`;
 	const preheader = `${nights}. Let me know which night works for you.`;
 	const text = `Hey ${name},
 
@@ -199,8 +199,19 @@ function displayName(nickname, fallback = 'Friend') {
 }
 
 /** What changes per email. Everything else is the shared invite layout below. */
-function content(step, { name, game, appUrl, memberSince }) {
+function content(step, { name, game, appUrl, memberSince, from, email }) {
 	const club = new URL('/club', appUrl).href;
+	if (step === 'added')
+		return {
+			subject: `${from} added you to Chaal ♠`,
+			preheader: 'You’re on the guest list. Sign in with Google to take your seat.',
+			eyebrow: 'PRIVATE CLUB · YOU’RE IN',
+			headline: `You’re on<br>${gold('the guest list, ' + name + '.')}`,
+			sub: `${from} added you to Chaal, a private Teen Patti table for friends, on video. Sign in with Google using ${email} to take your seat.`,
+			panel: { member: { name, since: memberSince } },
+			cta: { label: 'Take your seat', href: club, help: 'Sign in with Google' },
+			text: `You're on the guest list, ${name}.\n\n${from} added you to Chaal, a private Teen Patti table for friends, on video. Sign in with Google using ${email} to take your seat.\n\nTake your seat: ${club}`
+		};
 	if (step === 2)
 		return {
 			subject: `It’s set: ${game.date}, ${game.time} ♠`,
@@ -240,10 +251,12 @@ export function betaMessage(
 		game,
 		host = 'The Chaal table',
 		appUrl = 'https://chaal.tech',
-		memberSince = new Date()
+		memberSince = new Date(),
+		email = ''
 	}
 ) {
-	if (!BETA_STEPS.includes(step)) throw new Error(`Unknown beta email step ${step}`);
+	if (!BETA_STEPS.includes(step) && step !== 'added')
+		throw new Error(`Unknown beta email step ${step}`);
 	if (step === 1 && !formUrl) throw new Error('The availability email needs the Google Form link');
 	if (step === 1)
 		return availabilityMessage({
@@ -262,7 +275,9 @@ export function betaMessage(
 		name,
 		game: game && { ...game, label: escapeHtml(game.label) },
 		appUrl,
-		memberSince: since
+		memberSince: since,
+		from,
+		email
 	});
 	const plainName = displayName(nickname);
 	const subject = parts.subject.replaceAll(name, plainName);
@@ -479,4 +494,38 @@ export async function cancelBetaEmails({ apiKey, emails, now = new Date(), fetch
 		if (response.ok) cancelled.push(email.step);
 	}
 	return cancelled;
+}
+
+/** The "you're on the guest list" email, sent when an owner adds someone to the club. */
+export async function sendAddedEmail({ apiKey, from, member, host, appUrl, fetcher = fetch }) {
+	const message = betaMessage('added', {
+		nickname: member.nickname,
+		email: member.email,
+		host,
+		appUrl,
+		memberSince: member.createdAt ?? new Date()
+	});
+	const response = await fetcher('https://api.resend.com/emails', {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			'Content-Type': 'application/json',
+			'Idempotency-Key': `chaal-added-${member._id}`
+		},
+		body: JSON.stringify({
+			from,
+			to: [member.email],
+			subject: message.subject,
+			html: message.html,
+			text: message.text
+		}),
+		signal: AbortSignal.timeout(10000)
+	});
+	if (!response.ok) {
+		const body = await response.json().catch(() => ({}));
+		throw new Error(
+			`Resend rejected the welcome email (${response.status}): ${body.message ?? 'unknown error'}`
+		);
+	}
+	return message.subject;
 }

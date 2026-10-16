@@ -35,6 +35,7 @@ import {
 	decideGameNight
 } from '../club/admin.mjs';
 import { openPoll, publicPoll, saveAvailability, pollSummary } from '../club/availability.mjs';
+import { sendAddedEmail } from '../club/beta-emails.mjs';
 
 export { RoomDurableObject, ClubDirectory };
 
@@ -283,7 +284,28 @@ export default {
 					let notice = '';
 					if (request.method === 'POST') {
 						const action = body?.action;
-						if (action === 'add') await addMember(db, body);
+						if (action === 'add') {
+							const { added, member } = await addMember(db, body);
+							const who = member.nickname || member.email;
+							if (!added) notice = `Updated ${who}.`;
+							else if (body.notify === false) notice = `${who} is on the guest list. No email sent.`;
+							else if (!env.RESEND_API_KEY)
+								notice = `${who} is on the guest list. Email isn't set up, so tell them to sign in with ${member.email}.`;
+							else {
+								try {
+									await sendAddedEmail({
+										apiKey: env.RESEND_API_KEY,
+										from: betaSettings(env).from,
+										member,
+										host: owner.nickname,
+										appUrl: betaSettings(env).appUrl
+									});
+									notice = `${who} is on the guest list. We emailed them how to sign in.`;
+								} catch {
+									notice = `${who} is on the guest list, but the email didn't send. Tell them to sign in with ${member.email}.`;
+								}
+							}
+						}
 						else if (action === 'pause' || action === 'restore')
 							await setMemberPaused(db, body.memberId, action === 'pause', {
 								actorId,

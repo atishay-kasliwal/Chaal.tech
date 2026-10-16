@@ -7,7 +7,8 @@ import {
 	plannedSteps,
 	cancelBetaEmails,
 	candidateNights,
-	gameTime
+	gameTime,
+	sendAddedEmail
 } from '../../server/club/beta-emails.mjs';
 
 const formUrl = 'https://forms.gle/abc123';
@@ -34,7 +35,7 @@ test('day 1 is a personal note from the host with one button to the form', () =>
 		host: 'Atishay',
 		appUrl: 'https://chaal.tech'
 	});
-	assert.equal(message.subject, 'Teen Patti night next weekend?');
+	assert.match(message.subject, /^Teen Patti night: .+\?$/);
 	assert.ok(message.html.includes('Hey Raju,') && message.html.includes('Pick a night'));
 	assert.ok(message.html.includes('Fri, 23 Oct or Sat, 24 Oct') && message.html.includes(formUrl));
 	assert.ok(message.html.includes('https://chaal.tech/email/beta-cards.png'));
@@ -167,4 +168,25 @@ test('only emails still in the future are cancelled', async () => {
 	});
 	assert.deepEqual(steps, [3]);
 	assert.deepEqual(cancelled, ['https://api.resend.com/emails/c/cancel']);
+});
+
+test('the guest-list email names who added them and the Google account to use', async () => {
+	const sent = [];
+	const fetcher = async (url, init) => {
+		sent.push(JSON.parse(init.body));
+		return new Response(JSON.stringify({ id: 'email-1' }), { status: 200 });
+	};
+	const subject = await sendAddedEmail({
+		apiKey: 're_test',
+		from: 'Chaal <invites@chaal.tech>',
+		member: { _id: 'm1', email: 'raju@gmail.com', nickname: 'raju', createdAt: new Date() },
+		host: 'Atishay',
+		appUrl: 'https://chaal.tech',
+		fetcher
+	});
+	assert.equal(subject, 'Atishay added you to Chaal ♠');
+	assert.equal(sent[0].to[0], 'raju@gmail.com');
+	assert.ok(sent[0].text.includes('Sign in with Google using raju@gmail.com'));
+	assert.ok(sent[0].html.includes('https://chaal.tech/club'));
+	assert.ok(sent[0].text.includes('the guest list, Raju'));
 });

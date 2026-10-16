@@ -101,6 +101,7 @@
 	let newEmail = $state('');
 	let newNickname = $state('');
 	let newOwner = $state(false);
+	let newNotify = $state(true);
 
 	const isOwner = $derived(club.member?.role === 'owner');
 	const ready = $derived(club.status === 'signedIn' && !!club.member?.onboarded && isOwner);
@@ -160,10 +161,10 @@
 			action: 'add',
 			email: newEmail,
 			nickname: newNickname,
-			role: newOwner ? 'owner' : 'member'
+			role: newOwner ? 'owner' : 'member',
+			notify: newNotify
 		});
 		if (ok) {
-			notice = `${newNickname || newEmail} is on the guest list. They can sign in with Google now.`;
 			newEmail = newNickname = '';
 			newOwner = false;
 		}
@@ -226,9 +227,14 @@
 							aria-label="Nickname"
 						/>
 						<label class="check"><input type="checkbox" bind:checked={newOwner} /> Owner</label>
+						<label class="check"
+							><input type="checkbox" bind:checked={newNotify} /> Email them</label
+						>
 						<button class="primary" disabled={busy || !newEmail}>Add</button>
 					</form>
-					<p class="note">They sign in with that Google account. No email is sent.</p>
+					<p class="note">
+						They sign in with that Google account. “Email them” sends a short note telling them so.
+					</p>
 				</section>
 
 				<section class="card">
