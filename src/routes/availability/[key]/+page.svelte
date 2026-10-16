@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { Check } from '@lucide/svelte';
+	import { Plus, X } from '@lucide/svelte';
 	import { serverURL } from '#lib/config.js';
 
 	/**
 	 * Game-night availability, opened from a personal link in the email. No sign-in: the link says
-	 * who you are. Every hour shows in India time and US Eastern time.
+	 * who you are. People add the stretches they are free (day, from, to); each shows in India time
+	 * and US Eastern time.
 	 */
 	const ZONES = {
 		india: { tz: 'Asia/Kolkata', short: 'IST', label: 'India' },
@@ -55,6 +56,51 @@
 		return byDay;
 	});
 
+	const HOUR = 60 * 60 * 1000;
+	const plusHour = (iso: string) => new Date(new Date(iso).getTime() + HOUR).toISOString();
+
+	// The add form: a day, then a start hour and an end hour on it, in the chosen zone.
+	let dayIndex = $state(0);
+	let fromIndex = $state(0);
+	let toIndex = $state(1);
+	const dayHours = $derived(groups[dayIndex]?.[1] ?? []);
+	// Ends are the hour after each start: "until 10:30 PM".
+	const ends = $derived(dayHours.map(plusHour));
+	$effect(() => {
+		// Keep the form valid when the day or zone changes.
+		if (dayIndex >= groups.length) dayIndex = 0;
+		if (fromIndex >= dayHours.length) fromIndex = 0;
+		if (toIndex <= fromIndex || toIndex > dayHours.length)
+			toIndex = Math.min(fromIndex + 1, dayHours.length);
+	});
+	const adding = $derived(dayHours.slice(fromIndex, toIndex));
+
+	function addRange() {
+		if (!adding.length) return;
+		picked = [...new Set([...picked, ...adding])].sort();
+		justSaved = false;
+	}
+
+	/** Picked hours merged into unbroken stretches, for the list. */
+	const ranges = $derived.by(() => {
+		const runs: string[][] = [];
+		for (const slot of picked) {
+			const run = runs.at(-1);
+			if (run && plusHour(run[run.length - 1]) === slot) run.push(slot);
+			else runs.push([slot]);
+		}
+		return runs;
+	});
+	const span = (run: string[], z: Zone) => {
+		const end = plusHour(run[run.length - 1]);
+		const endDay = day(end, z) !== day(run[0], z) ? ` (${day(end, z)})` : '';
+		return `${day(run[0], z)}, ${time(run[0], z)} – ${time(end, z)}${endDay}`;
+	};
+	function removeRange(run: string[]) {
+		picked = picked.filter((slot) => !run.includes(slot));
+		justSaved = false;
+	}
+
 	onMount(async () => {
 		const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		if (tz.startsWith('America/')) zone = 'us';
@@ -75,11 +121,6 @@
 			loading = false;
 		}
 	});
-
-	function toggle(slot: string) {
-		picked = picked.includes(slot) ? picked.filter((s) => s !== slot) : [...picked, slot].sort();
-		justSaved = false;
-	}
 
 	async function save() {
 		saving = true;
@@ -119,9 +160,7 @@
 		<header class="card center">
 			<p class="suits" aria-hidden="true">♠ ♥ ♦ ♣</p>
 			<h1>Hi {name}, when are you free?</h1>
-			<p class="note">
-				Teen Patti night. Tap every hour that works for you; you can pick as many as you like.
-			</p>
+			<p class="note">Teen Patti night. Add the times you’re free; add as many as you like.</p>
 			<div class="zones" role="radiogroup" aria-label="Show times in">
 				{#each Object.entries(ZONES) as [id, z] (id)}
 					<button
@@ -135,47 +174,67 @@
 			</div>
 		</header>
 
-		{#each groups as [label, hours] (label)}
-			<section class="card">
-				<h2>{label} <small>{ZONES[zone].label}</small></h2>
-				<div class="hours">
-					{#each hours as slot (slot)}
-						{@const on = picked.includes(slot)}
-						<button
-							type="button"
-							class="hour"
-							class:on
-							aria-pressed={on}
-							onclick={() => toggle(slot)}
-						>
-							{#if on}<span class="tick"><Check size={12} strokeWidth={3} /></span>{/if}
-							<strong>{time(slot, zone)}</strong>
-							<small
-								>{time(slot, other)}
-								{ZONES[other].short}{day(slot, other) !== day(slot, zone)
-									? ` · ${day(slot, other).split(' ')[0]}`
-									: ''}</small
-							>
-						</button>
-					{/each}
-				</div>
-			</section>
-		{/each}
+		<section class="card">
+			<h2>Add a time you’re free <small>{ZONES[zone].label} time</small></h2>
+			<div class="form">
+				<label
+					><span>Day</span>
+					<select bind:value={dayIndex}>
+						{#each groups as [label], index (label)}
+							<option value={index}>{label}</option>
+						{/each}
+					</select></label
+				>
+				<label
+					><span>From</span>
+					<select bind:value={fromIndex}>
+						{#each dayHours as slot, index (slot)}
+							<option value={index}>{time(slot, zone)}</option>
+						{/each}
+					</select></label
+				>
+				<label
+					><span>To</span>
+					<select bind:value={toIndex}>
+						{#each ends as end, index (end)}
+							{#if index >= fromIndex}<option value={index + 1}>{time(end, zone)}</option>{/if}
+						{/each}
+					</select></label
+				>
+			</div>
+			{#if adding.length}
+				<p class="convert">
+					<span>{span(adding, zone)} <em>{ZONES[zone].short}</em></span>
+					<span class="eq">=</span>
+					<span>{span(adding, other)} <em>{ZONES[other].short}</em></span>
+				</p>
+			{/if}
+			<button type="button" class="add" onclick={addRange} disabled={!adding.length}
+				><Plus size={16} /> Add this time</button
+			>
+		</section>
 
 		<section class="card summary">
-			<h2>Your picks <small>{picked.length}</small></h2>
-			{#if picked.length}
+			<h2>Your times <small>{ranges.length}</small></h2>
+			{#if ranges.length}
 				<ul>
-					{#each picked as slot (slot)}
+					{#each ranges as run (run[0])}
 						<li>
-							<span>{day(slot, 'india')}, {time(slot, 'india')} <em>IST</em></span>
-							<span class="eq">=</span>
-							<span>{day(slot, 'us')}, {time(slot, 'us')} <em>ET</em></span>
+							<div class="both">
+								<span>{span(run, zone)} <em>{ZONES[zone].short}</em></span>
+								<span class="other">{span(run, other)} <em>{ZONES[other].short}</em></span>
+							</div>
+							<button
+								type="button"
+								class="remove"
+								aria-label="Remove {span(run, zone)}"
+								onclick={() => removeRange(run)}><X size={14} /></button
+							>
 						</li>
 					{/each}
 				</ul>
 			{:else}
-				<p class="note">Nothing picked yet.</p>
+				<p class="note">Nothing added yet.</p>
 			{/if}
 			{#if error}<p class="error" role="alert">{error}</p>{/if}
 			<button class="save" disabled={saving || !picked.length || justSaved} onclick={save}>
@@ -252,54 +311,72 @@
 		background: rgb(244 214 140 / 14%);
 		color: #f4d68c;
 	}
-	.hours {
+	.form {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(7.2rem, 1fr));
-		gap: 0.4rem;
+		grid-template-columns: 1.4fr 1fr 1fr;
+		gap: 0.5rem;
 	}
-	.hour {
-		position: relative;
+	.form label {
 		display: grid;
-		gap: 0.1rem;
-		border: 1px solid rgb(255 255 255 / 10%);
-		border-radius: 0.8rem;
-		background: rgb(255 255 255 / 3%);
-		padding: 0.5rem 0.6rem;
+		gap: 0.25rem;
+	}
+	.form span {
+		color: rgb(241 235 220 / 60%);
+		font-size: 0.75rem;
+	}
+	.form select {
+		border: 1px solid rgb(240 209 140 / 25%);
+		border-radius: 0.7rem;
+		background: rgb(0 0 0 / 30%);
+		padding: 0.6rem 0.6rem;
 		color: #f1ebdc;
-		text-align: left;
-		cursor: pointer;
-		transition:
-			border-color 120ms ease,
-			background 120ms ease;
-	}
-	.hour:hover {
-		border-color: rgb(240 209 140 / 45%);
-	}
-	.hour strong {
 		font-size: 0.95rem;
 	}
-	.hour small {
-		color: rgb(241 235 220 / 55%);
-		font-size: 0.72rem;
+	.convert {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		border-radius: 0.7rem;
+		background: rgb(244 214 140 / 8%);
+		padding: 0.55rem 0.7rem;
+		font-size: 0.85rem;
 	}
-	.hour.on {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 16%);
-	}
-	.hour.on small {
+	.add {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.35rem;
+		border: 1px solid #f4d68c;
+		border-radius: 999px;
+		padding: 0.6rem 1rem;
 		color: #f4d68c;
+		font-weight: 700;
+		cursor: pointer;
 	}
-	.tick {
-		position: absolute;
-		top: 0.4rem;
-		right: 0.4rem;
+	.add:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+	.both {
 		display: grid;
-		width: 1.1rem;
-		height: 1.1rem;
+		gap: 0.1rem;
+	}
+	.both .other {
+		color: rgb(241 235 220 / 60%);
+		font-size: 0.8rem;
+	}
+	.remove {
+		display: grid;
+		width: 1.8rem;
+		height: 1.8rem;
+		flex-shrink: 0;
 		place-items: center;
 		border-radius: 999px;
-		background: #f4d68c;
-		color: #24180a;
+		color: rgb(241 235 220 / 70%);
+		cursor: pointer;
+	}
+	.remove:hover {
+		background: rgb(255 255 255 / 8%);
 	}
 	.summary ul {
 		display: grid;
@@ -308,8 +385,20 @@
 	}
 	.summary li {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		border-radius: 0.8rem;
+		background: rgb(255 255 255 / 4%);
+		padding: 0.5rem 0.4rem 0.5rem 0.75rem;
+	}
+	@media (max-width: 480px) {
+		.form {
+			grid-template-columns: 1fr 1fr;
+		}
+		.form label:first-child {
+			grid-column: 1 / -1;
+		}
 	}
 	.summary em {
 		color: #e2b862;
