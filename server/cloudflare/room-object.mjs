@@ -758,7 +758,7 @@ export class RoomDurableObject {
 	}
 
 	turnMs() {
-		const value = Number(this.env.TURN_TIMEOUT_MS ?? 60000);
+		const value = Number(this.env.TURN_TIMEOUT_MS ?? 90000);
 		return Number.isSafeInteger(value) && value >= 100 && value <= 3600000 ? value : 60000;
 	}
 

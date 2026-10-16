@@ -468,8 +468,7 @@
 	}
 	.packed,
 	.away {
-		opacity: 0.55;
-		filter: saturate(0.4);
+		filter: grayscale(0.7) brightness(0.55);
 	}
 	.loser {
 		opacity: 0.75;

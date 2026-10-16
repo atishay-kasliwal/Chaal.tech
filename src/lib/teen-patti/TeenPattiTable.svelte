@@ -46,6 +46,7 @@
 		rememberHiddenBalance
 	} from './format.js';
 	import { handName, NAMED_VARIANTS, HAND_RANKINGS, RANKING_EXAMPLES } from './hands.js';
+	import { HOW_TO_PLAY } from './how-to-play.js';
 	import ClassicCard from '#lib/components/ClassicCard.svelte';
 	import { describeChange, type FeedEvent } from './feed.js';
 	import { opponentPoints, SELF_POINT, POT_POINT } from './layout.js';
@@ -177,7 +178,7 @@
 	let turnEnds = $state<number | null>(null);
 	let lastDeadline: number | null = null;
 	let sawSnapshot = false;
-	const total = $derived(room.turnMs ?? 60000);
+	const total = $derived(room.turnMs ?? 90000);
 	const remaining = $derived(turnEnds === null ? 0 : Math.max(0, turnEnds - now));
 
 	$effect(() => {
@@ -252,6 +253,37 @@
 					: effectiveChoice === 'keep'
 						? nameOfVariant(room.rulesVersion)
 						: nameOfVariant(effectiveChoice)
+	);
+	/** The standing pick in words: "Random", "Lineup order" or a game's name. */
+	const standingName = $derived(
+		!standing
+			? ''
+			: standing.choice === 'random'
+				? 'Random'
+				: standing.choice === 'next'
+					? 'Lineup order'
+					: nameOfVariant(standing.choice)
+	);
+	const pickTileCount = $derived(
+		(standing ? 1 : 0) +
+			(upNext && standing?.choice !== 'next' ? 1 : 0) +
+			(!standing || standing.choice !== room.rulesVersion ? 1 : 0) +
+			(standing?.choice !== 'random' ? 1 : 0) +
+			1
+	);
+	/** What comes after this hand, shown in the top bar while a hand is on. */
+	const comingNext = $derived(
+		chooser
+			? nextGame
+			: standing
+				? standing.choice === 'random'
+					? 'Random'
+					: standing.choice === 'next'
+						? nameOfVariant(upNext ?? room.rulesVersion)
+						: nameOfVariant(standing.choice)
+				: upNext
+					? nameOfVariant(upNext)
+					: null
 	);
 	const fromLineup = $derived(
 		lineup.length > 0 && (effectiveChoice === 'next' || effectiveChoice === 'random')
@@ -564,7 +596,9 @@
 	}
 
 	// ——— Panels and preferences ———
-	let panel = $state<'scores' | 'rules' | 'settings' | 'invite' | 'pick' | 'lineup' | null>(null);
+	let panel = $state<
+		'scores' | 'rules' | 'settings' | 'invite' | 'pick' | 'lineup' | 'game' | null
+	>(null);
 
 	// ——— Invites ———
 	/** Club friends picked in the invite panel. */
@@ -698,7 +732,13 @@
 			</button>
 		</div>
 		<div class="variant" data-testid="variant-label">
-			<span class="variant-name">{variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti'}</span>
+			<button class="variant-name" onclick={() => (panel = 'game')} title="How this game works"
+				>{variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti'}</button
+			>
+			{#if comingNext && comingNext !== (variant?.selectionLabel.split(': ')[0] ?? '')}
+				<span class="dot">·</span>
+				<span class="up-next">Next: <strong>{comingNext}</strong></span>
+			{/if}
 			<span class="dot">·</span>
 			<span>Boot {money(boot)}</span>
 			{#if room.variantState?.indicator}
@@ -875,28 +915,47 @@
 									aria-label="{pickSecondsLeft} seconds to pick">{pickSecondsLeft}</span
 								>
 								<div>
-									<p class="pick-title">Your pick for the next game</p>
+									<p class="pick-title">Your turn to pick the next game</p>
 									<p class="pick-sub">Everyone plays what you choose</p>
 								</div>
 							</div>
-							<div class="pick-options" class:four={!!upNext}>
-								{#if upNext}
-									<button class="pick-option keep" onclick={() => pick('next')}>
+							<div class="pick-options" class:four={pickTileCount === 4}>
+								{#if standing}
+									<!-- The pick already standing at the table: one tap keeps it. -->
+									<button class="pick-option keep" onclick={() => pick(standing.choice)}>
+										<RotateCcw class="h-5 w-5" />
+										<strong>Keep</strong>
+										<small>{standingName}</small>
+									</button>
+								{/if}
+								{#if upNext && standing?.choice !== 'next'}
+									<button class="pick-option" class:keep={!standing} onclick={() => pick('next')}>
 										<SkipForward class="h-5 w-5" />
 										<strong>Next up</strong>
 										<small>{nameOfVariant(upNext)}</small>
 									</button>
 								{/if}
-								<button class="pick-option" class:keep={!upNext} onclick={() => pick('keep')}>
-									<RotateCcw class="h-5 w-5" />
-									<strong>Keep</strong>
-									<small>{nameOfVariant(room.rulesVersion)}</small>
-								</button>
-								<button class="pick-option" onclick={() => pick('random')}>
-									<Shuffle class="h-5 w-5" />
-									<strong>Random</strong>
-									<small>Surprise us</small>
-								</button>
+								{#if !standing}
+									<button class="pick-option" class:keep={!upNext} onclick={() => pick('keep')}>
+										<RotateCcw class="h-5 w-5" />
+										<strong>Keep</strong>
+										<small>{nameOfVariant(room.rulesVersion)}</small>
+									</button>
+								{/if}
+								{#if standing && standing.choice !== room.rulesVersion}
+									<button class="pick-option" onclick={() => pick('keep')}>
+										<RotateCcw class="h-5 w-5" />
+										<strong>Same game</strong>
+										<small>{nameOfVariant(room.rulesVersion)}</small>
+									</button>
+								{/if}
+								{#if standing?.choice !== 'random'}
+									<button class="pick-option" onclick={() => pick('random')}>
+										<Shuffle class="h-5 w-5" />
+										<strong>Random</strong>
+										<small>Surprise us</small>
+									</button>
+								{/if}
 								<button
 									class="pick-option"
 									class:on={panel === 'pick'}
@@ -912,7 +971,9 @@
 					{:else if chooser && picking}
 						<p class="next-game waiting">
 							<span class="pulse" aria-hidden="true"></span>
-							<strong>{chooserName}</strong> is picking the next game · {pickSecondsLeft}s
+							<strong>{chooserName}</strong> is picking the next game · {pickSecondsLeft}s{#if standing}<small
+									>&nbsp;({standingName} if no change)</small
+								>{/if}
 						</p>
 					{:else}
 						<!-- One line: what's next, where it comes from, who set it, and Change on your turn. -->
@@ -1095,24 +1156,40 @@
 		>
 			<header class="sheet-head">
 				<h2>
-					{panel === 'lineup'
-						? 'Tonight’s lineup'
-						: panel === 'pick'
-							? 'Pick the next game'
-							: panel === 'scores'
-								? 'Tonight'
-								: panel === 'rules'
-									? 'Hand rankings'
-									: panel === 'invite'
-										? 'Invite friends'
-										: 'Table settings'}
+					{panel === 'game'
+						? (variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti')
+						: panel === 'lineup'
+							? 'Tonight’s lineup'
+							: panel === 'pick'
+								? 'Pick the next game'
+								: panel === 'scores'
+									? 'Tonight'
+									: panel === 'rules'
+										? 'Hand rankings'
+										: panel === 'invite'
+											? 'Invite friends'
+											: 'Table settings'}
 				</h2>
 				<button class="tool" onclick={() => (panel = null)} aria-label="Close"
 					><X class="h-4 w-4" /></button
 				>
 			</header>
 			<div class="sheet-body">
-				{#if panel === 'lineup'}
+				{#if panel === 'game'}
+					{@const how = HOW_TO_PLAY[room.rulesVersion]}
+					<div class="how">
+						<p class="how-win">{how?.win ?? variant?.description}</p>
+						{#if how}
+							<ul>
+								{#each how.points as point (point)}<li>{point}</li>{/each}
+							</ul>
+						{/if}
+						{#if comingNext}
+							<p class="how-next">Next game: <strong>{comingNext}</strong></p>
+						{/if}
+						<button class="link" onclick={() => (panel = 'rules')}>See all hand rankings ›</button>
+					</div>
+				{:else if panel === 'lineup'}
 					<LineupEditor
 						{lineup}
 						current={room.rulesVersion}
@@ -1447,6 +1524,53 @@
 		font-weight: 750;
 		letter-spacing: 0.01em;
 		box-shadow: 0 0 1rem rgb(244 214 140 / 12%);
+	}
+	.variant-name {
+		cursor: pointer;
+	}
+	.variant-name:hover {
+		background: rgb(244 214 140 / 26%);
+	}
+	.up-next {
+		color: rgb(241 235 220 / 65%);
+		font-size: 0.85rem;
+	}
+	.up-next strong {
+		color: #f4d68c;
+	}
+	/* "How this game works" panel. */
+	.how {
+		display: grid;
+		gap: 0.75rem;
+	}
+	.how-win {
+		color: #f7dc95;
+		font-size: 1.15rem;
+		font-weight: 800;
+		line-height: 1.3;
+	}
+	.how ul {
+		display: grid;
+		gap: 0.45rem;
+		padding-left: 1.1rem;
+		color: rgb(241 235 220 / 85%);
+		font-size: 0.95rem;
+		list-style: disc;
+	}
+	.how-next {
+		border-radius: 0.8rem;
+		background: rgb(244 214 140 / 10%);
+		padding: 0.6rem 0.8rem;
+		color: rgb(241 235 220 / 80%);
+	}
+	.how-next strong {
+		color: #f4d68c;
+	}
+	.how .link {
+		justify-self: start;
+		color: #f4d68c;
+		text-decoration: underline;
+		cursor: pointer;
 	}
 	/* Picking the next game, inside the result panel. */
 	.pick {

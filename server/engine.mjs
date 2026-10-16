@@ -93,6 +93,8 @@ const bootOf = (room) => room.boot ?? 1;
 export const CHOOSE_MS = 60 * 1000;
 /** Alone with bots, the pick is yours every hand: a shorter window keeps the game moving. */
 export const SOLO_CHOOSE_MS = 15 * 1000;
+/** When the turn passes to someone new, they get this long to keep or change the standing game. */
+export const HANDOVER_CHOOSE_MS = 20 * 1000;
 const CHOICES = new Set(['keep', 'next', 'random']);
 
 /**
@@ -109,12 +111,19 @@ function assignChooser(room, now) {
 	}
 	const lastSeat = room.players.find((p) => p.id === room.lastChooserId)?.seatNumber ?? -1;
 	const next = people.find((p) => p.seatNumber > lastSeat) ?? people[0];
-	// Once a game mode has been picked it stands (random stays random) and nobody waits:
-	// this hand's chooser can still change it during the normal countdown.
+	// Nothing picked yet: a full window. A standing pick (random stays random): no wait for the
+	// person who set it or a solo player; anyone else gets a short turn to keep or change it.
+	const window = !room.standing
+		? people.length === 1
+			? SOLO_CHOOSE_MS
+			: CHOOSE_MS
+		: people.length === 1 || room.standing.by === next.id
+			? 0
+			: HANDOVER_CHOOSE_MS;
 	room.chooser = {
 		playerId: next.id,
 		handId: room.result.handId,
-		deadline: room.standing ? now : now + (people.length === 1 ? SOLO_CHOOSE_MS : CHOOSE_MS),
+		deadline: now + window,
 		choice: null
 	};
 }

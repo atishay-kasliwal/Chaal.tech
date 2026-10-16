@@ -9,6 +9,7 @@ import {
 	nextInLineup,
 	CHOOSE_MS,
 	SOLO_CHOOSE_MS,
+	HANDOVER_CHOOSE_MS,
 	playing
 } from '../../server/engine.mjs';
 
@@ -97,20 +98,25 @@ test('a lineup sets what comes next, narrows random, and a timeout follows it', 
 	assert.deepEqual(nextHandChoice(room, ctx.now, lineup), { mode: 'random', pool: lineup });
 });
 
-test('a pick stands for later hands until someone changes it, with no waiting', () => {
+test('a pick stands for later hands until someone changes it', () => {
 	let room = finish(deal(table()));
 	room = transition(room, 'a', 'chooseNext', { choice: 'random' }, ctx);
 	room = finish(deal(room));
-	// b's turn: no pick window, the standing Random applies straight away.
+	// b's turn: a short window to keep or change it; if b does nothing, Random carries on.
 	assert.equal(room.chooser.playerId, 'b');
-	assert.equal(room.chooser.deadline, ctx.now);
-	assert.deepEqual(nextHandChoice(room, ctx.now), { mode: 'random' });
+	assert.equal(room.chooser.deadline, ctx.now + HANDOVER_CHOOSE_MS);
+	assert.throws(() => nextHandChoice(room, ctx.now), /b is picking/);
+	assert.deepEqual(nextHandChoice(room, ctx.now + HANDOVER_CHOOSE_MS), { mode: 'random' });
 	// b changes it during the countdown; that now stands.
 	room = transition(room, 'b', 'chooseNext', { choice: 'keep' }, ctx);
 	assert.deepEqual(room.standing, { choice: room.rulesVersion, by: 'b' });
 	const kept = room.rulesVersion;
 	room = finish(deal(room));
-	assert.deepEqual(nextHandChoice(room, ctx.now), { mode: 'selected', rulesVersion: kept });
+	// c's turn now; if c does nothing, b's pick carries on.
+	assert.deepEqual(nextHandChoice(room, ctx.now + HANDOVER_CHOOSE_MS), {
+		mode: 'selected',
+		rulesVersion: kept
+	});
 });
 
 test('the chooser can reopen the pick to change a standing game; others cannot', () => {
@@ -121,4 +127,14 @@ test('the chooser can reopen the pick to change a standing game; others cannot',
 	room = transition(room, 'b', 'openPick', {}, ctx);
 	assert.equal(room.chooser.deadline, ctx.now + CHOOSE_MS);
 	assert.throws(() => nextHandChoice(room, ctx.now), /b is picking/);
+});
+
+test('alone with bots, a standing pick deals with no wait', () => {
+	let room = newRoom('solo-stand', 1000, 'a', 'classic-1', { boot: 10, autoReady: true });
+	room = transition(room, 'a', 'join', { username: 'a' }, ctx);
+	room = transition(room, 'a', 'addBot', { botId: 'bot-0003', name: 'Bunty', level: 'easy' }, ctx);
+	room = finish(deal(room));
+	room = transition(room, 'a', 'chooseNext', { choice: 'random' }, ctx);
+	room = finish(deal(room));
+	assert.equal(room.chooser.deadline, ctx.now);
 });

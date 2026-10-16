@@ -23,7 +23,7 @@ new_sqlite_classes = ["ClubDirectory"]
 
 [vars]
 ALLOWED_ORIGINS = "https://chaal.tech,https://www.chaal.tech,https://chaal-tech.pages.dev,http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"
-TURN_TIMEOUT_MS = "60000"
+TURN_TIMEOUT_MS = "90000"
 HOST_GRACE_MS = "30000"
 # Email invites (Resend). Set the key with: npx wrangler secret put RESEND_API_KEY --config wrangler.game.toml
 PUBLIC_APP_URL = "https://chaal.tech"
