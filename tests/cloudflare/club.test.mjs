@@ -163,3 +163,32 @@ test('profile edits are limited to cosmetic fields and the lobby shows presence 
 	assert.ok(lobby.online.includes(saved.body.member.memberId));
 	assert.ok(lobby.members.every((member) => !('email' in member) && !('googleSub' in member)));
 });
+
+test('profile photos above the old body limit persist privately and can be removed', async () => {
+	const { readFile } = await import('node:fs/promises');
+	const jpeg = await readFile(new URL('../fixtures/profile-photo-large.jpg', import.meta.url));
+	const photoDataUrl = `data:image/jpeg;base64,${jpeg.toString('base64')}`;
+	assert.ok(photoDataUrl.length > 8192);
+	const session = await createSession();
+	assert.equal((await post('/me', { body: { profile: { photoDataUrl } } })).response.status, 401);
+	const saved = await post('/me', {
+		token: session.clubToken,
+		body: { profile: { photoDataUrl } }
+	});
+	assert.equal(saved.response.status, 200, JSON.stringify(saved.body));
+	assert.equal(saved.body.member.photoDataUrl, photoDataUrl);
+	const restored = await fetch(`${baseURL}/me`, {
+		headers: { Authorization: `Bearer ${session.clubToken}`, Origin: origin }
+	});
+	assert.equal((await restored.json()).member.photoDataUrl, photoDataUrl);
+	const invalid = await post('/me', {
+		token: session.clubToken,
+		body: { profile: { photoDataUrl: 'https://example.com/photo' } }
+	});
+	assert.equal(invalid.response.status, 400);
+	const removed = await post('/me', {
+		token: session.clubToken,
+		body: { profile: { photoDataUrl: null } }
+	});
+	assert.equal(removed.body.member.photoDataUrl, null);
+});

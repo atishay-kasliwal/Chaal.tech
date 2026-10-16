@@ -46,6 +46,7 @@
 				<SeatVideo
 					participant={showMedia && user.connected && !user.hasLeft ? mediaParticipant : undefined}
 					name={user.username}
+					playerId={user.id}
 					local={user.id === selfId}
 				/>
 				<div

@@ -124,7 +124,7 @@ test('table invites reach only people on the guest list; the roster hides emails
 	await claimMembership(db, { sub: 'f', email: 'friend@example.com', givenName: 'Friend' });
 	const roster = await activeRoster(db);
 	assert.equal(roster.length, 1);
-	assert.deepEqual(Object.keys(roster[0]).sort(), ['characterId', 'memberId', 'nickname']);
+	assert.deepEqual(Object.keys(roster[0]).sort(), ['characterId', 'memberId', 'nickname', 'photoDataUrl', 'playerId']);
 });
 
 test('picked friends resolve to emails on the server, never suspended or unknown ones', async () => {
@@ -147,4 +147,19 @@ test('server character IDs match the client catalog', async () => {
 	);
 	const clientIds = [...source.matchAll(/\{ id: '([a-z-]+)'/g)].map((match) => match[1]);
 	assert.deepEqual(clientIds, CHARACTER_IDS);
+});
+
+test('a saved profile photo survives reads and roster projection and can be removed', async () => {
+	const jpeg = await readFile(new URL('../fixtures/profile-photo.jpg', import.meta.url));
+	const photoDataUrl = `data:image/jpeg;base64,${jpeg.toString('base64')}`;
+	await invite('photo@example.com');
+	const member = await claimMembership(db, { sub: 'photo', email: 'photo@example.com' });
+	const id = String(member._id);
+	await updateProfile(db, id, { photoDataUrl, memberId: 'someone-else', role: 'owner' });
+	const read = await memberById(db, id);
+	assert.equal(publicProfile(read).photoDataUrl, photoDataUrl);
+	assert.equal(read.role, 'member');
+	assert.equal((await activeRoster(db))[0].photoDataUrl, photoDataUrl);
+	await updateProfile(db, id, { photoDataUrl: null });
+	assert.equal(publicProfile(await memberById(db, id)).photoDataUrl, null);
 });

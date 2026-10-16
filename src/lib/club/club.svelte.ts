@@ -6,11 +6,14 @@ export interface Member {
 	playerId: string;
 	nickname: string;
 	characterId: string;
+	photoDataUrl?: string | null;
 	role: 'owner' | 'member';
 	reducedMotion: boolean;
 	onboarded: boolean;
 }
-export type ProfileChange = Partial<Pick<Member, 'nickname' | 'characterId' | 'reducedMotion'>>;
+export type ProfileChange = Partial<
+	Pick<Member, 'nickname' | 'characterId' | 'reducedMotion' | 'photoDataUrl'>
+>;
 
 /** Club-wide choices an owner makes on the Admin page. */
 export interface ClubSettings {
@@ -59,6 +62,9 @@ const messages: Record<string, string> = {
 class Club {
 	status = $state<'loading' | 'signedOut' | 'signedIn'>('loading');
 	member = $state<Member | null>(null);
+	members = $state<
+		Pick<Member, 'memberId' | 'playerId' | 'nickname' | 'characterId' | 'photoDataUrl'>[]
+	>([]);
 	settings = $state<ClubSettings>(DEFAULT_CLUB_SETTINGS);
 	/** Why the last sign-in ended or failed, in words for the sign-in card. */
 	notice = $state('');
@@ -100,11 +106,14 @@ class Club {
 
 	private async call(path: string, init: RequestInit = {}) {
 		if (!serverURL) throw new Error(serverConfigError);
+		const requestToken = this.token;
 		const headers = new Headers(init.headers);
 		headers.set('Content-Type', 'application/json');
 		if (this.token) headers.set('Authorization', `Bearer ${this.token}`);
 		const response = await fetch(`${serverURL}${path}`, { ...init, headers });
 		const body = await response.json().catch(() => ({}));
+		if (response.ok && requestToken === this.token && Array.isArray(body.members))
+			this.members = body.members;
 		return { response, body };
 	}
 
@@ -127,8 +136,10 @@ class Club {
 	}
 
 	async refresh() {
+		const requestToken = this.token;
 		try {
 			const { response, body } = await this.call('/me');
+			if (requestToken !== this.token) return;
 			if (response.status === 401 || response.status === 403) return this.expire(body);
 			if (response.ok && body.member) {
 				this.accept(body.member);
@@ -162,7 +173,8 @@ class Club {
 			this.token = body.clubToken;
 			write(tokenKey, body.clubToken);
 			this.accept(body.member);
-			return true;
+			await this.refresh();
+			return this.status === 'signedIn';
 		} catch {
 			this.notice = 'Can’t reach the club right now. Check your connection and try again.';
 			return false;
@@ -172,12 +184,14 @@ class Club {
 	}
 
 	async save(change: ProfileChange, onboard = false): Promise<string | null> {
+		const savingToken = this.token;
 		this.busy = true;
 		try {
 			const { response, body } = await this.call('/me', {
 				method: 'POST',
 				body: JSON.stringify({ profile: change, onboard })
 			});
+			if (savingToken !== this.token) return 'Your account changed. Open your profile again.';
 			if (response.status === 401) {
 				this.expire(body);
 				return body.error ?? 'Sign in again';
@@ -205,6 +219,7 @@ class Club {
 	signOut(notice = '') {
 		this.token = undefined;
 		this.member = null;
+		this.members = [];
 		write(tokenKey, null);
 		write(memberKey, null);
 		this.clearLocal();

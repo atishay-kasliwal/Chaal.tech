@@ -165,6 +165,7 @@
 					<SeatVideo
 						participant={view.participants.find((p) => p.identity === member.id)}
 						name={member.username}
+						playerId={member.id}
 						local={member.id === playerId}
 					/>
 				{/each}

@@ -1,18 +1,36 @@
 <script lang="ts">
+	import { club } from './club.svelte.js';
 	import { characterFor } from './characters.js';
 
 	let {
 		characterId,
+		photoDataUrl,
+		memberId,
+		playerId,
 		size = 48,
 		label = '',
 		status
 	}: {
 		characterId?: string;
+		photoDataUrl?: string | null;
+		memberId?: string;
+		playerId?: string;
 		size?: number;
 		label?: string;
 		status?: 'online' | 'table';
 	} = $props();
-	const character = $derived(characterFor(characterId));
+	const member = $derived(
+		club.member &&
+			((memberId && club.member.memberId === memberId) ||
+				(playerId && club.member.playerId === playerId))
+			? club.member
+			: club.members.find(
+					(m) => (memberId && m.memberId === memberId) || (playerId && m.playerId === playerId)
+				)
+	);
+	const photo = $derived(photoDataUrl === undefined ? member?.photoDataUrl : photoDataUrl);
+	let failedPhoto = $state('');
+	const character = $derived(characterFor(characterId ?? member?.characterId));
 </script>
 
 <span
@@ -24,7 +42,9 @@
 	aria-label={label || undefined}
 	aria-hidden={label ? undefined : 'true'}
 >
-	<span class="glyph">{character.glyph}</span>
+	{#if photo?.startsWith('data:image/jpeg;base64,') && photo !== failedPhoto}
+		<img class="photo" src={photo} alt="" onerror={() => (failedPhoto = photo ?? '')} />
+	{:else}<span class="glyph">{character.glyph}</span>{/if}
 	{#if status}<span class="dot {status}" title={status === 'table' ? 'At a table' : 'Online'}
 		></span>{/if}
 </span>
@@ -42,6 +62,12 @@
 		box-shadow:
 			0 0 0 2px rgb(240 209 140 / 35%),
 			0 0.4rem 1rem rgb(0 0 0 / 35%);
+	}
+	.photo {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: inherit;
 	}
 	.glyph {
 		font-size: calc(var(--size) * 0.55);

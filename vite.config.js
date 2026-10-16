@@ -1,4 +1,5 @@
 import adapter from '@sveltejs/adapter-cloudflare';
+import { readdirSync } from 'node:fs';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
@@ -33,6 +34,24 @@ export default defineConfig(({ command, mode }) => {
 				]
 			}
 		},
-		plugins: [tailwindcss(), sveltekit({ preprocess: vitePreprocess(), adapter: adapter() })]
+		plugins: [
+			tailwindcss(),
+			sveltekit({
+				preprocess: vitePreprocess(),
+				adapter: adapter({
+					// One rule per public asset folder keeps full decks below Pages' 100-rule limit.
+					routes: {
+						exclude: [
+							'<build>',
+							'<prerendered>',
+							'<redirects>',
+							...readdirSync(new URL('./static/', import.meta.url), { withFileTypes: true })
+								.filter((entry) => !entry.name.startsWith('_'))
+								.map((entry) => `/${entry.name}${entry.isDirectory() ? '/*' : ''}`)
+						]
+					}
+				})
+			})
+		]
 	};
 });

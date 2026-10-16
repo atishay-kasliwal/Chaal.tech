@@ -109,3 +109,9 @@ GOOGLE_CLIENT_ID=<your client id>.apps.googleusercontent.com
 - **Characters at the table.** Seats still show the existing initial or camera fallback. Projecting the character into game snapshots touches every game engine, so it is deferred.
 - **Owner panel.** Membership is managed in MongoDB / `npm run club`, as requested. There is no in-app admin screen.
 - **Instant kick.** Suspension takes effect within five minutes (the credential lifetime), not instantly. That is because changes made directly in MongoDB do not notify the Worker.
+
+## Profile photos
+
+Members can open their navbar avatar, choose **Upload a photo**, adjust the crop, and save. JPEG, PNG and WebP inputs up to 5 MB / 24 megapixels are decoded locally. Only the cropped 192 × 192 JPEG (24 KB maximum) is sent to `/me`; browser re-encoding removes original EXIF/location metadata. The backend validates the JPEG format, dimensions, size and metadata markers. Photos are stored on the existing MongoDB member record as `photoDataUrl`, returned only through authenticated club/profile APIs, and require no public bucket or additional storage credentials.
+
+Photos appear on profile/navigation avatars, member-based club avatars and camera-off seats. Live camera video still takes priority; a missing or broken photo falls back to the saved character. Remove the photo and press Save to return to a character. Other members' photos refresh with their member roster on a subsequent profile refresh/page visit; no live photo broadcast is added. Old profiles without a photo continue to work.

@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { X } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { club } from './club.svelte.js';
 	import CharacterPicker from './CharacterPicker.svelte';
 	import CharacterAvatar from './CharacterAvatar.svelte';
+	import { openProfilePhoto, cropProfilePhoto } from './profile-photo.js';
 	import { profileModal } from './profile-modal.svelte.js';
 
 	let nickname = $state('');
@@ -12,20 +14,82 @@
 	let reducedMotion = $state(false);
 	let error = $state('');
 	let saved = $state(false);
+	let photoDataUrl = $state<string | null>(null);
+	let bitmap = $state.raw<ImageBitmap | null>(null);
+	let canvas = $state<HTMLCanvasElement>();
+	let zoom = $state(1);
+	let cropX = $state(0);
+	let cropY = $state(0);
+	let processing = $state(false);
+	let selection = 0;
+	$effect(() => {
+		const current = bitmap;
+		return () => current?.close();
+	});
+	$effect(() => {
+		if (bitmap && canvas) {
+			try {
+				photoDataUrl = cropProfilePhoto(canvas, bitmap, zoom, cropX, cropY);
+			} catch (failure) {
+				error = failure instanceof Error ? failure.message : 'Could not crop this photo.';
+			}
+		}
+	});
+	async function selectPhoto(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+		if (!file) return;
+		const request = ++selection;
+		processing = true;
+		error = '';
+		saved = false;
+		try {
+			const image = await openProfilePhoto(file);
+			if (request !== selection || !profileModal.open) {
+				image.close();
+				return;
+			}
+			zoom = 1;
+			cropX = cropY = 0;
+			bitmap = image;
+		} catch (failure) {
+			if (request === selection)
+				error = failure instanceof Error ? failure.message : 'Could not open this photo.';
+		} finally {
+			if (request === selection) processing = false;
+		}
+	}
+	function removePhoto() {
+		selection++;
+		processing = false;
+		bitmap = null;
+		photoDataUrl = null;
+		saved = false;
+	}
 
 	$effect(() => {
-		if (profileModal.open && club.member) {
-			nickname = club.member.nickname;
-			characterId = club.member.characterId;
-			reducedMotion = club.member.reducedMotion;
-			error = '';
-			saved = false;
-		}
+		const open = profileModal.open;
+		untrack(() => {
+			if (open && club.member) {
+				bitmap = null;
+				photoDataUrl = club.member.photoDataUrl ?? null;
+				nickname = club.member.nickname;
+				characterId = club.member.characterId;
+				reducedMotion = club.member.reducedMotion;
+				error = '';
+				saved = false;
+			} else {
+				selection++;
+				bitmap = null;
+				processing = false;
+			}
+		});
 	});
 
 	async function save(event: SubmitEvent) {
 		event.preventDefault();
-		error = (await club.save({ nickname, characterId, reducedMotion })) ?? '';
+		error = (await club.save({ nickname, characterId, reducedMotion, photoDataUrl })) ?? '';
 		saved = !error;
 	}
 
@@ -62,7 +126,7 @@
 				aria-label="Close"><X class="h-4 w-4" /></button
 			>
 			<div class="who">
-				<CharacterAvatar {characterId} size={64} />
+				<CharacterAvatar {characterId} {photoDataUrl} size={64} />
 				<div>
 					<h2>{club.member.nickname}</h2>
 					<p>{club.member.role === 'owner' ? 'Club owner' : 'Club member'}</p>
@@ -72,6 +136,49 @@
 				<span>Nickname</span>
 				<input bind:value={nickname} maxlength="24" required autocomplete="nickname" />
 			</label>
+			<div class="photo-controls">
+				<label class="upload-photo"
+					>{processing ? 'Opening photo…' : 'Upload a photo'}<input
+						type="file"
+						accept="image/jpeg,image/png,image/webp"
+						onchange={selectPhoto}
+						disabled={processing || club.busy}
+					/></label
+				>
+				<p class="hint">JPEG, PNG or WebP · up to 5 MB. Your photo is saved when you press Save.</p>
+				{#if bitmap}
+					<canvas bind:this={canvas} class="crop-preview" aria-label="Photo crop preview"></canvas>
+					<label class="field"
+						>Zoom<input type="range" min="1" max="3" step="0.05" bind:value={zoom} /></label
+					>
+					<label class="field"
+						>Move horizontally<input
+							type="range"
+							min="-1"
+							max="1"
+							step="0.02"
+							bind:value={cropX}
+						/></label
+					>
+					<label class="field"
+						>Move vertically<input
+							type="range"
+							min="-1"
+							max="1"
+							step="0.02"
+							bind:value={cropY}
+						/></label
+					>
+				{/if}
+				{#if photoDataUrl}<button type="button" class="text-btn" onclick={removePhoto}
+						>Remove photo · use character</button
+					>{/if}
+			</div>
+			<p class="hint">
+				{photoDataUrl
+					? 'Your character stays as a backup. Remove the photo to use it.'
+					: 'Or choose a character.'}
+			</p>
 			<CharacterPicker bind:value={characterId} />
 			<label class="motion">
 				<input type="checkbox" class="toggle toggle-sm" bind:checked={reducedMotion} />
@@ -79,7 +186,7 @@
 			</label>
 			<p class="hint">Name changes show at your next table join.</p>
 			{#if error}<p class="notice" role="alert">{error}</p>{/if}
-			<button class="primary" disabled={club.busy}
+			<button class="primary" disabled={club.busy || processing}
 				>{club.busy ? 'Saving…' : saved ? 'Saved' : 'Save'}</button
 			>
 			<button type="button" class="text-btn" onclick={signOut}>Sign out</button>
@@ -88,6 +195,25 @@
 {/if}
 
 <style>
+	.photo-controls {
+		display: grid;
+		gap: 0.6rem;
+	}
+	.upload-photo {
+		display: grid;
+		gap: 0.5rem;
+		font-weight: 600;
+	}
+	.upload-photo input {
+		max-width: 100%;
+		font-size: 0.85rem;
+	}
+	.crop-preview {
+		width: 144px;
+		height: 144px;
+		border-radius: 50%;
+		margin-inline: auto;
+	}
 	/* Profile setting: reduce motion for this member, whatever the device says. */
 	:global(:root[data-reduced-motion] *),
 	:global(:root[data-reduced-motion] *::before),

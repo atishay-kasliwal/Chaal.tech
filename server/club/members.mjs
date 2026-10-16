@@ -1,4 +1,5 @@
 import { MongoClient, ObjectId } from 'mongodb';
+import { isProfilePhoto } from './profile-photo.mjs';
 import { CHARACTER_IDS, defaultCharacterFor } from './characters.mjs';
 
 /**
@@ -87,6 +88,7 @@ export function publicProfile(member) {
 		characterId: CHARACTER_IDS.includes(member.characterId)
 			? member.characterId
 			: defaultCharacterFor(memberId),
+		photoDataUrl: isProfilePhoto(member.photoDataUrl) ? member.photoDataUrl : null,
 		role: member.role === 'owner' ? 'owner' : 'member',
 		reducedMotion: member.reducedMotion === true,
 		onboarded: Boolean(member.onboardedAt)
@@ -95,8 +97,8 @@ export function publicProfile(member) {
 
 /** Lobby roster entry: only what friends see of each other. */
 export function rosterEntry(member) {
-	const { memberId, nickname, characterId } = publicProfile(member);
-	return { memberId, nickname, characterId };
+	const { memberId, playerId, nickname, characterId, photoDataUrl } = publicProfile(member);
+	return { memberId, playerId, nickname, characterId, photoDataUrl };
 }
 
 export function assertActive(member) {
@@ -173,6 +175,15 @@ export function profilePatch(input) {
 			throw new ClubError('Invalid setting', 'INVALID_PROFILE', 400);
 		patch.reducedMotion = input.reducedMotion;
 	}
+	if ('photoDataUrl' in input) {
+		if (input.photoDataUrl !== null && !isProfilePhoto(input.photoDataUrl))
+			throw new ClubError(
+				'Choose a photo using the profile cropper (24 KB maximum).',
+				'INVALID_PROFILE',
+				400
+			);
+		patch.photoDataUrl = input.photoDataUrl;
+	}
 	return patch;
 }
 
@@ -192,7 +203,10 @@ export async function updateProfile(db, memberId, input, { onboard = false } = {
 export async function activeRoster(db) {
 	const members = await db
 		.collection(MEMBERS)
-		.find({ status: 'active' }, { projection: { nickname: 1, characterId: 1, status: 1 } })
+		.find(
+			{ status: 'active' },
+			{ projection: { playerId: 1, nickname: 1, characterId: 1, photoDataUrl: 1, status: 1 } }
+		)
 		.limit(100)
 		.toArray();
 	return members.map(rosterEntry);

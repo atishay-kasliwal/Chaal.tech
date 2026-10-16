@@ -89,7 +89,12 @@
 >
 	<div class="me">
 		<div class="me-video">
-			<SeatVideo participant={showMedia ? mediaParticipant : undefined} name={me.username} local />
+			<SeatVideo
+				participant={showMedia ? mediaParticipant : undefined}
+				name={me.username}
+				playerId={me.id}
+				local
+			/>
 		</div>
 		<div class="me-info">
 			<span class="me-name" title={me.username}>{me.username}</span>

@@ -46,7 +46,12 @@
 	</section>
 {:else if club.member && !club.member.onboarded}
 	<form class="gate" onsubmit={join} aria-labelledby="club-welcome">
-		<CharacterAvatar {characterId} size={96} label="Your character" />
+		<CharacterAvatar
+			photoDataUrl={club.member?.photoDataUrl}
+			{characterId}
+			size={96}
+			label="Your character"
+		/>
 		<h2 id="club-welcome">Welcome to the club</h2>
 		<p class="muted">This is you at the table. Change it now or any time later.</p>
 		<label class="field">

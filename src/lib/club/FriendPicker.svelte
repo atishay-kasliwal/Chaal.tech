@@ -83,7 +83,7 @@
 				onclick={() => toggle(friend.memberId)}
 			>
 				<span class="avatar">
-					<CharacterAvatar characterId={friend.characterId} size={34} />
+					<CharacterAvatar memberId={friend.memberId} characterId={friend.characterId} size={34} />
 					{#if status === 'online'}<span class="dot" title="Online"></span>{/if}
 					{#if on}<span class="tick"><Check size={12} strokeWidth={3} /></span>{/if}
 				</span>

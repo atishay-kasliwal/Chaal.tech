@@ -1,0 +1,269 @@
+{
+  "id": "christmas",
+  "name": "Christmas",
+  "width": 700,
+  "height": 1000,
+  "back": "back.svg",
+  "cards": [
+    {
+      "rank": "A",
+      "suit": "spades",
+      "file": "spades-a.svg"
+    },
+    {
+      "rank": "2",
+      "suit": "spades",
+      "file": "spades-2.svg"
+    },
+    {
+      "rank": "3",
+      "suit": "spades",
+      "file": "spades-3.svg"
+    },
+    {
+      "rank": "4",
+      "suit": "spades",
+      "file": "spades-4.svg"
+    },
+    {
+      "rank": "5",
+      "suit": "spades",
+      "file": "spades-5.svg"
+    },
+    {
+      "rank": "6",
+      "suit": "spades",
+      "file": "spades-6.svg"
+    },
+    {
+      "rank": "7",
+      "suit": "spades",
+      "file": "spades-7.svg"
+    },
+    {
+      "rank": "8",
+      "suit": "spades",
+      "file": "spades-8.svg"
+    },
+    {
+      "rank": "9",
+      "suit": "spades",
+      "file": "spades-9.svg"
+    },
+    {
+      "rank": "10",
+      "suit": "spades",
+      "file": "spades-10.svg"
+    },
+    {
+      "rank": "J",
+      "suit": "spades",
+      "file": "spades-j.svg"
+    },
+    {
+      "rank": "Q",
+      "suit": "spades",
+      "file": "spades-q.svg"
+    },
+    {
+      "rank": "K",
+      "suit": "spades",
+      "file": "spades-k.svg"
+    },
+    {
+      "rank": "A",
+      "suit": "hearts",
+      "file": "hearts-a.svg"
+    },
+    {
+      "rank": "2",
+      "suit": "hearts",
+      "file": "hearts-2.svg"
+    },
+    {
+      "rank": "3",
+      "suit": "hearts",
+      "file": "hearts-3.svg"
+    },
+    {
+      "rank": "4",
+      "suit": "hearts",
+      "file": "hearts-4.svg"
+    },
+    {
+      "rank": "5",
+      "suit": "hearts",
+      "file": "hearts-5.svg"
+    },
+    {
+      "rank": "6",
+      "suit": "hearts",
+      "file": "hearts-6.svg"
+    },
+    {
+      "rank": "7",
+      "suit": "hearts",
+      "file": "hearts-7.svg"
+    },
+    {
+      "rank": "8",
+      "suit": "hearts",
+      "file": "hearts-8.svg"
+    },
+    {
+      "rank": "9",
+      "suit": "hearts",
+      "file": "hearts-9.svg"
+    },
+    {
+      "rank": "10",
+      "suit": "hearts",
+      "file": "hearts-10.svg"
+    },
+    {
+      "rank": "J",
+      "suit": "hearts",
+      "file": "hearts-j.svg"
+    },
+    {
+      "rank": "Q",
+      "suit": "hearts",
+      "file": "hearts-q.svg"
+    },
+    {
+      "rank": "K",
+      "suit": "hearts",
+      "file": "hearts-k.svg"
+    },
+    {
+      "rank": "A",
+      "suit": "diamonds",
+      "file": "diamonds-a.svg"
+    },
+    {
+      "rank": "2",
+      "suit": "diamonds",
+      "file": "diamonds-2.svg"
+    },
+    {
+      "rank": "3",
+      "suit": "diamonds",
+      "file": "diamonds-3.svg"
+    },
+    {
+      "rank": "4",
+      "suit": "diamonds",
+      "file": "diamonds-4.svg"
+    },
+    {
+      "rank": "5",
+      "suit": "diamonds",
+      "file": "diamonds-5.svg"
+    },
+    {
+      "rank": "6",
+      "suit": "diamonds",
+      "file": "diamonds-6.svg"
+    },
+    {
+      "rank": "7",
+      "suit": "diamonds",
+      "file": "diamonds-7.svg"
+    },
+    {
+      "rank": "8",
+      "suit": "diamonds",
+      "file": "diamonds-8.svg"
+    },
+    {
+      "rank": "9",
+      "suit": "diamonds",
+      "file": "diamonds-9.svg"
+    },
+    {
+      "rank": "10",
+      "suit": "diamonds",
+      "file": "diamonds-10.svg"
+    },
+    {
+      "rank": "J",
+      "suit": "diamonds",
+      "file": "diamonds-j.svg"
+    },
+    {
+      "rank": "Q",
+      "suit": "diamonds",
+      "file": "diamonds-q.svg"
+    },
+    {
+      "rank": "K",
+      "suit": "diamonds",
+      "file": "diamonds-k.svg"
+    },
+    {
+      "rank": "A",
+      "suit": "clubs",
+      "file": "clubs-a.svg"
+    },
+    {
+      "rank": "2",
+      "suit": "clubs",
+      "file": "clubs-2.svg"
+    },
+    {
+      "rank": "3",
+      "suit": "clubs",
+      "file": "clubs-3.svg"
+    },
+    {
+      "rank": "4",
+      "suit": "clubs",
+      "file": "clubs-4.svg"
+    },
+    {
+      "rank": "5",
+      "suit": "clubs",
+      "file": "clubs-5.svg"
+    },
+    {
+      "rank": "6",
+      "suit": "clubs",
+      "file": "clubs-6.svg"
+    },
+    {
+      "rank": "7",
+      "suit": "clubs",
+      "file": "clubs-7.svg"
+    },
+    {
+      "rank": "8",
+      "suit": "clubs",
+      "file": "clubs-8.svg"
+    },
+    {
+      "rank": "9",
+      "suit": "clubs",
+      "file": "clubs-9.svg"
+    },
+    {
+      "rank": "10",
+      "suit": "clubs",
+      "file": "clubs-10.svg"
+    },
+    {
+      "rank": "J",
+      "suit": "clubs",
+      "file": "clubs-j.svg"
+    },
+    {
+      "rank": "Q",
+      "suit": "clubs",
+      "file": "clubs-q.svg"
+    },
+    {
+      "rank": "K",
+      "suit": "clubs",
+      "file": "clubs-k.svg"
+    }
+  ]
+}

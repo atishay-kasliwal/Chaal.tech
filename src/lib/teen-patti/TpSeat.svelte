@@ -113,6 +113,7 @@
 				<SeatVideo
 					participant={showMedia && !away ? mediaParticipant : undefined}
 					name={user.username}
+					playerId={user.id}
 				/>
 			{/if}
 			{#if onremove}

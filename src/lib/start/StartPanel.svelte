@@ -181,7 +181,11 @@
 	</header>
 
 	<button type="button" class="playing-as" onclick={() => (profileModal.open = true)}>
-		<CharacterAvatar characterId={club.member?.characterId} size={40} />
+		<CharacterAvatar
+			photoDataUrl={club.member?.photoDataUrl}
+			characterId={club.member?.characterId}
+			size={40}
+		/>
 		<span><small>Playing as</small><strong>{name}</strong></span>
 		<span class="edit">Edit</span>
 	</button>

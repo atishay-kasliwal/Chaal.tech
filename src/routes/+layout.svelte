@@ -4,7 +4,6 @@
 	import { page } from '$app/state';
 	import { fade, fly } from 'svelte/transition';
 	import StartModal from '#lib/start/StartModal.svelte';
-	import { openStart } from '#lib/start/start-modal.svelte.js';
 	import { onMount } from 'svelte';
 	import { club } from '#lib/club/club.svelte.js';
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
@@ -15,11 +14,7 @@
 	onMount(() => club.start());
 </script>
 
-<nav
-	class="navbar bg-base-100 relative z-20 container mx-auto"
-	class:club-route={page.route.id === '/club'}
-	class:room-route={page.route.id === '/[roomName]'}
->
+<nav class="site-nav navbar relative z-20" aria-label="Main navigation">
 	<div class="navbar-start min-w-0 flex-1">
 		<a class="inline-flex shrink-0 items-center" href="/" aria-label="Chaal.tech home">
 			<img
@@ -32,21 +27,18 @@
 		</a>
 	</div>
 	<div class="navbar-end w-auto shrink-0 gap-2">
-		{#if club.member && page.route.id !== '/club'}
-			<a href="/club" class="btn btn-ghost rounded-full">Club</a>
-		{/if}
-		{#if club.member?.role === 'owner' && page.route.id !== '/admin'}
-			<a href="/admin" class="btn btn-ghost rounded-full">Admin</a>
-		{/if}
-		{#if page.route.id !== '/create-room' && page.route.id !== '/' && page.route.id !== '/club'}
-			<!-- Opens the pop-up; the link still works without JavaScript. -->
+		{#if club.member}
 			<a
-				href="/create-room"
-				class="btn btn-primary rounded-full"
-				onclick={(event) => {
-					event.preventDefault();
-					openStart();
-				}}>Start a table</a
+				href="/club"
+				class="btn btn-ghost rounded-full"
+				aria-current={page.route.id === '/club' ? 'page' : undefined}>Club</a
+			>
+		{/if}
+		{#if club.member?.role === 'owner'}
+			<a
+				href="/admin"
+				class="btn btn-ghost rounded-full"
+				aria-current={page.route.id === '/admin' ? 'page' : undefined}>Admin</a
 			>
 		{/if}
 		{#if club.member}
@@ -55,14 +47,18 @@
 				onclick={() => (profileModal.open = true)}
 				aria-label="Your profile: {club.member.nickname}"
 			>
-				<CharacterAvatar characterId={club.member.characterId} size={38} />
+				<CharacterAvatar
+					photoDataUrl={club.member.photoDataUrl}
+					characterId={club.member.characterId}
+					size={38}
+				/>
 			</button>
 		{/if}
 	</div>
 </nav>
 
 <main
-	class="container mx-auto min-h-[calc(100vh-4rem)] px-2"
+	class="container mx-auto min-h-[calc(100dvh-72px)] px-2"
 	class:club-main={page.route.id === '/club'}
 	class:room-main={page.route.id === '/[roomName]'}
 >
@@ -84,7 +80,8 @@
 <ProfilePanel />
 
 <style>
-	.club-route {
+	.site-nav {
+		width: 100%;
 		max-width: none;
 		height: 72px;
 		min-height: 72px;
@@ -106,18 +103,30 @@
 		max-width: none;
 	}
 
+	.site-nav a[aria-current='page'] {
+		background: rgb(231 199 132 / 12%);
+		color: #e7c784;
+	}
 	@media (min-width: 640px) {
 		.brand-logo {
 			width: 208px;
 		}
 	}
+	@media (max-width: 479px) {
+		.brand-logo {
+			width: 144px;
+		}
+		.site-nav .navbar-end {
+			gap: 0.25rem;
+		}
+		.site-nav .btn {
+			padding-inline: 0.65rem;
+		}
+	}
 
 	@media (max-width: 959px) and (max-height: 500px) {
-		.room-route {
-			display: none;
-		}
 		.room-main {
-			min-height: 100dvh;
+			min-height: calc(100dvh - 72px);
 			overflow: hidden;
 		}
 	}

@@ -9,12 +9,14 @@
 	let mounted = $state(false);
 	let activeMechanic = $state(-1);
 	let activeHand = $state(0);
+	const handsPerPage = 3;
+	const rankingPages = [0, 1];
 	let rankingsPaused = $state(false);
 	let rankingsHovered = $state(false);
 	let rankingsFocused = $state(false);
 
 	function changeHand(offset: number) {
-		activeHand = (activeHand + offset + hands.length) % hands.length;
+		activeHand = (activeHand + offset + rankingPages.length) % rankingPages.length;
 	}
 
 	function activateMechanic(index: number, event: KeyboardEvent) {
@@ -126,11 +128,8 @@
 					</p>
 					<p class="mb-7 text-base text-white/80 md:text-lg">No download or sign-up.</p>
 					<div class="flex flex-wrap justify-center gap-3 md:justify-start">
-						<button class="hero-cta" onclick={openStart}>🤖 Play vs bots</button>
+						<button class="hero-cta" onclick={openStart}>Chaal</button>
 					</div>
-					<p class="mt-4 text-sm text-white/70">
-						Got a link from a friend? Just open it — that’s it.
-					</p>
 				</div>
 
 				<!-- Hero Visual (Floating Cards) -->
@@ -217,43 +216,46 @@
 							class="ranking-slide"
 							role="group"
 							aria-roledescription="slide"
-							aria-label="{activeHand + 1} of {hands.length}"
+							aria-label="Rankings {activeHand * handsPerPage + 1} to {(activeHand + 1) *
+								handsPerPage} of {hands.length}"
 							in:fade={{ duration: 180 }}
 							out:fade={{ duration: 180 }}
 						>
-							<div>
-								<p class="text-primary mb-2 text-sm font-bold">
-									{hands[activeHand].rank} / {hands.length}
-								</p>
-								<h3 class="text-2xl font-bold">{hands[activeHand].name}</h3>
-								<p class="text-base-content/70 mt-2">{hands[activeHand].desc}</p>
-							</div>
-							<div class="flex justify-center gap-2 sm:gap-3">
-								{#each hands[activeHand].cards as card (`${card.r}-${card.s}`)}
-									<PlayingCard rank={card.r} suit={card.s} class="!h-28 !w-20 sm:!h-36 sm:!w-24" />
-								{/each}
-							</div>
+							{#each hands.slice(activeHand * handsPerPage, (activeHand + 1) * handsPerPage) as hand (hand.rank)}
+								<div class="ranking-hand">
+									<div>
+										<p class="text-primary mb-2 text-sm font-bold">{hand.rank} / {hands.length}</p>
+										<h3 class="text-xl font-bold">{hand.name}</h3>
+										<p class="text-base-content/70 mt-2 text-sm">{hand.desc}</p>
+									</div>
+									<div class="flex justify-center gap-2">
+										{#each hand.cards as card (`${card.r}-${card.s}`)}
+											<PlayingCard rank={card.r} suit={card.s} class="!h-24 !w-16" />
+										{/each}
+									</div>
+								</div>
+							{/each}
 						</div>
 					{/key}
 				</div>
 				<div class="flex items-center justify-center gap-3">
 					<button
 						class="btn btn-circle btn-ghost btn-sm"
-						aria-label="Previous hand"
+						aria-label="Previous three hands"
 						onclick={() => changeHand(-1)}>←</button
 					>
-					{#each hands as hand, index (hand.rank)}
+					{#each rankingPages as index (index)}
 						<button
 							class="ranking-dot"
 							class:selected={index === activeHand}
-							aria-label="Show {hand.name}"
+							aria-label="Show rankings {index * handsPerPage + 1} to {(index + 1) * handsPerPage}"
 							aria-current={index === activeHand ? 'true' : undefined}
 							onclick={() => (activeHand = index)}
 						></button>
 					{/each}
 					<button
 						class="btn btn-circle btn-ghost btn-sm"
-						aria-label="Next hand"
+						aria-label="Next three hands"
 						onclick={() => changeHand(1)}>→</button
 					>
 				</div>
@@ -615,8 +617,15 @@
 	.ranking-slide {
 		grid-area: 1 / 1;
 		display: grid;
-		align-items: center;
+		grid-template-columns: 1fr;
+		gap: 1rem;
+		min-width: 0;
+	}
+	.ranking-hand {
+		display: grid;
+		grid-template-rows: 1fr auto;
 		gap: 1.5rem;
+		min-width: 0;
 		border: 1px solid var(--color-base-300);
 		border-radius: 1rem;
 		padding: 1.5rem 0.75rem;
@@ -638,11 +647,9 @@
 		outline: 2px solid var(--color-primary);
 		outline-offset: 4px;
 	}
-	@media (min-width: 640px) {
+	@media (min-width: 900px) {
 		.ranking-slide {
-			grid-template-columns: 1fr 1fr;
-			padding: 2rem;
-			text-align: left;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 		}
 	}
 

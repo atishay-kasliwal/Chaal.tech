@@ -1,12 +1,25 @@
 <script lang="ts">
 	import { Mic, MicOff, SignalLow, VideoOff } from '@lucide/svelte';
 	import type { MediaParticipant } from '#lib/media/controller.js';
+	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
+	import { club } from '#lib/club/club.svelte.js';
 	import { attachTrack } from '#lib/media/attach.js';
 	let {
 		participant,
 		name,
-		local = false
-	}: { participant?: MediaParticipant; name: string; local?: boolean } = $props();
+		local = false,
+		playerId
+	}: {
+		participant?: MediaParticipant;
+		name: string;
+		playerId?: string;
+		local?: boolean;
+	} = $props();
+	const profile = $derived(
+		playerId && club.member?.playerId === playerId
+			? club.member
+			: club.members.find((m) => m.playerId === playerId)
+	);
 	let initials = $derived(
 		name
 			.trim()
@@ -37,13 +50,20 @@
 		></video>
 	{:else}
 		<div class="camera-placeholder flex h-full w-full flex-col items-center justify-center">
-			<span class="camera-initials" aria-hidden="true">{initials}</span>
+			{#if profile}<CharacterAvatar {playerId} size={48} />{:else}<span
+					class="camera-initials"
+					aria-hidden="true">{initials}</span
+				>{/if}
 			<span class="camera-off-label"><VideoOff class="h-3.5 w-3.5" /> Camera off</span>
 		</div>
 	{/if}
-	<div class="seat-video-status absolute inset-x-2 bottom-2 flex items-center justify-between gap-2">
+	<div
+		class="seat-video-status absolute inset-x-2 bottom-2 flex items-center justify-between gap-2"
+	>
 		<span class="mic-state" class:speaking={participant?.speaking}>
-			{#if participant?.microphoneOn}<Mic class="h-3.5 w-3.5" />{:else}<MicOff class="h-3.5 w-3.5" />{/if}
+			{#if participant?.microphoneOn}<Mic class="h-3.5 w-3.5" />{:else}<MicOff
+					class="h-3.5 w-3.5"
+				/>{/if}
 			{participant?.speaking ? 'Speaking' : participant?.microphoneOn ? 'Mic on' : 'Muted'}
 		</span>
 		{#if participant?.quality === 'poor' || participant?.quality === 'lost'}

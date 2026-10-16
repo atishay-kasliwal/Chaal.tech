@@ -276,6 +276,7 @@
 								<div class="faces">
 									{#each featured.connectedMembers.slice(0, 6) as id (id)}{@const friend =
 											members.find((member) => member.memberId === id)}<CharacterAvatar
+											memberId={friend?.memberId}
 											characterId={friend?.characterId}
 											size={38}
 											label={nameOf(id)}
@@ -430,6 +431,7 @@
 					<ul class="friend-list">
 						{#each roster.slice(friendPage * 5, friendPage * 5 + 5) as friend (friend.memberId)}<li>
 								<CharacterAvatar
+									memberId={friend.memberId}
 									characterId={friend.characterId}
 									size={44}
 									status={atTable.has(friend.memberId)

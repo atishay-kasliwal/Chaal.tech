@@ -723,6 +723,7 @@
 						<SeatVideo
 							participant={mediaState?.participants.find((p) => p.identity === spotlightUser.id)}
 							name={spotlightUser.username}
+							playerId={spotlightUser.id}
 						/>
 					{/if}
 					<span class="spotlight-name"
