@@ -30,8 +30,11 @@ import {
 	setMemberRole,
 	betaDecision,
 	sendDueBeta,
+	sendDueBetaToAll,
+	resetGameNight,
 	decideGameNight
 } from '../club/admin.mjs';
+import { openPoll, publicPoll, saveAvailability, pollSummary } from '../club/availability.mjs';
 
 export { RoomDurableObject, ClubDirectory };
 
@@ -117,21 +120,24 @@ function betaSettings(env) {
 		apiKey: env.RESEND_API_KEY,
 		from: env.BETA_FROM || env.INVITE_FROM || 'Chaal <invites@chaal.tech>',
 		formUrl: env.BETA_FORM_URL,
-		appUrl: env.PUBLIC_APP_URL || 'https://chaal.tech'
+		appUrl: env.PUBLIC_APP_URL || 'https://chaal.tech',
+		// Signs each person's game-night link.
+		secret: env.SESSION_SECRET
 	};
 }
 
 /** Everything the Admin page shows, read fresh. */
 async function adminState(env, db) {
-	const [members, settings, beta, lobby] = await Promise.all([
+	const [members, settings, beta, poll, lobby] = await Promise.all([
 		adminMembers(db),
 		clubSettings(db),
 		betaDecision(db, betaSettings(env).appUrl),
+		pollSummary(db, env.SESSION_SECRET, betaSettings(env).appUrl),
 		clubDirectory(env)
 			.fetch('https://club.internal/lobby')
 			.then((result) => result.json())
 	]);
-	return { members, settings, beta, tables: lobby.tables ?? [], online: lobby.online ?? [] };
+	return { members, settings, beta, poll, tables: lobby.tables ?? [], online: lobby.online ?? [] };
 }
 
 function clubFailure(error, origin, env) {
@@ -164,10 +170,10 @@ function roomStub(env, name) {
 	return env.ROOMS.get(env.ROOMS.idFromName(name));
 }
 
-async function jsonBody(request) {
+async function jsonBody(request, limit = 8192) {
 	try {
 		const text = await request.text();
-		if (text.length > 8192) return null;
+		if (text.length > limit) return null;
 		return JSON.parse(text);
 	} catch {
 		return null;
@@ -220,8 +226,8 @@ export default {
 		}
 		if (url.pathname === '/me' && (request.method === 'GET' || request.method === 'POST')) {
 			try {
-				const body = request.method === 'POST' ? await jsonBody(request) : null;
-				const { member, settings } = await withClubDatabase(env, async (db) => {
+				const body = request.method === 'POST' ? await jsonBody(request, 40_000) : null;
+				const { member, settings, members } = await withClubDatabase(env, async (db) => {
 					const current = await signedInMember(request, env, db);
 					const updated =
 						request.method === 'GET'
@@ -230,10 +236,10 @@ export default {
 									onboard: body?.onboard === true
 								});
 					// Club-wide table look and defaults travel with the profile.
-					return { member: updated, settings: await clubSettings(db) };
+					return { member: updated, settings: await clubSettings(db), members: await activeRoster(db) };
 				});
 				if (request.method === 'POST') rosterCache.at = 0;
-				return response({ ok: true, member: publicProfile(member), settings }, 200, origin, env);
+				return response({ ok: true, member: publicProfile(member), settings, members }, 200, origin, env);
 			} catch (error) {
 				return clubFailure(error, origin, env);
 			}
@@ -245,6 +251,25 @@ export default {
 				const profile = publicProfile(member);
 				const session = await issueGameToken(env.SESSION_SECRET, profile);
 				return response({ ...session, member: profile }, 200, origin, env);
+			} catch (error) {
+				return clubFailure(error, origin, env);
+			}
+		}
+		// Public game-night poll: anyone with the unguessable link can answer. No sign-in.
+		const pollMatch = /^\/poll\/([0-9a-f]{24})$/.exec(url.pathname);
+		if (pollMatch && (request.method === 'GET' || request.method === 'POST')) {
+			try {
+				const body = request.method === 'POST' ? await jsonBody(request) : null;
+				// The personal token comes as ?for= (GET) or in the body (POST).
+				const token = request.method === 'GET' ? url.searchParams.get('for') : body?.for;
+				const result = await withClubDatabase(env, (db) =>
+					request.method === 'GET'
+						? publicPoll(db, env.SESSION_SECRET, pollMatch[1], token)
+						: saveAvailability(db, env.SESSION_SECRET, pollMatch[1], token, body?.slots).then(
+								(slots) => ({ saved: slots })
+							)
+				);
+				return response({ ok: true, ...result }, 200, origin, env);
 			} catch (error) {
 				return clubFailure(error, origin, env);
 			}
@@ -271,6 +296,13 @@ export default {
 							notice = steps.length
 								? `Sent beta email day ${steps.join(', ')}.`
 								: 'Nothing due for them.';
+						} else if (action === 'poll-open') {
+							await resetGameNight(db, { apiKey: env.RESEND_API_KEY });
+							await openPoll(db);
+							notice = 'Poll opened for tomorrow and the day after. Share the link.';
+						} else if (action === 'beta-send-all') {
+							const { reached, total } = await sendDueBetaToAll(db, betaSettings(env));
+							notice = `Emails sent to ${reached} of ${total}. Anyone already up to date was skipped.`;
 						} else if (action === 'beta-night')
 							notice = `Beta night set for ${await decideGameNight(db, body.start, betaSettings(env).appUrl)}.`;
 						else throw new ClubError('Unknown admin action', 'INVALID_ADMIN_REQUEST', 400);

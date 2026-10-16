@@ -43,7 +43,7 @@ test('day 1 is a personal note from the host with one button to the form', () =>
 
 test('the chosen time is read as India time and gets a calendar link', () => {
 	assert.equal(game.start.toISOString(), '2026-10-24T15:30:00.000Z');
-	assert.equal(game.label, 'Saturday 24 October · 9:00 PM IST');
+	assert.equal(game.label, 'Saturday 24 October · 9:00 PM IST (11:30 AM ET)');
 	assert.equal(game.date, 'Sat 24 Oct');
 	const calendar = new URL(game.calendarUrl);
 	assert.equal(calendar.searchParams.get('dates'), '20261024T153000Z/20261024T183000Z');

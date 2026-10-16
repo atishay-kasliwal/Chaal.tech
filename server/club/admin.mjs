@@ -12,6 +12,7 @@ import {
 	candidateNights,
 	gameTime
 } from './beta-emails.mjs';
+import { currentPoll, pollNights, personalLink } from './availability.mjs';
 
 export const SETTINGS = 'club_settings';
 
@@ -215,6 +216,13 @@ export async function sendDueBeta(db, memberId, beta, now = new Date()) {
 	if (member.betaOptOut) throw invalid('That member opted out of beta emails');
 	const decision = await db.collection(SETTINGS).findOne({ _id: 'beta' });
 	const steps = plannedSteps(member, decision, now);
+	// An open availability poll replaces the Google Form: its page is the link in the first email.
+	const poll = await currentPoll(db);
+	if (poll)
+		beta = {
+			...beta,
+			formUrl: await personalLink(beta.secret, poll, String(member._id), beta.appUrl)
+		};
 	if (!steps.length) return [];
 	if (!beta.apiKey)
 		throw new ClubError(
@@ -224,14 +232,15 @@ export async function sendDueBeta(db, memberId, beta, now = new Date()) {
 		);
 	if (steps.some(({ step }) => step === 1) && !beta.formUrl)
 		throw new ClubError(
-			'Set BETA_FORM_URL on the server to send the availability email.',
+			'Open a game-night poll first (Admin → Game night) so the first email has a link.',
 			'EMAIL_UNAVAILABLE',
 			503
 		);
 	const owner = await members.findOne({ role: 'owner', status: { $ne: 'suspended' } });
 	const details = {
 		formUrl: beta.formUrl,
-		nights: candidateNights(now),
+		// An open availability poll decides which nights the first email offers.
+		nights: (poll && pollNights(poll)) || candidateNights(now),
 		game: decision ? gameTime(decision.start.toISOString(), beta.appUrl) : null,
 		host: owner?.nickname || 'The Chaal table',
 		appUrl: beta.appUrl
@@ -254,6 +263,21 @@ export async function sendDueBeta(db, memberId, beta, now = new Date()) {
 	}
 }
 
+/** Send every active member whatever beta emails they are due. Returns how many got something. */
+export async function sendDueBetaToAll(db, beta, now = new Date()) {
+	const members = await db
+		.collection(MEMBERS)
+		.find(
+			{ status: { $in: ['invited', 'active'] }, betaOptOut: { $ne: true } },
+			{ projection: { _id: 1 } }
+		)
+		.toArray();
+	let reached = 0;
+	for (const member of members)
+		if ((await sendDueBeta(db, String(member._id), beta, now)).length) reached++;
+	return { reached, total: members.length };
+}
+
 /** Pick the beta game night. Changing an already chosen night is not offered here. */
 export async function decideGameNight(db, start, appUrl, now = new Date()) {
 	let game;
@@ -271,4 +295,17 @@ export async function decideGameNight(db, start, appUrl, now = new Date()) {
 		.collection(SETTINGS)
 		.updateOne({ _id: 'beta' }, { $set: { start: game.start, decidedAt: now } }, { upsert: true });
 	return game.label;
+}
+
+/**
+ * A new game-night round: forget the picked night and who was emailed, so the new poll's links
+ * and the new time go out to everyone. Emails still scheduled for the old night are cancelled.
+ */
+export async function resetGameNight(db, { apiKey, now = new Date() } = {}) {
+	const members = db.collection(MEMBERS);
+	if (apiKey)
+		for (const member of await members.find({ 'betaInvite.emails.0': { $exists: true } }).toArray())
+			await cancelBetaEmails({ apiKey, emails: member.betaInvite.emails, now }).catch(() => []);
+	await members.updateMany({}, { $unset: { betaInvite: '' } });
+	await db.collection(SETTINGS).deleteOne({ _id: 'beta' });
 }

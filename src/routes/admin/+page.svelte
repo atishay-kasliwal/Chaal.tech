@@ -34,7 +34,7 @@
 		['tables', 'Live tables'],
 		['defaults', 'Table defaults'],
 		['look', 'Look'],
-		['beta', 'Beta emails']
+		['beta', 'Game night']
 	] as const;
 	const BOOTS = [5, 10, 20, 50, 100];
 	const LIMITS = [0, 64, 128, 256, 512];
@@ -61,6 +61,36 @@
 	let tables = $state<LobbyTable[]>([]);
 	let online = $state<string[]>([]);
 	let beta = $state<{ label: string } | null>(null);
+	interface Poll {
+		days: string[];
+		openedAt: string;
+		people: { memberId: string; name: string; link: string | null; slots: string[] | null }[];
+		best: { slot: string; free: string[] }[];
+	}
+	let poll = $state<Poll | null>(null);
+	let copiedFor = $state('');
+	const answered = $derived(poll?.people.filter((person) => person.slots) ?? []);
+	const waiting = $derived(poll?.people.filter((person) => !person.slots) ?? []);
+	const inZone = (iso: string, tz: string, short: string) =>
+		`${new Intl.DateTimeFormat('en-GB', { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso))}, ${new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit' }).format(new Date(iso))} ${short}`;
+	const india = (iso: string) => inZone(iso, 'Asia/Kolkata', 'IST');
+	const indiaDay = (day: string) =>
+		new Intl.DateTimeFormat('en-GB', {
+			timeZone: 'Asia/Kolkata',
+			weekday: 'short',
+			day: 'numeric',
+			month: 'short'
+		}).format(new Date(`${day}T12:00:00+05:30`));
+	const eastern = (iso: string) => inZone(iso, 'America/New_York', 'ET');
+	async function copyLink(person: Poll['people'][number]) {
+		if (!person.link) return;
+		try {
+			await navigator.clipboard.writeText(person.link);
+			copiedFor = person.memberId;
+		} catch {
+			notice = person.link;
+		}
+	}
 	let draft = $state<ClubSettings>(structuredClone(DEFAULT_CLUB_SETTINGS));
 	let loaded = $state(false);
 	let busy = $state(false);
@@ -71,8 +101,6 @@
 	let newEmail = $state('');
 	let newNickname = $state('');
 	let newOwner = $state(false);
-	// Beta night (India time, as the emails use).
-	let night = $state('');
 
 	const isOwner = $derived(club.member?.role === 'owner');
 	const ready = $derived(club.status === 'signedIn' && !!club.member?.onboarded && isOwner);
@@ -86,12 +114,14 @@
 		online: string[];
 		settings: ClubSettings;
 		beta: { label: string } | null;
+		poll: Poll | null;
 		notice?: string;
 	}) {
 		members = body.members;
 		tables = body.tables;
 		online = body.online;
 		beta = body.beta;
+		poll = body.poll;
 		club.applySettings(body.settings);
 		draft = structuredClone(body.settings);
 		notice = body.notice ?? '';
@@ -143,11 +173,6 @@
 		void send({ action: 'settings', settings: draft }).then((ok) => {
 			if (ok) notice = 'Saved. New tables and every card back use this now.';
 		});
-	}
-
-	function setNight() {
-		// datetime-local gives "YYYY-MM-DDTHH:MM"; the beta emails read it as India time.
-		void send({ action: 'beta-night', start: night.replace('T', ' ') });
 	}
 
 	const statusLabel = (member: AdminMember) =>
@@ -212,7 +237,11 @@
 						{#each members as member (member.memberId)}
 							{@const self = member.memberId === club.member?.memberId}
 							<li class:paused={member.status === 'suspended'}>
-								<CharacterAvatar characterId={member.characterId ?? undefined} size={36} />
+								<CharacterAvatar
+									memberId={member.memberId}
+									characterId={member.characterId ?? undefined}
+									size={36}
+								/>
 								<div class="who">
 									<strong
 										>{member.nickname || member.email}{#if self}
@@ -385,23 +414,104 @@
 				</section>
 			{:else if tab === 'beta'}
 				<section class="card">
-					<h2>Beta game night</h2>
-					{#if beta}
-						<p>Set for <strong>{beta.label}</strong>.</p>
-					{:else}
-						<p class="note">Not picked yet. Day 1 asks everyone which night suits them.</p>
+					<h2><span class="step">1</span> Ask everyone when they're free</h2>
+					{#if poll}
+						<p class="note">
+							Asking about {poll.days.map(indiaDay).join(' and ')}
+							(India dates). Each person gets their own link, no sign-in.
+						</p>
 						<div class="add">
-							<input
-								type="datetime-local"
-								bind:value={night}
-								aria-label="Game night (India time)"
-							/>
-							<button class="primary" disabled={busy || !night} onclick={setNight}>Set night</button
+							<button
+								class="primary"
+								disabled={busy}
+								onclick={() =>
+									confirm('Email every guest their link? Anyone already emailed is skipped.') &&
+									send({ action: 'beta-send-all' })}>Email everyone their link</button
+							>
+							<button
+								disabled={busy}
+								class="ghost"
+								onclick={() =>
+									confirm(
+										'Start a new round? Old links stop working, answers and the picked time are cleared, and everyone can be emailed again.'
+									) && send({ action: 'poll-open' })}>Start over</button
 							>
 						</div>
-						<p class="note">India time. Picking it lets you send day 2 and day 3.</p>
+					{:else}
+						<p class="note">
+							Opens a poll for tomorrow and the day after. Friends tick the hours they're free;
+							every hour shows in India time and US Eastern.
+						</p>
+						<button class="primary" disabled={busy} onclick={() => send({ action: 'poll-open' })}
+							>Ask for availability</button
+						>
 					{/if}
 				</section>
+
+				{#if poll}
+					<section class="card">
+						<h2>
+							<span class="step">2</span> Answers
+							<small>{answered.length} of {poll.people.length}</small>
+						</h2>
+						<ul class="rows">
+							{#each [...answered, ...waiting] as person (person.memberId)}
+								<li>
+									<div class="who">
+										<strong>{person.name}</strong>
+										<small>{person.slots ? `${person.slots.length} hours free` : 'Waiting'}</small>
+									</div>
+									<span class="tag" class:live={!!person.slots}
+										>{person.slots ? 'Answered' : 'Waiting'}</span
+									>
+									{#if person.link}
+										<button disabled={busy} onclick={() => copyLink(person)}
+											>{copiedFor === person.memberId ? 'Copied' : 'Copy link'}</button
+										>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					</section>
+
+					<section class="card">
+						<h2><span class="step">3</span> Pick the time</h2>
+						{#if beta}
+							<p>Set for <strong>{beta.label}</strong>.</p>
+							<button
+								class="primary"
+								disabled={busy}
+								onclick={() =>
+									confirm(`Email everyone that it's on: ${beta?.label}?`) &&
+									send({ action: 'beta-send-all' })}>Email everyone the time</button
+							>
+						{:else if !poll.best.length}
+							<p class="note">The best times show here as answers come in.</p>
+						{:else}
+							<p class="note">Best times first. Waiting on {waiting.length || 'nobody'}.</p>
+							<ul class="rows">
+								{#each poll.best as option (option.slot)}
+									<li>
+										<div class="who">
+											<strong>{india(option.slot)}</strong>
+											<small>{eastern(option.slot)}</small>
+											<small class="names"
+												>{option.free.length} free: {option.free.join(', ')}</small
+											>
+										</div>
+										<button
+											disabled={busy}
+											onclick={() =>
+												confirm(`Make it ${india(option.slot)} (${eastern(option.slot)})?`) &&
+												send({ action: 'beta-night', start: option.slot })}>Pick this time</button
+										>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					</section>
+				{/if}
+
 				<section class="card">
 					<h2>Who got what</h2>
 					<ul class="rows">
@@ -460,6 +570,24 @@
 	h2 small {
 		color: rgb(241 235 220 / 50%);
 		font-size: 0.85rem;
+	}
+	.step {
+		display: inline-grid;
+		width: 1.4rem;
+		height: 1.4rem;
+		margin-right: 0.35rem;
+		place-items: center;
+		border-radius: 999px;
+		background: rgb(244 214 140 / 16%);
+		color: #f4d68c;
+		font-size: 0.75rem;
+	}
+	.ghost {
+		border: 1px solid rgb(240 209 140 / 25%);
+		border-radius: 999px;
+		padding: 0.55rem 1rem;
+		color: #f4d68c;
+		cursor: pointer;
 	}
 	.tabs {
 		display: flex;

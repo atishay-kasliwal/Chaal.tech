@@ -50,13 +50,20 @@ export function gameTime(start, appUrl = 'https://chaal.tech') {
 		/\s?([ap])m/i,
 		(_, m) => ` ${m.toUpperCase()}M`
 	);
+	// Friends in the US read the same moment in Eastern time.
+	const eastern = new Intl.DateTimeFormat('en-US', {
+		timeZone: 'America/New_York',
+		hour: 'numeric',
+		minute: '2-digit'
+	}).format(date);
 	return {
 		start: date,
 		day: format(date, { weekday: 'long' }),
 		date: format(date, { weekday: 'short', day: 'numeric', month: 'short' }),
 		time,
 		zone: 'IST',
-		label: `${format(date, { weekday: 'long', day: 'numeric', month: 'long' })} · ${time} IST`,
+		eastern,
+		label: `${format(date, { weekday: 'long', day: 'numeric', month: 'long' })} · ${time} IST (${eastern} ET)`,
 		calendarUrl: calendar.href
 	};
 }
