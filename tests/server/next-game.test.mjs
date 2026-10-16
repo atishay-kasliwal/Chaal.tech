@@ -96,3 +96,29 @@ test('a lineup sets what comes next, narrows random, and a timeout follows it', 
 	room = transition(room, 'a', 'chooseNext', { choice: 'random' }, ctx);
 	assert.deepEqual(nextHandChoice(room, ctx.now, lineup), { mode: 'random', pool: lineup });
 });
+
+test('a pick stands for later hands until someone changes it, with no waiting', () => {
+	let room = finish(deal(table()));
+	room = transition(room, 'a', 'chooseNext', { choice: 'random' }, ctx);
+	room = finish(deal(room));
+	// b's turn: no pick window, the standing Random applies straight away.
+	assert.equal(room.chooser.playerId, 'b');
+	assert.equal(room.chooser.deadline, ctx.now);
+	assert.deepEqual(nextHandChoice(room, ctx.now), { mode: 'random' });
+	// b changes it during the countdown; that now stands.
+	room = transition(room, 'b', 'chooseNext', { choice: 'keep' }, ctx);
+	assert.deepEqual(room.standing, { choice: room.rulesVersion, by: 'b' });
+	const kept = room.rulesVersion;
+	room = finish(deal(room));
+	assert.deepEqual(nextHandChoice(room, ctx.now), { mode: 'selected', rulesVersion: kept });
+});
+
+test('the chooser can reopen the pick to change a standing game; others cannot', () => {
+	let room = finish(deal(table()));
+	room = transition(room, 'a', 'chooseNext', { choice: 'random' }, ctx);
+	room = finish(deal(room));
+	assert.throws(() => transition(room, 'c', 'openPick', {}, ctx), /not your turn/);
+	room = transition(room, 'b', 'openPick', {}, ctx);
+	assert.equal(room.chooser.deadline, ctx.now + CHOOSE_MS);
+	assert.throws(() => nextHandChoice(room, ctx.now), /b is picking/);
+});

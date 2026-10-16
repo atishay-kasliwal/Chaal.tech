@@ -230,24 +230,37 @@
 	);
 	const nameOfVariant = (version: string) =>
 		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(' — ')[0] ?? 'Teen Patti';
+	/** The mode a pick left standing (random stays random), and who set it. */
+	const standing = $derived(room.standing ?? null);
+	/** What decides the next hand: this hand's pick, else the standing one, else the lineup. */
+	const effectiveChoice = $derived(
+		chooser?.choice ?? standing?.choice ?? (upNext ? 'next' : 'keep')
+	);
+	const setBy = $derived.by(() => {
+		const id = chooser?.choice ? chooser.playerId : standing?.by;
+		if (!id) return null;
+		return id === selfId ? 'you' : (room.usersList.find((u) => u.id === id)?.username ?? null);
+	});
 	/** What the next hand will be, in words. */
 	const nextGame = $derived(
 		!chooser
 			? nextVariant
-			: chooser.choice === 'random'
-				? lineup.length
-					? 'A random game from the lineup'
-					: 'A random game'
-				: chooser.choice === 'next' || (!chooser.choice && upNext)
+			: effectiveChoice === 'random'
+				? 'Random'
+				: effectiveChoice === 'next'
 					? nameOfVariant(upNext ?? room.rulesVersion)
-					: chooser.choice && chooser.choice !== 'keep'
-						? nameOfVariant(chooser.choice)
-						: nameOfVariant(room.rulesVersion)
+					: effectiveChoice === 'keep'
+						? nameOfVariant(room.rulesVersion)
+						: nameOfVariant(effectiveChoice)
+	);
+	const fromLineup = $derived(
+		lineup.length > 0 && (effectiveChoice === 'next' || effectiveChoice === 'random')
 	);
 	let pickTotal = $state(60);
 	let pickHand: string | null = null;
 	$effect(() => {
-		const hand = chooser?.handId ?? null;
+		// A reopened pick (same hand, new deadline) restarts the ring too.
+		const hand = chooser ? `${chooser.handId}:${chooser.deadline}` : null;
 		const left = chooser ? chooser.deadline - Date.now() : 0;
 		untrack(() => {
 			if (hand === pickHand) return;
@@ -289,9 +302,9 @@
 		const choice = chooser?.choice;
 		untrack(() => {
 			if (!deadline || dealAt === null) return;
-			dealAt = choice
-				? Math.min(Math.max(dealAt, Date.now() + 4000), Date.now() + 5000)
-				: deadline + 500;
+			// Picked: deal shortly. Picking: wait for it. A standing pick: the normal countdown.
+			if (choice) dealAt = Math.min(Math.max(dealAt, Date.now() + 4000), Date.now() + 5000);
+			else if (deadline > Date.now()) dealAt = deadline + 500;
 		});
 	});
 
@@ -552,7 +565,6 @@
 
 	// ——— Panels and preferences ———
 	let panel = $state<'scores' | 'rules' | 'settings' | 'invite' | 'pick' | 'lineup' | null>(null);
-
 
 	// ——— Invites ———
 	/** Club friends picked in the invite panel. */
@@ -903,24 +915,18 @@
 							<strong>{chooserName}</strong> is picking the next game · {pickSecondsLeft}s
 						</p>
 					{:else}
+						<!-- One line: what's next, where it comes from, who set it, and Change on your turn. -->
 						<p class="next-game">
-							Next game: <strong>{nextGame}</strong>{#if chooser?.choice}<small>
-									· picked by {myPick ? 'you' : chooserName}</small
+							Next game: <strong>{nextGame}</strong>
+							{#if fromLineup}<button class="link" onclick={() => (panel = 'lineup')}
+									>{effectiveChoice === 'random' ? 'from the lineup' : 'lineup'} ›</button
+								>{/if}
+							{#if setBy}<small>· set by {setBy}</small>{/if}
+							{#if chooser && myPick && !chooser.choice}<button
+									class="change-next"
+									onclick={() => void send('openPick')}>Change</button
 								>{/if}
 						</p>
-					{/if}
-					{#if lineup.length}
-						<button class="lineup-strip" onclick={() => (panel = 'lineup')}>
-							<ListOrdered class="h-3.5 w-3.5" />
-							{#each lineup.slice(0, 5) as version, index (index + version)}
-								{#if index}<span class="arrow">›</span>{/if}
-								<span
-									class:current={version === room.rulesVersion}
-									class:upnext={version === upNext}>{nameOfVariant(version)}</span
-								>
-							{/each}
-							{#if lineup.length > 5}<span class="arrow">+{lineup.length - 5}</span>{/if}
-						</button>
 					{/if}
 					{#if dealIn !== null}
 						<div class="next" data-testid="next-round-controls">
@@ -1545,32 +1551,25 @@
 		border-color: rgb(244 214 140 / 55%);
 		color: #f4d68c;
 	}
-	/* Tonight's lineup at the bottom of the result card; tap to open it. */
-	.lineup-strip {
-		display: flex;
-		max-width: 100%;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: center;
-		gap: 0.3rem;
-		margin-top: 0.35rem;
-		border-radius: 999px;
-		background: rgb(255 255 255 / 5%);
-		padding: 0.25rem 0.75rem;
-		color: rgb(241 235 220 / 60%);
-		font-size: 0.75rem;
+	.next-game .link {
+		margin-left: 0.25rem;
+		color: rgb(244 214 140 / 80%);
+		font-size: 0.85em;
+		text-decoration: underline;
 		cursor: pointer;
 	}
-	.lineup-strip .arrow {
-		color: rgb(241 235 220 / 30%);
-	}
-	.lineup-strip .current {
-		color: #f1ebdc;
-		font-weight: 700;
-	}
-	.lineup-strip .upnext {
+	.change-next {
+		margin-left: 0.4rem;
+		border: 1px solid rgb(244 214 140 / 45%);
+		border-radius: 999px;
+		padding: 0.1rem 0.65rem;
 		color: #f4d68c;
+		font-size: 0.8rem;
 		font-weight: 700;
+		cursor: pointer;
+	}
+	.change-next:hover {
+		background: rgb(244 214 140 / 12%);
 	}
 	/* Phones: a compact pick so it clears your raised hand. */
 	.arena.portrait .result {

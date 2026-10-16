@@ -109,10 +109,12 @@ function assignChooser(room, now) {
 	}
 	const lastSeat = room.players.find((p) => p.id === room.lastChooserId)?.seatNumber ?? -1;
 	const next = people.find((p) => p.seatNumber > lastSeat) ?? people[0];
+	// Once a game mode has been picked it stands (random stays random) and nobody waits:
+	// this hand's chooser can still change it during the normal countdown.
 	room.chooser = {
 		playerId: next.id,
 		handId: room.result.handId,
-		deadline: now + (people.length === 1 ? SOLO_CHOOSE_MS : CHOOSE_MS),
+		deadline: room.standing ? now : now + (people.length === 1 ? SOLO_CHOOSE_MS : CHOOSE_MS),
 		choice: null
 	};
 }
@@ -135,8 +137,8 @@ export function nextHandChoice(room, now, lineup = []) {
 		const name = room.players.find((p) => p.id === chooser.playerId)?.username ?? 'Someone';
 		throw new GameError(`${name} is picking the next game`, 'PICKING');
 	}
-	// No pick in time follows the lineup when there is one, otherwise keeps the game.
-	const choice = chooser.choice ?? (lineup.length ? 'next' : 'keep');
+	// This hand's pick, else the standing mode, else the lineup, else the same game.
+	const choice = chooser.choice ?? room.standing?.choice ?? (lineup.length ? 'next' : 'keep');
 	if (choice === 'random')
 		return lineup.length ? { mode: 'random', pool: lineup } : { mode: 'random' };
 	if (choice === 'next')
@@ -423,6 +425,14 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				bot: { level: payload.level, rebuys: 0 }
 			});
 			room.issuedChips += room.table;
+		} else if (action === 'openPick') {
+			// This hand's chooser wants to change the standing game: hold the deal while they pick.
+			require(room.chooser &&
+				!playing(room) &&
+				room.chooser.playerId === id, 'It’s not your turn to pick');
+			const solo = seated(room).filter((p) => !p.bot && !p.departed).length === 1;
+			room.chooser.choice = null;
+			room.chooser.deadline = (ctx?.now ?? 0) + (solo ? SOLO_CHOOSE_MS : CHOOSE_MS);
 		} else if (action === 'chooseNext') {
 			require(room.chooser && !playing(room), 'Nobody is picking the next game right now');
 			const picker = room.players.find((p) => p.id === room.chooser.playerId);
@@ -432,6 +442,11 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				(typeof payload.choice === 'string' &&
 					getVariant(payload.choice)), 'Pick keep, random or a Teen Patti variant');
 			room.chooser.choice = payload.choice;
+			// A pick stands for later hands until someone changes it. "Keep" stands as this game.
+			room.standing = {
+				choice: payload.choice === 'keep' ? room.rulesVersion : payload.choice,
+				by: id
+			};
 		} else if (action === 'setPotLimit') {
 			require(id === room.hostId, 'Only the host can change the pot limit', 'FORBIDDEN');
 			require(room.boot !== undefined, 'Pot limits need a table created with table options');
@@ -638,6 +653,7 @@ export function projection(room, id, connected) {
 		maxStake: room.maxStake,
 		// Who picks the next game, until when, and what they picked (null while undecided).
 		...(room.chooser ? { chooser: { ...room.chooser } } : {}),
+		...(room.standing ? { standing: { ...room.standing } } : {}),
 		// Chip requests are private to the two players involved.
 		...(room.chipRequests?.some((r) => r.from === id || r.to === id)
 			? {

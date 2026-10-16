@@ -403,6 +403,10 @@ export function createGameServer({
 					action = 'setBalanceHidden';
 					payload = { hidden: args[0] };
 					text = null;
+				} else if (event === 'openPick') {
+					action = 'openPick';
+					payload = {};
+					text = null;
 				} else if (event === 'chooseNext') {
 					action = 'chooseNext';
 					payload = { choice: args[0] };
@@ -584,6 +588,7 @@ export function createGameServer({
 			'setBalanceHidden',
 			'showCards',
 			'chooseNext',
+			'openPick',
 			'requestChips',
 			'cancelChipRequest',
 			'answerChipRequest',

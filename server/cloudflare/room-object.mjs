@@ -37,7 +37,7 @@ const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
 	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
 	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit',
-	'setBalanceHidden', 'showCards', 'chooseNext', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
+	'setBalanceHidden', 'showCards', 'chooseNext', 'openPick', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
 ]);
 
 const hash = async (value) => {
@@ -498,6 +498,10 @@ export class RoomDurableObject {
 			} else if (event === 'setBalanceHidden') {
 				action = 'setBalanceHidden';
 				payload = { hidden: args[0] };
+				text = null;
+			} else if (event === 'openPick') {
+				action = 'openPick';
+				payload = {};
 				text = null;
 			} else if (event === 'chooseNext') {
 				action = 'chooseNext';
