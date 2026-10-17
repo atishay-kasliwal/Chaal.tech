@@ -98,12 +98,14 @@ test('members edit only cosmetic fields, within limits', async () => {
 			characterId: 'owl',
 			reducedMotion: true,
 			role: 'owner',
+			mascotId: 'adarsh',
 			status: 'active'
 		},
 		{ onboard: true }
 	);
 	assert.equal(updated.nickname, 'Big Boss');
 	assert.equal(updated.role, 'member');
+	assert.equal(publicProfile(updated).mascotId, null, 'members cannot pick another friend’s face');
 	assert.equal(publicProfile(updated).onboarded, true);
 	await assert.rejects(updateProfile(db, id, { characterId: 'dragon' }), {
 		code: 'INVALID_PROFILE'
@@ -124,7 +126,21 @@ test('table invites reach only people on the guest list; the roster hides emails
 	await claimMembership(db, { sub: 'f', email: 'friend@example.com', givenName: 'Friend' });
 	const roster = await activeRoster(db);
 	assert.equal(roster.length, 1);
-	assert.deepEqual(Object.keys(roster[0]).sort(), ['characterId', 'joined', 'memberId', 'nickname', 'photoDataUrl', 'playerId']);
+	assert.deepEqual(Object.keys(roster[0]).sort(), [
+		'characterId',
+		'joined',
+		'mascotId',
+		'memberId',
+		'nickname',
+		'photoDataUrl',
+		'playerId'
+	]);
+});
+
+test('only known mascots reach the table', () => {
+	assert.equal(publicProfile({ _id: 'a', mascotId: 'mradul' }).mascotId, 'mradul');
+	assert.equal(publicProfile({ _id: 'a', mascotId: '../../etc' }).mascotId, null);
+	assert.equal(publicProfile({ _id: 'a' }).mascotId, null);
 });
 
 test('picked friends resolve to emails on the server, never suspended or unknown ones', async () => {

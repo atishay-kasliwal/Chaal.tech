@@ -6,6 +6,8 @@ export interface Member {
 	playerId: string;
 	nickname: string;
 	characterId: string;
+	/** Personal mascot drawn from their photo, linked by the owner. */
+	mascotId?: string | null;
 	photoDataUrl?: string | null;
 	role: 'owner' | 'member';
 	reducedMotion: boolean;
@@ -67,7 +69,10 @@ class Club {
 	status = $state<'loading' | 'signedOut' | 'signedIn'>('loading');
 	member = $state<Member | null>(null);
 	members = $state<
-		Pick<Member, 'memberId' | 'playerId' | 'nickname' | 'characterId' | 'photoDataUrl'>[]
+		Pick<
+			Member,
+			'memberId' | 'playerId' | 'nickname' | 'characterId' | 'mascotId' | 'photoDataUrl'
+		>[]
 	>([]);
 	settings = $state<ClubSettings>(DEFAULT_CLUB_SETTINGS);
 	/** Why the last sign-in ended or failed, in words for the sign-in card. */

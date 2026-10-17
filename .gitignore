@@ -17,3 +17,6 @@ vite.config.ts.timestamp-*
 
 /data/
 beta-email-preview/
+
+# Keep image build environments out of version control; production WebP atlases are tracked.
+/.venv-mascots/

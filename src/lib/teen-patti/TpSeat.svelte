@@ -8,6 +8,9 @@
 	import BotAvatar from './BotAvatar.svelte';
 	import { money, balanceLabel, coversBoot } from './format.js';
 	import { onMount } from 'svelte';
+	import Mascot from '#lib/mascots/Mascot.svelte';
+	import { mascotFor, mascots, reactions } from '#lib/mascots/mascots.svelte.js';
+	import { restingFace, WATCH_ACTIVE } from '#lib/mascots/table-reactions.js';
 
 	let {
 		user,
@@ -51,6 +54,7 @@
 	/** Phones have less felt between seats and pot, so bets draw at most two stacks there. */
 	let narrow = $state(false);
 	onMount(() => {
+		mascots.load();
 		const query = window.matchMedia('(max-width: 639px)');
 		const update = () => (narrow = query.matches);
 		update();
@@ -59,6 +63,8 @@
 	});
 
 	const away = $derived(user.hasLeft || !user.connected);
+	const mascot = $derived(mascotFor(user.id));
+	const face = $derived(reactions.byPlayer[user.id]?.pose ?? restingFace({ away }));
 	const revealed = $derived(user.cardsInHand.some((card) => card.rank > 0));
 	const progress = $derived(total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0);
 	const seconds = $derived(Math.ceil(remaining / 1000));
@@ -166,6 +172,18 @@
 				{/if}
 			{/if}
 		</div>
+		{#if mascot}
+			<!-- Straddles the tile's right border, half over the video, dipping just below its bottom edge. -->
+			<span class="peek">
+				<Mascot
+					id={mascot}
+					size={100}
+					reaction={face}
+					watch={active ? '.pot' : WATCH_ACTIVE}
+					label={user.username}
+				/>
+			</span>
+		{/if}
 	</div>
 
 	{#if inHand && (user.handBet ?? 0) > 0 && !showdown}
@@ -196,6 +214,7 @@
 	}
 	.ring {
 		--ring-color: var(--tp-felt-glow);
+		position: relative;
 		width: 100%;
 		border-radius: 1.05rem;
 		padding: 3px;
@@ -234,6 +253,16 @@
 	.winner .ring {
 		background: linear-gradient(135deg, #f7df9d, #c08a34);
 		box-shadow: 0 0 2rem rgb(240 200 110 / 55%);
+	}
+	/* The mascot straddles the tile's right border: half over the video, half outside,
+	   starting at the bottom edge and dipping a little below it. Offsets are in cell sizes, since each sheet
+	   cell leaves a margin around the figure. */
+	.peek {
+		--size: 100px;
+		position: absolute;
+		z-index: 4;
+		right: calc(var(--size) * -0.5 + var(--mascot-inset, 0px));
+		bottom: calc(var(--size) * -0.32);
 	}
 	.frame {
 		position: relative;

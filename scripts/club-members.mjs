@@ -5,6 +5,7 @@
  *
  *   npm run club -- add raju@gmail.com --nickname Raju --character tiger
  *   npm run club -- add me@gmail.com --owner
+ *   npm run club -- add raju@gmail.com --mascot adityaraj   (links the friend's personal mascot)
  *   npm run club -- list
  *   npm run club -- suspend raju@gmail.com      (also signs them out within five minutes)
  *   npm run club -- activate raju@gmail.com
@@ -23,6 +24,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { MEMBERS, ensureIndexes, normalizeEmail } from '../server/club/members.mjs';
 import { CHARACTER_IDS } from '../server/club/characters.mjs';
+import { MASCOT_IDS } from '../server/club/mascots.mjs';
 import {
 	BETA_STEPS,
 	betaMessage,
@@ -48,7 +50,7 @@ function fail(message) {
 }
 
 const usage =
-	'Usage: npm run club -- <add|list|suspend|activate|unlink|remove|beta|beta-decide|beta-preview> [email|--all] [--nickname N] [--character C] [--owner] [--no-beta] [--start "YYYY-MM-DD HH:MM"]';
+	'Usage: npm run club -- <add|list|suspend|activate|unlink|remove|beta|beta-decide|beta-preview> [email|--all] [--nickname N] [--character C] [--mascot M] [--owner] [--no-beta] [--start "YYYY-MM-DD HH:MM"]';
 if (!command) fail(usage);
 
 const beta = {
@@ -175,12 +177,16 @@ try {
 		const characterId = flag('character');
 		if (characterId && !CHARACTER_IDS.includes(characterId))
 			fail(`Unknown character. Pick one of: ${CHARACTER_IDS.join(', ')}`);
+		const mascotId = flag('mascot');
+		if (mascotId && !MASCOT_IDS.includes(mascotId))
+			fail(`Unknown mascot. Pick one of: ${MASCOT_IDS.join(', ')}`);
 		const result = await members.updateOne(
 			{ email: address },
 			{
 				$set: {
 					...(typeof nickname === 'string' ? { nickname: nickname.slice(0, 24) } : {}),
 					...(characterId ? { characterId } : {}),
+					...(mascotId ? { mascotId } : {}),
 					...(flag('owner') ? { role: 'owner' } : {}),
 					// --no-beta: this member never gets the beta emails, now or on beta-decide.
 					...(flag('no-beta') ? { betaOptOut: true } : {}),
@@ -246,6 +252,7 @@ try {
 						role: 1,
 						status: 1,
 						characterId: 1,
+						mascotId: 1,
 						claimedAt: 1,
 						betaInvite: 1
 					}
@@ -255,12 +262,22 @@ try {
 			.toArray();
 		console.table(
 			rows.map(
-				({ email: rowEmail, nickname, role, status, characterId, claimedAt, betaInvite }) => ({
+				({
+					email: rowEmail,
+					nickname,
+					role,
+					status,
+					characterId,
+					mascotId,
+					claimedAt,
+					betaInvite
+				}) => ({
 					email: rowEmail,
 					nickname,
 					role,
 					status,
 					character: characterId ?? '(default)',
+					mascot: mascotId ?? '-',
 					signedIn: claimedAt ? 'yes' : 'not yet',
 					betaEmails:
 						[...new Set((betaInvite?.emails ?? []).map((entry) => entry.step))].sort().join(',') ||

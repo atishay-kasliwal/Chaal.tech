@@ -59,6 +59,8 @@
 	import { HOW_TO_PLAY } from './how-to-play.js';
 	import ClassicCard from '#lib/components/ClassicCard.svelte';
 	import { describeChange, type FeedEvent } from './feed.js';
+	import { reactToEvents } from '#lib/mascots/table-reactions.js';
+	import { reactions } from '#lib/mascots/mascots.svelte.js';
 	import { opponentPoints, SELF_POINT, POT_POINT } from './layout.js';
 	import { play, soundEnabled, setSoundEnabled } from './sound.js';
 
@@ -663,6 +665,7 @@
 			previous = snapshot;
 			if (!events.length) return;
 			feed = [...feed, ...events].slice(-40);
+			reactToEvents(events, snapshot);
 			for (const event of events) {
 				if (event.kind === 'blind' || event.kind === 'chaal' || event.kind === 'raise') {
 					launch(pointFor(event.playerId), potPoint(), event.amount ?? 0);
@@ -871,6 +874,7 @@
 			clearInterval(tick);
 			observer.disconnect();
 			clearTimeout(packTimer);
+			reactions.clear();
 			document.title = baseTitle;
 		};
 	});
@@ -1056,6 +1060,7 @@
 				style:left="{point.left}px"
 				style:top="{point.top}px"
 				style:--seat-w="{seatW}px"
+				style:--mascot-inset="{Math.max(0, 32 - (arenaW - point.left - seatW / 2))}px"
 			>
 				<TpSeat
 					user={entry.user}
