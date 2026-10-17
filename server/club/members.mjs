@@ -290,3 +290,9 @@ export async function membersForPlayers(db, playerIds) {
 		nickname: member.nickname ?? ''
 	}));
 }
+
+/** Note when a member last opened the app, for the Admin page. At most one write per 10 minutes. */
+export async function markSeen(db, member, now = new Date()) {
+	if (member.lastSeenAt && now - member.lastSeenAt < 10 * 60_000) return;
+	await db.collection(MEMBERS).updateOne({ _id: member._id }, { $set: { lastSeenAt: now } });
+}

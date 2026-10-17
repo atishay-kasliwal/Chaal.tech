@@ -22,6 +22,7 @@
 	import FriendPicker from '#lib/club/FriendPicker.svelte';
 	import { profileModal } from '#lib/club/profile-modal.svelte.js';
 	import { stageJoinName, roomCodeFrom, stageInviteFriends } from './player-name.js';
+	import { track } from '#lib/analytics.js';
 
 	/**
 	 * Everything needed to get to a table: you (from your club profile), one tap to start (or play bots),
@@ -111,6 +112,7 @@
 			displayToast(result.error || 'Could not start a table. Try again', 'error');
 			return;
 		}
+		track('table_create', { game_type: gameType, with_bots: withBots, invite: forInvite });
 		stageJoinName(result.roomName, name);
 		if (forInvite) {
 			inviteRoom = result.roomName;

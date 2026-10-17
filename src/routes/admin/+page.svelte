@@ -6,6 +6,7 @@
 	import LineupEditor from '#lib/club/LineupEditor.svelte';
 	import { MASCOT_NAMES } from '#lib/mascots/catalog.js';
 	import { club, DEFAULT_CLUB_SETTINGS, type ClubSettings } from '#lib/club/club.svelte.js';
+	import { ago, fairPhrase, gameName as gameTitle, resultsPhrase, signed } from '#lib/analytics/format.js';
 
 	/** Owner tools: the guest list, live tables, table defaults, the table look and beta emails. */
 	interface AdminMember {
@@ -33,8 +34,28 @@
 		connectedMembers: string[];
 	}
 
+	/** One member on the normalised basis (server/analytics/api.mjs adminAnalytics). */
+	interface MemberStats {
+		memberId: string | null;
+		playerId: string;
+		hands: number;
+		nights: number;
+		games: Record<string, number>;
+		withBots: number;
+		fairShare: { verdict: string; hands: number; wins: number; expected: number; ratio: number | null };
+		results: { verdict: string; hands: number; perHand: number | null; perHandLow: number | null; perHandHigh: number | null; units: number };
+		lastPlayedAt: number | null;
+		lastSeenAt: string | null;
+	}
+	interface Analytics {
+		totals: { hands: number; nights: number; players: number };
+		variants: Record<string, number>;
+		members: MemberStats[];
+	}
+
 	const TABS = [
 		['members', 'Members'],
+		['analytics', 'Analytics'],
 		['tables', 'Live tables'],
 		['lineup', 'Lineup'],
 		['defaults', 'Table defaults'],
@@ -96,6 +117,42 @@
 			notice = person.link;
 		}
 	}
+	let analytics = $state<Analytics | null>(null);
+	let analyticsWindow = $state<'all' | '30d' | 'recent-nights'>('all');
+	let analyticsSort = $state<'results' | 'hands' | 'active'>('results');
+	const WINDOWS = [
+		['all', 'All time'],
+		['30d', 'Last 30 days'],
+		['recent-nights', 'Recent nights']
+	] as const;
+	const activeAt = (row: MemberStats) =>
+		Math.max(row.lastPlayedAt ?? 0, row.lastSeenAt ? Date.parse(row.lastSeenAt) : 0);
+	const statsRows = $derived(
+		(analytics?.members ?? [])
+			.map((row) => ({ row, member: members.find((m) => m.memberId === row.memberId) }))
+			.filter(({ member }) => member && member.status !== 'invited')
+			.sort((x, y) =>
+				analyticsSort === 'hands'
+					? y.row.hands - x.row.hands
+					: analyticsSort === 'active'
+						? activeAt(y.row) - activeAt(x.row)
+						: (y.row.results.perHand ?? -Infinity) - (x.row.results.perHand ?? -Infinity) || y.row.hands - x.row.hands
+			)
+	);
+
+	async function loadAnalytics(window = analyticsWindow) {
+		analyticsWindow = window;
+		const { response, body } = await club.request(`/admin?analytics=${window}`);
+		if (!response.ok) {
+			error = body.error || 'Can’t reach the club right now.';
+			return;
+		}
+		apply(body);
+	}
+	$effect(() => {
+		if (ready && tab === 'analytics' && !analytics) void loadAnalytics();
+	});
+
 	let draft = $state<ClubSettings>(structuredClone(DEFAULT_CLUB_SETTINGS));
 	let loaded = $state(false);
 	let busy = $state(false);
@@ -122,14 +179,16 @@
 		beta: { label: string } | null;
 		poll: Poll | null;
 		notice?: string;
+		analytics?: Analytics;
 	}) {
+		if (body.analytics) analytics = body.analytics;
 		members = body.members;
 		tables = body.tables;
 		online = body.online;
 		beta = body.beta;
 		poll = body.poll;
 		club.applySettings(body.settings);
-		draft = structuredClone(body.settings);
+		draft = structuredClone($state.snapshot(club.settings));
 		notice = body.notice ?? '';
 	}
 
@@ -326,6 +385,91 @@
 							</li>
 						{/each}
 					</ul>
+				</section>
+			{:else if tab === 'analytics'}
+				<section class="card">
+					<h2>
+						How everyone is doing
+						<small
+							>{analytics
+								? `${analytics.totals.hands.toLocaleString('en-IN')} hands · ${analytics.totals.nights} nights · ${analytics.totals.players} playing`
+								: ''}</small
+						>
+					</h2>
+					<div class="pills">
+						{#each WINDOWS as [id, label] (id)}
+							<button
+								type="button"
+								class:on={analyticsWindow === id}
+								onclick={() => loadAnalytics(id)}>{label}</button
+							>
+						{/each}
+						<label class="sort"
+							>Sort <select bind:value={analyticsSort}
+								><option value="results">Results</option><option value="hands">Hands</option><option
+									value="active">Last active</option
+								></select
+							></label
+						>
+					</div>
+					<p class="note">
+						Results are in boots (Hold’em big blinds, Blackjack bets), so tables with different
+						stakes compare fairly. Wins are judged against a fair share: one in two heads-up, one
+						in six at a full table. Recorded hands only; the leaderboard keeps older history.
+					</p>
+					{#if !analytics}
+						<p class="note">Loading…</p>
+					{:else}
+						<ul class="rows">
+							{#each statsRows as { row, member } (row.playerId)}
+								<li class="stat-row">
+									<CharacterAvatar
+										memberId={row.memberId ?? undefined}
+										characterId={member?.characterId ?? undefined}
+										size={36}
+									/>
+									<div class="who">
+										<strong>{properName(member?.nickname ?? '') || member?.email}</strong>
+										<small>Seen {ago(row.lastSeenAt)} · played {ago(row.lastPlayedAt)}</small>
+									</div>
+									<span
+										class="net"
+										class:up={row.results.verdict === 'winning'}
+										class:down={row.results.verdict === 'losing'}
+										>{resultsPhrase(row.results)}</span
+									>
+									<dl class="stats">
+										<div><dt>Hands</dt><dd>{row.hands}</dd></div>
+										<div><dt>Nights</dt><dd>{row.nights}</dd></div>
+										<div>
+											<dt>Boots a hand</dt>
+											<dd>
+												{signed(row.results.perHand, 2)}{#if row.results.perHandLow !== null}<span class="ci"
+														>{signed(row.results.perHandLow, 1)} to {signed(row.results.perHandHigh, 1)}</span
+													>{/if}
+											</dd>
+										</div>
+										<div>
+											<dt>Wins vs fair share</dt>
+											<dd>{row.fairShare.wins} / {row.fairShare.expected}</dd>
+										</div>
+										<div><dt>With bots</dt><dd>{row.withBots}</dd></div>
+									</dl>
+									<small class="games">{fairPhrase(row.fairShare)}</small>
+									{#if Object.keys(row.games).length}
+										<small class="games"
+											>{Object.entries(row.games)
+												.sort((a, b) => b[1] - a[1])
+												.map(([game, hands]) => `${gameTitle(game)} ${hands}`)
+												.join(' · ')}</small
+										>
+									{/if}
+								</li>
+							{:else}
+								<li><span class="note">No recorded hands in this period yet.</span></li>
+							{/each}
+						</ul>
+					{/if}
 				</section>
 			{:else if tab === 'tables'}
 				<section class="card">
@@ -907,6 +1051,64 @@
 		width: 3.6rem;
 		border-radius: 0.3rem;
 		box-shadow: 0 3px 8px rgb(0 0 0 / 45%);
+	}
+	.sort {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		margin-left: auto;
+		color: rgb(241 235 220 / 70%);
+		font-size: 0.8rem;
+	}
+	.sort select {
+		border: 1px solid rgb(240 209 140 / 20%);
+		border-radius: 0.5rem;
+		background: #122219;
+		padding: 0.25rem 0.4rem;
+		color: #f1ebdc;
+	}
+	.net {
+		font-weight: 800;
+		font-variant-numeric: tabular-nums;
+	}
+	.net.up {
+		color: #8fe0ad;
+	}
+	.net.down {
+		color: #f3b0a5;
+	}
+	.stats {
+		display: grid;
+		width: 100%;
+		grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+		gap: 0.3rem;
+	}
+	.stats div {
+		border-radius: 0.6rem;
+		background: rgb(0 0 0 / 20%);
+		padding: 0.3rem 0.5rem;
+	}
+	.stats dt {
+		color: rgb(241 235 220 / 50%);
+		font-size: 0.65rem;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+	}
+	.stats dd {
+		font-size: 0.9rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+	}
+	.ci {
+		display: block;
+		color: rgb(241 235 220 / 45%);
+		font-size: 0.65rem;
+		font-weight: 500;
+	}
+	.games {
+		width: 100%;
+		color: rgb(241 235 220 / 55%);
+		font-size: 0.75rem;
 	}
 	.mascot-choice {
 		display: flex;

@@ -1,5 +1,6 @@
 import { browser } from '$app/env';
 import { serverConfigError, serverURL } from '#lib/config.js';
+import { track } from '#lib/analytics.js';
 
 export interface Member {
 	memberId: string;
@@ -183,6 +184,7 @@ class Club {
 			write(tokenKey, body.clubToken);
 			this.accept(body.member);
 			await this.refresh();
+			if (this.status === 'signedIn') track('login', { method: 'Google' });
 			return this.status === 'signedIn';
 		} catch {
 			this.notice = 'Can’t reach the club right now. Check your connection and try again.';
