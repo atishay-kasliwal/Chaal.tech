@@ -234,6 +234,8 @@
 							>{folding ? 'Fold this card as my joker' : 'Throw this card away'}</button
 						>
 					{/if}
+				{:else if live && me.isPacked}
+					{#if revealed && handLabel}{handLabel}{/if}
 				{:else if me.isPacked && !legal.peek && !legal.reveal}
 					You packed this hand{#if handLabel}&nbsp;· {handLabel}{/if}
 				{:else if legal.peek || legal.reveal}
@@ -281,7 +283,21 @@
 			{:else if playing && waitingOn}
 				<span class="wait-text">Waiting for <strong>{waitingOn}</strong>…</span>
 			{:else if live && me.isPacked}
-				<span class="wait-text">Packed. Watch the rest of the hand</span>
+				<div class="packed-status">
+					<span class="wait-text">Packed. Watch the rest of the hand</span>
+					<div class="packed-controls">
+						{#if legal.peek}
+							<button class="after-btn" onclick={onpeek} disabled={!connected}
+								><Eye size={14} /> See my cards</button
+							>
+						{/if}
+						{#if legal.reveal}
+							<button class="after-btn gold" onclick={onshowcards} disabled={!connected}
+								>Show to table</button
+							>
+						{/if}
+					</div>
+				</div>
 			{:else}
 				<label class="sit-toggle">
 					<input
@@ -629,6 +645,17 @@
 	.turn-text {
 		font-size: 1.1rem;
 		font-weight: 800;
+	}
+	.packed-status {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.65rem;
+	}
+	.packed-controls {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 	.turn-secs {
 		font-size: 1.1rem;
