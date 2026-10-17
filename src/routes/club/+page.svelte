@@ -6,6 +6,14 @@
 	import { club } from '#lib/club/club.svelte.js';
 	import { socket } from '#lib/stores/socket-store.svelte.js';
 	import { openStart } from '#lib/start/start-modal.svelte.js';
+	import ClubWarmup from '#lib/club/ClubWarmup.svelte';
+	import DeckCard from '#lib/components/DeckCard.svelte';
+	import CasinoChip from '#lib/components/CasinoChip.svelte';
+	import { VARIANT_BY_VERSION, type RulesVersion } from '#lib/variant-catalog.js';
+	const slotName = (game: string) =>
+		game === 'mystery'
+			? 'Mystery'
+			: (VARIANT_BY_VERSION[game as RulesVersion]?.selectionLabel.split(':')[0] ?? game);
 
 	interface Friend {
 		memberId: string;
@@ -180,7 +188,7 @@
 	}
 </script>
 
-<svelte:head><title>The club · Chaal</title></svelte:head>
+<svelte:head><title>Your adda · Chaal</title></svelte:head>
 
 {#snippet leaders(limit: number, offset = 0)}
 	<ol class="standings">
@@ -203,42 +211,32 @@
 	<div class="club-room">
 		<header class="welcome">
 			<div>
-				<p class="eyebrow">Your people. Your table.</p>
-				<h1>Hey {properName(club.member?.nickname)}<span class="gold">.</span></h1>
+				<p class="eyebrow">Chaal · The private clubhouse</p>
+				<h1>Your people. <em>Your adda.</em></h1>
+				<p class="welcome-note">
+					Good to have you here, {properName(club.member?.nickname)}. Pull up a chair.
+				</p>
 			</div>
 			<button class="online-pill" onclick={() => (tab = 'friends')}
-				><span class="live-dot"></span>{online.length} online
+				><span class="live-dot"></span>{loaded && !error
+					? `${online.length} online`
+					: error
+						? 'Club offline'
+						: 'Checking the room…'}
 				<span aria-hidden="true">↗</span></button
 			>
 		</header>
 
-		<div class="personal-record" aria-label="Your record for the selected period">
-			<div>
-				<span>Your net winnings</span><strong class:negative={personal.net < 0}
-					>{historyLoaded && !historyError && !historyBusy ? chips(personal.net) : '-'}
-					<small>chips</small></strong
-				>
-			</div>
-			<div>
-				<span>Hands won</span><strong
-					>{historyLoaded && !historyError && !historyBusy ? personal.wins : '-'}</strong
-				>
-			</div>
-			<div>
-				<span>Hands played</span><strong
-					>{historyLoaded && !historyError && !historyBusy ? personal.hands : '-'}</strong
-				>
-			</div>
-			<div class="record-period">
-				<label for="record-period">Club record</label><select
-					id="record-period"
-					value={period}
-					onchange={(event) => filterHistory(event.currentTarget.value)}
-					><option value="all">All time</option><option value="month">This month</option><option
-						value="today">Today</option
-					></select
-				>
-			</div>
+		<div class="club-footer">
+			<nav aria-label="Club views">
+				{#each [{ id: 'tonight' as const, label: 'Tonight', icon: '♠' }, { id: 'leaderboard' as const, label: 'Leaderboard', icon: '♛' }, { id: 'history' as const, label: 'History', icon: '◷' }, { id: 'friends' as const, label: 'Friends', icon: '♧' }] as view (view.id)}<button
+						class:active={tab === view.id}
+						aria-current={tab === view.id ? 'page' : undefined}
+						onclick={() => (tab = view.id)}
+						><span aria-hidden="true">{view.icon}</span>{view.label}</button
+					>{/each}
+			</nav>
+			<p>Good cards. Better company.</p>
 		</div>
 
 		{#if error}<div class="notice" role="alert">
@@ -248,11 +246,53 @@
 				Records unavailable. <button onclick={loadHistory}>Retry records</button>
 			</div>{/if}
 
+		{#if tab === 'tonight'}
+			<section class="people-strip" aria-label="Around the clubhouse">
+				<div class="people-heading">
+					<p class="eyebrow">The usual suspects</p>
+					<button class="text-button" onclick={() => (tab = 'friends')}>Everyone ↗</button>
+				</div>
+				{#if !loaded}<p class="muted">Seeing who’s around…</p>
+				{:else if error}<p class="muted">Your friends will appear when the club reconnects.</p>
+				{:else if roster.length}<ul class="people">
+						{#each roster as friend (friend.memberId)}
+							<li class:around={online.includes(friend.memberId) || atTable.has(friend.memberId)}>
+								<CharacterAvatar
+									memberId={friend.memberId}
+									characterId={friend.characterId}
+									size={46}
+									status={atTable.has(friend.memberId)
+										? 'table'
+										: online.includes(friend.memberId)
+											? 'online'
+											: undefined}
+								/>
+								<div>
+									<strong
+										>{properName(friend.nickname)}{friend.memberId === club.member?.memberId
+											? ' · You'
+											: ''}</strong
+									><span
+										>{atTable.has(friend.memberId)
+											? 'At a table'
+											: online.includes(friend.memberId)
+												? 'In the clubhouse'
+												: friend.joined === false
+													? 'Invited'
+													: 'Away for now'}</span
+									>
+								</div>
+							</li>
+						{/each}
+					</ul>{:else}<p class="muted">Your club’s people will appear here.</p>{/if}
+			</section>
+		{/if}
+
 		<div class="room-content" class:tonight={tab === 'tonight'}>
 			{#if tab === 'tonight'}
 				<section class="panel table-panel" aria-label="Tonight’s table">
 					<div class="panel-heading">
-						<p class="eyebrow">{featured ? 'The night is young' : 'Make a night of it'}</p>
+						<p class="eyebrow">{featured ? 'Happening in your club' : 'The card room'}</p>
 						<button class="text-button" onclick={openStart}>+ Start a table</button>
 					</div>
 					{#if !loaded}
@@ -314,14 +354,26 @@
 							</div>{/if}
 					{:else}
 						<div class="empty-state">
-							<span class="suit-mark" aria-hidden="true">♠</span>
-							<h2>Someone has to deal first.</h2>
+							<div class="lounge-art" aria-hidden="true">
+								<div class="art-ring"></div>
+								<span class="art-card one"><DeckCard faceDown /></span>
+								<span class="art-card two"><DeckCard rank="A" suit="spades" /></span>
+								<span class="art-card three"><DeckCard rank="K" suit="hearts" /></span>
+								<span class="art-chip first"
+									><CasinoChip denomination={25} size={56} decorative /></span
+								>
+								<span class="art-chip second"
+									><CasinoChip denomination={100} size={56} decorative /></span
+								>
+							</div>
+							<p class="scene-kicker">A little taash. A lot of catching up.</p>
+							<h2>The best nights<br />start with “one hand”.</h2>
 							<p>
-								Your friends, a little bakwaas, one more hand.<br />Start a table and they’ll see it
+								No table open yet. Deal the first hand.<br />Your friends will find your table right
 								here.
 							</p>
 							<button class="primary" onclick={openStart}
-								>Deal us in <span aria-hidden="true">↗</span></button
+								>Start the night <span aria-hidden="true">↗</span></button
 							>
 						</div>
 					{/if}
@@ -347,6 +399,64 @@
 						>See the club record <span aria-hidden="true">→</span></button
 					>
 				</aside>
+
+				<section class="hangout" aria-label="Stay a little longer">
+					<ClubWarmup />
+					<div class="club-notebook">
+						<section class="lineup-preview" aria-labelledby="lineup-title">
+							<p class="eyebrow">Something different on the table</p>
+							<h2 id="lineup-title">
+								{club.settings.lineup?.length
+									? 'On the menu tonight.'
+									: 'Find your next favourite.'}
+							</h2>
+							{#if club.settings.lineup?.length}
+								<ol class="night-lineup">
+									{#each club.settings.lineup as game, index (index)}<li>
+											<span>{String(index + 1).padStart(2, '0')}</span><strong
+												>{slotName(game)}</strong
+											><span aria-hidden="true">{game === 'mystery' ? '?' : '♠'}</span>
+										</li>{/each}
+								</ol>
+							{:else}<p class="notebook-copy">
+									Muflis turns the rules upside down. AK47 makes the wild cards wilder. There’s more
+									than one way to play tonight.
+								</p>{/if}
+							<a class="notebook-link" href="/games"
+								>Explore the games <span aria-hidden="true">↗</span></a
+							>
+						</section>
+						<section class="last-night" aria-labelledby="last-night-title">
+							<p class="eyebrow">From the record book</p>
+							<h2 id="last-night-title">
+								{pastHands.length && !historyError
+									? 'One for the group chat.'
+									: 'The stories start here.'}
+							</h2>
+							{#if historyBusy && !historyLoaded}<p class="notebook-copy">
+									Opening the record book…
+								</p>
+							{:else if historyError}<p class="notebook-copy">
+									The record book is taking a moment. Try the records again above.
+								</p>
+							{:else if pastHands.length}{@const last = pastHands[0]}
+								<p class="last-win">
+									<strong>{properName(last.winnerName)}</strong> took
+									<span>{last.amount.toLocaleString('en-IN')} chips</span>.
+								</p>
+								<p class="notebook-copy">
+									{gameName[last.gameType] ?? last.gameType} · {when(last.completedAt)}
+								</p>
+							{:else}<p class="notebook-copy">
+									The close calls. The unexpected winners. Finish a hand with friends and we’ll keep
+									the story here.
+								</p>{/if}
+							<button class="notebook-link" onclick={() => (tab = 'history')}
+								>Open the record book <span aria-hidden="true">→</span></button
+							>
+						</section>
+					</div>
+				</section>
 			{:else if tab === 'leaderboard'}
 				<section class="panel record-panel" aria-labelledby="leader-title" aria-busy={historyBusy}>
 					<div class="panel-heading">
@@ -469,17 +579,38 @@
 				</section>
 			{/if}
 		</div>
-		<footer class="club-footer">
-			<nav aria-label="Club views">
-				{#each [{ id: 'tonight' as const, label: 'Tonight', icon: '♠' }, { id: 'leaderboard' as const, label: 'Leaderboard', icon: '♛' }, { id: 'history' as const, label: 'History', icon: '◷' }, { id: 'friends' as const, label: 'Friends', icon: '♧' }] as view (view.id)}<button
-						class:active={tab === view.id}
-						aria-current={tab === view.id ? 'page' : undefined}
-						onclick={() => (tab = view.id)}
-						><span aria-hidden="true">{view.icon}</span>{view.label}</button
-					>{/each}
-			</nav>
-			<p>Cards out. One more hand.</p>
-		</footer>
+
+		<div class="personal-record" aria-label="Your record for the selected period">
+			<div>
+				<span>Your net winnings</span><strong class:negative={personal.net < 0}
+					>{historyLoaded && !historyError && !historyBusy ? chips(personal.net) : '-'}
+					<small>chips</small></strong
+				>
+			</div>
+			<div>
+				<span>Hands won</span><strong
+					>{historyLoaded && !historyError && !historyBusy ? personal.wins : '-'}</strong
+				>
+			</div>
+			<div>
+				<span>Hands played</span><strong
+					>{historyLoaded && !historyError && !historyBusy ? personal.hands : '-'}</strong
+				>
+			</div>
+			<div class="record-period">
+				<label for="record-period">Club record</label><select
+					id="record-period"
+					value={period}
+					onchange={(event) => filterHistory(event.currentTarget.value)}
+					><option value="all">All time</option><option value="month">This month</option><option
+						value="today">Today</option
+					></select
+				>
+			</div>
+		</div>
+		<p class="closing-note">
+			Same people. A different story every night. <span aria-hidden="true">♠</span>
+		</p>
 	</div>
 </ClubGate>
 
@@ -489,10 +620,9 @@
 		isolation: isolate;
 		display: flex;
 		flex-direction: column;
-		gap: clamp(0.7rem, 1.8vh, 1.3rem);
-		height: calc(100dvh - 72px);
-		min-height: 560px;
-		padding: clamp(1rem, 2.5vw, 2.5rem) max(1rem, calc((100vw - 1240px) / 2));
+		gap: 1.8rem;
+		min-height: calc(100dvh - 72px);
+		padding: clamp(1.25rem, 4vw, 3.5rem) max(1.25rem, calc((100vw - 1320px) / 2));
 		color: #f1ebdc;
 	}
 	.club-room::before {
@@ -500,9 +630,7 @@
 		position: absolute;
 		z-index: -1;
 		inset: -72px 0 0;
-		background:
-			linear-gradient(90deg, rgb(4 13 10 / 94%), rgb(5 16 12 / 82%) 55%, rgb(6 15 12 / 88%)),
-			url('/email/invite-table.jpg') center / cover;
+		background: radial-gradient(ellipse at 80% 0%, #243c2b66, transparent 45%), #0b1510;
 	}
 	.welcome,
 	.panel-heading,
@@ -513,9 +641,11 @@
 		gap: 1rem;
 	}
 	h1 {
-		font-size: clamp(1.6rem, 3vw, 2.4rem);
-		font-weight: 650;
-		letter-spacing: -0.04em;
+		font-family: Georgia, serif;
+		font-size: clamp(2.5rem, 5vw, 4.5rem);
+		font-weight: 400;
+		line-height: 1.12;
+		letter-spacing: -0.055em;
 	}
 	h2 {
 		font-size: clamp(1.2rem, 2vw, 1.65rem);
@@ -533,7 +663,6 @@
 		text-transform: uppercase;
 		margin-bottom: 0.35rem;
 	}
-	.gold,
 	.score {
 		color: #e7c784;
 	}
@@ -618,13 +747,13 @@
 		min-height: 0;
 	}
 	.room-content.tonight {
-		grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+		grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
 		gap: 1.25rem;
 	}
 	.panel {
 		border: 1px solid #e7c78424;
-		border-radius: 1.4rem;
-		background: linear-gradient(145deg, #14281ee8, #091810ee);
+		border-radius: 1rem;
+		background: #122019;
 		padding: clamp(1rem, 2vw, 1.7rem);
 		min-height: 0;
 	}
@@ -726,7 +855,7 @@
 	.standings {
 		display: grid;
 		gap: 0.4rem;
-		margin-block: auto;
+		margin-block: 0;
 	}
 	.standings li {
 		display: flex;
@@ -818,7 +947,7 @@
 	.history-list {
 		display: grid;
 		gap: 0.65rem;
-		margin-block: auto;
+		margin-block: 0;
 	}
 	.past-hand {
 		padding-bottom: 0.65rem;
@@ -854,7 +983,7 @@
 	.friend-list {
 		display: grid;
 		gap: 0.5rem;
-		margin-block: auto;
+		margin-block: 0;
 	}
 	.friend-list li {
 		display: flex;
@@ -914,7 +1043,7 @@
 			grid-template-columns: 1fr;
 		}
 		.hall-of-fame {
-			display: none;
+			min-height: 250px;
 		}
 		.club-footer {
 			justify-content: center;
@@ -923,7 +1052,7 @@
 			display: none;
 		}
 		.club-room::before {
-			background-image: linear-gradient(#06100bea, #06100be0), url('/email/invite-table-phone.jpg');
+			background: #0b1510;
 		}
 	}
 	@media (max-width: 480px) {
@@ -992,5 +1121,383 @@
 		.room-content {
 			min-height: 330px;
 		}
+	}
+
+	h1 em {
+		color: #d8b77b;
+		font-weight: 400;
+	}
+	.welcome-note {
+		margin-top: 0.9rem;
+		color: #aebaae;
+		font-size: 0.9rem;
+	}
+	.welcome {
+		align-items: center;
+		padding-bottom: 0.6rem;
+	}
+	.welcome .eyebrow {
+		margin-bottom: 1rem;
+	}
+	.people-strip {
+		border-block: 1px solid #d7c29120;
+		padding: 1.25rem 0;
+	}
+	.people-heading {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 1rem;
+	}
+	.people-heading .eyebrow {
+		margin: 0;
+	}
+	.people {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.25rem 2rem;
+		padding: 0;
+		margin: 0;
+		list-style: none;
+	}
+	.people li {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+	}
+	.people li > div {
+		display: grid;
+		gap: 0.2rem;
+	}
+	.people strong {
+		font-size: 0.8rem;
+		font-weight: 550;
+	}
+	.people li span {
+		color: #97a898;
+		font-size: 0.65rem;
+	}
+	.people li.around span {
+		color: #bcd0b7;
+	}
+	.table-panel {
+		position: relative;
+		overflow: hidden;
+		isolation: isolate;
+		min-height: 435px;
+		background: radial-gradient(ellipse at 55% 25%, #32583c66, transparent 65%), #14261b;
+	}
+	.table-panel::before {
+		position: absolute;
+		z-index: -1;
+		inset: 0;
+		content: '';
+		opacity: 0.065;
+		background: url('/email/invite-table.jpg') center / cover;
+	}
+	.table-panel .empty-state {
+		padding-block: 0.3rem 1.2rem;
+		gap: 0.7rem;
+	}
+	.table-panel .empty-state h2 {
+		font:
+			400 clamp(2rem, 3.4vw, 3rem)/1.08 Georgia,
+			serif;
+		letter-spacing: -0.04em;
+	}
+	.table-panel .empty-state p {
+		font-size: 0.8rem;
+	}
+	.table-panel .empty-state .scene-kicker {
+		color: #dfc48c;
+		font-size: 0.65rem;
+		letter-spacing: 0.04em;
+	}
+	.table-panel .primary {
+		margin-top: 0.4rem;
+	}
+	.lounge-art {
+		position: relative;
+		width: 280px;
+		height: 170px;
+		margin: 0.4rem 0 0.8rem;
+	}
+	.art-ring {
+		position: absolute;
+		inset: 28px -35px -8px;
+		border: 1px solid #d1b06b35;
+		border-radius: 50%;
+		transform: rotate(-8deg);
+	}
+	.art-ring::after {
+		content: '';
+		position: absolute;
+		inset: 12px;
+		border: 1px solid #d1b06b1a;
+		border-radius: inherit;
+	}
+	.art-card {
+		position: absolute;
+		width: 90px;
+		filter: drop-shadow(0 10px 12px #0009);
+		transition: transform 400ms ease;
+	}
+	.art-card :global(.deck-card) {
+		width: 100%;
+		height: auto;
+	}
+	.art-card.one {
+		left: 31px;
+		top: 18px;
+		rotate: -22deg;
+	}
+	.art-card.two {
+		left: 98px;
+		top: 0;
+		rotate: -3deg;
+	}
+	.art-card.three {
+		left: 165px;
+		top: 17px;
+		rotate: 17deg;
+	}
+	.lounge-art:hover .art-card.one {
+		transform: translate(-5px, -3px);
+	}
+	.lounge-art:hover .art-card.three {
+		transform: translate(5px, -3px);
+	}
+	.art-chip {
+		position: absolute;
+		filter: drop-shadow(0 5px 4px #0008);
+	}
+	.art-chip.first {
+		bottom: 2px;
+		left: 3px;
+		rotate: -18deg;
+	}
+	.art-chip.second {
+		bottom: -2px;
+		right: 0;
+		rotate: 12deg;
+	}
+	.hall-of-fame {
+		background: #1c271f;
+	}
+	.hall-of-fame .standings {
+		margin-block: 1.5rem;
+	}
+	.hall-of-fame h2 {
+		font:
+			400 2rem/1.15 Georgia,
+			serif;
+	}
+	.hall-of-fame .view-record {
+		margin-top: auto;
+	}
+	.hangout {
+		display: grid;
+		grid-column: 1 / -1;
+		grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+		gap: 1.25rem;
+		margin-top: 0.4rem;
+	}
+	.club-notebook {
+		padding: 0.2rem 1.5rem;
+		border-left: 1px solid #d7c29128;
+	}
+	.club-notebook section {
+		padding: 0.9rem 0 1.5rem;
+	}
+	.club-notebook section + section {
+		border-top: 1px solid #d7c29128;
+		padding-top: 1.5rem;
+	}
+	.club-notebook h2 {
+		font:
+			400 1.8rem/1.15 Georgia,
+			serif;
+		margin-top: 0.7rem;
+	}
+	.notebook-copy {
+		margin-top: 0.8rem;
+		color: #aebaae;
+		font-size: 0.83rem;
+		line-height: 1.7;
+		max-width: 32rem;
+	}
+	.notebook-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 2rem;
+		color: #e0bf81;
+		font-size: 0.8rem;
+		margin-top: 1.1rem;
+		padding: 0.3rem 0;
+	}
+	.night-lineup {
+		padding: 0;
+		margin: 0.8rem 0 0;
+		list-style: none;
+		max-height: 180px;
+		overflow-y: auto;
+	}
+	.night-lineup li {
+		display: flex;
+		gap: 1rem;
+		padding: 0.55rem 0;
+		border-bottom: 1px solid #ffffff0e;
+		font-size: 0.8rem;
+	}
+	.night-lineup li > span {
+		color: #c7aa77;
+		font-size: 0.7rem;
+	}
+	.night-lineup li > span:last-child {
+		margin-left: auto;
+	}
+	.night-lineup strong {
+		font-weight: 500;
+	}
+	.last-win {
+		margin-top: 1rem;
+		font-size: 1.05rem;
+		color: #c4cdbf;
+	}
+	.last-win strong,
+	.last-win span {
+		color: #e6c88f;
+	}
+	.closing-note {
+		text-align: center;
+		font-size: 0.72rem;
+		color: #849685;
+		padding: 0.3rem 0;
+	}
+	.closing-note span {
+		display: block;
+		color: #bd9a5f;
+		margin-top: 0.8rem;
+	}
+	.personal-record {
+		margin-top: 0.4rem;
+		padding-block: 1.5rem;
+	}
+	.club-footer nav {
+		border-radius: 0.5rem;
+		background: transparent;
+		padding: 0;
+		border: none;
+		gap: 0.4rem;
+	}
+	.club-footer nav button {
+		border-radius: 0.35rem;
+		padding: 0.65rem 1rem;
+		font-size: 0.8rem;
+	}
+	.club-footer nav button[aria-current='page'] {
+		background: #d8b77b;
+	}
+	.club-footer nav button:hover:not([aria-current='page']) {
+		background: #ffffff08;
+		color: #f1ebdc;
+	}
+	.record-panel {
+		max-width: 100%;
+		min-height: 400px;
+	}
+	button,
+	a {
+		-webkit-tap-highlight-color: transparent;
+	}
+	a:focus-visible {
+		outline: 2px solid #e7c784;
+		outline-offset: 4px;
+	}
+	@media (max-width: 800px) {
+		.hangout {
+			grid-template-columns: 1fr;
+		}
+		.club-notebook {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1.5rem;
+			padding: 0.5rem 0;
+			border-left: none;
+		}
+		.club-notebook section + section {
+			border-top: none;
+			padding-top: 0.9rem;
+		}
+		.people {
+			gap: 1rem 1.5rem;
+		}
+		.hall-of-fame .standings {
+			margin-block: 0.5rem 1rem;
+		}
+	}
+	@media (max-width: 560px) {
+		.welcome {
+			flex-wrap: wrap;
+			gap: 1.2rem;
+		}
+		h1 {
+			font-size: clamp(2.5rem, 10vw, 3.4rem);
+		}
+		.welcome-note {
+			font-size: 0.8rem;
+		}
+		.people {
+			flex-wrap: nowrap;
+			overflow-x: auto;
+			padding: 3px 3px 0.6rem;
+		}
+		.people li {
+			flex: 0 0 auto;
+		}
+		.club-notebook {
+			grid-template-columns: 1fr;
+			gap: 0;
+			padding-inline: 0.3rem;
+		}
+		.club-notebook section + section {
+			border-top: 1px solid #d7c29128;
+			padding-top: 1.5rem;
+		}
+		.club-footer nav button {
+			flex: 1;
+			min-width: 0;
+			padding: 0.6rem 0.2rem;
+			font-size: 0.65rem;
+		}
+		.club-footer nav {
+			justify-content: space-between;
+			width: 100%;
+		}
+		.table-panel {
+			min-height: 460px;
+		}
+		.lounge-art {
+			scale: 0.9;
+			margin-block: 0;
+		}
+		.people-strip {
+			margin-top: 0.3rem;
+		}
+		.room-content.tonight {
+			gap: 1rem;
+		}
+		.personal-record {
+			margin-top: 0.5rem;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.art-card {
+			transition: none;
+		}
+	}
+	:global([data-reduced-motion]) .art-card {
+		transition: none;
 	}
 </style>
