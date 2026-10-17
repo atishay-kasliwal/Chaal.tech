@@ -229,6 +229,9 @@
 						{folding
 							? 'Tap the card to fold: its rank becomes your joker'
 							: 'Tap the card you want to throw away'}
+						{#if !folding && handLabel?.startsWith('Best three')}<small class="best-keep"
+								>{handLabel}</small
+							>{/if}
 					{:else}
 						<button class="throw" onclick={() => chosen !== null && ondiscard(chosen)}
 							>{folding ? 'Fold this card as my joker' : 'Throw this card away'}</button
@@ -579,6 +582,13 @@
 		font-size: 0.9rem;
 		font-weight: 750;
 		cursor: pointer;
+	}
+	/* Before throwing away: the best three you could keep, under the prompt. */
+	.best-keep {
+		display: block;
+		color: #f4d68c;
+		font-size: 0.8rem;
+		font-weight: 700;
 	}
 	/* Kiss-Miss-Bliss: turning two cards into a joker is a gain, so it reads gold, not red. */
 	.throw.make {

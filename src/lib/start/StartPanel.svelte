@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { properName } from '#lib/names.js';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { socket } from '#lib/stores/socket-store.svelte.js';
@@ -186,7 +187,7 @@
 			characterId={club.member?.characterId}
 			size={40}
 		/>
-		<span><small>Playing as</small><strong>{name}</strong></span>
+		<span><small>Playing as</small><strong>{properName(name)}</strong></span>
 		<span class="edit">Edit</span>
 	</button>
 

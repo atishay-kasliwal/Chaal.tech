@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { properName } from '#lib/names.js';
 	import { asset } from '$app/paths';
 	import ClubGate from '#lib/club/ClubGate.svelte';
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
@@ -252,7 +253,7 @@
 								/>
 								<div class="who">
 									<strong
-										>{member.nickname || member.email}{#if self}
+										>{properName(member.nickname) || member.email}{#if self}
 											<span class="you">you</span>{/if}</strong
 									>
 									<small>{member.email}</small>
@@ -293,7 +294,7 @@
 												disabled={busy}
 												onclick={() =>
 													confirm(
-														`Pause ${member.nickname || member.email}? They are signed out now.`
+														`Pause ${properName(member.nickname) || member.email}? They are signed out now.`
 													) && send({ action: 'pause', memberId: member.memberId })}>Pause</button
 											>
 										{/if}
@@ -480,7 +481,7 @@
 							{#each [...answered, ...waiting] as person (person.memberId)}
 								<li>
 									<div class="who">
-										<strong>{person.name}</strong>
+										<strong>{properName(person.name)}</strong>
 										<small>{person.slots ? `${person.slots.length} hours free` : 'Waiting'}</small>
 									</div>
 									<span class="tag" class:live={!!person.slots}
@@ -540,7 +541,7 @@
 						{#each members.filter((m) => m.status !== 'suspended') as member (member.memberId)}
 							<li>
 								<div class="who">
-									<strong>{member.nickname || member.email}</strong>
+									<strong>{properName(member.nickname) || member.email}</strong>
 									<small
 										>{member.betaOptOut
 											? 'No beta emails'

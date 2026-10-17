@@ -37,6 +37,7 @@
 	import ActionDock from './ActionDock.svelte';
 	import TableMat from './TableMat.svelte';
 	import NextGameCard from './NextGameCard.svelte';
+	import { properName } from '#lib/names.js';
 	import { matFor, REVIEW_GAMES, REVIEW_MS } from './table-cards.js';
 	import {
 		money,
@@ -258,6 +259,8 @@
 	);
 	const nameOfVariant = (version: string) =>
 		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(': ')[0] ?? 'Teen Patti';
+	/** The last games played at this table, newest first. */
+	const gameLog = $derived([...(room.gameLog ?? [])].reverse());
 	/** The next game once the server has settled it (a Random draw is already made). */
 	const settled = $derived(room.upNext ?? null);
 	/** The mode a pick left standing (random stays random), and who set it. */
@@ -1214,6 +1217,18 @@
 				</li>
 			{/each}
 		</ol>
+
+		<!-- The last five games sit in the top-right corner, mirroring the actions on the left. -->
+		{#if gameLog.length && !portrait}
+			<ol class="game-log" aria-label="Last games played">
+				{#each gameLog as entry, index (entry.handId)}
+					<li class="game-line" style:opacity={1 - index * 0.16}>
+						<strong>{nameOfVariant(entry.rulesVersion)}</strong>
+						<span>· {properName(entry.winner)} won</span>
+					</li>
+				{/each}
+			</ol>
+		{/if}
 
 		{#if revealOpen && settled}
 			<NextGameCard
@@ -2334,10 +2349,13 @@
 	.feed {
 		position: absolute;
 		top: 0.4rem;
-		left: 0.6rem;
+		left: 0;
 		z-index: 4;
 		display: flex;
 		max-width: min(17rem, calc(50% - var(--seat-w, 12rem) / 2 - 1rem));
+		margin: 0;
+		padding: 0;
+		list-style: none;
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 0.15rem;
@@ -2348,14 +2366,13 @@
 		text-shadow: 0 1px 3px rgb(0 0 0 / 70%);
 	}
 	/* Phones have no free corner beside the top seat: show just the newest action,
-	   as one pill centred above your hand. */
+	   as one pill aligned left above your hand. */
 	.arena.portrait .feed {
 		top: auto;
 		bottom: 0.4rem;
-		left: 50%;
+		left: 0;
 		max-width: calc(100% - 1.5rem);
-		translate: -50% 0;
-		align-items: center;
+		align-items: flex-start;
 	}
 	.arena.portrait .feed-line:not(:first-child) {
 		display: none;
@@ -2368,6 +2385,36 @@
 	}
 	.hidden-feed {
 		display: none;
+	}
+	.game-log {
+		position: absolute;
+		top: 0.4rem;
+		right: 0;
+		z-index: 4;
+		display: flex;
+		max-width: min(17rem, calc(50% - var(--seat-w, 12rem) / 2 - 1rem));
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0.15rem;
+		text-align: right;
+		pointer-events: none;
+	}
+	.game-line {
+		color: #f1ebdc;
+		font-size: 0.85rem;
+		line-height: 1.2;
+		text-shadow: 0 1px 3px rgb(0 0 0 / 70%);
+		white-space: nowrap;
+	}
+	.game-line strong {
+		color: #f4d68c;
+		font-weight: 650;
+	}
+	.game-line span {
+		color: rgb(241 235 220 / 75%);
 	}
 	.feed-line {
 		color: #f1ebdc;

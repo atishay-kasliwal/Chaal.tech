@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { properName } from '#lib/names.js';
 	import { untrack } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { X } from '@lucide/svelte';
@@ -128,7 +129,7 @@
 			<div class="who">
 				<CharacterAvatar {characterId} {photoDataUrl} size={64} />
 				<div>
-					<h2>{club.member.nickname}</h2>
+					<h2>{properName(club.member.nickname)}</h2>
 					<p>{club.member.role === 'owner' ? 'Club owner' : 'Club member'}</p>
 				</div>
 			</div>

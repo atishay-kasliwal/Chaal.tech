@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { properName } from '#lib/names.js';
 	import { goto } from '$app/navigation';
 	import ClubGate from '#lib/club/ClubGate.svelte';
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
@@ -188,7 +189,7 @@
 				<span class="place">{entry.rank < 4 ? ['Ⅰ', 'Ⅱ', 'Ⅲ'][entry.rank - 1] : entry.rank}</span>
 				<CharacterAvatar characterId={entry.characterId} size={36} />
 				<div class="standing-name">
-					<strong>{entry.nickname}{entry.isYou ? ' · You' : ''}</strong><small
+					<strong>{properName(entry.nickname)}{entry.isYou ? ' · You' : ''}</strong><small
 						>{entry.wins} wins · {entry.hands} hands</small
 					>
 				</div>
@@ -203,7 +204,7 @@
 		<header class="welcome">
 			<div>
 				<p class="eyebrow">Your people. Your table.</p>
-				<h1>Hey {club.member?.nickname}<span class="gold">.</span></h1>
+				<h1>Hey {properName(club.member?.nickname)}<span class="gold">.</span></h1>
 			</div>
 			<button class="online-pill" onclick={() => (tab = 'friends')}
 				><span class="live-dot"></span>{online.length} online
@@ -401,7 +402,7 @@
 									<div class="hand-results">
 										{#each hand.players as player, index (index)}<span
 												class:my-result={player.isYou}
-												>{player.isYou ? 'You' : player.nickname}
+												>{player.isYou ? 'You' : properName(player.nickname)}
 												<b class:negative={player.net < 0}>{chips(player.net)}</b></span
 											>{/each}
 									</div>
@@ -443,7 +444,7 @@
 										: online.includes(friend.memberId)
 											? 'online'
 											: undefined}
-								/><strong>{friend.nickname}</strong><span class="friend-status"
+								/><strong>{properName(friend.nickname)}</strong><span class="friend-status"
 									>{atTable.has(friend.memberId)
 										? 'At the table'
 										: online.includes(friend.memberId)

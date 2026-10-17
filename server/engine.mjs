@@ -1,7 +1,7 @@
 import { freshDeck } from './classic.mjs';
 import { DEFAULT_RULES_VERSION, getVariant, listVariants } from './variants/index.mjs';
 import { getGameEngine } from './games/index.mjs';
-import { describeHand, wildIndexes } from './variants/describe.mjs';
+import { describeHand, describeKeep, wildIndexes } from './variants/describe.mjs';
 import { compareVectors } from './variants/hand-utils.mjs';
 
 export class GameError extends Error {
@@ -764,6 +764,22 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			}
 		}
 	}
+	// A hand just ended on a table with options: remember it (the last five games played), then
+	// open the pick for the next game.
+	if (
+		room.boot !== undefined &&
+		!playing(room) &&
+		room.result &&
+		room.gameLog?.at(-1)?.handId !== room.result.handId
+	)
+		room.gameLog = [
+			...(room.gameLog ?? []),
+			{
+				handId: room.result.handId,
+				rulesVersion: room.rulesVersion,
+				winner: room.result.winnerName
+			}
+		].slice(-5);
 	// A hand just ended on a table with options: open the pick for the next game.
 	if (
 		room.boot !== undefined &&
@@ -833,6 +849,8 @@ export function projection(room, id, connected) {
 		// Who picks the next game, until when, and what they picked (null while undecided).
 		...(room.chooser ? { chooser: { ...room.chooser } } : {}),
 		...(room.standing ? { standing: { ...room.standing } } : {}),
+		// The last five hands played here: the game and who won.
+		...(room.gameLog ? { gameLog: room.gameLog.map((entry) => ({ ...entry })) } : {}),
 		// The settled next game: what, how it was chosen, and when it will be dealt.
 		...(room.upNext ? { upNext: { ...room.upNext } } : {}),
 		// Chip requests are private to the two players involved.
@@ -899,10 +917,13 @@ export function projection(room, id, connected) {
 				? variant.foldsToEnd && !p.folded && playing(room) && !p.isPacked
 					? // Folding Joker before the fold: no hand yet, the folded card decides the joker.
 						{ handName: 'Fold one card: it becomes your joker', wildCards: [] }
-					: {
-							handName: describeHand(variant, p.cards, handStateOf(variant, room, p.id)),
-							wildCards: wildIndexes(variant, p.cards, handStateOf(variant, room, p.id))
-						}
+					: playing(room) && !p.isPacked && mustDiscard(variant, p)
+						? // Still throwing cards away: the best cards to keep, with their jokers.
+							describeKeep(variant, p.cards, handStateOf(variant, room, p.id))
+						: {
+								handName: describeHand(variant, p.cards, handStateOf(variant, room, p.id)),
+								wildCards: wildIndexes(variant, p.cards, handStateOf(variant, room, p.id))
+							}
 				: {})
 		})),
 		legalActions: {

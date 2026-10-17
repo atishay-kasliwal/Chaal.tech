@@ -1,4 +1,4 @@
-import { describeClassic } from './hand-utils.mjs';
+import { describeClassic, compareVectors } from './hand-utils.mjs';
 import { playedCards } from './discard-one.mjs';
 
 /**
@@ -48,4 +48,41 @@ export function wildIndexes(variant, cards, handState) {
 					? new Set([Math.min(...cards.map((card) => card.rank))])
 					: null;
 	return ranks ? cards.flatMap((card, index) => (ranks.has(card.rank) ? [index] : [])) : [];
+}
+
+/**
+ * A seen hand that still has to throw cards away (four-card and Kiss-Miss-Bliss games): name the
+ * best cards it could keep, and mark the jokers on those cards, as positions in the whole hand.
+ * Without this the name and stars would come from the first three cards dealt, ignoring the rest.
+ */
+export function describeKeep(variant, cards, handState) {
+	const keep = variant?.discardTo;
+	if (!Number.isInteger(keep) || !Array.isArray(cards) || cards.length <= keep)
+		return {
+			handName: describeHand(variant, cards, handState),
+			wildCards: wildIndexes(variant, cards, handState)
+		};
+	let best = null;
+	const choose = (start, picked) => {
+		if (picked.length === keep) {
+			const subset = picked.map((i) => cards[i]);
+			let score;
+			try {
+				score = variant.evaluateHand(subset, handState);
+			} catch {
+				return;
+			}
+			if (!best || compareVectors(score, best.score) > 0) best = { score, picked: [...picked] };
+			return;
+		}
+		for (let i = start; i < cards.length; i++) choose(i + 1, [...picked, i]);
+	};
+	choose(0, []);
+	if (!best) return { handName: null, wildCards: [] };
+	const subset = best.picked.map((i) => cards[i]);
+	const name = describeHand(variant, subset, handState);
+	return {
+		handName: name ? `Best three: ${name}` : null,
+		wildCards: wildIndexes(variant, subset, handState).map((i) => best.picked[i])
+	};
 }

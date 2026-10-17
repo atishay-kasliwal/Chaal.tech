@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { properName } from '#lib/names.js';
 	import { onMount } from 'svelte';
 	import { Check } from '@lucide/svelte';
 	import CharacterAvatar from './CharacterAvatar.svelte';
@@ -88,7 +89,7 @@
 					{#if on}<span class="tick"><Check size={12} strokeWidth={3} /></span>{/if}
 				</span>
 				<span class="who">
-					<strong>{friend.nickname}</strong>
+					<strong>{properName(friend.nickname)}</strong>
 					{#if status}<small>{status}</small>{/if}
 				</span>
 			</button>

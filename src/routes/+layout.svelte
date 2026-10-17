@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { properName } from '#lib/names.js';
 	import '../app.css';
 	import { Toasts } from '#lib/components/Toasts/index.js';
 	import { page } from '$app/state';
@@ -45,7 +46,7 @@
 			<button
 				class="rounded-full"
 				onclick={() => (profileModal.open = true)}
-				aria-label="Your profile: {club.member.nickname}"
+				aria-label="Your profile: {properName(club.member.nickname)}"
 			>
 				<CharacterAvatar
 					photoDataUrl={club.member.photoDataUrl}

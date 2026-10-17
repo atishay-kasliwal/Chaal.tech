@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withProperNames } from '#lib/names.js';
 	import { onMount } from 'svelte';
 	import { socket } from '#lib/stores/socket-store.svelte.js';
 	import { displayToast } from '#lib/components/Toasts/index.js';
@@ -145,7 +146,8 @@
 	$effect(() => {
 		const snapshot = socket.roomData;
 		if (snapshot?.name !== data.roomName) return;
-		roomData = snapshot;
+		// Tables keep names in lowercase: show everyone's name with capitals.
+		roomData = withProperNames(snapshot);
 		if (lastRulesVersion !== snapshot.rulesVersion) {
 			nextRulesVersion = snapshot.rulesVersion as RulesVersion;
 			lastRulesVersion = snapshot.rulesVersion;
