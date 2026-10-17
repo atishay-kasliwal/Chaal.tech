@@ -243,6 +243,16 @@ export default {
 				return clubFailure(error, origin, env);
 			}
 		}
+		if (url.pathname === '/club/settings' && request.method === 'GET') {
+			try {
+				const result = await withClubDatabase(env, async db => {
+					const member = await signedInMember(request, env, db);
+					const [settings, members] = await Promise.all([clubSettings(db), activeRoster(db)]);
+					return {settings, members, member: publicProfile(member)};
+				});
+				return response(result, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
 		if (url.pathname === '/me' && (request.method === 'GET' || request.method === 'POST')) {
 			try {
 				const body = request.method === 'POST' ? await jsonBody(request, 40_000) : null;

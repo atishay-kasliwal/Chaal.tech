@@ -40,7 +40,8 @@ test('settings default sensibly, keep the boot within 1/20 of the chips, and rej
 	);
 	const wanted = {
 		table: { chips: 5000, boot: 100, potLimit: 0 },
-		look: { felt: 'onyx', cardBack: 'crimson' }
+		look: { felt: 'onyx', cardBack: 'crimson' },
+		mascotSize: 100
 	};
 	assert.deepEqual(await saveClubSettings(db, wanted, 'owner'), wanted);
 	assert.deepEqual(await clubSettings(db), { ...wanted, lineup: [], lineupHands: 1 });
@@ -145,4 +146,20 @@ test('last seen is written at most once every ten minutes', async () => {
 	await markSeen(db, member, seen);
 	await markSeen(db, { ...member, lastSeenAt: seen }, new Date(day + 60_000));
 	assert.equal((await members.findOne({ _id: member._id })).lastSeenAt.getTime(), day);
+});
+
+test('mascot size persists, rejects invalid values and survives older clients saving settings', async () => {
+	const saved = await clubSettings(db);
+	for (const mascotSize of [60, 125, 160]) {
+		await saveClubSettings(db, { ...saved, mascotSize }, 'owner');
+		assert.equal((await clubSettings(db)).mascotSize, mascotSize);
+	}
+	for (const mascotSize of [0, 59, 161, 102, 120.5, '120', null]) {
+		await assert.rejects(saveClubSettings(db, { ...saved, mascotSize }, 'owner'), /Mascot size/);
+	}
+	const { mascotSize: ignored, ...legacy } = saved;
+	void ignored;
+	await saveClubSettings(db, legacy, 'owner');
+	assert.equal((await clubSettings(db)).mascotSize, 160);
+	assert.equal(normalizeSettings({ mascotSize: -1 }).mascotSize, 100);
 });

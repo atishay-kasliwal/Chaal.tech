@@ -61,6 +61,7 @@
 	import { describeChange, type FeedEvent } from './feed.js';
 	import { reactToEvents } from '#lib/mascots/table-reactions.js';
 	import { reactions } from '#lib/mascots/mascots.svelte.js';
+	import { MASCOT_SIZE } from '#lib/mascots/size.js';
 	import { opponentPoints, SELF_POINT, POT_POINT } from './layout.js';
 	import { play, soundEnabled, setSoundEnabled } from './sound.js';
 
@@ -862,6 +863,7 @@
 	let arena: HTMLElement | undefined = $state();
 
 	onMount(() => {
+		const stopSettings = club.watchSettings();
 		sound = soundEnabled();
 		const tick = setInterval(() => (now = Date.now()), 250);
 		const observer = new ResizeObserver(([entry]) => {
@@ -874,6 +876,7 @@
 			clearInterval(tick);
 			observer.disconnect();
 			clearTimeout(packTimer);
+			stopSettings();
 			reactions.clear();
 			document.title = baseTitle;
 		};
@@ -1060,7 +1063,7 @@
 				style:left="{point.left}px"
 				style:top="{point.top}px"
 				style:--seat-w="{seatW}px"
-				style:--mascot-inset="{Math.max(0, 32 - (arenaW - point.left - seatW / 2))}px"
+				style:--mascot-inset="{Math.max(0, (club.settings.mascotSize ?? MASCOT_SIZE.default) * 0.32 - (arenaW - point.left - seatW / 2))}px"
 			>
 				<TpSeat
 					user={entry.user}
@@ -1092,7 +1095,7 @@
 			>
 				<span class="spotlight-frame">
 					{#if spotlightUser.bot}
-						<BotAvatar name={spotlightUser.username} level={spotlightUser.bot} />
+						<BotAvatar name={spotlightUser.username} level={spotlightUser.bot} mascotId={spotlightUser.botMascotId} />
 					{:else}
 						<SeatVideo
 							participant={mediaState?.participants.find((p) => p.identity === spotlightUser.id)}

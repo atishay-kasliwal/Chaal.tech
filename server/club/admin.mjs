@@ -6,6 +6,7 @@ import { ObjectId } from 'mongodb';
 import { MEMBERS, ClubError, normalizeEmail } from './members.mjs';
 import { CHARACTER_IDS, defaultCharacterFor } from './characters.mjs';
 import { cleanMascotId } from './mascots.mjs';
+import { MASCOT_SIZE, isMascotSize } from '../../src/lib/mascots/size.js';
 import {
 	plannedSteps,
 	sendBetaEmails,
@@ -36,7 +37,8 @@ export const FELTS = ['emerald', 'sapphire', 'crimson', 'onyx'];
 export const CARD_BACKS = ['navy', 'crimson', 'forest'];
 export const DEFAULT_SETTINGS = Object.freeze({
 	table: { chips: 1000, boot: 10, potLimit: 128 },
-	look: { felt: 'emerald', cardBack: 'navy' }
+	look: { felt: 'emerald', cardBack: 'navy' },
+	mascotSize: MASCOT_SIZE.default
 });
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,6 +58,7 @@ export function normalizeSettings(input = {}) {
 	const chips = Number(table.chips);
 	const boot = BOOTS.includes(table.boot) ? table.boot : DEFAULT_SETTINGS.table.boot;
 	const settings = {
+		mascotSize: isMascotSize(input?.mascotSize) ? input.mascotSize : MASCOT_SIZE.default,
 		table: {
 			chips:
 				Number.isSafeInteger(chips) && chips >= 1000 && chips <= 1_000_000
@@ -112,7 +115,13 @@ export async function saveLineup(db, lineup, byMemberId, now = new Date(), hands
 
 /** Save club settings. Unknown or out-of-range values are rejected rather than silently changed. */
 export async function saveClubSettings(db, input, byMemberId, now = new Date()) {
-	const settings = normalizeSettings(input);
+	if (input?.mascotSize !== undefined && !isMascotSize(input.mascotSize))
+		throw invalid(
+			`Mascot size must be ${MASCOT_SIZE.min}–${MASCOT_SIZE.max}px in steps of ${MASCOT_SIZE.step}`
+		);
+	// Older clients save table defaults without this field; retain the saved mascot size.
+	const mascotSize = input?.mascotSize ?? (await clubSettings(db)).mascotSize;
+	const settings = normalizeSettings({ ...input, mascotSize });
 	if (JSON.stringify(settings.table) !== JSON.stringify(input?.table))
 		throw invalid('Starting chips must be ₹1,000–₹10,00,000, boot at most 1/20 of them');
 	if (JSON.stringify(settings.look) !== JSON.stringify(input?.look))

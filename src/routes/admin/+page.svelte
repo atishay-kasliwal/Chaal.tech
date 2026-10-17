@@ -5,6 +5,8 @@
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
 	import LineupEditor from '#lib/club/LineupEditor.svelte';
 	import { MASCOT_NAMES } from '#lib/mascots/catalog.js';
+	import Mascot from '#lib/mascots/Mascot.svelte';
+	import { MASCOT_SIZE } from '#lib/mascots/size.js';
 	import { club, DEFAULT_CLUB_SETTINGS, type ClubSettings } from '#lib/club/club.svelte.js';
 	import { ago, fairPhrase, gameName as gameTitle, resultsPhrase, signed } from '#lib/analytics/format.js';
 
@@ -245,7 +247,7 @@
 
 	function saveSettings() {
 		void send({ action: 'settings', settings: draft }).then((ok) => {
-			if (ok) notice = 'Saved. New tables and every card back use this now.';
+			if (ok) notice = 'Saved. Open tables pick up mascot size changes within 15 seconds.';
 		});
 	}
 
@@ -636,6 +638,41 @@
 								</button>
 							{/each}
 						</div>
+					</div>
+					<div class="field mascot-sizing">
+						<label for="mascot-size"
+							>Mascot size <output for="mascot-size"
+								>{draft.mascotSize ?? MASCOT_SIZE.default}px</output
+							></label
+						>
+						<input
+							id="mascot-size"
+							type="range"
+							min={MASCOT_SIZE.min}
+							max={MASCOT_SIZE.max}
+							step={MASCOT_SIZE.step}
+							bind:value={draft.mascotSize}
+							disabled={busy}
+						/>
+						<p class="note">
+							Same size for every friend. Save to update open tables within 15 seconds.
+						</p>
+						<div class="mascot-size-preview" aria-label="Mascot size preview">
+							{#each Object.entries(MASCOT_NAMES) as [id, name] (id)}<figure>
+									<Mascot
+										{id}
+										label={name}
+										size={draft.mascotSize ?? MASCOT_SIZE.default}
+										poke={false}
+									/>
+									<figcaption>{name}</figcaption>
+								</figure>{/each}
+						</div>
+						<button
+							type="button"
+							disabled={busy}
+							onclick={() => (draft.mascotSize = MASCOT_SIZE.default)}>Reset to 100px</button
+						>
 					</div>
 					<button class="primary" disabled={busy || !settingsChanged} onclick={saveSettings}
 						>Save look</button
@@ -1124,5 +1161,38 @@
 		border-radius: 0.4rem;
 		background: #122219;
 		color: #f1ebdc;
+	}
+	.mascot-sizing {
+		border-top: 1px solid #d7c29125;
+		padding-top: 1.25rem;
+	}
+	.mascot-sizing label {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+	.mascot-sizing output {
+		color: #e7c784;
+		font-variant-numeric: tabular-nums;
+	}
+	.mascot-sizing input {
+		width: min(100%, 32rem);
+		accent-color: #d8b77b;
+	}
+	.mascot-size-preview {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-block: 0.5rem;
+	}
+	.mascot-size-preview figure {
+		display: grid;
+		justify-items: center;
+		margin: 0;
+	}
+	.mascot-size-preview figcaption {
+		color: #b5c2b2;
+		font-size: 0.7rem;
 	}
 </style>

@@ -1,10 +1,15 @@
 <script lang="ts">
+	import Mascot from '#lib/mascots/Mascot.svelte';
 	/** A friendly face for a bot seat, stable per bot name. No camera, no network. */
 	let {
 		name,
 		level,
+		mascotId,
+		size = 210,
+		reaction = null,
+		watch = null,
 		thinking = false
-	}: { name: string; level: string; thinking?: boolean } = $props();
+	}: { name: string; level: string; mascotId?: string; size?: number; reaction?: string | null; watch?: string | null; thinking?: boolean } = $props();
 	const faces = ['😎', '🤠', '🧐', '😏', '🤓', '🥸', '😄', '🤩', '😌', '🙃', '😼', '🦁'];
 	const palettes = [
 		['#3b2a6b', '#7a4fd0'],
@@ -20,8 +25,8 @@
 </script>
 
 <div class="bot-avatar" style:--from={palette[0]} style:--to={palette[1]} data-testid="bot-avatar">
-	<span class="face" class:thinking aria-hidden="true">{face}</span>
-	<span class="badge-bot">BOT · {level}</span>
+	{#if mascotId}<Mascot id={mascotId} label={name} {size} {reaction} {watch} />{:else}<span class="face" class:thinking aria-hidden="true">{face}</span>{/if}
+	<span class="badge-bot">Bot{mascotId ? '' : ` · ${level}`}</span>
 	{#if thinking}
 		<span class="dots" aria-label="thinking"><i></i><i></i><i></i></span>
 	{/if}

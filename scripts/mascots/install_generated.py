@@ -3,6 +3,7 @@
 Keeps approved directions/reactions unchanged. Archives source PNGs in design/mascots/generated
 and writes deployable WebPs to static/mascots. Requires Pillow and NumPy.
 """
+import argparse
 import json
 import shutil
 from pathlib import Path
@@ -62,7 +63,10 @@ def install(entry):
 
 
 if __name__ == '__main__':
-    for entry in json.loads(SOURCES.read_text())['assets']:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--sources', type=Path, default=SOURCES)
+    args = parser.parse_args()
+    for entry in json.loads(args.sources.read_text())['assets']:
         install(entry)
     manifest = {}
     for directions in sorted((ROOT / 'static/mascots').glob('*/*/directions.webp')):

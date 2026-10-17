@@ -9,6 +9,8 @@
 	import { money, balanceLabel, coversBoot } from './format.js';
 	import { onMount } from 'svelte';
 	import Mascot from '#lib/mascots/Mascot.svelte';
+	import { club } from '#lib/club/club.svelte.js';
+	import { MASCOT_SIZE } from '#lib/mascots/size.js';
 	import { mascotFor, mascots, reactions } from '#lib/mascots/mascots.svelte.js';
 	import { restingFace, WATCH_ACTIVE } from '#lib/mascots/table-reactions.js';
 
@@ -63,7 +65,8 @@
 	});
 
 	const away = $derived(user.hasLeft || !user.connected);
-	const mascot = $derived(mascotFor(user.id));
+	const mascot = $derived(user.bot ? null : mascotFor(user.id));
+	const mascotSize = $derived(club.settings.mascotSize ?? MASCOT_SIZE.default);
 	const face = $derived(reactions.byPlayer[user.id]?.pose ?? restingFace({ away }));
 	const revealed = $derived(user.cardsInHand.some((card) => card.rank > 0));
 	const progress = $derived(total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0);
@@ -97,6 +100,8 @@
 	class:away
 	data-testid="player-seat"
 	data-player-id={user.id}
+	data-bot-id={user.botId}
+	data-bot-style={user.botStyleId}
 	data-active={active}
 	aria-label="{user.username}{active ? ', their turn' : ''}{status ? ', ' + status : ''}"
 >
@@ -114,7 +119,7 @@
 				title="Tap to see {user.username} large"
 			></button>
 			{#if user.bot}
-				<BotAvatar name={user.username} level={user.bot} thinking={active} />
+				<BotAvatar name={user.username} level={user.bot} mascotId={user.botMascotId} thinking={active} size={mascotSize * 2.1} reaction={face} watch={active ? '.pot' : WATCH_ACTIVE} />
 			{:else}
 				<SeatVideo
 					participant={showMedia && !away ? mediaParticipant : undefined}
@@ -172,12 +177,12 @@
 				{/if}
 			{/if}
 		</div>
-		{#if mascot}
+		{#if mascot && !user.bot}
 			<!-- Straddles the tile's right border, half over the video, dipping just below its bottom edge. -->
-			<span class="peek">
+			<span class="peek" style:--size="{mascotSize}px">
 				<Mascot
 					id={mascot}
-					size={100}
+					size={mascotSize}
 					reaction={face}
 					watch={active ? '.pot' : WATCH_ACTIVE}
 					label={user.username}
@@ -258,7 +263,6 @@
 	   starting at the bottom edge and dipping a little below it. Offsets are in cell sizes, since each sheet
 	   cell leaves a margin around the figure. */
 	.peek {
-		--size: 100px;
 		position: absolute;
 		z-index: 4;
 		right: calc(var(--size) * -0.5 + var(--mascot-inset, 0px));
