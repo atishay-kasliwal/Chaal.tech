@@ -20,6 +20,8 @@
 		to: [number, number];
 		color: string;
 		faint?: boolean;
+		/** Sideways shift in grid units, to draw several players' strokes along one line. */
+		offset?: number;
 	}
 	export interface MatPile {
 		top: { rank: number; suit: string };
@@ -88,6 +90,14 @@
 	// Card centres in the grid's own units: cards are 7 wide and 10 tall with a gap of 1.
 	const cx = (column: number) => column * 8 + 3.5;
 	const cy = (row: number) => row * 11 + 5;
+	/** A line's sideways shift as x and y, at right angles to the line. */
+	const shift = (line: MatLine): [number, number] => {
+		if (!line.offset) return [0, 0];
+		const x = cx(line.to[1]) - cx(line.from[1]);
+		const y = cy(line.to[0]) - cy(line.from[0]);
+		const length = Math.hypot(x, y) || 1;
+		return [(-y / length) * line.offset, (x / length) * line.offset];
+	};
 	/**
 	 * Prompts may mark words bold with <b>…</b>. Split them into plain and bold text, so names
 	 * inside a prompt are always shown as text and never read as markup.
@@ -164,11 +174,12 @@
 									{/each}
 								{/if}
 								{#each lines as line, index (index)}
+									{@const [dx, dy] = shift(line)}
 									<line
-										x1={cx(line.from[1])}
-										y1={cy(line.from[0])}
-										x2={cx(line.to[1])}
-										y2={cy(line.to[0])}
+										x1={cx(line.from[1]) + dx}
+										y1={cy(line.from[0]) + dy}
+										x2={cx(line.to[1]) + dx}
+										y2={cy(line.to[0]) + dy}
 										stroke={line.color}
 										stroke-width={line.faint ? 0.25 : 0.7}
 										stroke-dasharray={line.faint ? '0.6 0.6' : ''}

@@ -36,7 +36,7 @@
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import ActionDock from './ActionDock.svelte';
 	import TableMat from './TableMat.svelte';
-	import { matFor } from './table-cards.js';
+	import { matFor, REVIEW_GAMES, REVIEW_MS } from './table-cards.js';
 	import {
 		money,
 		signedMoney,
@@ -341,6 +341,8 @@
 	let dealingFor: string | null = null;
 	let dealError = $state('');
 	let lastResultHand: string | null = null;
+	/** Earliest automatic deal after a table-card hand (0 when there is no review time). */
+	let reviewUntil = 0;
 	const dealIn = $derived(dealAt === null ? null : Math.max(0, Math.ceil((dealAt - now) / 1000)));
 
 	$effect(() => {
@@ -350,7 +352,11 @@
 			if (handId === lastResultHand) return;
 			lastResultHand = handId;
 			dealError = '';
-			dealAt = handId ? Date.now() + (reason === 'last-player' ? 5000 : 8000) : null;
+			// Games with cards on the table leave them up for a minute, so everyone can see what happened.
+			reviewUntil = handId && REVIEW_GAMES.has(room.rulesVersion) ? Date.now() + REVIEW_MS : 0;
+			dealAt = handId
+				? Math.max(reviewUntil, Date.now() + (reason === 'last-player' ? 5000 : 8000))
+				: null;
 		});
 	});
 	// While someone picks the next game, wait for them (up to their minute); once they pick,
@@ -361,8 +367,12 @@
 		untrack(() => {
 			if (!deadline || dealAt === null) return;
 			// Picked: deal shortly. Picking: wait for it. A standing pick: the normal countdown.
-			if (choice) dealAt = Math.min(Math.max(dealAt, Date.now() + 4000), Date.now() + 5000);
-			else if (deadline > Date.now()) dealAt = deadline + 500;
+			if (choice)
+				dealAt = Math.max(
+					reviewUntil,
+					Math.min(Math.max(dealAt, Date.now() + 4000), Date.now() + 5000)
+				);
+			else if (deadline > Date.now()) dealAt = Math.max(reviewUntil, deadline + 500);
 		});
 	});
 
@@ -943,11 +953,14 @@
 
 		<div
 			class="center"
-			class:with-mat={hasMat && !result && room.isStarted}
+			class:with-mat={hasMat && room.isStarted}
+			class:reviewing={hasMat && room.isStarted && !!result}
 			data-testid="table-center"
 			style:top="{centerTop}px"
 		>
 			{#if result}
+				<!-- Table-card games keep the mat up beside the result, so everyone sees how it ended. -->
+				{#if tableCards}{@render tableCards()}{:else if mat}<TableMat {...mat} />{/if}
 				<div class="result" in:fly={{ y: 12, duration: 350 }} role="status" aria-live="polite">
 					<Trophy class="trophy h-7 w-7" />
 					<p class="result-title">
@@ -2187,6 +2200,22 @@
 		flex-direction: row-reverse;
 		justify-content: center;
 		gap: 1.2rem;
+	}
+	/* After a table-card hand: the result sits beside the mat, narrower and shorter. */
+	.center.with-mat .result {
+		width: auto;
+		min-width: 0;
+		max-width: 27rem;
+		flex: 1 1 24rem;
+		padding: 0.7rem 1rem 0.75rem;
+	}
+	/* The result is taller than the pot: lift the row clear of your cards. */
+	.center.with-mat.reviewing {
+		translate: -50% calc(-50% - 2.4rem);
+	}
+	.center.with-mat .result :global(.trophy),
+	.center.with-mat .result-bots {
+		display: none;
 	}
 	/* The pot steps back so the cards on the table lead; still easy to read. */
 	.center.with-mat .pot {

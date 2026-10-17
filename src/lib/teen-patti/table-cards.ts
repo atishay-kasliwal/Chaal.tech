@@ -8,6 +8,15 @@ import type { MatCard, MatLine } from './TableMat.svelte';
  */
 
 type Mat = ComponentProps<typeof TableMat>;
+/** Games whose table cards stay up after the hand, and for how long before the next deal. */
+export const REVIEW_GAMES = new Set([
+	'chatai-1',
+	'running-1',
+	'rotating-joker-1',
+	'revolving-joker-1'
+]);
+export const REVIEW_MS = 60 * 1000;
+const COLOUR_NAMES = ['gold', 'blue', 'green', 'pink', 'purple', 'orange'];
 const SUIT_SYMBOL: Record<string, string> = { spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣' };
 const RANK: Record<number, string> = { 14: 'A', 13: 'K', 12: 'Q', 11: 'J' };
 export const rankText = (rank: number) => RANK[rank] ?? String(rank);
@@ -111,15 +120,31 @@ function chatai(room: RoomData, selfId: string, ui: MatUi): Mat | null {
 	} else if (allOpen) {
 		// Every line this viewer may see: their own, and everyone's after the Show.
 		const seats = room.usersList.map((user) => user.id);
-		for (const [id, line] of Object.entries(lines))
+		const entries = Object.entries(lines);
+		// Players who locked the same line get parallel strokes side by side, so each one shows.
+		entries.forEach(([id, line]) => {
+			const same = entries.filter(([, other]) => other === line);
+			const slot = same.findIndex(([other]) => other === id);
 			drawn.push({
 				...lineEnds(line),
-				color: id === selfId ? '#f4d68c' : SEAT_COLOURS[(seats.indexOf(id) + 1) % 6]
+				color: id === selfId ? '#f4d68c' : SEAT_COLOURS[(seats.indexOf(id) + 1) % 6],
+				offset: (slot - (same.length - 1) / 2) * 0.9
 			});
+		});
 	}
 	const openRanks = mat.filter((_, i) => open[i]).map((card) => card.rank);
 	const openCount = open.filter(Boolean).length;
 	const pending = state.pendingOpen;
+	const over = room.gameShow;
+	// After the hand: name whose line is which colour.
+	const seats = room.usersList.map((user) => user.id);
+	const lineKey = Object.keys(lines)
+		.map((id) =>
+			id === selfId
+				? 'you gold'
+				: `${nameOf(room, id)} ${COLOUR_NAMES[(seats.indexOf(id) + 1) % 6]}`
+		)
+		.join(' · ');
 	const prompt = canOpen
 		? '<b>Tap a card on the mat to open it</b>'
 		: pending && room.isStarted && !room.gameShow
@@ -134,21 +159,31 @@ function chatai(room: RoomData, selfId: string, ui: MatUi): Mat | null {
 		cards,
 		lines: drawn,
 		prompt,
-		caption: allOpen ? '' : `${openCount} of 9 open`,
-		tray: allOpen
-			? mine !== undefined
-				? {
-						title: 'Your jokers',
-						ranks: uniqueRanks(CHATAI_LINES[mine].map((cell) => mat[cell].rank)),
-						note: '🔒 Line locked'
-					}
-				: {
-						title: 'Jokers',
-						note: 'Lock a row, column or diagonal: its three cards become your jokers'
-					}
-			: openRanks.length
-				? { title: 'Jokers', ranks: uniqueRanks(openRanks), note: 'any card of these ranks' }
-				: { title: 'Jokers', note: 'Every card opened on the mat becomes a joker' },
+		caption: over
+			? allOpen
+				? lineKey
+					? `Lines: ${lineKey}`
+					: 'No lines were locked'
+				: `${openCount} of 9 opened before the end`
+			: allOpen
+				? ''
+				: `${openCount} of 9 open`,
+		tray: over
+			? undefined
+			: allOpen
+				? mine !== undefined
+					? {
+							title: 'Your jokers',
+							ranks: uniqueRanks(CHATAI_LINES[mine].map((cell) => mat[cell].rank)),
+							note: '🔒 Line locked'
+						}
+					: {
+							title: 'Jokers',
+							note: 'Lock a row, column or diagonal: its three cards become your jokers'
+						}
+				: openRanks.length
+					? { title: 'Jokers', ranks: uniqueRanks(openRanks), note: 'any card of these ranks' }
+					: { title: 'Jokers', note: 'Every card opened on the mat becomes a joker' },
 		actions:
 			choosing && ui.previewLine !== null
 				? [
