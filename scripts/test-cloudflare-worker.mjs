@@ -51,6 +51,7 @@ await writeFile(varsFile, [
 	'MONGODB_DB=chaal-cf-test',
 	`GOOGLE_CLIENT_ID=${clientId}`,
 	'ALLOW_TEST_SIGN_IN=true',
+	'ENGINE_BUILD=test',
 	`TEST_GOOGLE_JWKS='${JSON.stringify({ keys: [publicJwk] })}'`
 ].join('\n'), { mode: 0o600 });
 const worker = spawn(wrangler, [

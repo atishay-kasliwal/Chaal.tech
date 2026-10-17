@@ -63,20 +63,20 @@ export function botDue(room, connected) {
  * The next bot move for this room, or null when no bot needs to act.
  * Discards come first (any bot holding too many seen cards), then the bot on turn.
  */
-export function nextBotMove(room, connected, random) {
+export function nextBotMove(room, connected, random, profileFor = () => undefined) {
 	if (!playing(room) || (room.gameType && room.gameType !== 'teen-patti')) return null;
 	for (const bot of room.players.filter(
 		(p) => p.bot && !p.departed && !p.isPacked && p.cards.length
 	)) {
 		const view = projection(room, bot.id, connected);
 		if (needsMove(view.legalActions)) {
-			const move = decide(view, bot.id, random);
+			const move = decide(view, bot.id, random, profileFor(bot.id));
 			if (move) return { botId: bot.id, ...move };
 		}
 	}
 	const current = room.players.find((p) => p.id === room.currentPlayerId);
 	if (!current?.bot) return null;
-	const move = decide(projection(room, current.id, connected), current.id, random);
+	const move = decide(projection(room, current.id, connected), current.id, random, profileFor(current.id));
 	return move ? { botId: current.id, ...move } : null;
 }
 

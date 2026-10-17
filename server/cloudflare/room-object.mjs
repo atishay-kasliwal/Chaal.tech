@@ -24,8 +24,12 @@ import { withClubDatabase, invitableEmails, emailsForMembers, memberRole, member
 import { saveNight, nightEmail } from '../club/nights.mjs';
 import { clubSettings } from '../club/admin.mjs';
 import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
+import { recordCommitSafely, stepRecorder, botRandom, abandonOpenHand } from '../analytics/recorder.mjs';
+import { archiveRecorderRow, isRecorderRow, writeRoomStatus } from '../analytics/store.mjs';
+import { engineBuild } from './build.mjs';
 
 const secureRandom = () => secureRandomInt(0x1_0000_0000) / 0x1_0000_0000;
+const randomUint32 = () => secureRandomInt(0x1_0000_0000);
 
 /** Seats at every table; the engine allows seat numbers 0–5. */
 const MAX_PLAYERS = 6;
@@ -47,13 +51,15 @@ const knownEvents = new Set([
  * of the cards that were shown prove they sat exactly there before anyone cut.
  */
 async function sealDeck(room) {
-	if (!room.cut || room.seal) return;
+	if (!room.cut || room.seal) return undefined;
 	const deck = shuffledDeck();
 	const salts = deck.map(() => toHex(crypto.getRandomValues(new Uint8Array(16))));
 	const leaves = await Promise.all(
 		deck.map((card, index) => hash(`${index}|${card.rank}|${card.suit}|${salts[index]}`))
 	);
 	room.seal = { deck, salts, leaves, commitment: await hash(leaves.join('')) };
+	// Returned so the hand recorder can replay this change, which happens outside transition().
+	return room.seal;
 }
 
 const hash = async (value) => {
@@ -153,8 +159,14 @@ export class RoomDurableObject {
 		return row ? { fingerprint: row.fingerprint, result: JSON.parse(row.result) } : null;
 	}
 
-	commit(room, playerId, commandId, commandFingerprint, result, movement, expectedRevision) {
+	/**
+	 * `step` describes the input for the hand recorder (server/analytics/recorder.mjs). Recording
+	 * runs in this transaction but can never change `room` or fail the commit: an error only
+	 * abandons the current hand's recording, as an explicit failure row.
+	 */
+	commit(room, playerId, commandId, commandFingerprint, result, movement, expectedRevision, step) {
 		const now = Date.now();
+		const snapshot = JSON.stringify(room);
 		this.ctx.storage.transactionSync(() => {
 			const current = this.room();
 			if (
@@ -168,10 +180,24 @@ export class RoomDurableObject {
 			if (tracked.progress) this.setMeta('clubHand', tracked.progress);
 			else this.deleteMeta('clubHand');
 			if (tracked.completed) this.sql.exec('INSERT OR IGNORE INTO history_outbox(id,payload) VALUES (?,?)', tracked.completed._id, JSON.stringify(tracked.completed));
+			const recorded = recordCommitSafely(this.getMeta('recorder'), {
+				before: current?.snapshot ?? null,
+				after: JSON.parse(snapshot),
+				afterJson: snapshot,
+				step: step ?? { actor: playerId, action: 'unknown', payload: {}, ctx: {}, kind: 'system', cause: 'unrecorded' },
+				now,
+				// Null (and so an explicit failure at flush) if this isolate has no valid build id.
+				engine: engineBuild(this.env)
+			});
+			if (recorded.error) console.error('Hand recorder error:', recorded.error?.message ?? 'Error');
+			this.setMeta('recorder', recorded.state);
+			for (const row of recorded.rows)
+				this.sql.exec('INSERT OR IGNORE INTO history_outbox(id,payload) VALUES (?,?)', row.id, JSON.stringify(row.payload));
+			this.urgentHistory = !!tracked.completed || recorded.rows.some((row) => row.payload.type !== 'night-event');
 			this.sql.exec(
 				'INSERT INTO room_state(name,snapshot,updated_at) VALUES (?,?,?) ON CONFLICT(name) DO UPDATE SET snapshot=excluded.snapshot, updated_at=excluded.updated_at',
 				room.name,
-				JSON.stringify(room),
+				snapshot,
 				now
 			);
 			this.sql.exec(
@@ -193,21 +219,91 @@ export class RoomDurableObject {
 					now
 				);
 		});
-		if (this.hasPendingHistory()) this.ctx.waitUntil(this.flushHistory());
+		// Hands and failures go out now; between-hand events ride along or go on the next alarm.
+		if (this.urgentHistory) this.ctx.waitUntil(this.flushHistory());
+		this.urgentHistory = false;
 	}
 
+	/**
+	 * Drain the durable outbox to MongoDB over one connection: club hands in a batch, recorder rows
+	 * one by one in order. Rows queued while a flush runs are picked up by the same flush.
+	 */
 	async flushHistory() {
 		if (!this.env.MONGODB_URI) return;
-		if (this.historyFlush) return this.historyFlush;
+		if (this.historyFlush) {
+			this.flushAgain = true;
+			return this.historyFlush;
+		}
 		this.historyFlush = (async () => {
-			const pending = this.sql.exec('SELECT id,payload FROM history_outbox LIMIT 20').toArray();
-			if (!pending.length) return;
 			try {
-				await withClubDatabase(this.env, (db) => archiveHands(db, pending.map((row) => JSON.parse(row.payload))));
-				for (const row of pending) this.sql.exec('DELETE FROM history_outbox WHERE id=?', row.id);
-			} catch { /* Durable outbox retries on the next alarm. */ }
+				await withClubDatabase(this.env, async (db) => {
+					for (let round = 0; round < 25; round++) {
+						this.flushAgain = false;
+						const pending = this.sql.exec('SELECT id,payload FROM history_outbox ORDER BY rowid LIMIT 20').toArray()
+							.map((row) => ({ id: row.id, payload: JSON.parse(row.payload) }));
+						if (!pending.length) break;
+						const hands = pending.filter((row) => !isRecorderRow(row.payload));
+						if (hands.length) {
+							await archiveHands(db, hands.map((row) => row.payload));
+							for (const row of hands) this.sql.exec('DELETE FROM history_outbox WHERE id=?', row.id);
+						}
+						// Recorder rows in order; the first that cannot be written stops the rest until next time.
+						for (const row of pending.filter((candidate) => isRecorderRow(candidate.payload))) {
+							await archiveRecorderRow(db, row.payload);
+							this.sql.exec('DELETE FROM history_outbox WHERE id=?', row.id);
+						}
+						if (pending.length < 20 && !this.flushAgain) break;
+					}
+					this.deleteMeta('outboxError');
+					await writeRoomStatus(db, this.roomNameForStatus(), this.recorderStatus()).catch(() => {});
+				});
+			} catch (error) {
+				// Durable outbox retries on the next alarm; the failure is logged and kept, never silent.
+				const previous = this.getMeta('outboxError');
+				const failure = {
+					attempts: (previous?.attempts ?? 0) + 1,
+					at: Date.now(),
+					error: String(error?.message ?? error?.name ?? 'Error').slice(0, 300)
+				};
+				this.setMeta('outboxError', { ...failure, since: previous?.since ?? failure.at });
+				console.error('History outbox flush failed:', failure.attempts, failure.error);
+				// Best effort: if the database is reachable, say this room is stuck and why.
+				await withClubDatabase(this.env, (db) => writeRoomStatus(db, this.roomNameForStatus(), this.recorderStatus()))
+					.catch(() => {});
+			}
 		})();
 		try { await this.historyFlush; } finally { this.historyFlush = null; }
+	}
+
+	roomNameForStatus() {
+		return this.room()?.snapshot.name ?? this.getMeta('recorder')?.night?.id?.split(':')[0] ?? 'unknown-room';
+	}
+
+	/** Recorder counters and what is waiting in the outbox, for recorder health. */
+	recorderStatus() {
+		const pending = { total: 0, capture: 0, nightEvent: 0, reveal: 0, failure: 0, clubHand: 0 };
+		for (const row of this.sql.exec('SELECT id FROM history_outbox').toArray()) {
+			pending.total++;
+			const kind = row.id.slice(0, 4);
+			if (kind === 'cap:') pending.capture++;
+			else if (kind === 'nev:') pending.nightEvent++;
+			else if (kind === 'rev:') pending.reveal++;
+			else if (kind === 'fail') pending.failure++;
+			else pending.clubHand++;
+		}
+		const error = this.getMeta('outboxError');
+		const recorder = this.getMeta('recorder');
+		return {
+			stats: recorder?.stats ?? { handsStarted: 0, captured: 0, failed: 0 },
+			handOpen: !!recorder?.hand && !recorder.hand.failed,
+			pending,
+			consecutiveFailures: error?.attempts ?? 0,
+			lastError: error?.error ?? null,
+			failingSince: error?.since ?? null,
+			engineBuild: engineBuild(this.env),
+			reportedAt: new Date(),
+			...(error ? {} : { lastSuccessAt: new Date() })
+		};
 	}
 
 	hasPendingHistory() {
@@ -295,7 +391,13 @@ export class RoomDurableObject {
 				: createGameRoom(gameType, name, table, playerId);
 			room.revision = 1;
 			const result = { ok: true, roomName: room.name, revision: room.revision, handId: room.handId };
-			this.commit(room, playerId, meta.commandId, commandFingerprint, result, null, null);
+			this.commit(room, playerId, meta.commandId, commandFingerprint, result, null, null, {
+				actor: playerId,
+				action: 'create',
+				payload: { gameType, table, rulesVersion: room.rulesVersion ?? null, options: options ?? null },
+				ctx: {},
+				kind: 'player'
+			});
 			this.reportToLobby(room);
 			await this.scheduleAlarm();
 			return json(result);
@@ -620,7 +722,7 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		const now = Date.now();
 		// Only club owners may end a table: checked against the guest list, not the table.
 		const canEnd = action === 'endNight' ? await this.isOwner(attachment.memberId) : false;
-		const room = transition(before, playerId, action, payload, {
+		const recorder = stepRecorder({
 			canEnd,
 			now,
 			turnMs: this.turnMs(),
@@ -633,9 +735,11 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 			requireReady: true,
 			...(await this.pickContext())
 		});
+		const room = transition(before, playerId, action, payload, recorder.ctx);
 		const result = { ok: true, roomName: room.name, revision: room.revision, handId: room.handId };
-		await sealDeck(room);
-		this.commit(room, playerId, meta.commandId, commandFingerprint, result, movements(before, room, event), before.revision);
+		const seal = await sealDeck(room);
+		this.commit(room, playerId, meta.commandId, commandFingerprint, result, movements(before, room, event), before.revision,
+			recorder.step(playerId, action, payload, seal ? { seal } : {}));
 		if (room.ended && !before.ended) await this.afterNight(room);
 		if (room.result && room.result.handId !== before.result?.handId)
 			text = `${room.result.winnerName} won ${room.result.amount} chips`;
@@ -863,14 +967,16 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 			await this.closeTable(before, 'An owner closed this table.');
 			return json({ ok: true, closed: true });
 		}
-		const room = transition(before, actor.id, 'endNight', { mode }, {
+		const recorder = stepRecorder({
 			now: Date.now(),
 			turnMs: this.turnMs(),
 			connected: this.connectedRoom(before.name),
 			canEnd: true
 		});
+		const room = transition(before, actor.id, 'endNight', { mode }, recorder.ctx);
 		const commandId = `end:${before.revision}`;
-		this.commit(room, actor.id, commandId, await hash(commandId), { ok: true }, movements(before, room, 'endNight'), before.revision);
+		this.commit(room, actor.id, commandId, await hash(commandId), { ok: true }, movements(before, room, 'endNight'), before.revision,
+			recorder.step(actor.id, 'endNight', { mode }, { kind: 'system', cause: 'admin-end' }));
 		this.publish(room.name, room.ended ? 'The table has ended for the night' : 'The table ends after this hand');
 		if (room.ended) await this.afterNight(room);
 		return json({ ok: true, ending: !room.ended });
@@ -878,6 +984,7 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 
 	/** Tell everyone still here, then close the table for good. */
 	async closeTable(room, reason) {
+		this.abandonRecording(room);
 		await this.flushHistory();
 		if (this.hasPendingHistory()) {
 			await this.ctx.storage.setAlarm(Date.now() + 60_000);
@@ -891,6 +998,18 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		this.reportToLobby(room, true);
 		await this.ctx.storage.deleteAll();
 		this.ensureSchema();
+	}
+
+	/** A hand still being recorded when its table closes becomes an explicit failure row. */
+	abandonRecording(room) {
+		const state = this.getMeta('recorder');
+		const rows = abandonOpenHand(state, room.name);
+		if (!rows.length) return;
+		this.ctx.storage.transactionSync(() => {
+			for (const row of rows)
+				this.sql.exec('INSERT OR IGNORE INTO history_outbox(id,payload) VALUES (?,?)', row.id, JSON.stringify(row.payload));
+			this.setMeta('recorder', { ...state, hand: { ...state.hand, failed: true, steps: [] } });
+		});
 	}
 
 	turnMs() {
@@ -948,18 +1067,26 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		const before = stored.snapshot;
 		if (planned.revision !== before.revision) return false;
 		const connected = this.connectedRoom(before.name);
-		const move = nextBotMove(before, connected, secureRandom);
+		// Every random draw the bot makes is logged so its decision can be replayed exactly.
+		const draws = botRandom(randomUint32);
+		const move = nextBotMove(before, connected, draws.random);
 		if (!move) return false;
 		try {
-			const room = transition(before, move.botId, move.action, move.payload, {
+			const recorder = stepRecorder({
 				now: Date.now(),
 				turnMs: this.turnMs(),
 				connected,
 				...(await this.pickContext())
 			});
+			const room = transition(before, move.botId, move.action, move.payload, recorder.ctx);
 			const commandId = `bot:${before.handId}:${before.revision}`;
-			await sealDeck(room);
-			this.commit(room, move.botId, commandId, await hash(commandId), { ok: true }, movements(before, room, `bot-${move.action}`), before.revision);
+			const seal = await sealDeck(room);
+			this.commit(room, move.botId, commandId, await hash(commandId), { ok: true }, movements(before, room, `bot-${move.action}`), before.revision,
+				recorder.step(move.botId, move.action, move.payload, {
+					kind: 'bot',
+					bot: { seed: draws.seed, draws: draws.draws, reason: move.reason ?? null },
+					...(seal ? { seal } : {})
+				}));
 			if (room.ended && !before.ended) await this.afterNight(room);
 			this.publish(room.name, room.result && !before.result
 				? `${room.result.winnerName} won ${room.result.amount} chips`
@@ -1024,7 +1151,7 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		if (playing(room) && room.deadline <= now) {
 			try {
 				const before = room;
-				room = transition(before, before.currentPlayerId, 'timeout', {}, {
+				const recorder = stepRecorder({
 					now,
 					turnMs: this.turnMs(),
 					connected: this.connectedRoom(room.name),
@@ -1033,9 +1160,11 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 						? shuffle(before.discardPile.slice(0, -1))
 						: undefined
 				});
+				room = transition(before, before.currentPlayerId, 'timeout', {}, recorder.ctx);
 				const commandId = `timeout:${before.handId}:${before.revision}`;
-				await sealDeck(room);
-				this.commit(room, before.currentPlayerId, commandId, await hash(commandId), { ok: true }, movements(before, room, 'timeout'), before.revision);
+				const seal = await sealDeck(room);
+				this.commit(room, before.currentPlayerId, commandId, await hash(commandId), { ok: true }, movements(before, room, 'timeout'), before.revision,
+					recorder.step(before.currentPlayerId, 'timeout', {}, { kind: 'system', cause: 'timeout', ...(seal ? { seal } : {}) }));
 				if (room.ended && !before.ended) await this.afterNight(room);
 				changed = true;
 				announcement = room.result
@@ -1049,18 +1178,21 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		// A pick window that ran out with no pick: settle the next game so everyone sees it.
 		if (!playing(room) && room.chooser && !room.upNext && room.chooser.deadline <= now) {
 			try {
-				const before = room;
+				// The committed snapshot, exactly as the recorder will replay it.
+				const before = this.room().snapshot;
 				const actor = before.players.find((p) => p.seatNumber !== null && !p.departed && !p.bot);
 				if (actor) {
-					room = transition(before, actor.id, 'settleNext', {}, {
+					const recorder = stepRecorder({
 						now,
 						turnMs: this.turnMs(),
 						connected: this.connectedRoom(room.name),
 						...(await this.pickContext())
 					});
+					room = transition(before, actor.id, 'settleNext', {}, recorder.ctx);
 					const commandId = `settle:${before.chooser.handId}:${before.revision}`;
-					await sealDeck(room);
-					this.commit(room, actor.id, commandId, await hash(commandId), { ok: true }, null, before.revision);
+					const seal = await sealDeck(room);
+					this.commit(room, actor.id, commandId, await hash(commandId), { ok: true }, null, before.revision,
+						recorder.step(actor.id, 'settleNext', {}, { kind: 'system', cause: 'pick-timeout', ...(seal ? { seal } : {}) }));
 					changed = true;
 				}
 			} catch (error) {
@@ -1078,10 +1210,11 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 				const candidates = seats.filter((player) => player.id !== recovery.hostId && active.has(player.id));
 				const nextHost = candidates.find((player) => player.seatNumber > hostSeat) ?? candidates[0];
 				if (nextHost) {
-					const before = room;
+					const before = this.room().snapshot;
 					room = { ...before, hostId: nextHost.id, revision: before.revision + 1 };
 					const commandId = crypto.randomUUID();
-					this.commit(room, recovery.hostId, commandId, await hash(JSON.stringify({ event: 'hostRecovery', hostId: recovery.hostId, nextHost: nextHost.id, revision: before.revision })), { ok: true, roomName: room.name, revision: room.revision, handId: room.handId }, null, before.revision);
+					this.commit(room, recovery.hostId, commandId, await hash(JSON.stringify({ event: 'hostRecovery', hostId: recovery.hostId, nextHost: nextHost.id, revision: before.revision })), { ok: true, roomName: room.name, revision: room.revision, handId: room.handId }, null, before.revision,
+						{ actor: recovery.hostId, action: 'hostRecovery', payload: { hostId: nextHost.id }, ctx: {}, kind: 'system', cause: 'host-recovery' });
 					announcement = `${nextHost.username} is now the room host`;
 					changed = true;
 				}
