@@ -28,6 +28,7 @@ import {
 	addMember,
 	setMemberPaused,
 	setMemberRole,
+	setMemberMascot,
 	betaDecision,
 	sendDueBeta,
 	sendDueBetaToAll,
@@ -314,6 +315,7 @@ export default {
 								apiKey: env.RESEND_API_KEY
 							});
 						else if (action === 'role') await setMemberRole(db, body.memberId, body.role);
+						else if (action === 'mascot') await setMemberMascot(db, body.memberId, body.mascotId);
 						else if (action === 'settings') await saveClubSettings(db, body.settings, actorId);
 						else if (action === 'end-table') {
 	// End a live table for the night: after its hand (default) or now with bets refunded.

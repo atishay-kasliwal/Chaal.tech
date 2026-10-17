@@ -5,6 +5,7 @@
 import { ObjectId } from 'mongodb';
 import { MEMBERS, ClubError, normalizeEmail } from './members.mjs';
 import { CHARACTER_IDS, defaultCharacterFor } from './characters.mjs';
+import { cleanMascotId } from './mascots.mjs';
 import {
 	plannedSteps,
 	sendBetaEmails,
@@ -139,6 +140,7 @@ export async function adminMembers(db) {
 					role: 1,
 					status: 1,
 					characterId: 1,
+					mascotId: 1,
 					claimedAt: 1,
 					createdAt: 1,
 					betaOptOut: 1,
@@ -153,6 +155,7 @@ export async function adminMembers(db) {
 		memberId: String(member._id),
 		email: member.email,
 		nickname: member.nickname ?? '',
+		mascotId: cleanMascotId(member.mascotId),
 		role: member.role === 'owner' ? 'owner' : 'member',
 		status: member.status,
 		// Never-chosen characters show the same stable default the member themselves would see.
@@ -361,4 +364,13 @@ export async function resetGameNight(db, { apiKey, now = new Date() } = {}) {
 			await cancelBetaEmails({ apiKey, emails: member.betaInvite.emails, now }).catch(() => []);
 	await members.updateMany({}, { $unset: { betaInvite: '' } });
 	await db.collection(SETTINGS).deleteOne({ _id: 'beta' });
+}
+
+/** Link personal art to a member; callers must enforce owner access. Null removes the link. */
+export async function setMemberMascot(db, memberId, mascotId, now = new Date()) {
+	if (mascotId !== null && cleanMascotId(mascotId) === null) throw invalid('Unknown mascot');
+	const result = await db.collection(MEMBERS).updateOne(idQuery(memberId), {
+		$set: { mascotId, updatedAt: now }
+	});
+	if (!result.matchedCount) throw invalid('Unknown member');
 }

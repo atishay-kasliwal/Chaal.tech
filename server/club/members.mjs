@@ -1,12 +1,13 @@
 import { MongoClient, ObjectId } from 'mongodb';
 import { isProfilePhoto } from './profile-photo.mjs';
 import { CHARACTER_IDS, defaultCharacterFor } from './characters.mjs';
+import { cleanMascotId } from './mascots.mjs';
 
 /**
  * The club's guest list lives in MongoDB, collection `members`. The owner adds people
  * there directly (see docs/PRIVATE_CLUB.md); nobody can sign up on their own.
  *
- * { email, nickname?, characterId?, role: 'owner'|'member', status: 'invited'|'active'|'suspended',
+ * { email, nickname?, characterId?, mascotId?, role: 'owner'|'member', status: 'invited'|'active'|'suspended',
  *   googleSub?, playerId?, sessionVersion?, reducedMotion?, onboardedAt?, createdAt, claimedAt?, updatedAt }
  */
 export const MEMBERS = 'members';
@@ -88,6 +89,7 @@ export function publicProfile(member) {
 		characterId: CHARACTER_IDS.includes(member.characterId)
 			? member.characterId
 			: defaultCharacterFor(memberId),
+		mascotId: cleanMascotId(member.mascotId),
 		photoDataUrl: isProfilePhoto(member.photoDataUrl) ? member.photoDataUrl : null,
 		role: member.role === 'owner' ? 'owner' : 'member',
 		reducedMotion: member.reducedMotion === true,
@@ -97,13 +99,15 @@ export function publicProfile(member) {
 
 /** Lobby roster entry: only what friends see of each other. */
 export function rosterEntry(member) {
-	const { memberId, playerId, nickname, characterId, photoDataUrl } = publicProfile(member);
+	const { memberId, playerId, nickname, characterId, mascotId, photoDataUrl } =
+		publicProfile(member);
 	// Invited people show in the club too, marked as not joined until they first sign in.
 	return {
 		memberId,
 		playerId,
 		nickname,
 		characterId,
+		mascotId,
 		photoDataUrl,
 		joined: member.status === 'active'
 	};
@@ -213,7 +217,16 @@ export async function activeRoster(db) {
 		.collection(MEMBERS)
 		.find(
 			{ status: { $in: ['active', 'invited'] } },
-			{ projection: { playerId: 1, nickname: 1, characterId: 1, photoDataUrl: 1, status: 1 } }
+			{
+				projection: {
+					playerId: 1,
+					nickname: 1,
+					characterId: 1,
+					mascotId: 1,
+					photoDataUrl: 1,
+					status: 1
+				}
+			}
 		)
 		.limit(100)
 		.toArray();

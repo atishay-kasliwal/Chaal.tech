@@ -192,3 +192,29 @@ test('profile photos above the old body limit persist privately and can be remov
 	});
 	assert.equal(removed.body.member.photoDataUrl, null);
 });
+
+test('mascot links are owner-only and reach member profiles', async () => {
+	const owner = await createSession({ nickname: 'Owner' });
+	const friend = await createSession({ nickname: 'Friend' });
+	const friendRow = await members.findOne({ email: friend.email });
+	const action = { action: 'mascot', memberId: String(friendRow._id), mascotId: 'mradul' };
+	assert.equal(
+		(await post('/admin', { token: friend.clubToken, body: action })).response.status,
+		403
+	);
+	await members.updateOne({ email: owner.email }, { $set: { role: 'owner' } });
+	const saved = await post('/admin', { token: owner.clubToken, body: action });
+	assert.equal(saved.response.status, 200, JSON.stringify(saved.body));
+	assert.equal(saved.body.members.find((m) => m.memberId === action.memberId).mascotId, 'mradul');
+	assert.equal((await get('/me', friend.clubToken)).body.member.mascotId, 'mradul');
+	assert.equal(
+		(await post('/admin', { token: owner.clubToken, body: { ...action, mascotId: '../private' } }))
+			.response.status,
+		400
+	);
+	const changed = await post('/me', {
+		token: friend.clubToken,
+		body: { profile: { mascotId: 'adarsh' } }
+	});
+	assert.equal(changed.body.member.mascotId, 'mradul');
+});

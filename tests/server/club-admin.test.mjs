@@ -121,3 +121,18 @@ test('a lineup can hold Mystery slots and play each game for a few hands', async
 	await assert.rejects(saveLineup(db, ['classic-1'], 'owner', new Date(), 7), /1, 2 or 3 hands/);
 	await saveLineup(db, [], 'owner');
 });
+
+test('owners can link and clear a known mascot without changing membership', async () => {
+	const { setMemberMascot } = await import('../../server/club/admin.mjs');
+	await addMember(db, { email: 'mascot@example.com', nickname: 'Mascot friend' });
+	const id = await idOf('mascot@example.com');
+	await setMemberMascot(db, id, 'adityaraj');
+	assert.equal((await adminMembers(db)).find((m) => m.memberId === id).mascotId, 'adityaraj');
+	await assert.rejects(setMemberMascot(db, id, '../private'), /Unknown mascot/);
+	await assert.rejects(setMemberMascot(db, 'not-a-member', 'mradul'), /Unknown member/);
+	await setMemberMascot(db, id, null);
+	const member = await members.findOne({ email: 'mascot@example.com' });
+	assert.equal(member.mascotId, null);
+	assert.equal(member.status, 'invited');
+	assert.equal(member.role, 'member');
+});

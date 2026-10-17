@@ -4,6 +4,7 @@
 	import ClubGate from '#lib/club/ClubGate.svelte';
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
 	import LineupEditor from '#lib/club/LineupEditor.svelte';
+	import { MASCOT_NAMES } from '#lib/mascots/catalog.js';
 	import { club, DEFAULT_CLUB_SETTINGS, type ClubSettings } from '#lib/club/club.svelte.js';
 
 	/** Owner tools: the guest list, live tables, table defaults, the table look and beta emails. */
@@ -14,6 +15,7 @@
 		role: 'owner' | 'member';
 		status: 'invited' | 'active' | 'suspended';
 		characterId: string | null;
+		mascotId: string | null;
 		signedIn: boolean;
 		betaOptOut: boolean;
 		betaSteps: number[];
@@ -161,6 +163,12 @@
 		if (ready) void send();
 	});
 
+	async function linkMascot(member: AdminMember, select: HTMLSelectElement) {
+		const mascotId = select.value || null;
+		select.value = member.mascotId ?? '';
+		if (await send({ action: 'mascot', memberId: member.memberId, mascotId })) await club.refresh();
+	}
+
 	async function addFriend(event: Event) {
 		event.preventDefault();
 		const ok = await send({
@@ -269,6 +277,18 @@
 									>{online.includes(member.memberId) ? 'Online' : statusLabel(member)}</span
 								>
 								<div class="actions">
+									<label class="mascot-choice"
+										><span>Mascot</span><select
+											aria-label="Mascot for {properName(member.nickname) || member.email}"
+											value={member.mascotId ?? ''}
+											disabled={busy}
+											onchange={(event) => linkMascot(member, event.currentTarget)}
+											><option value="">None</option
+											>{#each Object.entries(MASCOT_NAMES) as [id, name] (id)}<option value={id}
+													>{name}</option
+												>{/each}</select
+										></label
+									>
 									{#if member.role === 'member'}
 										<button
 											disabled={busy}
@@ -887,5 +907,20 @@
 		width: 3.6rem;
 		border-radius: 0.3rem;
 		box-shadow: 0 3px 8px rgb(0 0 0 / 45%);
+	}
+	.mascot-choice {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.72rem;
+		color: #cbb98f;
+	}
+	.mascot-choice select {
+		max-width: 9rem;
+		padding: 0.3rem;
+		border: 1px solid #cbb98f44;
+		border-radius: 0.4rem;
+		background: #122219;
+		color: #f1ebdc;
 	}
 </style>
