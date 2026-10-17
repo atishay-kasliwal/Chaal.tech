@@ -40,6 +40,9 @@ export function humansPresent(room, connected) {
 	);
 }
 
+/** Off-turn work a bot must do: discard, or a table move (open a mat card, lock a line). */
+const needsMove = (legal) => !!legal.discard || !!legal.table?.length;
+
 /** Which bot (if any) needs to act now, without working out its move. Cheap to call. */
 export function botDue(room, connected) {
 	if (!playing(room) || (room.gameType && room.gameType !== 'teen-patti')) return null;
@@ -51,7 +54,7 @@ export function botDue(room, connected) {
 			!p.departed &&
 			!p.isPacked &&
 			p.cards.length &&
-			projection(room, p.id, connected).legalActions.discard
+			needsMove(projection(room, p.id, connected).legalActions)
 	);
 	return discarding?.id ?? null;
 }
@@ -66,7 +69,7 @@ export function nextBotMove(room, connected, random) {
 		(p) => p.bot && !p.departed && !p.isPacked && p.cards.length
 	)) {
 		const view = projection(room, bot.id, connected);
-		if (view.legalActions.discard) {
+		if (needsMove(view.legalActions)) {
 			const move = decide(view, bot.id, random);
 			if (move) return { botId: bot.id, ...move };
 		}

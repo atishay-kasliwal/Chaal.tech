@@ -1,0 +1,258 @@
+import type { ComponentProps } from 'svelte';
+import type TableMat from './TableMat.svelte';
+import type { MatCard, MatLine } from './TableMat.svelte';
+
+/**
+ * What the mat in the middle shows for games with cards on the table, worked out from the
+ * viewer's own projection. The server decides everything; this only lays it out.
+ */
+
+type Mat = ComponentProps<typeof TableMat>;
+const SUIT_SYMBOL: Record<string, string> = { spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣' };
+const RANK: Record<number, string> = { 14: 'A', 13: 'K', 12: 'Q', 11: 'J' };
+export const rankText = (rank: number) => RANK[rank] ?? String(rank);
+export const cardText = (card: Card) => `${rankText(card.rank)}${SUIT_SYMBOL[card.suit] ?? ''}`;
+const uniqueRanks = (ranks: number[]) =>
+	[...new Set(ranks)]
+		.sort((a, b) => a - b)
+		.map(rankText)
+		.join(' · ');
+
+/** Rows, columns and diagonals of the 3×3 mat (same order as the server). */
+export const CHATAI_LINES = [
+	[0, 1, 2],
+	[3, 4, 5],
+	[6, 7, 8],
+	[0, 3, 6],
+	[1, 4, 7],
+	[2, 5, 8],
+	[0, 4, 8],
+	[2, 4, 6]
+] as const;
+const lineEnds = (line: number): Pick<MatLine, 'from' | 'to'> => {
+	const cells = CHATAI_LINES[line];
+	const at = (cell: number): [number, number] => [Math.floor(cell / 3), cell % 3];
+	return { from: at(cells[0]), to: at(cells[2]) };
+};
+/** One colour per seat, for drawing each player's line at the Show. */
+const SEAT_COLOURS = ['#f4d68c', '#3fa7ff', '#55d38a', '#ff8b98', '#c49bff', '#ffb35c'];
+
+/** Kiss (next to each other), Miss (one apart) or Bliss (same rank), the Ace on both ends. */
+export function jokerPair(left: Card, right: Card): 'kiss' | 'miss' | 'bliss' | null {
+	if (left.rank === right.rank) return 'bliss';
+	const low = (rank: number) => (rank === 14 ? 1 : rank);
+	const distance = Math.min(
+		Math.abs(left.rank - right.rank),
+		Math.abs(low(left.rank) - low(right.rank))
+	);
+	return distance === 1 ? 'kiss' : distance === 2 ? 'miss' : null;
+}
+export const PAIR_LABEL = { kiss: '💋 Kiss', miss: '🙈 Miss', bliss: '✨ Bliss' } as const;
+
+export interface MatUi {
+	/** The line a Chatai player is trying before locking it. */
+	previewLine: number | null;
+	onopen: (index: number) => void;
+	onpreview: (line: number) => void;
+	onlock: (line: number) => void;
+}
+
+const nameOf = (room: RoomData, id: string | null | undefined) =>
+	room.usersList.find((user) => user.id === id)?.username ?? 'Someone';
+
+export function matFor(room: RoomData, selfId: string, ui: MatUi): Mat | null {
+	const state = room.variantState;
+	if (!state || !room.isStarted) return null;
+	switch (room.rulesVersion) {
+		case 'chatai-1':
+			return chatai(room, selfId, ui);
+		case 'running-1':
+			return running(room);
+		case 'rotating-joker-1':
+		case 'revolving-joker-1':
+			return jokers(room);
+		case 'kiss-miss-bliss-1':
+		case 'kissing-missing-1':
+			return pairJoker(room);
+		default:
+			return null;
+	}
+}
+
+function chatai(room: RoomData, selfId: string, ui: MatUi): Mat | null {
+	const state = room.variantState!;
+	const mat = state.mat ?? [];
+	const open = state.open ?? [];
+	const lines = state.lines ?? {};
+	const options = room.legalActions.table ?? [];
+	const canOpen = options.some((move) => move.kind === 'open');
+	const choosing = options.some((move) => move.kind === 'line');
+	const allOpen = open.length === 9 && open.every(Boolean);
+	const mine = lines[selfId];
+	const shown = allOpen ? (choosing ? ui.previewLine : (mine ?? null)) : null;
+	const highlight = new Set<number>(shown === null ? [] : CHATAI_LINES[shown]);
+	const cards: MatCard[] = mat.map((card, index) =>
+		open[index]
+			? {
+					card,
+					open: true,
+					// Still closing: every open card is a joker. All open: only your line.
+					wild: allOpen ? highlight.has(index) : true,
+					picked: allOpen && highlight.has(index) && choosing,
+					dim: allOpen && shown !== null && !highlight.has(index)
+				}
+			: { tappable: canOpen }
+	);
+	const drawn: MatLine[] = [];
+	if (choosing) {
+		for (let line = 0; line < 8; line++)
+			drawn.push({ ...lineEnds(line), color: '#ffffff', faint: true });
+		if (ui.previewLine !== null) drawn.push({ ...lineEnds(ui.previewLine), color: '#f4d68c' });
+	} else if (allOpen) {
+		// Every line this viewer may see: their own, and everyone's after the Show.
+		const seats = room.usersList.map((user) => user.id);
+		for (const [id, line] of Object.entries(lines))
+			drawn.push({
+				...lineEnds(line),
+				color: id === selfId ? '#f4d68c' : SEAT_COLOURS[(seats.indexOf(id) + 1) % 6]
+			});
+	}
+	const openRanks = mat.filter((_, i) => open[i]).map((card) => card.rank);
+	const openCount = open.filter(Boolean).length;
+	const pending = state.pendingOpen;
+	const prompt = canOpen
+		? '<b>Tap a card on the mat to open it</b>'
+		: pending && room.isStarted && !room.gameShow
+			? `${nameOf(room, pending)} is opening a card`
+			: choosing
+				? '<b>Pick your joker line.</b> Once locked, it can’t change.'
+				: '';
+	const lineCards = (line: number) =>
+		CHATAI_LINES[line].map((cell) => cardText(mat[cell])).join(' ');
+	return {
+		layout: 'grid',
+		cards,
+		lines: drawn,
+		prompt,
+		caption: allOpen ? '' : `${openCount} of 9 open`,
+		tray: allOpen
+			? mine !== undefined
+				? {
+						title: 'Your jokers',
+						ranks: uniqueRanks(CHATAI_LINES[mine].map((cell) => mat[cell].rank)),
+						note: '🔒 Line locked'
+					}
+				: {
+						title: 'Jokers',
+						note: 'Lock a row, column or diagonal: its three cards become your jokers'
+					}
+			: openRanks.length
+				? { title: 'Jokers', ranks: uniqueRanks(openRanks), note: 'any card of these ranks' }
+				: { title: 'Jokers', note: 'Every card opened on the mat becomes a joker' },
+		actions:
+			choosing && ui.previewLine !== null
+				? [
+						{
+							label: `🔒 Lock ${lineCards(ui.previewLine)} as my jokers`,
+							primary: true,
+							onclick: () => ui.onlock(ui.previewLine!)
+						}
+					]
+				: [],
+		onCardClick: canOpen ? ui.onopen : undefined,
+		onLineClick: choosing ? ui.onpreview : undefined
+	};
+}
+
+function running(room: RoomData): Mat {
+	const state = room.variantState!;
+	const table = state.table ?? [];
+	const opened = state.opened ?? 0;
+	const thresholds = state.thresholds ?? [200, 400, 600];
+	const killer = state.killer ?? null;
+	const ranks: number[] = [];
+	const below = (rank: number) => (rank === 2 ? 14 : rank - 1);
+	const above = (rank: number) => (rank === 14 ? 2 : rank + 1);
+	if (opened >= 1 && table[0]?.rank) ranks.push(below(table[0].rank), above(table[0].rank));
+	if (opened >= 2 && table[1]?.rank)
+		ranks.push(table[1].rank, below(table[1].rank), above(table[1].rank));
+	const cards: MatCard[] = table.map((card, index) => {
+		const isOpen = index < opened;
+		const last = index === 2;
+		return {
+			card,
+			open: isOpen,
+			wild: isOpen && index === 1,
+			killer: isOpen && last,
+			tag: isOpen
+				? last
+					? `☠ ${SUIT_SYMBOL[killer ?? ''] ?? ''} is out`
+					: `✓ ₹${thresholds[index]}`
+				: `${last ? '☠ ' : ''}₹${thresholds[index]}`,
+			tagTone: isOpen ? (last ? 'danger' : 'done') : last ? 'danger' : ''
+		};
+	});
+	const next = thresholds[opened];
+	const prev = opened ? thresholds[opened - 1] : 0;
+	const out = (state.out ?? []).map((id) => nameOf(room, id));
+	const symbol = SUIT_SYMBOL[killer ?? ''] ?? '';
+	return {
+		layout: 'row',
+		cards,
+		prompt: killer
+			? `<b>${symbol} is out.</b>${out.length ? ` ${out.join(', ')} packed` : ' Nobody seen holds it'}`
+			: '',
+		promptTone: killer ? 'danger' : '',
+		progress:
+			next !== undefined
+				? {
+						label: `₹${room.pot} of ₹${next} · next card soon`,
+						value: Math.max(0, Math.min(1, (room.pot - prev) / (next - prev)))
+					}
+				: undefined,
+		tray: ranks.length
+			? {
+					title: 'Jokers',
+					ranks: uniqueRanks(ranks),
+					danger: killer ? `☠ any ${symbol} is out` : undefined
+				}
+			: { title: 'Jokers', note: 'The first card opens at ₹200 of pot' }
+	};
+}
+
+function jokers(room: RoomData): Mat {
+	const state = room.variantState!;
+	const now = Array.isArray(state.jokers) ? state.jokers : [];
+	const before = state.before ?? [];
+	return {
+		layout: 'none',
+		prompt: before.length
+			? `New jokers: <b>${now.map(cardText).join(' ')}</b>`
+			: room.rulesVersion === 'rotating-joker-1'
+				? 'A player who packs turns their cards into the jokers'
+				: 'Every pack deals three fresh jokers',
+		tray: {
+			title: before.length ? 'Jokers now' : 'Jokers',
+			cards: now,
+			before: before.length ? before : undefined
+		}
+	};
+}
+
+function pairJoker(room: RoomData): Mat | null {
+	const moves = (room.legalActions.table ?? []).filter((move) => move.kind === 'joker');
+	if (!moves.length) return null;
+	const bliss = room.rulesVersion === 'kiss-miss-bliss-1';
+	return {
+		layout: 'none',
+		prompt: 'Tap two of your cards to make your joker',
+		tray: {
+			title: 'Make your joker',
+			rules: [
+				{ icon: '💋', name: 'Kiss', text: 'Next to each other, like 2-3' },
+				{ icon: '🙈', name: 'Miss', text: 'One gap between, like 8-10' },
+				...(bliss ? [{ icon: '✨', name: 'Bliss', text: 'Same rank, like K-K' }] : [])
+			]
+		}
+	};
+}

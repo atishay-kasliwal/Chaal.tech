@@ -34,7 +34,13 @@ test('AK47 is registered without changing the Classic default or other variants'
 			'joker-4-1',
 			'lowest-joker-4-1',
 			'highest-joker-4-1',
-			'color-joker-4-1'
+			'color-joker-4-1',
+			'chatai-1',
+			'running-1',
+			'rotating-joker-1',
+			'revolving-joker-1',
+			'kiss-miss-bliss-1',
+			'kissing-missing-1'
 		]
 	);
 	assert.equal(getVariant('classic-1').id, 'classic');

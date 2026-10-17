@@ -407,6 +407,13 @@ export function createGameServer({
 					action = 'openPick';
 					payload = {};
 					text = null;
+				} else if (event === 'tableAction') {
+					// A move on the table cards: open a mat card, lock a line, make a joker.
+					if (!args[0] || typeof args[0] !== 'object' || Array.isArray(args[0]))
+						throw new GameError('Invalid table move');
+					action = 'table';
+					payload = args[0];
+					text = null;
 				} else if (event === 'chooseNext') {
 					action = 'chooseNext';
 					payload = { choice: args[0] };
@@ -589,6 +596,7 @@ export function createGameServer({
 			'showCards',
 			'chooseNext',
 			'openPick',
+'tableAction',
 			'requestChips',
 			'cancelChipRequest',
 			'answerChipRequest',

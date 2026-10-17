@@ -117,5 +117,60 @@ export const HOW_TO_PLAY: Record<string, HowToPlay> = {
 	'color-joker-4-1': {
 		win: 'Best hand wins, 4 cards, one colour is wild.',
 		points: [FOUR, 'A face-up card picks red or black; that colour is wild.', BLIND4]
+	},
+	'chatai-1': {
+		win: 'Best hand wins. The mat in the middle gives you jokers.',
+		points: [
+			'Nine cards lie face down on the mat.',
+			'After you pay your chaal, tap a mat card to open it. Blind players open cards too.',
+			'Every open card is a joker: any card of that rank counts as anything.',
+			'When all nine are open, pick one row, column or diagonal and lock it. Only those three are your jokers.',
+			'Lock your line before you ask for a Show. Once locked, it can’t change.'
+		]
+	},
+	'running-1': {
+		win: 'Best hand wins, but watch the third card.',
+		points: [
+			'Three cards lie face down on the table.',
+			'At ₹200 of pot the first opens: the ranks just above and below it are jokers (a 7 makes 6s and 8s wild).',
+			'At ₹400 the second opens: its rank and the ranks above and below are jokers too. Aces wrap.',
+			'At ₹600 the third opens: anyone who has seen their cards and holds its suit is out.',
+			'Blind players may still Show, but can’t win holding that suit.',
+			'Equal hands: the higher card wins, then the suit: ♠, ♥, ♣, ♦.'
+		]
+	},
+	'rotating-joker-1': {
+		win: 'Best hand wins, with three jokers on the table.',
+		points: [
+			'Three cards lie open on the table. Their ranks are jokers for everyone.',
+			'When someone packs, their three cards become the new jokers.',
+			'At the Show, the jokers on the table at that moment count.'
+		]
+	},
+	'revolving-joker-1': {
+		win: 'Best hand wins, with three jokers on the table.',
+		points: [
+			'Three cards lie open on the table. Their ranks are jokers for everyone.',
+			'Every time someone packs, three fresh jokers replace them.'
+		]
+	},
+	'kiss-miss-bliss-1': {
+		win: 'Best hand wins. Make your own joker from two cards.',
+		points: [
+			'You get 5 cards. After you look, tap two that make a pair type:',
+			'Kiss: next to each other (2-3). Miss: one gap (8-10). Bliss: the same rank (K-K).',
+			'Those two become one joker. Then throw cards away until you keep three.',
+			'No pair? Throw two cards away and play the natural three.',
+			'Stay blind and your first three cards play, with no joker.'
+		]
+	},
+	'kissing-missing-1': {
+		win: 'Best hand wins. Make your own joker from two cards.',
+		points: [
+			'You get 4 cards. After you look, tap two that make a Kiss (2-3) or a Miss (8-10).',
+			'Those two become one joker, leaving you three cards.',
+			'No pair? Throw one card away and play the natural three.',
+			'Stay blind and your first three cards play, with no joker.'
+		]
 	}
 };

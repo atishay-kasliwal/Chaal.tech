@@ -5,6 +5,7 @@
 	import TpCard from './TpCard.svelte';
 	import ChipAsk from './ChipAsk.svelte';
 	import { money, signedMoney } from './format.js';
+	import { jokerPair, PAIR_LABEL, cardText } from './table-cards.js';
 
 	let {
 		me,
@@ -23,6 +24,7 @@
 		mediaParticipant,
 		onsee,
 		ondiscard,
+		onjoker,
 		onpack,
 		onbet,
 		onshow,
@@ -49,6 +51,8 @@
 		mediaParticipant?: MediaParticipant;
 		onsee: () => void;
 		ondiscard: (index: number) => void;
+		/** Kiss-Miss-Bliss: turn two of your cards into one joker. */
+		onjoker?: (indexes: [number, number]) => void;
 		onpack: () => void;
 		onbet: (amount: number) => void;
 		onshow: () => void;
@@ -81,6 +85,29 @@
 	$effect(() => {
 		if (!discarding) chosen = null;
 	});
+	/** Kiss-Miss-Bliss: pairs the server allows as a joker, and the two cards picked so far. */
+	const jokerMoves = $derived((legal.table ?? []).filter((move) => move.kind === 'joker'));
+	let skipJoker = $state(false);
+	let pair = $state<number[]>([]);
+	$effect(() => {
+		void dealKey;
+		skipJoker = false;
+		pair = [];
+	});
+	const pairing = $derived(revealed && jokerMoves.length > 0 && !skipJoker && !!onjoker);
+	const pairOk = $derived(
+		pair.length === 2 &&
+			jokerMoves.some(
+				(move) =>
+					move.kind === 'joker' && move.indexes.join() === [...pair].sort((a, b) => a - b).join()
+			)
+	);
+	const pairKind = $derived(
+		pair.length === 2 ? jokerPair(me.cardsInHand[pair[0]], me.cardsInHand[pair[1]]) : null
+	);
+	const togglePair = (index: number) => {
+		pair = pair.includes(index) ? pair.filter((i) => i !== index) : [...pair, index].slice(-2);
+	};
 </script>
 
 <section
@@ -128,7 +155,17 @@
 			<div class="my-cards" class:blind={!revealed && playing}>
 				{#key dealKey}
 					{#each me.cardsInHand as card, index (index)}
-						{#if discarding}
+						{#if pairing}
+							<button
+								class="pick"
+								class:chosen={pair.includes(index)}
+								onclick={() => togglePair(index)}
+								aria-label="Pick card {index + 1} for your joker"
+								aria-pressed={pair.includes(index)}
+							>
+								<TpCard {card} faceUp />
+							</button>
+						{:else if discarding}
 							<button
 								class="pick"
 								class:chosen={chosen === index}
@@ -171,7 +208,23 @@
 				{/if}
 			</div>
 			<p class="hand-name">
-				{#if discarding}
+				{#if pairing}
+					{#if pair.length < 2}
+						Tap two cards to make your joker
+						<button class="after-btn" onclick={() => (skipJoker = true)}>No joker</button>
+					{:else if pairOk && pairKind}
+						<button
+							class="throw make"
+							onclick={() => onjoker?.([...pair].sort((a, b) => a - b) as [number, number])}
+							>{PAIR_LABEL[pairKind]}
+							{cardText(me.cardsInHand[pair[0]])}-{cardText(me.cardsInHand[pair[1]])}: make joker</button
+						>
+					{:else}
+						Not a {room.rulesVersion === 'kiss-miss-bliss-1'
+							? 'Kiss, Miss or Bliss'
+							: 'Kiss or Miss'}
+					{/if}
+				{:else if discarding}
 					{#if chosen === null}
 						{folding
 							? 'Tap the card to fold: its rank becomes your joker'
@@ -491,6 +544,11 @@
 		font-size: 0.9rem;
 		font-weight: 750;
 		cursor: pointer;
+	}
+	/* Kiss-Miss-Bliss: turning two cards into a joker is a gain, so it reads gold, not red. */
+	.throw.make {
+		background: linear-gradient(180deg, #f7dc95, #d9ac4c);
+		color: #2d1f05;
 	}
 	/* After packing or after the hand: look at your cards, or show them to everyone. */
 	.after-hand {

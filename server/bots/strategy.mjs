@@ -15,12 +15,11 @@ const SAMPLES = 96;
  * again and again across samples and decisions, and joker hands are costly to score.
  */
 const scoreCache = new Map();
+const stateKey = (handState) =>
+	handState?.wildRank ?? handState?.wildColor ?? (handState ? JSON.stringify(handState) : '');
 const CACHE_LIMIT = 60_000;
 function score(variant, cards, handState) {
-	const id = `${variant.rulesVersion}|${handState?.wildRank ?? handState?.wildColor ?? ''}|${cards
-		.map(key)
-		.sort()
-		.join(',')}`;
+	const id = `${variant.rulesVersion}|${stateKey(handState)}|${cards.map(key).sort().join(',')}`;
 	let value = scoreCache.get(id);
 	if (!value) {
 		value = variant.evaluateHand(cards, handState);
@@ -59,9 +58,11 @@ export function winChance(cards, variant, handState, random, known = []) {
 
 /** For discard variants: which card to throw away so the remaining three score best. */
 export function bestDiscard(cards, variant, handState) {
-	let best = 0;
+	let best = cards.findIndex((card) => !variant.keepsCard?.(handState, card));
 	let bestScore;
 	for (let index = 0; index < cards.length; index++) {
+		// Never throw away the joker you made.
+		if (variant.keepsCard?.(handState, cards[index])) continue;
 		const kept = cards.filter((_, i) => i !== index);
 		// Folding Joker scores the kept three with the thrown card last, as the joker.
 		const score = variant.evaluateHand(
@@ -74,6 +75,48 @@ export function bestDiscard(cards, variant, handState) {
 		}
 	}
 	return best;
+}
+
+/** Pick a table move: a random mat card, the line or joker pair that scores best. */
+function tableMove(view, me, variant, random) {
+	const options = view.legalActions.table;
+	const seen = me.cardsInHand.every((card) => card.rank > 0);
+	const scored = (payload) => {
+		if (!seen) return null;
+		if (payload.kind === 'line') {
+			const state = {
+				...view.variantState,
+				lines: { ...view.variantState.lines, [me.id]: payload.line }
+			};
+			return variant.evaluateHand(me.cardsInHand, variant.stateFor(state, me.id));
+		}
+		if (payload.kind === 'joker') {
+			const [i, j] = payload.indexes;
+			const joker = me.cardsInHand[i];
+			const rest = me.cardsInHand.filter((_, index) => index !== i && index !== j);
+			// Best three that keep the joker.
+			let best = null;
+			for (let a = 0; a < rest.length; a++)
+				for (let b = a + 1; b < rest.length; b++) {
+					const score = variant.evaluateHand([joker, rest[a], rest[b]], {
+						jokerKey: `${joker.rank}:${joker.suit}`
+					});
+					if (!best || compare(score, best) > 0) best = score;
+				}
+			return best;
+		}
+		return null;
+	};
+	let choice = options[Math.floor(random() * options.length)];
+	let top = null;
+	for (const payload of options) {
+		const score = scored(payload);
+		if (score && (!top || compare(score, top) > 0)) {
+			top = score;
+			choice = payload;
+		}
+	}
+	return choice;
 }
 
 function compare(left, right) {
@@ -125,7 +168,10 @@ export function decide(view, botId, random) {
 	const level = me?.bot ?? 'normal';
 	const profile = PROFILES[level] ?? PROFILES.normal;
 	const variant = getVariant(view.rulesVersion);
-	const handState = view.variantState;
+	// Some games give each player their own jokers (a Chatai line, a Kiss-Miss-Bliss pair).
+	const handState = variant.stateFor
+		? variant.stateFor(view.variantState, botId)
+		: view.variantState;
 	const opponents = view.usersList.filter(
 		(user) => user.id !== botId && user.cardsInHand.length && !user.isPacked
 	);
@@ -135,6 +181,9 @@ export function decide(view, botId, random) {
 	const high = { action: 'bet', payload: { amount: legal.maxBet } };
 	const canRaise = legal.bet && legal.maxBet > legal.minBet;
 
+	// Table moves first: open the mat card it paid for, lock its best line, make a joker.
+	if (legal.table?.length)
+		return { action: 'table', payload: tableMove(view, me, variant, random) };
 	// Discard variants: throw the card that leaves the strongest three.
 	if (legal.discard)
 		return {

@@ -13,6 +13,7 @@ import { lallanKallan } from './lallan-kallan.mjs';
 import { potBlind } from './pot-blind.mjs';
 import { discardOne } from './discard-one.mjs';
 import { FOUR_CARD_VARIANTS } from './four-discard.mjs';
+import { TABLE_GAMES } from './table-games.mjs';
 
 /**
  * Current variant boundary:
@@ -24,6 +25,7 @@ import { FOUR_CARD_VARIANTS } from './four-discard.mjs';
  * optional wildIndexes(cards, publicHandState?) -> indexes of this hand's wild cards;
  * optional allowSee: false keeps every player blind until the Show;
  * optional discardTo: after looking, players throw cards away down to this many;
+ * optional table hooks for cards on the table and per-player jokers (see table-games.mjs);
  * getRules() -> immutable hand-ranking description.
  *
  * Variants receive cards only. Rooms, money, dealing, turn/tie policy, networking,
@@ -44,7 +46,8 @@ const variants = Object.freeze([
 	lallanKallan,
 	potBlind,
 	discardOne,
-	...FOUR_CARD_VARIANTS
+	...FOUR_CARD_VARIANTS,
+	...TABLE_GAMES
 ]);
 const registry = new Map(variants.map((variant) => [variant.rulesVersion, variant]));
 export const DEFAULT_RULES_VERSION = classic.rulesVersion;

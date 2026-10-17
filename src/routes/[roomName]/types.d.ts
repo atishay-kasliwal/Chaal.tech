@@ -38,6 +38,30 @@ interface User {
 	wager?: number;
 	blackjackOutcome?: string | null;
 }
+/** Cards on the table, as each viewer may see them (closed cards are rank 0). */
+interface TableCards {
+	/** Chatai: the 3×3 mat, which cards are open, who must open one, locked lines. */
+	mat?: Card[];
+	open?: boolean[];
+	pendingOpen?: string | null;
+	lines?: Record<string, number>;
+	locked?: string[];
+	/** Running: the three table cards and how many are open; the killer suit; who it knocked out. */
+	table?: Card[];
+	opened?: number;
+	thresholds?: number[];
+	killer?: string | null;
+	out?: string[];
+	/** Rotating and Revolving Joker: the jokers now, and the ones they replaced. Kiss-Miss-Bliss: joker per player. */
+	jokers?: Card[] | Record<string, string>;
+	before?: Card[];
+	made?: string[];
+}
+/** A move on the table cards. */
+type TableMove =
+	| { kind: 'open'; index: number }
+	| { kind: 'line'; line: number }
+	| { kind: 'joker'; indexes: [number, number] };
 interface ChipRequest {
 	from: string;
 	to: string;
@@ -61,7 +85,9 @@ interface RoomData {
 	handId: string | null;
 	rulesVersion: string;
 	gameType?: 'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy';
-	variantState?: { wildRank: number; indicator: Card } & { wildColor?: 'red' | 'black' };
+	variantState?: { wildRank: number; indicator: Card } & {
+		wildColor?: 'red' | 'black';
+	} & TableCards;
 	stage?: string;
 	board?: Card[];
 	dealerCards?: Card[];
@@ -130,5 +156,7 @@ interface RoomData {
 		discard?: boolean;
 		declare?: boolean;
 		addBot?: boolean;
+		/** Moves on the table cards this player may make now. */
+		table?: TableMove[];
 	};
 }

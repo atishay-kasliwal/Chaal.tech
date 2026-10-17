@@ -2,6 +2,7 @@ import { freshDeck } from './classic.mjs';
 import { DEFAULT_RULES_VERSION, getVariant } from './variants/index.mjs';
 import { getGameEngine } from './games/index.mjs';
 import { describeHand, wildIndexes } from './variants/describe.mjs';
+import { compareVectors } from './variants/hand-utils.mjs';
 
 export class GameError extends Error {
 	constructor(message, code = 'INVALID_ACTION') {
@@ -31,6 +32,26 @@ const mustDiscard = (variant, player) =>
 	!player.folded &&
 	player.cards.length > variant.discardTo;
 export const playing = (room) => room.isStarted && !room.gameShow;
+/** The hand state one player's cards are scored with: their own jokers in some games. */
+const handStateOf = (variant, room, playerId) =>
+	variant.stateFor ? variant.stateFor(room.variantState, playerId) : room.variantState;
+/** Compare two players' hands, each with their own jokers where the game gives them. */
+function compareFor(variant, room, left, right) {
+	if (!variant.stateFor) return variant.compareHands(left.cards, right.cards, room.variantState);
+	return compareVectors(
+		variant.evaluateHand(left.cards, handStateOf(variant, room, left.id)),
+		variant.evaluateHand(right.cards, handStateOf(variant, room, right.id))
+	);
+}
+/** A variant hook that rejects a move throws a plain Error: report it like any illegal move. */
+function variantMove(fn) {
+	try {
+		return fn();
+	} catch (error) {
+		if (error instanceof GameError) throw error;
+		throw new GameError(error.message);
+	}
+}
 /** Bots are seated by the server and never disconnect. */
 const present = (p, connected) => !!p.bot || connected.has(p.id);
 export const BOT_LEVELS = Object.freeze(['easy', 'normal', 'hard']);
@@ -205,17 +226,17 @@ function settle(room, winner, reason, revealed = []) {
  * Pot limit reached: everyone still in shows. The best hand takes the pot; exact ties
  * split it evenly, any odd rupee going to the first tied player clockwise.
  */
-function forcedShow(room, variant) {
+function forcedShow(room, variant, reason = 'pot-limit') {
 	const contenders = active(room);
 	let best = [contenders[0]];
 	for (const player of contenders.slice(1)) {
-		const comparison = variant.compareHands(player.cards, best[0].cards, room.variantState);
+		const comparison = compareFor(variant, room, player, best[0]);
 		if (comparison > 0) best = [player];
 		else if (comparison === 0) best.push(player);
 	}
 	const revealed = contenders.map((p) => p.id);
 	if (best.length === 1) {
-		settle(room, best[0], 'pot-limit', revealed);
+		settle(room, best[0], reason, revealed);
 		return;
 	}
 	require(!room.result, 'Hand already settled');
@@ -237,11 +258,36 @@ function forcedShow(room, variant) {
 		winnerId: winners[0].id,
 		winnerName: winners.map((w) => w.name).join(' & '),
 		amount: pot,
-		reason: 'pot-limit-split',
+		reason: `${reason}-split`,
 		revealedPlayerIds: revealed,
 		winners,
 		handId: room.handId
 	};
+}
+/**
+ * Games that knock players out (Running's killer suit): seen players who are out are packed and
+ * their cards shown. If that would leave nobody, everyone still in shows instead.
+ */
+function knockOut(room, variant, ctx) {
+	if (!variant.knockedOut || !playing(room)) return;
+	const live = active(room);
+	const out = live.filter((p) => variant.knockedOut(room.variantState, p));
+	if (!out.length) return;
+	if (out.length === live.length) {
+		forcedShow(room, variant, 'knockout');
+		return;
+	}
+	for (const p of out) {
+		p.isPacked = true;
+		room.variantState.out = [...new Set([...(room.variantState.out ?? []), p.id])];
+		room.shownIds = [...new Set([...(room.shownIds ?? []), p.id])];
+	}
+	const left = active(room);
+	if (left.length === 1) settle(room, left[0], 'last-player');
+	else if (out.some((p) => p.id === room.currentPlayerId)) {
+		const seat = room.players.find((p) => p.id === room.currentPlayerId).seatNumber;
+		nextTurn(room, seat, ctx);
+	}
 }
 function afterPack(room, seat, ctx) {
 	const candidates = active(room);
@@ -525,6 +571,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				room.chipRequests = room.chipRequests.filter((r) => r.from !== id && r.to !== id);
 			if (playing(room) && !player.isPacked) {
 				player.isPacked = true;
+				variant.onPack?.(room.variantState, { cards: player.cards, deck: room.deck });
 				if (active(room).length === 1) settle(room, active(room)[0], 'last-player');
 				else if (wasTurn) nextTurn(room, player.seatNumber, ctx);
 			}
@@ -549,11 +596,19 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					false, `${variant.name} keeps every hand blind until the Show`);
 				require(player.isBlind, 'Cards already seen');
 				player.isBlind = false;
+				knockOut(room, variant, ctx);
+			} else if (action === 'table') {
+				require(variant.tableAction, `${variant.name} has no table moves`);
+				variantMove(() => variant.tableAction(room.variantState, player, payload));
 			} else if (action === 'discard') {
 				require(mustDiscard(variant, player), 'There is nothing to discard');
 				require(Number.isInteger(payload.index) &&
 					payload.index >= 0 &&
 					payload.index < player.cards.length, 'Choose one of your cards to discard');
+				require(!variant.keepsCard?.(
+					handStateOf(variant, room, id),
+					player.cards[payload.index]
+				), 'Keep your joker');
 				const [thrown] = player.cards.splice(payload.index, 1);
 				// Folding Joker keeps the folded card, last, face down: it is the player's joker.
 				if (variant.foldsToEnd) {
@@ -563,9 +618,12 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			} else {
 				require(room.currentPlayerId === id, 'It is not your turn', 'OUT_OF_TURN');
 				require(ctx.now < room.deadline || action === 'timeout', 'Turn has expired', 'STALE_TURN');
+				// A card the last player paid to open, but didn't, opens now.
+				variant.beforeTurn?.(room.variantState);
 				if (action === 'pack' || action === 'timeout') {
 					if (action === 'timeout') require(ctx.now >= room.deadline, 'Turn has not expired');
 					player.isPacked = true;
+					variant.onPack?.(room.variantState, { cards: player.cards, deck: room.deck });
 					afterPack(room, player.seatNumber, ctx);
 				} else if (action === 'bet') {
 					require(!mustDiscard(variant, player), 'Discard a card before you bet');
@@ -578,10 +636,17 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					if (player.handBet !== undefined) player.handBet += payload.amount;
 					room.pot += payload.amount;
 					room.maxStake = player.isBlind ? payload.amount * 2 : payload.amount;
+					variant.afterPot?.(room.variantState, room.pot);
 					if (room.potLimit && room.pot >= room.potLimit * bootOf(room)) forcedShow(room, variant);
-					else nextTurn(room, player.seatNumber, ctx);
+					else {
+						variant.afterBet?.(room.variantState, id);
+						nextTurn(room, player.seatNumber, ctx);
+						knockOut(room, variant, ctx);
+					}
 				} else if (action === 'show') {
 					require(!mustDiscard(variant, player), 'Discard a card before you Show');
+					const blocked = variant.showBlocked?.(room.variantState, id);
+					require(!blocked, blocked);
 					const candidates = active(room);
 					require(candidates.length === 2, 'Show requires exactly two active players');
 					const other = candidates.find((p) => p.id !== id);
@@ -592,11 +657,13 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					player.balance -= fee;
 					if (player.handBet !== undefined) player.handBet += fee;
 					room.pot += fee;
-					const comparison = variant.compareHands(player.cards, other.cards, room.variantState);
+					variant.afterPot?.(room.variantState, room.pot);
+					const override = variant.showOverride?.(room.variantState, player, other);
+					const comparison = override ? 0 : compareFor(variant, room, player, other);
 					settle(
 						room,
-						comparison > 0 ? player : other,
-						comparison === 0 ? 'show-tie-requester-loses' : 'show',
+						override ?? (comparison > 0 ? player : other),
+						override ? 'show' : comparison === 0 ? 'show-tie-requester-loses' : 'show',
 						[player.id, other.id]
 					);
 				} else throw new GameError('Unknown action');
@@ -676,7 +743,11 @@ export function projection(room, id, connected) {
 			: {}),
 		...(room.variantState === undefined
 			? {}
-			: { variantState: structuredClone(room.variantState) }),
+			: {
+					variantState: variant.publicState
+						? variant.publicState(room.variantState, id, reveal)
+						: structuredClone(room.variantState)
+				}),
 		deadline: room.deadline,
 		result: room.result
 			? {
@@ -724,8 +795,8 @@ export function projection(room, id, connected) {
 					? // Folding Joker before the fold: no hand yet, the folded card decides the joker.
 						{ handName: 'Fold one card: it becomes your joker', wildCards: [] }
 					: {
-							handName: describeHand(variant, p.cards, room.variantState),
-							wildCards: wildIndexes(variant, p.cards, room.variantState)
+							handName: describeHand(variant, p.cards, handStateOf(variant, room, p.id)),
+							wildCards: wildIndexes(variant, p.cards, handStateOf(variant, room, p.id))
 						}
 				: {})
 		})),
@@ -743,6 +814,10 @@ export function projection(room, id, connected) {
 			...(explain
 				? {
 						discard: playing(room) && !player.isPacked && mustDiscard(variant, player),
+						// Moves on the table cards: open a mat card, lock a line, make a joker.
+						...(variant.tableOptions && playing(room) && room.variantState
+							? { table: variant.tableOptions(room.variantState, player) }
+							: {}),
 						addBot: id === room.hostId && !playing(room) && seated(room).length < 6
 					}
 				: {}),
@@ -755,7 +830,8 @@ export function projection(room, id, connected) {
 				!mustDiscard(variant, player) &&
 				active(room).length === 2 &&
 				(player.isBlind || active(room).every((p) => !p.isBlind)) &&
-				player.balance >= limits(room, player).min
+				player.balance >= limits(room, player).min &&
+				!variant.showBlocked?.(room.variantState, id)
 		}
 	};
 }

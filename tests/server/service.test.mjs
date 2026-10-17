@@ -180,7 +180,7 @@ test('Random Teen Patti mode chooses a registered variant on the server and deri
 	const started = await host.send('start', ['test-room', 0, 3, 'classic-1', 'random']);
 	assert.equal(started.ok, true);
 	const room = app.store.room('test-room');
-	assert.equal(room.rulesVersion, 'color-joker-4-1'); // Last registered variant; deals four.
+	assert.equal(room.rulesVersion, 'kissing-missing-1'); // Last registered variant; deals four.
 	assert.ok(room.players.every((player) => player.cards.length === 4));
 });
 

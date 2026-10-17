@@ -46,7 +46,13 @@ test('Classic remains the default and every Teen Patti variant has its own regis
 			'joker-4-1',
 			'lowest-joker-4-1',
 			'highest-joker-4-1',
-			'color-joker-4-1'
+			'color-joker-4-1',
+			'chatai-1',
+			'running-1',
+			'rotating-joker-1',
+			'revolving-joker-1',
+			'kiss-miss-bliss-1',
+			'kissing-missing-1'
 		]
 	);
 	const variant = getVariant('classic-1');

@@ -141,6 +141,53 @@ export const VARIANT_CATALOG = [
 		tableLabel: 'Color Joker 4 · throw one, a colour is wild',
 		description: 'Get four, throw one. An open card picks red or black; that colour is wild.',
 		cardsPerPlayer: 4
+	},
+	{
+		rulesVersion: 'chatai-1',
+		selectionLabel: 'Chatai 3×3: open the mat, pick a line',
+		tableLabel: 'Chatai 3×3 · open cards are jokers, then lock a line',
+		description:
+			'Nine cards face down on the mat. Pay, open one: open cards are jokers. All nine open? Lock one line as your jokers.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'running-1',
+		selectionLabel: 'Running: table cards open with the pot',
+		tableLabel: 'Running · cards open at ₹200, ₹400, ₹600',
+		description:
+			'Three table cards open as the pot grows. The first two set jokers; the third card’s suit knocks players out.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'rotating-joker-1',
+		selectionLabel: 'Rotating Joker: packed cards become jokers',
+		tableLabel: 'Rotating Joker · a pack hands its cards to the table',
+		description:
+			'Three jokers open on the table. When someone packs, their cards are the new jokers.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'revolving-joker-1',
+		selectionLabel: 'Revolving Joker: fresh jokers on every pack',
+		tableLabel: 'Revolving Joker · each pack deals new jokers',
+		description: 'Three jokers open on the table. Every pack deals three fresh jokers.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'kiss-miss-bliss-1',
+		selectionLabel: 'Kiss-Miss-Bliss: make a joker from five',
+		tableLabel: 'Kiss-Miss-Bliss · two cards become one joker',
+		description:
+			'Get five. Two cards next to each other, one apart or the same become one joker. Keep three.',
+		cardsPerPlayer: 5
+	},
+	{
+		rulesVersion: 'kissing-missing-1',
+		selectionLabel: 'Kissing-Missing: make a joker from four',
+		tableLabel: 'Kissing-Missing · Kiss or Miss makes a joker',
+		description:
+			'Get four. Two cards next to each other or one apart become one joker. Keep three.',
+		cardsPerPlayer: 4
 	}
 ] as const;
 

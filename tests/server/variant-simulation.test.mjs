@@ -33,7 +33,8 @@ const ids = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5'];
 let forcedShows = 0;
 
 function assertNoLeaks(room, connected) {
-	const reveal = new Set(room.result?.revealedPlayerIds ?? []);
+	// Hands compared at a Show, and hands shown on purpose (or knocked out in Running).
+	const reveal = new Set([...(room.result?.revealedPlayerIds ?? []), ...(room.shownIds ?? [])]);
 	for (const viewer of room.players.filter((p) => p.seatNumber !== null && !p.departed)) {
 		const view = projection(room, viewer.id, connected);
 		for (const user of view.usersList) {
@@ -63,9 +64,15 @@ function chooseAction(room, connected, random) {
 	const legal = view.legalActions;
 	const me = view.usersList.find((user) => user.id === actorId);
 	const options = [];
+	// Table moves (open a mat card, lock a line, make a joker) come up often; take most of them.
+	if (legal.table?.length && random() < 0.7) return [actorId, 'table', pick(random, legal.table)];
 	if (legal.see) options.push(['see', {}], ['see', {}]);
-	if (legal.discard)
-		return [actorId, 'discard', { index: Math.floor(random() * me.cardsInHand.length) }];
+	if (legal.discard) {
+		// Any card but a joker the player made.
+		const keep = new Set(room.variantState?.jokers ? (me.wildCards ?? []) : []);
+		const throwable = me.cardsInHand.flatMap((_, i) => (keep.has(i) ? [] : [i]));
+		return [actorId, 'discard', { index: pick(random, throwable) }];
+	}
 	if (legal.bet) {
 		options.push(
 			['bet', { amount: legal.minBet }],
@@ -117,14 +124,20 @@ function playSession(rulesVersion, playerCount, seed) {
 		let steps = 0;
 		while (playing(room)) {
 			assert.ok(++steps < 600, `${rulesVersion}: hand did not finish`);
-			// Players who are not on turn may look at their cards at any time.
-			for (const p of room.players)
-				if (
-					p.id !== room.currentPlayerId &&
-					random() < 0.08 &&
-					projection(room, p.id, connected).legalActions.see
-				)
+			// Players who are not on turn may look at their cards, or make a table move, at any time.
+			for (const p of room.players) {
+				if (p.id === room.currentPlayerId || !playing(room)) continue;
+				const legal = projection(room, p.id, connected).legalActions;
+				if (random() < 0.08 && legal.see)
 					room = transition(room, p.id, 'see', {}, { now, turnMs: 60000, connected });
+				else if (legal.table?.length && random() < 0.5)
+					room = transition(room, p.id, 'table', pick(random, legal.table), {
+						now,
+						turnMs: 60000,
+						connected
+					});
+			}
+			if (!playing(room)) break;
 			const [actor, action, payload] = chooseAction(room, connected, random);
 			if (action === 'timeout') now = room.deadline;
 			const before = JSON.stringify(room);

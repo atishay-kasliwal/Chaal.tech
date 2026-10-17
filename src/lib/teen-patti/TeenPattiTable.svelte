@@ -35,6 +35,8 @@
 	import BotAvatar from './BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import ActionDock from './ActionDock.svelte';
+	import TableMat from './TableMat.svelte';
+	import { matFor } from './table-cards.js';
 	import {
 		money,
 		signedMoney,
@@ -65,7 +67,9 @@
 		ondeal,
 		oninvite,
 		onleave,
-		emailInvites
+		emailInvites,
+		tableCards,
+		gameTitle
 	}: {
 		room: RoomData;
 		selfId: string;
@@ -83,6 +87,10 @@
 		onleave: () => void;
 		/** Sends (or, with no addresses, lists) email invites through the room server. */
 		emailInvites: (emails: string[], memberIds?: string[]) => Promise<InviteReply>;
+		/** Cards dealt to the table (a mat in the middle); the pot moves to its left. */
+		tableCards?: Snippet;
+		/** Overrides the game name in the top bar. */
+		gameTitle?: string;
 	} = $props();
 
 	type InviteReply = {
@@ -141,6 +149,15 @@
 			return `Pot limit reached: equal best hands${nameOf(winner) ? ` (${nameOf(winner)})` : ''}, pot split`;
 		if (result.reason === 'pot-limit')
 			return `Pot limit reached: everyone showed${nameOf(winner) ? `; ${nameOf(winner)} is best` : ''}`;
+		// Running: the killer suit caught everyone still in, so the best hand among them takes it.
+		const killerSymbol =
+			({ spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣' } as Record<string, string>)[
+				room.variantState?.killer ?? ''
+			] ?? '';
+		if (result.reason === 'knockout-split')
+			return `Everyone held ${killerSymbol}: equal best hands, pot split`;
+		if (result.reason === 'knockout')
+			return `Everyone held ${killerSymbol}${nameOf(winner) ? `; ${nameOf(winner)} is best` : ''}`;
 		// Only the two hands compared at the Show; a player who looked and then packed is not one.
 		const shown = room.usersList.filter((user) =>
 			revealed.size ? revealed.has(user.id) : user.cardsInHand.some((c) => c.rank > 0)
@@ -149,6 +166,15 @@
 		const winName = nameOf(winner);
 		const loseName = nameOf(loser);
 		const lowest = room.rulesVersion === 'muflis-1' ? ' (lowest hand wins)' : '';
+		// Running: a hand holding the killer suit can't win a Show.
+		if (killerSymbol && loser) {
+			const holds = (user: User) =>
+				user.cardsInHand.some((card) => card.suit === room.variantState?.killer);
+			const winnerUser = room.usersList.find((user) => user.id === result.winnerId);
+			if (winnerUser && holds(winnerUser) && holds(loser))
+				return `Both held ${killerSymbol}: ${winnerUser.username} opened last and wins`;
+			if (holds(loser)) return `${loser.username} held ${killerSymbol}, so can’t win`;
+		}
 		if (result.reason === 'show-tie-requester-loses')
 			return 'Equal hands, so whoever asked for the Show loses';
 		if (winName && loseName && winName === loseName)
@@ -549,6 +575,30 @@
 	}
 	const see = () => room.legalActions.see && void send('seeCards');
 	const discard = (index: number) => room.legalActions.discard && void send('discardCard', [index]);
+	// Moves on the table cards: open a mat card, lock a Chatai line, make a joker.
+	const tableMove = (move: TableMove) => void send('tableAction', [move]);
+	const makeJoker = (indexes: [number, number]) => tableMove({ kind: 'joker', indexes });
+	/** The Chatai line being tried before it is locked; cleared every hand. */
+	let previewLine = $state<number | null>(null);
+	$effect(() => {
+		void room.handId;
+		previewLine = null;
+	});
+	const mat = $derived(
+		tableCards
+			? null
+			: matFor(room, selfId, {
+					previewLine,
+					onopen: (index) => tableMove({ kind: 'open', index }),
+					onpreview: (line) => (previewLine = line),
+					onlock: (line) => {
+						tableMove({ kind: 'line', line });
+						previewLine = null;
+					}
+				})
+	);
+	/** Cards on the table this hand: the mat takes the centre and the pot steps aside. */
+	const hasMat = $derived(!!tableCards || !!mat);
 	const bet = (amount: number) => room.legalActions.bet && void send('play', [false, amount]);
 	const show = () => room.legalActions.show && void send('show', [room.name]);
 	const sitOut = (value: boolean) => void send('ready', [!value]);
@@ -733,7 +783,7 @@
 		</div>
 		<div class="variant" data-testid="variant-label">
 			<button class="variant-name" onclick={() => (panel = 'game')} title="How this game works"
-				>{variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti'}</button
+				>{gameTitle ?? variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti'}</button
 			>
 			{#if comingNext && comingNext !== (variant?.selectionLabel.split(': ')[0] ?? '')}
 				<span class="dot">·</span>
@@ -891,7 +941,12 @@
 			</div>
 		{/if}
 
-		<div class="center" data-testid="table-center" style:top="{centerTop}px">
+		<div
+			class="center"
+			class:with-mat={hasMat && !result && room.isStarted}
+			data-testid="table-center"
+			style:top="{centerTop}px"
+		>
 			{#if result}
 				<div class="result" in:fly={{ y: 12, duration: 350 }} role="status" aria-live="polite">
 					<Trophy class="trophy h-7 w-7" />
@@ -1051,12 +1106,13 @@
 					{/if}
 				</div>
 			{:else}
+				{#if tableCards}{@render tableCards()}{:else if mat}<TableMat {...mat} />{/if}
 				<div class="pot" aria-live="polite">
 					{#if room.pot}
 						<span class="pot-chips">
 							<ChipStack
 								amount={room.pot}
-								size={portrait ? '2.3rem' : '3.6rem'}
+								size={hasMat ? (portrait ? '1.6rem' : '2.3rem') : portrait ? '2.3rem' : '3.6rem'}
 								spread={4}
 								stacks={4}
 							/>
@@ -1126,6 +1182,7 @@
 			mediaParticipant={mediaState?.participants.find((p) => p.identity === selfId)}
 			onsee={see}
 			ondiscard={discard}
+			onjoker={makeJoker}
 			onpack={pack}
 			onbet={bet}
 			onshow={show}
@@ -2122,6 +2179,30 @@
 	.arena.portrait .center {
 		top: 52%;
 		width: min(15rem, 44%);
+	}
+	/* With cards on the table: the pot on the left, the mat and joker tray beside it. */
+	.center.with-mat {
+		width: min(56rem, 80%);
+		translate: -50% calc(-50% - 0.9rem);
+		flex-direction: row-reverse;
+		justify-content: center;
+		gap: 1.2rem;
+	}
+	/* The pot steps back so the cards on the table lead; still easy to read. */
+	.center.with-mat .pot {
+		flex: none;
+		padding: 0.3rem 0.6rem 0.4rem;
+	}
+	.center.with-mat .pot-amount {
+		font-size: clamp(1.15rem, 2vw, 1.6rem);
+	}
+	.center.with-mat .stakes {
+		font-size: 0.68rem;
+	}
+	.arena.portrait .center.with-mat {
+		width: 92%;
+		flex-direction: column-reverse;
+		gap: 0.4rem;
 	}
 	/* The pot sits on the cloth: a stack of chips and the total printed beside it. */
 	.pot {
