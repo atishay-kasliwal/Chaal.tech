@@ -36,6 +36,7 @@
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import ActionDock from './ActionDock.svelte';
 	import TableMat from './TableMat.svelte';
+	import NextGameCard from './NextGameCard.svelte';
 	import { matFor, REVIEW_GAMES, REVIEW_MS } from './table-cards.js';
 	import {
 		money,
@@ -257,11 +258,13 @@
 	);
 	const nameOfVariant = (version: string) =>
 		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(': ')[0] ?? 'Teen Patti';
+	/** The next game once the server has settled it (a Random draw is already made). */
+	const settled = $derived(room.upNext ?? null);
 	/** The mode a pick left standing (random stays random), and who set it. */
 	const standing = $derived(room.standing ?? null);
 	/** What decides the next hand: this hand's pick, else the standing one, else the lineup. */
 	const effectiveChoice = $derived(
-		chooser?.choice ?? standing?.choice ?? (upNext ? 'next' : 'keep')
+		chooser?.choice ?? standing?.choice ?? (upNext ? 'next' : 'random')
 	);
 	const setBy = $derived.by(() => {
 		const id = chooser?.choice ? chooser.playerId : standing?.by;
@@ -270,15 +273,17 @@
 	});
 	/** What the next hand will be, in words. */
 	const nextGame = $derived(
-		!chooser
-			? nextVariant
-			: effectiveChoice === 'random'
-				? 'Random'
-				: effectiveChoice === 'next'
-					? nameOfVariant(upNext ?? room.rulesVersion)
-					: effectiveChoice === 'keep'
-						? nameOfVariant(room.rulesVersion)
-						: nameOfVariant(effectiveChoice)
+		settled
+			? nameOfVariant(settled.rulesVersion)
+			: !chooser
+				? nextVariant
+				: effectiveChoice === 'random'
+					? 'Random'
+					: effectiveChoice === 'next'
+						? nameOfVariant(upNext ?? room.rulesVersion)
+						: effectiveChoice === 'keep'
+							? nameOfVariant(room.rulesVersion)
+							: nameOfVariant(effectiveChoice)
 	);
 	/** The standing pick in words: "Random", "Lineup order" or a game's name. */
 	const standingName = $derived(
@@ -359,13 +364,47 @@
 				: null;
 		});
 	});
+	// Once the next game is settled, everyone gets time to read it: 15 seconds for a new game
+	// (5 alone with bots), a short pause for the same game. Table-card games still get their minute.
+	let seenSettled: string | null = null;
+	const settledKey = $derived(
+		settled ? `${result?.handId}:${settled.rulesVersion}:${settled.dealAt}` : null
+	);
+	$effect(() => {
+		const key = settledKey;
+		untrack(() => {
+			if (!key || !settled || dealAt === null || key === seenSettled) return;
+			seenSettled = key;
+			const wait = settled.changed ? settled.revealMs : 4000;
+			dealAt = Math.max(reviewUntil, Date.now() + wait);
+		});
+	});
+	/** The rules card: open in the last seconds before a new game, unless you closed it. */
+	let closedReveal = $state<string | null>(null);
+	const revealLeft = $derived(settled && dealAt !== null && result ? Math.max(0, dealAt - now) : 0);
+	const revealOpen = $derived(
+		!!settled?.changed &&
+			settled.revealMs > 0 &&
+			revealLeft > 0 &&
+			revealLeft <= settled.revealMs + 250 &&
+			closedReveal !== settledKey
+	);
+	const revealBadge = $derived.by(() => {
+		if (!settled) return '';
+		if (settled.mode === 'random') return '🎲 Random picked';
+		if (settled.mode === 'lineup') return 'Next in tonight’s lineup';
+		if (settled.by === selfId) return 'You picked';
+		const name = room.usersList.find((user) => user.id === settled.by)?.username;
+		return name ? `${name} picked` : 'Picked for the table';
+	});
+
 	// While someone picks the next game, wait for them (up to their minute); once they pick,
 	// deal a few seconds later.
 	$effect(() => {
 		const deadline = chooser?.deadline;
 		const choice = chooser?.choice;
 		untrack(() => {
-			if (!deadline || dealAt === null) return;
+			if (!deadline || dealAt === null || room.upNext) return;
 			// Picked: deal shortly. Picking: wait for it. A standing pick: the normal countdown.
 			if (choice)
 				dealAt = Math.max(
@@ -751,6 +790,12 @@
 </script>
 
 <!-- The host picks the Teen Patti variant for the next hand right where they deal. -->
+{#snippet rulesAgain()}
+	{#if settled?.changed && !revealOpen && revealLeft > 0}
+		<button class="mini" onclick={() => (closedReveal = null)}>Rules</button>
+	{/if}
+{/snippet}
+
 {#snippet variantChip()}
 	<button
 		type="button"
@@ -1039,14 +1084,17 @@
 					{:else if chooser && picking}
 						<p class="next-game waiting">
 							<span class="pulse" aria-hidden="true"></span>
-							<strong>{chooserName}</strong> is picking the next game · {pickSecondsLeft}s{#if standing}<small
-									>&nbsp;({standingName} if no change)</small
-								>{/if}
+							<strong>{chooserName}</strong> is picking the next game · {pickSecondsLeft}s<small
+								>&nbsp;({standing ? standingName : upNext ? 'the lineup' : 'Random'} if no {standing
+									? 'change'
+									: 'pick'})</small
+							>
 						</p>
 					{:else}
 						<!-- One line: what's next, where it comes from, who set it, and Change on your turn. -->
 						<p class="next-game">
 							Next game: <strong>{nextGame}</strong>
+							{#if settled?.mode === 'random'}<small>· 🎲 random</small>{/if}
 							{#if fromLineup}<button class="link" onclick={() => (panel = 'lineup')}
 									>{effectiveChoice === 'random' ? 'from the lineup' : 'lineup'} ›</button
 								>{/if}
@@ -1064,6 +1112,7 @@
 									<span>Dealing once the game is picked</span>
 								{:else if autoDeal && !paused}
 									<span>Next hand in {dealIn}s</span>
+									{@render rulesAgain()}
 									<button class="mini" onclick={() => (paused = true)}
 										><Pause class="h-3.5 w-3.5" /> Pause</button
 									>
@@ -1081,6 +1130,7 @@
 								<span>Dealing once the game is picked</span>
 							{:else if autoDeal}
 								<span>Next hand in {dealIn}s</span>
+								{@render rulesAgain()}
 							{:else}
 								<span>Waiting for the host to deal</span>
 							{/if}
@@ -1164,6 +1214,17 @@
 				</li>
 			{/each}
 		</ol>
+
+		{#if revealOpen && settled}
+			<NextGameCard
+				rulesVersion={settled.rulesVersion}
+				name={nameOfVariant(settled.rulesVersion)}
+				badge={revealBadge}
+				seconds={Math.ceil(revealLeft / 1000)}
+				total={Math.round(settled.revealMs / 1000)}
+				onclose={() => (closedReveal = settledKey)}
+			/>
+		{/if}
 
 		{#each flights as flight (flight.id)}
 			<span

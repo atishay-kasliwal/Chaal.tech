@@ -12,6 +12,7 @@ import {
 	HANDOVER_CHOOSE_MS,
 	playing
 } from '../../server/engine.mjs';
+import { listVariants } from '../../server/variants/index.mjs';
 
 const ids = ['a', 'b', 'c'];
 const connected = new Set([...ids, 'bot-0001']);
@@ -65,14 +66,97 @@ test('the pick decides the next game, and the turn passes on', () => {
 	assert.throws(() => transition(room, 'a', 'chooseNext', { choice: 'poker' }, ctx), /variant/);
 });
 
-test('no pick in a minute keeps the game; a chooser who leaves forfeits the pick', () => {
+test('no pick in a minute falls back to Random; a chooser who leaves forfeits the pick', () => {
 	let room = finish(deal(table()));
-	assert.deepEqual(nextHandChoice(room, ctx.now + CHOOSE_MS), {
-		mode: 'selected',
-		rulesVersion: 'classic-1'
-	});
+	assert.deepEqual(nextHandChoice(room, ctx.now + CHOOSE_MS), { mode: 'random' });
 	room = transition(room, 'a', 'leave', {}, ctx);
-	assert.deepEqual(nextHandChoice(room, ctx.now), { mode: 'selected', rulesVersion: 'classic-1' });
+	assert.deepEqual(nextHandChoice(room, ctx.now), { mode: 'random' });
+});
+
+// Settling the next game ahead of the deal, so everyone sees it and its rules.
+const seq = (values) => {
+	let i = 0;
+	return (n) => values[i++ % values.length] % n;
+};
+const pickCtx = (extra = {}) => ({ ...ctx, randomInt: seq([0]), lineup: [], ...extra });
+
+test('a pick settles the next game at once, with 15 seconds to read a new game', () => {
+	let room = finish(deal(table()));
+	assert.equal(room.upNext, undefined);
+	room = transition(room, 'a', 'chooseNext', { choice: 'muflis-1' }, pickCtx());
+	assert.deepEqual(room.upNext, {
+		rulesVersion: 'muflis-1',
+		mode: 'picked',
+		by: 'a',
+		changed: true,
+		revealMs: 15000,
+		dealAt: ctx.now + 15000
+	});
+	assert.deepEqual(projection(room, 'b', connected).upNext.rulesVersion, 'muflis-1');
+	// The same game again: no rules card, a short pause.
+	room = transition(
+		finish(deal(room, 'muflis-1')),
+		'b',
+		'chooseNext',
+		{ choice: 'keep' },
+		pickCtx()
+	);
+	assert.equal(room.upNext.changed, false);
+	assert.equal(room.upNext.revealMs, 0);
+	// Dealing uses the settled game up.
+	assert.equal(deal(room, 'muflis-1').upNext, undefined);
+});
+
+test('a pick window that runs out settles Random, and never the game just played', () => {
+	let room = finish(deal(table()));
+	assert.throws(() => transition(room, 'b', 'settleNext', {}, pickCtx()), /still open/);
+	room = transition(room, 'b', 'settleNext', {}, pickCtx({ now: ctx.now + CHOOSE_MS }));
+	assert.equal(room.upNext.mode, 'random');
+	assert.notEqual(room.upNext.rulesVersion, 'classic-1');
+	assert.throws(() =>
+		transition(room, 'b', 'settleNext', {}, pickCtx({ now: ctx.now + CHOOSE_MS }))
+	);
+});
+
+test('Random plays every game in the pool once before any repeats', () => {
+	const lineup = ['classic-1', 'muflis-1', 'ak47-1', 'joker-1'];
+	let room = finish(deal(table()));
+	room = transition(
+		room,
+		'a',
+		'chooseNext',
+		{ choice: 'random' },
+		pickCtx({ lineup, randomInt: seq([3, 1, 2, 0, 1]) })
+	);
+	const played = [];
+	for (let hand = 0; hand < 4; hand++) {
+		const version = room.upNext.rulesVersion;
+		played.push(version);
+		room = finish(deal(room, version));
+		// The standing Random settles straight away for whoever picks next.
+		room = transition(
+			room,
+			room.chooser.playerId,
+			'chooseNext',
+			{ choice: 'random' },
+			pickCtx({ lineup, randomInt: seq([3, 1, 2, 0, 1]) })
+		);
+	}
+	assert.equal(new Set(played).size, 4, played.join());
+	for (let i = 1; i < played.length; i++) assert.notEqual(played[i], played[i - 1]);
+});
+
+test('alone with bots, a standing pick settles right after the hand with a short rules card', () => {
+	let room = newRoom('solo-room', 1000, 'a', 'classic-1', { boot: 10, autoReady: true });
+	room = transition(room, 'a', 'join', { username: 'a' }, ctx);
+	room = transition(room, 'a', 'addBot', { botId: 'bot-0002', name: 'Bunty', level: 'easy' }, ctx);
+	room = finish(deal(room));
+	room = transition(room, 'a', 'chooseNext', { choice: 'random' }, pickCtx());
+	assert.equal(room.upNext.revealMs, 5000);
+	room = deal(room, room.upNext.rulesVersion);
+	while (playing(room)) room = transition(room, room.currentPlayerId, 'pack', {}, pickCtx());
+	assert.ok(room.upNext, 'settled without waiting');
+	assert.equal(room.upNext.mode, 'random');
 });
 
 test('alone with bots, the pick window is shorter', () => {
@@ -137,4 +221,64 @@ test('alone with bots, a standing pick deals with no wait', () => {
 	room = transition(room, 'a', 'chooseNext', { choice: 'random' }, ctx);
 	room = finish(deal(room));
 	assert.equal(room.chooser.deadline, ctx.now);
+});
+
+test('Random never brings back any of the last four games played', () => {
+	const random = ((seed) => (n) => {
+		seed = (seed * 1103515245 + 12345) % 2 ** 31;
+		return seed % n;
+	})(42);
+	const threeCard = listVariants()
+		.filter((variant) => (variant.cardsPerPlayer ?? 3) === 3)
+		.map((variant) => variant.rulesVersion);
+	for (const lineup of [
+		threeCard,
+		['classic-1', 'muflis-1', 'ak47-1', 'joker-1', '999-1', 'pot-blind-1']
+	]) {
+		let room = finish(deal(table()));
+		const played = [room.rulesVersion];
+		room = transition(
+			room,
+			'a',
+			'chooseNext',
+			{ choice: 'random' },
+			pickCtx({ lineup, randomInt: random })
+		);
+		for (let hand = 0; hand < 60; hand++) {
+			const version = room.upNext.rulesVersion;
+			assert.ok(
+				!played.slice(-4).includes(version),
+				`${version} came back within four: ${played.slice(-4)}`
+			);
+			played.push(version);
+			room = finish(deal(room, version));
+			room = transition(
+				room,
+				room.chooser.playerId,
+				'chooseNext',
+				{ choice: 'random' },
+				pickCtx({ lineup, randomInt: random })
+			);
+		}
+	}
+});
+
+test('a lineup too small to rest four games gets the one played longest ago', () => {
+	const lineup = ['classic-1', 'muflis-1', 'ak47-1'];
+	let room = finish(deal(table()));
+	room = transition(room, 'a', 'chooseNext', { choice: 'random' }, pickCtx({ lineup }));
+	const played = [];
+	for (let hand = 0; hand < 6; hand++) {
+		played.push(room.upNext.rulesVersion);
+		room = finish(deal(room, room.upNext.rulesVersion));
+		room = transition(
+			room,
+			room.chooser.playerId,
+			'chooseNext',
+			{ choice: 'random' },
+			pickCtx({ lineup })
+		);
+	}
+	for (let i = 1; i < played.length; i++) assert.notEqual(played[i], played[i - 1]);
+	assert.equal(new Set(played).size, 3);
 });

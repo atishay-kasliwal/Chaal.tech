@@ -73,6 +73,15 @@ interface RoomData {
 	lineup?: string[];
 	/** The last pick, which stands for later hands until someone changes it. */
 	standing?: { choice: string; by: string };
+	/** The next game once settled: what, how it was chosen, by whom, and the rules-card time. */
+	upNext?: {
+		rulesVersion: string;
+		mode: 'random' | 'lineup' | 'picked';
+		by: string | null;
+		changed: boolean;
+		revealMs: number;
+		dealAt: number;
+	};
 	/** Who picks the next game between hands, until when, and what they picked. */
 	chooser?: { playerId: string; handId: string; deadline: number; choice: string | null };
 	/** Open chip requests this viewer sent or received. */

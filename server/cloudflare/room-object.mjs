@@ -459,7 +459,10 @@ export class RoomDurableObject {
 				if (before.gameType === 'texas-holdem') {
 					payload = { cutAt: args[1], cardsToDeal: args[2], rulesVersion: args[3] };
 				} else if (!before.gameType || before.gameType === 'teen-patti') {
-					const picked = nextHandChoice(before, Date.now(), await this.lineup());
+					// A game already settled (and shown to everyone) is what gets dealt.
+const picked = before.upNext
+	? { mode: 'selected', rulesVersion: before.upNext.rulesVersion }
+	: nextHandChoice(before, Date.now(), await this.lineup());
 					const mode = picked?.mode ?? args[4] ?? 'selected';
 					if (mode !== 'selected' && mode !== 'random')
 						throw new GameError('Choose a variant or random mode', 'INVALID_ACTION');
@@ -585,7 +588,8 @@ export class RoomDurableObject {
 				? shuffle(before.discardPile.slice(0, -1))
 				: undefined,
 			connected: this.connectedRoom(name),
-			requireReady: true
+			requireReady: true,
+			...(await this.pickContext())
 		});
 		const result = { ok: true, roomName: room.name, revision: room.revision, handId: room.handId };
 		this.commit(room, playerId, meta.commandId, commandFingerprint, result, movements(before, room, event), before.revision);
@@ -717,6 +721,11 @@ export class RoomDurableObject {
 	}
 
 	/** The club's lineup for tonight, cached for a few seconds; empty when unreachable. */
+	/** What settling the next game needs: tonight's lineup and a secure random draw. */
+	async pickContext() {
+		return { lineup: await this.lineup(), randomInt: secureRandomInt };
+	}
+
 	async lineup() {
 		const cached = this.lineupCache;
 		if (cached && Date.now() - cached.at < 15000) return cached.lineup;
@@ -825,7 +834,8 @@ export class RoomDurableObject {
 			const room = transition(before, move.botId, move.action, move.payload, {
 				now: Date.now(),
 				turnMs: this.turnMs(),
-				connected
+				connected,
+				...(await this.pickContext())
 			});
 			const commandId = `bot:${before.handId}:${before.revision}`;
 			this.commit(room, move.botId, commandId, await hash(commandId), { ok: true }, movements(before, room, `bot-${move.action}`), before.revision);
@@ -853,6 +863,7 @@ export class RoomDurableObject {
 		const botTurn = this.planBot(room);
 		if (botTurn) deadlines.push(botTurn.at);
 		if (playing(room) && Number.isSafeInteger(room.deadline)) deadlines.push(room.deadline);
+		if (!playing(room) && room.chooser && !room.upNext) deadlines.push(room.chooser.deadline);
 		const hostRecovery = this.getMeta('hostRecovery');
 		if (hostRecovery?.at) deadlines.push(hostRecovery.at);
 		// Start (or stop) the idle clock: one or no players for idleCloseMs() closes the table.
@@ -893,6 +904,7 @@ export class RoomDurableObject {
 					now,
 					turnMs: this.turnMs(),
 					connected: this.connectedRoom(room.name),
+					...(await this.pickContext()),
 					recycledDeck: before.gameType === 'rummy' && before.deck.length === 0 && before.discardPile.length > 1
 						? shuffle(before.discardPile.slice(0, -1))
 						: undefined
@@ -905,6 +917,27 @@ export class RoomDurableObject {
 					: 'Turn timed out; player packed';
 			} catch (error) {
 				console.error('Cloudflare turn recovery failed:', error?.code ?? error?.name ?? 'Error');
+			}
+		}
+
+		// A pick window that ran out with no pick: settle the next game so everyone sees it.
+		if (!playing(room) && room.chooser && !room.upNext && room.chooser.deadline <= now) {
+			try {
+				const before = room;
+				const actor = before.players.find((p) => p.seatNumber !== null && !p.departed && !p.bot);
+				if (actor) {
+					room = transition(before, actor.id, 'settleNext', {}, {
+						now,
+						turnMs: this.turnMs(),
+						connected: this.connectedRoom(room.name),
+						...(await this.pickContext())
+					});
+					const commandId = `settle:${before.chooser.handId}:${before.revision}`;
+					this.commit(room, actor.id, commandId, await hash(commandId), { ok: true }, null, before.revision);
+					changed = true;
+				}
+			} catch (error) {
+				console.error('Cloudflare next-game settle failed:', error?.code ?? error?.name ?? 'Error');
 			}
 		}
 

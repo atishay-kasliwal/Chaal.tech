@@ -400,6 +400,25 @@
 	.me-video :global(.seat-video) {
 		aspect-ratio: 16 / 10;
 	}
+	/* Wide screens: your camera is bigger and, like your hand, rises out of the dock, staying a
+	   little shorter and lower than the cards. */
+	@media (min-width: 960px) {
+		.tp-dock {
+			grid-template-columns: clamp(10rem, 14.5vw, 14rem) minmax(0, 1fr) minmax(18rem, 25rem);
+		}
+		.me {
+			align-self: end;
+		}
+		.me-video {
+			position: relative;
+			z-index: 3;
+			width: min(100%, calc(var(--hand-h) * 0.8 * 1.6));
+			margin-top: calc(var(--hand-h) * -0.34);
+			box-shadow:
+				0 0 0 1px rgb(240 209 140 / 22%),
+				0 0.8rem 1.4rem rgb(0 0 0 / 50%);
+		}
+	}
 	.me-video :global(.camera-off-label) {
 		display: none;
 	}

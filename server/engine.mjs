@@ -1,5 +1,5 @@
 import { freshDeck } from './classic.mjs';
-import { DEFAULT_RULES_VERSION, getVariant } from './variants/index.mjs';
+import { DEFAULT_RULES_VERSION, getVariant, listVariants } from './variants/index.mjs';
 import { getGameEngine } from './games/index.mjs';
 import { describeHand, wildIndexes } from './variants/describe.mjs';
 import { compareVectors } from './variants/hand-utils.mjs';
@@ -117,6 +117,83 @@ export const SOLO_CHOOSE_MS = 15 * 1000;
 /** When the turn passes to someone new, they get this long to keep or change the standing game. */
 export const HANDOVER_CHOOSE_MS = 20 * 1000;
 const CHOICES = new Set(['keep', 'next', 'random']);
+/** Once the next game is settled, everyone gets this long to read its rules before the deal. */
+export const REVEAL_MS = 15 * 1000;
+/** Alone with bots the rules card is short. */
+export const SOLO_REVEAL_MS = 5 * 1000;
+/** The same game again needs no rules card: a short pause, then deal. */
+export const SAME_GAME_MS = 4 * 1000;
+
+const humansSeated = (room) => seated(room).filter((p) => !p.bot && !p.departed).length;
+
+/** A game Random just played sits out this many hands before it can come up again. */
+export const RANDOM_COOLDOWN = 4;
+
+/**
+ * Random plays like a shuffled playlist: every game in the pool once, in a random order, then a
+ * fresh shuffle. On top of that, the last RANDOM_COOLDOWN games played never come up (so AK47
+ * played now is out for the next four hands); a pool too small for that gets the game played
+ * longest ago. `randomInt(n)` is 0..n-1.
+ */
+function drawRandom(room, pool, randomInt) {
+	const key = [...pool].sort().join(',');
+	const recent = (room.recentGames ?? []).slice(-RANDOM_COOLDOWN);
+	const shuffle = (list) => {
+		const out = [...list];
+		for (let i = out.length - 1; i > 0; i--) {
+			const j = randomInt(i + 1);
+			[out[i], out[j]] = [out[j], out[i]];
+		}
+		return out;
+	};
+	let bag = room.randomBag?.pool === key ? room.randomBag.left.filter((v) => pool.includes(v)) : [];
+	if (!bag.some((v) => !recent.includes(v)))
+		bag = [...bag, ...shuffle(pool.filter((v) => !bag.includes(v)))];
+	let at = bag.findIndex((v) => !recent.includes(v));
+	let next;
+	if (at >= 0) next = bag.splice(at, 1)[0];
+	else {
+		// Every game in the pool was played lately: take the one played longest ago.
+		const lastPlayed = (v) => recent.lastIndexOf(v);
+		next = [...pool].sort((x, y) => lastPlayed(x) - lastPlayed(y))[0];
+		at = bag.indexOf(next);
+		if (at >= 0) bag.splice(at, 1);
+	}
+	room.randomBag = { pool: key, left: bag };
+	return next;
+}
+
+/**
+ * Settle what the next hand plays, as soon as the pick is final, so everyone can be shown the
+ * game and its rules before the deal. A pick nobody made falls back to tonight's lineup, or to
+ * Random. Needs ctx.randomInt; without it the deal settles the game instead (older callers).
+ */
+function settleNext(room, ctx) {
+	if (!room.chooser || room.upNext || !ctx?.randomInt || !Number.isFinite(ctx.now)) return;
+	const chooser = room.chooser;
+	const lineup = (ctx.lineup ?? []).filter((version) => getVariant(version));
+	const choice = chooser.choice ?? room.standing?.choice ?? (lineup.length ? 'next' : 'random');
+	const pool = lineup.length ? lineup : listVariants().map((variant) => variant.rulesVersion);
+	const rulesVersion =
+		choice === 'random'
+			? drawRandom(room, pool, ctx.randomInt)
+			: choice === 'next'
+				? (nextInLineup(lineup, room.rulesVersion) ?? room.rulesVersion)
+				: choice === 'keep'
+					? room.rulesVersion
+					: choice;
+	const by = chooser.choice ? chooser.playerId : (room.standing?.by ?? null);
+	const changed = rulesVersion !== room.rulesVersion;
+	const revealMs = changed ? (humansSeated(room) <= 1 ? SOLO_REVEAL_MS : REVEAL_MS) : 0;
+	room.upNext = {
+		rulesVersion,
+		mode: choice === 'random' ? 'random' : choice === 'next' ? 'lineup' : 'picked',
+		by,
+		changed,
+		revealMs,
+		dealAt: ctx.now + (changed ? revealMs : SAME_GAME_MS)
+	};
+}
 
 /**
  * Hand over the pick to the next person in seat order after the last chooser (bots never pick).
@@ -147,6 +224,7 @@ function assignChooser(room, now) {
 		deadline: now + window,
 		choice: null
 	};
+	delete room.upNext;
 }
 
 /**
@@ -167,8 +245,8 @@ export function nextHandChoice(room, now, lineup = []) {
 		const name = room.players.find((p) => p.id === chooser.playerId)?.username ?? 'Someone';
 		throw new GameError(`${name} is picking the next game`, 'PICKING');
 	}
-	// This hand's pick, else the standing mode, else the lineup, else the same game.
-	const choice = chooser.choice ?? room.standing?.choice ?? (lineup.length ? 'next' : 'keep');
+	// This hand's pick, else the standing mode, else the lineup, else Random.
+	const choice = chooser.choice ?? room.standing?.choice ?? (lineup.length ? 'next' : 'random');
 	if (choice === 'random')
 		return lineup.length ? { mode: 'random', pool: lineup } : { mode: 'random' };
 	if (choice === 'next')
@@ -409,6 +487,10 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				), 'Invalid server deck', 'INVARIANT');
 			const deck = structuredClone(ctx.deck);
 			room.rulesVersion = nextVersion;
+			// The last few games dealt, so Random can let each one rest a while.
+			// Only tables with the next-game pick need it; older tables keep their exact state.
+			if (room.boot !== undefined)
+				room.recentGames = [...(room.recentGames ?? []), nextVersion].slice(-RANDOM_COOLDOWN);
 			room.deck = [...deck.slice(payload.cutAt), ...deck.slice(0, payload.cutAt)];
 			room.handId = ctx.handId;
 			room.initiator = id;
@@ -419,6 +501,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				room.lastChooserId = room.chooser.playerId;
 				delete room.chooser;
 			}
+			delete room.upNext;
 			room.isStarted = true;
 			room.gameShow = false;
 			room.pot = 0;
@@ -488,6 +571,8 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			const solo = seated(room).filter((p) => !p.bot && !p.departed).length === 1;
 			room.chooser.choice = null;
 			room.chooser.deadline = (ctx?.now ?? 0) + (solo ? SOLO_CHOOSE_MS : CHOOSE_MS);
+			// Changing the game un-settles it until the new pick.
+			delete room.upNext;
 		} else if (action === 'chooseNext') {
 			require(room.chooser && !playing(room), 'Nobody is picking the next game right now');
 			const picker = room.players.find((p) => p.id === room.chooser.playerId);
@@ -502,6 +587,15 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				choice: payload.choice === 'keep' ? room.rulesVersion : payload.choice,
 				by: id
 			};
+			delete room.upNext;
+			settleNext(room, ctx);
+		} else if (action === 'settleNext') {
+			// The pick window ran out with no pick: settle the next game now (the server's timer).
+			require(room.chooser && !playing(room) && !room.upNext, 'Nothing to settle');
+			require(Number.isFinite(ctx?.now) &&
+				ctx.now >= room.chooser.deadline, 'The pick is still open');
+			settleNext(room, ctx);
+			require(room.upNext, 'Could not settle the next game');
 		} else if (action === 'setPotLimit') {
 			require(id === room.hostId, 'Only the host can change the pot limit', 'FORBIDDEN');
 			require(room.boot !== undefined, 'Pot limits need a table created with table options');
@@ -679,6 +773,15 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 		Number.isFinite(ctx?.now)
 	)
 		assignChooser(room, ctx.now);
+	// No wait for this pick (a standing pick for its owner, or a solo table): settle it now.
+	if (
+		room.chooser &&
+		!room.upNext &&
+		!playing(room) &&
+		Number.isFinite(ctx?.now) &&
+		ctx.now >= room.chooser.deadline
+	)
+		settleNext(room, ctx);
 	room.revision++;
 	invariant(room);
 	return room;
@@ -730,6 +833,8 @@ export function projection(room, id, connected) {
 		// Who picks the next game, until when, and what they picked (null while undecided).
 		...(room.chooser ? { chooser: { ...room.chooser } } : {}),
 		...(room.standing ? { standing: { ...room.standing } } : {}),
+		// The settled next game: what, how it was chosen, and when it will be dealt.
+		...(room.upNext ? { upNext: { ...room.upNext } } : {}),
 		// Chip requests are private to the two players involved.
 		...(room.chipRequests?.some((r) => r.from === id || r.to === id)
 			? {

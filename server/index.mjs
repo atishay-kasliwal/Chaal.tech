@@ -355,7 +355,9 @@ export function createGameServer({
 					if (before.gameType === 'texas-holdem') {
 						payload = { cutAt: args[1], cardsToDeal: args[2], rulesVersion: args[3] };
 					} else if (!before.gameType || before.gameType === 'teen-patti') {
-						const picked = nextHandChoice(before, clock());
+						const picked = before.upNext
+							? { mode: 'selected', rulesVersion: before.upNext.rulesVersion }
+							: nextHandChoice(before, clock());
 					const mode = picked?.mode ?? args[4] ?? 'selected';
 						if (mode !== 'selected' && mode !== 'random')
 							throw new GameError('Choose a variant or random mode', 'INVALID_ACTION');
