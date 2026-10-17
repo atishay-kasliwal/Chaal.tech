@@ -83,6 +83,10 @@ interface RoomData {
 		leaves?: string[];
 		cards?: { pos: number; rank: number; suit: string; salt: string }[];
 	};
+	/** Real money tonight: people only, bots never count. */
+	realNet?: { id: string; name: string; net: number }[];
+	/** The fewest payments that settle tonight's real money. */
+	settleUp?: { from: string; fromName: string; to: string; toName: string; amount: number }[];
 	/** Hands each lineup game is played for (0 = one round). */
 	lineupHands?: number;
 	/** Where the night is in the lineup: the slot playing and how many hands it has had. */

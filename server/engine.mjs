@@ -3,6 +3,7 @@ import { DEFAULT_RULES_VERSION, getVariant, listVariants } from './variants/inde
 import { getGameEngine } from './games/index.mjs';
 import { describeHand, describeKeep, wildIndexes } from './variants/describe.mjs';
 import { compareVectors } from './variants/hand-utils.mjs';
+import { settleUp } from './settle-up.mjs';
 
 export class GameError extends Error {
 	constructor(message, code = 'INVALID_ACTION') {
@@ -364,9 +365,50 @@ function nextTurn(room, afterSeat, ctx) {
 	room.deadline = player ? ctx.now + ctx.turnMs : null;
 	if (room.boot !== undefined) room.turnMs = player ? ctx.turnMs : null;
 }
+/**
+ * Real money: only what moves between people counts. Each bet in the pot goes to the winners in
+ * proportion to what they were paid; a flow counts only when both ends are people. So chips won
+ * from a bot, or lost to one, never change anyone's real result, and real results always sum to 0.
+ */
+function recordReal(room, winners) {
+	if (room.boot === undefined) return;
+	const pot = winners.reduce((sum, winner) => sum + winner.amount, 0);
+	if (!pot) return;
+	const person = (id) => room.players.some((p) => p.id === id && !p.bot);
+	const delta = {};
+	for (const payer of room.players) {
+		const bet = payer.handBet ?? 0;
+		if (!bet || payer.bot) continue;
+		for (const winner of winners) {
+			if (winner.id === payer.id || !person(winner.id)) continue;
+			const flow = (bet * winner.amount) / pot;
+			delta[winner.id] = (delta[winner.id] ?? 0) + flow;
+			delta[payer.id] = (delta[payer.id] ?? 0) - flow;
+		}
+	}
+	const ids = Object.keys(delta);
+	if (!ids.length) return;
+	// Whole rupees that still add up to zero.
+	const rounded = ids.map((id) => Math.round(delta[id]));
+	const drift = rounded.reduce((sum, value) => sum + value, 0);
+	if (drift) {
+		const largest = ids.reduce(
+			(top, id, i) => (Math.abs(delta[id]) > Math.abs(delta[ids[top]]) ? i : top),
+			0
+		);
+		rounded[largest] -= drift;
+	}
+	const net = { ...(room.realNet ?? {}) };
+	ids.forEach((id, i) => {
+		if (rounded[i]) net[id] = (net[id] ?? 0) + rounded[i];
+	});
+	room.realNet = net;
+}
+
 function settle(room, winner, reason, revealed = []) {
 	require(!room.result, 'Hand already settled');
 	const amount = room.pot;
+	recordReal(room, [{ id: winner.id, amount }]);
 	winner.balance += amount;
 	room.pot = 0;
 	room.gameShow = true;
@@ -407,6 +449,7 @@ function forcedShow(room, variant, reason = 'pot-limit') {
 		name: p.username,
 		amount: share + (index < pot - share * best.length ? 1 : 0)
 	}));
+	recordReal(room, winners);
 	for (const winner of winners)
 		room.players.find((p) => p.id === winner.id).balance += winner.amount;
 	room.pot = 0;
@@ -991,6 +1034,15 @@ export function projection(room, id, connected) {
 		// Who picks the next game, until when, and what they picked (null while undecided).
 		...(room.chooser ? { chooser: { ...room.chooser } } : {}),
 		...(room.standing ? { standing: { ...room.standing } } : {}),
+		// Real money tonight (people only, bots never count) and the fewest payments to settle it.
+		...(room.realNet
+			? (() => {
+					const people = room.players
+						.filter((p) => !p.bot && room.realNet[p.id] !== undefined)
+						.map((p) => ({ id: p.id, name: p.username, net: room.realNet[p.id] }));
+					return { realNet: people, settleUp: settleUp(people) };
+				})()
+			: {}),
 		// The last five hands played here: the game and who won.
 		...(room.gameLog ? { gameLog: room.gameLog.map((entry) => ({ ...entry })) } : {}),
 		// The cut before the deal (who cuts, where, and the sealed deck's fingerprint), and once the

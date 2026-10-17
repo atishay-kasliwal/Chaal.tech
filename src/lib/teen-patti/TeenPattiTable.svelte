@@ -192,7 +192,16 @@
 		if (winName && loseName) return `${winName} beats ${loseName}${lowest}`;
 		return 'Won at the show';
 	});
-	const net = $derived(me ? (me.balance ?? room.table) - room.table : 0);
+	/** Real money tonight, people only (bots never count), best first. */
+	const realPeople = $derived([...(room.realNet ?? [])].sort((a, b) => b.net - a.net));
+	/** Your result tonight in real money; before any real hand, your chips. */
+	const net = $derived(
+		room.realNet
+			? (room.realNet.find((person) => person.id === selfId)?.net ?? 0)
+			: me
+				? (me.balance ?? room.table) - room.table
+				: 0
+	);
 	const blindStake = $derived(Math.ceil(room.maxStake / 2));
 	const potCap = $derived(room.potLimit ? room.potLimit * boot : 0);
 	const setPotLimit = (value: number) => void send('setPotLimit', [value]);
@@ -1630,6 +1639,47 @@
 							</li>
 						{/each}
 					</ol>
+					<!-- Real money: only what moved between people, and the fewest payments to settle it. -->
+					<section class="money" aria-label="Real money tonight">
+						<h3>Real money tonight</h3>
+						<p class="money-note">
+							Only money between people counts. Chips won from a bot, or lost to one, don’t.
+						</p>
+						{#if realPeople.length}
+							<ul class="real">
+								{#each realPeople as person (person.id)}
+									<li class:me={person.id === selfId}>
+										<span
+											>{properName(person.name)}{#if person.id === selfId}<small>You</small
+												>{/if}</span
+										>
+										<strong class:up={person.net > 0} class:down={person.net < 0}
+											>{signedMoney(person.net)}</strong
+										>
+									</li>
+								{/each}
+							</ul>
+							<h3>Settle up</h3>
+							{#if room.settleUp?.length}
+								<ul class="payments">
+									{#each room.settleUp as payment (`${payment.from}-${payment.to}`)}
+										<li>
+											<strong
+												>{payment.from === selfId ? 'You' : properName(payment.fromName)}</strong
+											>
+											<span class="arrow">pay{payment.from === selfId ? '' : 's'} →</span>
+											<strong>{payment.to === selfId ? 'you' : properName(payment.toName)}</strong>
+											<span class="amount">{money(payment.amount)}</span>
+										</li>
+									{/each}
+								</ul>
+							{:else}
+								<p class="money-note">Everyone is square so far.</p>
+							{/if}
+						{:else}
+							<p class="money-note">Nothing yet: the first hand between people starts the count.</p>
+						{/if}
+					</section>
 					<h3>Hand log</h3>
 					{#each handsLog as hand, index (hand.id)}
 						<section class="hand-card" class:current={index === 0 && !hand.win}>
@@ -3027,6 +3077,77 @@
 	.muted {
 		color: rgb(241 235 220 / 55%);
 		font-size: 0.85rem;
+	}
+	.money {
+		display: grid;
+		gap: 0.5rem;
+		margin-top: 1.2rem;
+		border-top: 1px solid rgb(255 255 255 / 8%);
+		padding-top: 1rem;
+	}
+	.money h3 {
+		color: #f4d68c;
+		font-size: 0.8rem;
+		font-weight: 800;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+	.money-note {
+		color: rgb(241 235 220 / 60%);
+		font-size: 0.8rem;
+		line-height: 1.4;
+	}
+	.money ul {
+		display: grid;
+		gap: 0.35rem;
+		margin: 0 0 0.6rem;
+		padding: 0;
+		list-style: none;
+	}
+	.real li {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		border-radius: 0.6rem;
+		background: rgb(255 255 255 / 4%);
+		padding: 0.45rem 0.7rem;
+	}
+	.real li.me {
+		box-shadow: inset 0 0 0 1px rgb(244 214 140 / 35%);
+	}
+	.real small {
+		margin-left: 0.4rem;
+		color: #f4d68c;
+		font-size: 0.7rem;
+		font-weight: 800;
+	}
+	.real strong {
+		font-variant-numeric: tabular-nums;
+	}
+	.real strong.up {
+		color: #8fe0a8;
+	}
+	.real strong.down {
+		color: #ee9a8c;
+	}
+	.payments li {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		border-radius: 0.7rem;
+		background: linear-gradient(90deg, rgb(244 214 140 / 10%), rgb(255 255 255 / 3%));
+		padding: 0.55rem 0.8rem;
+	}
+	.payments .arrow {
+		color: rgb(241 235 220 / 55%);
+		font-size: 0.82rem;
+	}
+	.payments .amount {
+		margin-left: auto;
+		color: #f7dc95;
+		font-size: 1.05rem;
+		font-weight: 850;
+		font-variant-numeric: tabular-nums;
 	}
 	.standings {
 		display: flex;
