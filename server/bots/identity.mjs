@@ -77,3 +77,8 @@ export function identityForLevel(level) {
 	const style = LEGACY_STYLES[level];
 	return style ? identityForStyle(style) : null;
 }
+
+/** Identity only; the full configuration lives exclusively in sealed room/replay state. */
+export function identityForSeat(bot) {
+	return bot?.style ? identityForStyle(bot.style) : identityForLevel(bot?.level);
+}

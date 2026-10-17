@@ -20,13 +20,15 @@ import { inviteEmails, planInvites, inviteMessage, sendWithResend } from './invi
 import { verifyGameToken } from './security.mjs';
 import { clubDirectory } from './club-directory.mjs';
 import { trackClubHand, archiveHands } from '../club/history.mjs';
-import { withClubDatabase, invitableEmails, emailsForMembers, memberRole, membersForPlayers } from '../club/members.mjs';
+import { withClubDatabase, ClubError, invitableEmails, emailsForMembers, memberRole, membersForPlayers } from '../club/members.mjs';
 import { saveNight, nightEmail } from '../club/nights.mjs';
+import { botSeat } from '../bots/directory.mjs';
 import { clubSettings } from '../club/admin.mjs';
-import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
+import { nextBotMove, botDue, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
 import { recordCommitSafely, stepRecorder, botRandom, abandonOpenHand } from '../analytics/recorder.mjs';
 import { archiveRecorderRow, isRecorderRow, writeRoomStatus } from '../analytics/store.mjs';
 import { engineBuild } from './build.mjs';
+
 
 const secureRandom = () => secureRandomInt(0x1_0000_0000) / 0x1_0000_0000;
 const randomUint32 = () => secureRandomInt(0x1_0000_0000);
@@ -619,8 +621,7 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 				action = 'addBot';
 				payload = {
 					botId: `bot-${crypto.randomUUID()}`,
-					name: pickBotName(before, secureRandom),
-					level: args[0]
+					...await withClubDatabase(this.env, db => botSeat(db, before, ['easy', 'normal', 'hard'].includes(args[0]) ? undefined : args[0])).catch(error => { if (error instanceof ClubError) throw new GameError(error.message, error.code); throw error; })
 				};
 				text = null;
 			} else if (event === 'setPotLimit') {

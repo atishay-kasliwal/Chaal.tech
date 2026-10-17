@@ -16,7 +16,6 @@
 		Sparkles,
 		Mail,
 		Share2,
-		Bot,
 		RotateCcw,
 		Shuffle,
 		LayoutGrid,
@@ -62,6 +61,7 @@
 	import { reactToEvents } from '#lib/mascots/table-reactions.js';
 	import { reactions } from '#lib/mascots/mascots.svelte.js';
 	import { MASCOT_SIZE } from '#lib/mascots/size.js';
+	import BotPicker from '#lib/bots/BotPicker.svelte';
 	import { opponentPoints, SELF_POINT, POT_POINT } from './layout.js';
 	import { play, soundEnabled, setSoundEnabled } from './sound.js';
 
@@ -768,9 +768,14 @@
 	});
 
 	// ——— Bots ———
-	let botLevel = $state<'easy' | 'normal' | 'hard'>('normal');
 	const canAddBot = $derived(isHost && !live && !!room.legalActions.addBot && connected);
-	const addBot = () => canAddBot && void send('addBot', [botLevel]);
+	let addingBot = $state(false);
+	async function addBot(botId: string) {
+		if (!canAddBot || addingBot) return;
+		addingBot = true;
+		try { await send('addBot', [botId]); } finally { addingBot = false; }
+	}
+
 	const removeBot = (botId: string) => void send('removeBot', [botId]);
 	const low = $derived(room.legalActions.minBet ?? 0);
 	const high = $derived(Math.min(room.legalActions.maxBet ?? 0, me?.balance ?? 0));
@@ -915,22 +920,15 @@
 
 <svelte:window {onkeydown} />
 
-{#snippet botAdder()}
-	<div class="bot-adder" data-testid="bot-adder">
-		<div class="levels" role="radiogroup" aria-label="Bot difficulty">
-			{#each ['easy', 'normal', 'hard'] as const as level (level)}
-				<button
-					role="radio"
-					aria-checked={botLevel === level}
-					class:on={botLevel === level}
-					onclick={() => (botLevel = level)}>{level}</button
-				>
-			{/each}
-		</div>
-		<button class="mini add-bot" onclick={addBot} disabled={!canAddBot}>
-			<Bot class="h-3.5 w-3.5" /> Add bot
-		</button>
+{#snippet waitingHostActions()}
+	<div class="mobile-lobby-actions">
+		<button class="deal-btn" onclick={startNight} disabled={!canDeal} data-testid="mobile-deal-first"><Play class="h-4 w-4" /> Start the night</button>
+		<button class="mini" onclick={openInvite}><UserPlus class="h-3.5 w-3.5" /> Add company</button>
 	</div>
+{/snippet}
+
+{#snippet botAdder()}
+	<BotPicker occupied={room.usersList.filter(user => !user.hasLeft && user.botId).map(user => user.botId!)} game={room.gameType ?? 'teen-patti'} busy={!canAddBot || addingBot} onpick={addBot} />
 {/snippet}
 
 <div class="tp-shell" data-testid="table-scene" data-game="teen-patti">
@@ -1063,7 +1061,11 @@
 				style:left="{point.left}px"
 				style:top="{point.top}px"
 				style:--seat-w="{seatW}px"
-				style:--mascot-inset="{Math.max(0, (club.settings.mascotSize ?? MASCOT_SIZE.default) * 0.32 - (arenaW - point.left - seatW / 2))}px"
+				style:--mascot-inset="{Math.max(
+					0,
+					(club.settings.mascotSize ?? MASCOT_SIZE.default) * 0.32 -
+						(arenaW - point.left - seatW / 2)
+				)}px"
 			>
 				<TpSeat
 					user={entry.user}
@@ -1304,11 +1306,11 @@
 							>
 								<Play class="h-4 w-4" /> Start the night
 							</button>
-							<button class="mini" onclick={oninvite}
-								><UserPlus class="h-3.5 w-3.5" /> Invite</button
+							<button class="mini" onclick={openInvite}
+								><UserPlus class="h-3.5 w-3.5" /> {canAddBot ? 'Add company' : 'Invite'}</button
 							>
 							{#if !lineup.length}{@render variantChip()}{/if}
-							{@render botAdder()}
+							<div class="lobby-bots">{@render botAdder()}</div>
 						</div>
 
 						{#if !canDeal}
@@ -1451,6 +1453,7 @@
 
 	{#if me}
 		<ActionDock
+			waitingActions={isHost ? waitingHostActions : undefined}
 			{me}
 			{room}
 			inHand={inHand(me)}
@@ -3008,6 +3011,13 @@
 		font-size: 2.6rem;
 		animation: wobble 2.4s ease-in-out infinite;
 	}
+	.lobby-bots { width: 100%; max-width: 620px; }
+	.mobile-lobby-actions { display: none; }
+	@media(max-width: 640px) {
+		.lobby-bots, .lobby .lobby-actions { display: none; }
+		.mobile-lobby-actions { display: flex; align-items: center; justify-content: center; gap: .6rem; margin-bottom: .6rem; }
+		.mobile-lobby-actions .deal-btn { padding: .6rem .9rem; font-size: .8rem; }
+	}
 	.lobby-actions {
 		display: flex;
 		flex-wrap: wrap;
@@ -3690,5 +3700,4 @@
 		.flying-chip {
 			display: none;
 		}
-	}
-</style>
+	}</style>

@@ -262,6 +262,7 @@
 		<header>
 			<p class="eyebrow">Club owner</p>
 			<h1>Admin</h1>
+			<a class="btn btn-ghost rounded-full" href="/admin/bots">Manage characters ↗</a>
 		</header>
 
 		{#if !isOwner}

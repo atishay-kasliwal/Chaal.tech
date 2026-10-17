@@ -50,6 +50,7 @@
 				class="btn btn-ghost rounded-full"
 				aria-current={page.route.id === '/stats' ? 'page' : undefined}>Stats</a
 			>
+			<a href="/bots" class="btn btn-ghost rounded-full" aria-current={page.url.pathname.startsWith('/bots') ? 'page' : undefined}>Bots</a>
 		{/if}
 		{#if club.member?.role === 'owner'}
 			<a

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { MongoClient } from 'mongodb';
 import { randomUUID } from 'node:crypto';
 import { verifyStoredHands, migrateAnalytics, recorderHealth, COLLECTIONS } from '../../server/analytics/store.mjs';
+import { seedCharacters } from '../../server/bots/directory.mjs';
 import { baseURL, origin, closeClub, createSession, openPlayer } from './club-helper.mjs';
 
 const mongo = new MongoClient(process.env.CHAAL_CF_TEST_MONGO);
@@ -42,6 +43,8 @@ test('the Worker reports its engine build', async () => {
 test('a real hand with a bot is recorded in three tiers and replays exactly from storage', async (t) => {
 	// Schema administration is a separate, deliberate step (the runtime never does it).
 	await migrateAnalytics(db);
+	await seedCharacters(db);
+	const expectedStyle = (await db.collection('bots').findOne({_id: 'rohit-sharma'})).currentStyle;
 	const hostSession = await createSession({ nickname: 'Recorder host' });
 	const guestSession = await createSession({ nickname: 'Recorder guest' });
 	const created = await createBootTable(hostSession);
@@ -58,7 +61,7 @@ test('a real hand with a bot is recorded in three tiers and replays exactly from
 	await host.waitFor((p) => p.event === 'roomData' && p.args?.[0]?.usersList?.length === 1);
 	assert.equal((await guest.send('joinRoom', ['Guest', room], false)).ok, true);
 	await host.waitFor((p) => p.event === 'roomData' && p.args?.[0]?.usersList?.length === 2);
-	const added = await host.send('addBot', ['hard']);
+	const added = await host.send('addBot', ['rohit-sharma']);
 	assert.equal(added.ok, true, JSON.stringify(added));
 	await host.waitFor((p) => p.event === 'roomData' && p.args?.[0]?.usersList?.length === 3);
 	const started = await host.send('start', [room, 0, 3, 'classic-1', 'selected']);
@@ -85,8 +88,8 @@ test('a real hand with a bot is recorded in three tiers and replays exactly from
 	assert.equal(record.complete, true);
 	assert.equal(record.seats.length, 3);
 	const bot = record.seats.find((seat) => seat.kind === 'bot');
-	assert.equal(bot.bot.styleId, 'legacy-hard@1');
-	assert.equal(bot.bot.policy, 'tp-heuristic@1');
+	assert.equal(bot.bot.styleId, expectedStyle);
+	assert.equal(bot.bot.policy, 'tp-character@1');
 	assert.equal(record.engine, 'test', 'the engine build is recorded');
 	assert.deepEqual(record.versions, {
 		engine: 'test', recorder: 2, game: 'teen-patti', gameVersion: 1, rulesVersion: 'classic-1', variant: { id: 'classic', version: 1 }
@@ -98,7 +101,7 @@ test('a real hand with a bot is recorded in three tiers and replays exactly from
 	for (const trace of sealed.botTrace) assert.equal(trace.verified, 'reproduced');
 	assert.equal(await db.collection(COLLECTIONS.failures).countDocuments({ room }), 0);
 	const night = await until(() => db.collection(COLLECTIONS.nights).findOne({ room }));
-	assert.ok(night.events.some((event) => event.a === 'addBot' && event.identity?.styleId === 'legacy-hard@1'));
+	assert.ok(night.events.some((event) => event.a === 'addBot' && event.identity?.styleId === expectedStyle));
 
 	// The stored hand replays from its sealed inputs in this process, outside Cloudflare.
 	const report = await verifyStoredHands(db, { filter: { _id: record._id } });

@@ -70,13 +70,13 @@ export function nextBotMove(room, connected, random, profileFor = () => undefine
 	)) {
 		const view = projection(room, bot.id, connected);
 		if (needsMove(view.legalActions)) {
-			const move = decide(view, bot.id, random, profileFor(bot.id));
+			const move = decide(view, bot.id, random, profileFor(bot.id) ?? bot.bot.style?.tendencies);
 			if (move) return { botId: bot.id, ...move };
 		}
 	}
 	const current = room.players.find((p) => p.id === room.currentPlayerId);
 	if (!current?.bot) return null;
-	const move = decide(projection(room, current.id, connected), current.id, random, profileFor(current.id));
+	const move = decide(projection(room, current.id, connected), current.id, random, profileFor(current.id) ?? current.bot.style?.tendencies);
 	return move ? { botId: current.id, ...move } : null;
 }
 

@@ -83,7 +83,10 @@ published style.
 - **chaal-runtime** (the Worker's `MONGODB_URI`), as a custom role on database `chaal` with:
   - `find`, `insert`, `update` on `hand_records`, `hand_private`, `hand_sealed`, `night_events`,
     `recorder_failures`, `recorder_status`;
-  - `find` on `analytics_meta`, `bot_styles`, `bots`;
+  - `find` on `analytics_meta`;
+  - Phase 3 owner tools require `find`, `insert`, `update` on `bot_styles` and `bots`.
+    No `remove`: retirement keeps every identity and publication. The Worker checks a fresh
+    owner membership before these management operations; bot decisions never access this API;
   - the app's existing needs: `find`, `insert`, `update`, `remove` on `members`, `club_settings`,
     `club_hands`, `club_nights` and `availability`, plus `createIndex` on `club_hands` (the
     existing archive creates its index at runtime).

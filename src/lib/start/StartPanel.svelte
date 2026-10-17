@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import BotPicker from '#lib/bots/BotPicker.svelte';
+	import type { ClubBot } from '#lib/bots/types.js';
 	import { properName } from '#lib/names.js';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -59,8 +62,17 @@
 		boot = defaults.boot;
 		potLimit = defaults.potLimit;
 	});
-	let botCount = $state(3);
-	let botLevel = $state<'easy' | 'normal' | 'hard'>('normal');
+	let pickedBots = $state<string[]>([]);
+	let botOptions = $state<ClubBot[]>([]);
+	let botPickerOpen = $state(false);
+	onMount(() => {
+		void club.request('/bots').then(({response, body}) => {
+			if (!response.ok) return;
+			botOptions = body.bots;
+			const requested = page.url.searchParams.get('bot');
+			pickedBots = requested && botOptions.some(bot => bot.botId === requested) ? [requested] : botOptions.slice(0, 3).map(bot => bot.botId);
+		}).catch(() => {});
+	});
 	const BOOTS = [5, 10, 20, 50, 100];
 	const LIMITS = [0, 64, 128, 256, 512];
 	// Every Teen Patti room opens with Classic. Variant choice belongs between hands.
@@ -122,7 +134,7 @@
 		}
 		onclose?.();
 		const practice =
-			withBots && gameType === 'teen-patti' ? `?bots=${botCount}&level=${botLevel}` : '';
+			withBots && gameType === 'teen-patti' ? `?bots=${pickedBots.join(',')}` : '';
 		await goto(`/${result.roomName}${practice}`);
 	}
 
@@ -287,14 +299,16 @@
 					class="big"
 					data-testid="play-bots"
 					onclick={() => create(true)}
-					disabled={!socket.connected || !!busy}
+					disabled={!socket.connected || !!busy || !pickedBots.length}
 				>
 					<span class="emoji" aria-hidden="true">🤖</span>
 					<span>
-						{busy === 'bots' ? 'Dealing…' : 'Play vs bots'}
-						<small>{botCount} {botLevel} bots, cards dealt instantly</small>
+						{busy === 'bots' ? 'Getting your table ready…' : 'Chaal'}
+						<small>{pickedBots.length ? botOptions.filter(bot => pickedBots.includes(bot.botId)).map(bot => bot.name).join(', ') : 'Pick your company'}</small>
 					</span>
 				</button>
+				<button class="text-btn" onclick={() => botPickerOpen = !botPickerOpen}>{botPickerOpen ? 'Done choosing' : 'Choose your opponents'}</button>
+				{#if botPickerOpen}<BotPicker selected={pickedBots} onpick={id => pickedBots = pickedBots.includes(id) ? pickedBots.filter(bot => bot !== id) : [...pickedBots, id]} />{/if}
 			{/if}
 		</div>
 	{/if}
@@ -403,31 +417,7 @@
 							{/each}
 						</div>
 					</div>
-					<div class="row">
-						<span>Bots for “Play vs bots”</span>
-						<div class="pills" role="radiogroup" aria-label="Number of bots">
-							{#each [1, 2, 3, 4, 5] as count (count)}
-								<button
-									type="button"
-									role="radio"
-									aria-checked={botCount === count}
-									class:on={botCount === count}
-									onclick={() => (botCount = count)}>{count}</button
-								>
-							{/each}
-						</div>
-						<div class="pills" role="radiogroup" aria-label="Bot difficulty">
-							{#each ['easy', 'normal', 'hard'] as const as level (level)}
-								<button
-									type="button"
-									role="radio"
-									aria-checked={botLevel === level}
-									class:on={botLevel === level}
-									onclick={() => (botLevel = level)}>{level}</button
-								>
-							{/each}
-						</div>
-					</div>
+
 				{/if}
 			</div>
 		{/if}

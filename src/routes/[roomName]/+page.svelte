@@ -3,7 +3,8 @@
 	import { onMount } from 'svelte';
 	import { socket } from '#lib/stores/socket-store.svelte.js';
 	import { displayToast } from '#lib/components/Toasts/index.js';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
+	import { page } from '$app/state';
 	import UsersTable from './UsersTable.svelte';
 	import PokerSeat from '#lib/components/PokerSeat.svelte';
 	import PlayingCard from '#lib/components/PlayingCard.svelte';
@@ -239,17 +240,17 @@
 		if (practiceDone || !room || !usernameCreated || room.isStarted) return;
 		if ((room.gameType ?? 'teen-patti') !== 'teen-patti' || room.hostId !== socket.playerId) return;
 		const params = new URLSearchParams(window.location.search);
-		const wanted = Math.min(5, Math.max(0, Number(params.get('bots')) || 0));
-		const level = ['easy', 'normal', 'hard'].includes(params.get('level') ?? '')
-			? params.get('level')
-			: 'normal';
+		const value = params.get('bots') ?? '';
+		// Numeric links from the previous UI still seat characters, never relabel legacy history.
+		const ids = /^\d+$/.test(value) ? Array(Math.min(5, Number(value))).fill('') as string[] : [...new Set(value.split(',').filter(Boolean))].slice(0, 5);
+		const wanted = ids.length;
 		if (!wanted) return;
 		practiceDone = true;
-		history.replaceState(history.state, '', window.location.pathname);
+		replaceState(window.location.pathname, page.state);
 		void (async () => {
 			for (let i = room.usersList.filter((u) => u.bot).length; i < wanted; i++) {
 				const revision = socket.roomData?.revision;
-				if (!(await sendAction('addBot', [level]))) return;
+				if (!(await sendAction('addBot', [ids[i]]))) return;
 				// Wait for the new seat to arrive before the next command (revision-checked).
 				for (let tries = 0; tries < 50 && socket.roomData?.revision === revision; tries++)
 					await new Promise((resolve) => setTimeout(resolve, 40));

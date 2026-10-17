@@ -34,7 +34,8 @@ function run(command, args, options = {}) {
 	});
 }
 
-const [port, inspectorPort] = await Promise.all([freePort(), freePort()]);
+const [port, inspectorPort, frontendPort] = await Promise.all([freePort(), freePort(), freePort()]);
+const browserURL = `http://127.0.0.1:${frontendPort}`;
 const endpoint = `http://127.0.0.1:${port}`;
 const wrangler = path.join(root, 'node_modules/.bin/wrangler');
 // A throwaway guest list and a stand-in for Google's signing key: the real sign-in path, offline.
@@ -52,6 +53,7 @@ await writeFile(varsFile, [
 	`GOOGLE_CLIENT_ID=${clientId}`,
 	'ALLOW_TEST_SIGN_IN=true',
 	'ENGINE_BUILD=test',
+	`ALLOWED_ORIGINS=http://localhost:5173,${browserURL}`,
 	`TEST_GOOGLE_JWKS='${JSON.stringify({ keys: [publicJwk] })}'`
 ].join('\n'), { mode: 0o600 });
 const worker = spawn(wrangler, [
@@ -59,6 +61,12 @@ const worker = spawn(wrangler, [
 	'--port', String(port), '--inspector-port', String(inspectorPort),
 	'--env-file', varsFile, '--persist-to', path.join(varsDir, 'state'), '--log-level', 'error'
 ], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+const frontend = spawn(path.join(root, 'node_modules/.bin/vite'), ['dev', '--host', '127.0.0.1', '--port', String(frontendPort), '--strictPort'], {
+ cwd: root, env: {...process.env, VITE_SERVER_URL: endpoint, VITE_GOOGLE_CLIENT_ID: clientId}, stdio: ['ignore','pipe','pipe']
+});
+let frontendOutput = '';
+frontend.stdout.on('data', chunk => {frontendOutput += chunk.toString();});
+frontend.stderr.on('data', chunk => {frontendOutput += chunk.toString();});
 let workerOutput = '';
 worker.stdout.on('data', (chunk) => { workerOutput += chunk.toString(); });
 worker.stderr.on('data', (chunk) => { workerOutput += chunk.toString(); });
@@ -77,8 +85,8 @@ try {
 	for (let attempt = 0; attempt < 120; attempt++) {
 		if (worker.exitCode !== null) break;
 		try {
-			const response = await fetch(`${endpoint}/health`);
-			if (response.ok) {
+			const [response, ui] = await Promise.all([fetch(`${endpoint}/health`), fetch(`${browserURL}/bots`)]);
+			if (response.ok && ui.ok) {
 				ready = true;
 				break;
 			}
@@ -87,14 +95,15 @@ try {
 		}
 		await new Promise((resolve) => setTimeout(resolve, 250));
 	}
-	if (!ready) throw new Error(`Cloudflare Worker did not become ready.\n${workerOutput}`);
+	if (!ready) throw new Error(`Cloudflare Worker did not become ready.\n${workerOutput}\n${frontendOutput}`);
 	const files = (await readdir(path.join(root, 'tests/cloudflare')))
 		.filter((name) => name.endsWith('.test.mjs'))
 		.map((name) => path.join('tests/cloudflare', name));
-	const result = await run(process.execPath, ['--test', ...files], {
+	const result = await run(process.execPath, ['--test', '--test-concurrency=1', ...files], {
 		env: {
 			...process.env,
 			CHAAL_CF_TEST_URL: endpoint,
+			CHAAL_BROWSER_URL: browserURL,
 			CHAAL_CF_TEST_SECRET: testSecret,
 			CHAAL_CF_TEST_MONGO: mongo.getUri(),
 			CHAAL_CF_TEST_CLIENT_ID: clientId,
@@ -104,13 +113,14 @@ try {
 	process.stdout.write(result.stdout);
 	process.stderr.write(result.stderr);
 	if (result.code !== 0) {
-		if (workerOutput.trim()) process.stderr.write(`\nWrangler output:\n${workerOutput}`);
+		if (workerOutput.trim()) process.stderr.write(`\nWrangler output:\n${workerOutput}\n${frontendOutput}`);
 		process.exitCode = result.code;
 	}
 } catch (error) {
 	console.error(error instanceof Error ? error.message : 'Cloudflare Worker tests failed');
 	process.exitCode = 1;
 } finally {
+	frontend.kill('SIGTERM');
 	await stopWorker();
 	await mongo.stop();
 	await rm(varsDir, { recursive: true, force: true });

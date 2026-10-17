@@ -22,6 +22,7 @@
 		"phase5:browser": "node scripts/phase5/browser.mjs",
 		"phase6:browser": "node scripts/phase6/browser.mjs",
 		"club": "node --env-file-if-exists=.env scripts/club-members.mjs",
+		"bots:migrate": "node --env-file-if-exists=.env scripts/bots-migrate.mjs",
 		"analytics:migrate": "node --env-file-if-exists=.env scripts/analytics-migrate.mjs",
 		"analytics:replay": "node --env-file-if-exists=.env scripts/analytics-replay.mjs",
 		"analytics:health": "node --env-file-if-exists=.env scripts/analytics-health.mjs",

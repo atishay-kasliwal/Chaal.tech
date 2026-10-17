@@ -29,18 +29,18 @@ The installer preserves transparency, packs strict cell boundaries, normalizes h
 Preview all characters, head tracking, expressions and a simulated hand at `/test-mascots`. Game expressions are ordered exactly as `src/lib/mascots/catalog.ts`; each atlas must keep nine cells in that order. Only signature outfits are included in this release; additional outfits require their own aligned directional sheets.
 
 
-## Bot artwork and seat support
+## Character bots (Phase 3)
 
-Five approved transparent direction atlases ship under `bot-rohit-sharma`, `bot-virat-kohli`,
-`bot-ms-dhoni`, `bot-gg`, and `bot-samay-raina`. `/test-mascots` separates member and bot art,
-and offers only expressions present in the manifest. The runtime-independent art catalogue
-lives in `shared/bot-characters.mjs`; the frontend compatibility export has no policy logic.
+Five approved bot direction atlases ship under `bot-rohit-sharma`, `bot-virat-kohli`,
+`bot-ms-dhoni`, `bot-gg`, and `bot-samay-raina`. `/test-mascots` has separate member/bot groups
+and only offers expressions that actually exist. All five member atlases remain complete.
 
-Table seats can display the animated bot mascot as their primary portrait when the server
-provides its asset ID, using 2.1 times the owner-selected cell size. Existing anonymous bots
-keep their fallback avatar until the permanent character integration supplies those IDs.
-Human corner peeks keep their original layout. Both honor the saved size and reduced motion.
+Bot seats use the animated mascot as their main portrait, at 2.1 times the owner-selected
+cell size; human seats use the original corner peek. This avoids showing the same face twice
+on a bot seat. Both follow the saved size without a redeploy, and respect reduced motion.
+Bot reaction categories gracefully fall back to the directional face until dedicated bot
+expression art exists. The 30 unfinished sheets are listed, with prompts, in
+`scripts/mascots/bot-generation-plan.json`; the image service rejected those requests at its
+usage limit. These are pending jobs, not generated assets.
 
-The 30 unfinished bot expression sheets and their original prompts remain listed in
-`scripts/mascots/bot-generation-plan.json`. Image generation hit its usage limit; no missing
-expression has been represented as generated art. Member expression art is complete.
+See `docs/BOT_CHARACTERS_PHASE3.md` for permanent bot identities, publishing and migration.

@@ -41,6 +41,7 @@ import {
 import { recentNights } from '../club/nights.mjs';
 import { openPoll, publicPoll, saveAvailability, pollSummary } from '../club/availability.mjs';
 import { sendAddedEmail } from '../club/beta-emails.mjs';
+import { botDirectory, adminBots, manageBot } from '../bots/directory.mjs';
 import { engineBuild } from './build.mjs';
 
 export { RoomDurableObject, ClubDirectory };
@@ -304,6 +305,26 @@ export default {
 			} catch (error) {
 				return clubFailure(error, origin, env);
 			}
+		}
+		if ((url.pathname === '/bots' || /^\/bots\/[a-z0-9-]+$/.test(url.pathname)) && request.method === 'GET') {
+			try {
+				const result = await withClubDatabase(env, async db => {
+					const member = await signedInMember(request, env, db);
+					return botDirectory(db, member, { id: url.pathname === '/bots' ? undefined : url.pathname.slice(6) });
+				});
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
+		if (url.pathname === '/admin/bots' && ['GET', 'POST'].includes(request.method)) {
+			try {
+				const body = request.method === 'POST' ? await jsonBody(request) : null;
+				const result = await withClubDatabase(env, async db => {
+					const owner = await signedInOwner(request, env, db);
+					if (body) await manageBot(db, owner, body);
+					return adminBots(db, owner);
+				});
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
 		}
 		if (url.pathname === '/admin' && (request.method === 'GET' || request.method === 'POST')) {
 			try {

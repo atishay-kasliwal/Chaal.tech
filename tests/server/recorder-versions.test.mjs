@@ -5,7 +5,8 @@ import { GAME_VERSIONS, replayUnavailable } from '../../server/games/versions.mj
 import { finishCapture, replayHand, semanticHash } from '../../server/analytics/recorder.mjs';
 import { BUILD_PATTERN, engineBuild } from '../../server/cloudflare/build.mjs';
 import { buildId } from '../../scripts/deploy-backend.mjs';
-import { readCorpus, corpusKey } from '../../scripts/replay-corpus.mjs';
+import { readCorpus, corpusKey, characterCorpusKey } from '../../scripts/replay-corpus.mjs';
+import { CHARACTER_SEEDS } from '../../server/bots/characters.mjs';
 import { teenPattiTable, dealTeenPatti, playTeenPatti } from './helpers/drivers.mjs';
 
 /* --------------------------------------- replay corpus --------------------------------------- */
@@ -41,6 +42,20 @@ test('the corpus covers every game and variant version this code implements', ()
 		);
 	for (const game of Object.keys(GAME_VERSIONS).filter((g) => g !== 'teen-patti'))
 		assert.ok([...covered].some((key) => key.startsWith(`${game}@${GAME_VERSIONS[game]}|`)), `no corpus hand for ${game}`);
+});
+
+test('the corpus pins every initial character style and policy across supported variants', () => {
+	const covered = new Map(corpus.hands.map(capture => [characterCorpusKey(capture), capture]));
+	for (const character of CHARACTER_SEEDS) for (const variant of listVariants()) {
+		const key = `${character.style._id}|${character.style.policy}|teen-patti@${GAME_VERSIONS['teen-patti']}|${variant.rulesVersion}|${variant.id}@${variant.version}`;
+		const capture = covered.get(key);
+		assert.ok(capture, `Missing character policy fixture: ${key}; run npm run analytics:corpus`);
+		const identity = Object.values(capture.hand.bots).find(bot => bot.styleId === character.style._id);
+		assert.equal(identity.configHash, character.style.configHash, 'An existing published seed style cannot change meaning');
+		const finished = finishCapture(capture);
+		assert.equal(finished.ok, true, JSON.stringify(finished.failure));
+		assert.ok(finished.records.sealed.botTrace.some(trace => trace.botId === character.bot._id && trace.verified === 'reproduced'));
+	}
 });
 
 /* -------------------------------------- recorded versions ------------------------------------- */

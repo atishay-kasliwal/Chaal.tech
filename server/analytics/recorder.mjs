@@ -17,7 +17,8 @@
  */
 import { transition, projection, playing, limits } from '../engine.mjs';
 import { nextBotMove } from '../bots/runner.mjs';
-import { identityForLevel, STYLES, LEGACY_POLICY } from '../bots/identity.mjs';
+import { identityForSeat, STYLES, LEGACY_POLICY } from '../bots/identity.mjs';
+import { CHARACTER_POLICY, configErrors } from '../bots/config.mjs';
 import { getVariant } from '../variants/index.mjs';
 import { canonicalJson, fingerprint64 } from './hash.mjs';
 import { handVersions, replayUnavailable } from '../games/versions.mjs';
@@ -237,7 +238,7 @@ export function recordCommit(state, { before, after, afterJson, step, now, engin
 
 	// A bot's identity is frozen when it sits down, so a later style change never relabels it.
 	if (step.action === 'addBot' && after.players.some((p) => p.id === step.payload?.botId))
-		next.bots[step.payload.botId] = identityForLevel(step.payload.level) ?? {
+		next.bots[step.payload.botId] = identityForSeat(after.players.find(p => p.id === step.payload.botId)?.bot) ?? {
 			unresolved: true,
 			level: step.payload.level ?? null
 		};
@@ -273,7 +274,7 @@ export function recordCommit(state, { before, after, afterJson, step, now, engin
 			bots: Object.fromEntries(
 				after.players
 					.filter((p) => p.bot)
-					.map((p) => [p.id, next.bots[p.id] ?? { ...identityForLevel(p.bot.level), resolvedAt: 'deal' }])
+					.map((p) => [p.id, next.bots[p.id] ?? { ...identityForSeat(p.bot), resolvedAt: 'deal' }])
 			)
 		};
 	} else if (next.hand && !next.hand.failed) next.hand.steps.push(entry);
@@ -385,7 +386,15 @@ function betweenHands(state, { before, after, step, now }) {
 		payload: step.payload ?? {},
 		afterHand: state.last?.handId ?? null
 	};
-	if (step.action === 'addBot') event.identity = state.bots[step.payload?.botId] ?? null;
+	if (step.action === 'addBot') {
+		// The authoritative add payload carries a replay snapshot. Night events are public:
+		// retain only identity metadata, never policy inputs, tendencies or validation reports.
+		const identity = state.bots[step.payload?.botId];
+		event.payload = {};
+		event.identity = identity ? Object.fromEntries(
+			['botId', 'styleId', 'styleVersion', 'configHash', 'policy'].map(key => [key, identity[key]])
+		) : null;
+	}
 	if (step.action === 'answerChipRequest') event.chips = balanceChanges(before, after);
 	rows.push(nightEvent(state, event, after.name));
 	// A late reveal makes cards public to everyone still at the table.
@@ -445,14 +454,15 @@ export function replayHand(preDeal, steps, { bots = {}, botChecks = [], match = 
  * Re-run a bot's decision with the exact style it played under. A style the running code can no
  * longer interpret is reported as unavailable, never re-interpreted with today's behaviour.
  */
-function styleProfile(identity) {
-	const style = identity?.styleId ? STYLES[identity.styleId] : null;
-	if (!style || style.configHash !== identity.configHash || style.policy !== LEGACY_POLICY) return null;
+function styleProfile(identity, bot) {
+	const style = bot?.style ?? (identity?.styleId ? STYLES[identity.styleId] : null);
+	if (!style || style.configHash !== identity?.configHash || style.botId !== identity.botId || style._id !== identity.styleId || style.version !== identity.styleVersion) return null;
+	if (style.policy === CHARACTER_POLICY ? configErrors(style).length > 0 : style.policy !== LEGACY_POLICY) return null;
 	return style.tendencies;
 }
 
 function verifyBotDecision(state, step, index, bots) {
-	const profile = styleProfile(bots[step.actor]);
+	const profile = styleProfile(bots[step.actor], state.players.find(p => p.id === step.actor)?.bot);
 	if (!profile) return 'policy-unavailable';
 	if (!Array.isArray(step.bot.seed)) throw new ReplayError('Bot decision has no recorded seed', index);
 	const next = sfc32(step.bot.seed);
@@ -462,7 +472,7 @@ function verifyBotDecision(state, step, index, bots) {
 		return next();
 	};
 	const connected = new Set(step.ctx?.connected ?? []);
-	const move = nextBotMove(state, connected, random, (id) => styleProfile(bots[id]) ?? undefined);
+	const move = nextBotMove(state, connected, random, (id) => styleProfile(bots[id], state.players.find(p => p.id === id)?.bot) ?? undefined);
 	if (
 		!move ||
 		move.botId !== step.actor ||
@@ -674,7 +684,7 @@ export function buildHandRecords(hand, { engine = null, room } = {}) {
 			stack: hidden ? null : (pre?.balance ?? null),
 			hidden,
 			connected: p.bot ? true : startConnected.has(p.id),
-			...(p.bot ? { bot: hand.bots?.[p.id] ?? { ...identityForLevel(p.bot.level), resolvedAt: 'build' } } : {})
+			...(p.bot ? { bot: hand.bots?.[p.id] ?? { ...identityForSeat(p.bot), resolvedAt: 'build' } } : {})
 		};
 	});
 
