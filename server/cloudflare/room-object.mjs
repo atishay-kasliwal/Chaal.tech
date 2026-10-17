@@ -37,8 +37,23 @@ const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
 	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
 	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit',
-	'setBalanceHidden', 'showCards', 'chooseNext', 'openPick', 'tableAction', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
+	'setBalanceHidden', 'showCards', 'chooseNext', 'openPick', 'tableAction', 'prepareStart', 'cutDeck', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
 ]);
+
+/**
+ * Seal the next hand's deck as soon as a cut opens: shuffle it, give every position a secret, and
+ * publish one fingerprint over the fingerprints of all 52 positions. After the hand, the secrets
+ * of the cards that were shown prove they sat exactly there before anyone cut.
+ */
+async function sealDeck(room) {
+	if (!room.cut || room.seal) return;
+	const deck = shuffledDeck();
+	const salts = deck.map(() => toHex(crypto.getRandomValues(new Uint8Array(16))));
+	const leaves = await Promise.all(
+		deck.map((card, index) => hash(`${index}|${card.rank}|${card.suit}|${salts[index]}`))
+	);
+	room.seal = { deck, salts, leaves, commitment: await hash(leaves.join('')) };
+}
 
 const hash = async (value) => {
 	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
@@ -481,7 +496,9 @@ const picked = before.upNext
 						: (picked?.rulesVersion ?? args[3] ?? before.rulesVersion);
 					const variant = getVariant(rulesVersion);
 					if (!variant) throw new GameError('Unsupported game rules version', 'UNSUPPORTED_RULES');
-					payload = { cutAt: args[1], cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(opening ? { lineupIndex: 0 } : {}) };
+					// A sealed deck is dealt from where the cutter cut it (or a random cut if they didn't).
+const cutAt = before.seal ? (before.cut?.at ?? 1 + secureRandomInt(51)) : args[1];
+payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(opening ? { lineupIndex: 0 } : {}) };
 				} else payload = {};
 				text = 'Game started';
 			} else if (event === 'ready') {
@@ -514,7 +531,15 @@ const picked = before.upNext
 				action = 'openPick';
 				payload = {};
 				text = null;
-			} else if (event === 'tableAction') {
+			} else if (event === 'prepareStart') {
+	action = 'prepareStart';
+	payload = { rulesVersion: args[0] };
+	text = null;
+} else if (event === 'cutDeck') {
+	action = 'cutDeck';
+	payload = { at: args[0] };
+	text = null;
+} else if (event === 'tableAction') {
 				// A move on the table cards: open a mat card, lock a line, make a joker.
 				if (!args[0] || typeof args[0] !== 'object' || Array.isArray(args[0]))
 					throw new GameError('Invalid table move');
@@ -591,7 +616,7 @@ const picked = before.upNext
 			now,
 			turnMs: this.turnMs(),
 			handId: randomHandId(),
-			deck: action === 'start' ? productionDeck(before.gameType ?? 'teen-patti') : undefined,
+			deck: action === 'start' ? (before.seal?.deck ?? productionDeck(before.gameType ?? 'teen-patti')) : undefined,
 			recycledDeck: before.gameType === 'rummy' && before.deck.length === 0 && before.discardPile.length > 1
 				? shuffle(before.discardPile.slice(0, -1))
 				: undefined,
@@ -600,6 +625,7 @@ const picked = before.upNext
 			...(await this.pickContext())
 		});
 		const result = { ok: true, roomName: room.name, revision: room.revision, handId: room.handId };
+		await sealDeck(room);
 		this.commit(room, playerId, meta.commandId, commandFingerprint, result, movements(before, room, event), before.revision);
 		if (room.result && room.result.handId !== before.result?.handId)
 			text = `${room.result.winnerName} won ${room.result.amount} chips`;
@@ -850,6 +876,7 @@ const picked = before.upNext
 				...(await this.pickContext())
 			});
 			const commandId = `bot:${before.handId}:${before.revision}`;
+			await sealDeck(room);
 			this.commit(room, move.botId, commandId, await hash(commandId), { ok: true }, movements(before, room, `bot-${move.action}`), before.revision);
 			this.publish(room.name, room.result && !before.result
 				? `${room.result.winnerName} won ${room.result.amount} chips`
@@ -922,6 +949,7 @@ const picked = before.upNext
 						: undefined
 				});
 				const commandId = `timeout:${before.handId}:${before.revision}`;
+				await sealDeck(room);
 				this.commit(room, before.currentPlayerId, commandId, await hash(commandId), { ok: true }, movements(before, room, 'timeout'), before.revision);
 				changed = true;
 				announcement = room.result
@@ -945,6 +973,7 @@ const picked = before.upNext
 						...(await this.pickContext())
 					});
 					const commandId = `settle:${before.chooser.handId}:${before.revision}`;
+					await sealDeck(room);
 					this.commit(room, actor.id, commandId, await hash(commandId), { ok: true }, null, before.revision);
 					changed = true;
 				}

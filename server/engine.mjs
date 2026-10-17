@@ -126,6 +126,54 @@ export const SAME_GAME_MS = 4 * 1000;
 
 const humansSeated = (room) => seated(room).filter((p) => !p.bot && !p.departed).length;
 
+/** Time the cutter gets to cut the sealed deck before the deal (alongside the rules card). */
+export const CUT_MS = 15 * 1000;
+
+/**
+ * Open the cut: the person whose turn it was to pick (the host for the first hand) cuts the deck
+ * the server sealed for the next hand. Bots never cut; a cut that doesn't come is made at random.
+ */
+function openCut(room, by, ctx) {
+	delete room.cut;
+	delete room.seal;
+	const cutter = room.players.find((p) => p.id === by && !p.bot && !p.departed);
+	if (room.boot === undefined || !cutter || !Number.isFinite(ctx?.now)) return;
+	room.cut = { by, ms: CUT_MS, deadline: ctx.now + CUT_MS, at: null };
+}
+/** Forget a cut (and its sealed deck) when the next game is no longer settled. */
+function dropCut(room) {
+	delete room.cut;
+	delete room.seal;
+}
+
+/**
+ * What everyone may know of the sealed deck: before the deal, its fingerprint; after the hand,
+ * the proof for every card shown (its place in the sealed deck and its secret). Packed hands that
+ * were never shown stay hidden: only their fingerprints are listed.
+ */
+function deckProof(room, reveal) {
+	const seal = room.handSeal;
+	if (!seal?.commitment) return null;
+	if (!room.result)
+		return { commitment: seal.commitment, cutAt: seal.cutAt, by: seal.cutBy ?? null };
+	const position = new Map(seal.deck.map((card, index) => [`${card.rank}:${card.suit}`, index]));
+	const cards = room.players
+		.filter((p) => reveal.has(p.id))
+		.flatMap((p) => p.cards)
+		.map((card) => {
+			const pos = position.get(`${card.rank}:${card.suit}`);
+			return { pos, rank: card.rank, suit: card.suit, salt: seal.salts[pos] };
+		})
+		.filter((card) => Number.isInteger(card.pos));
+	return {
+		commitment: seal.commitment,
+		cutAt: seal.cutAt,
+		by: seal.cutBy ?? null,
+		leaves: [...seal.leaves],
+		cards
+	};
+}
+
 /** A lineup slot that draws a surprise game (same rule as Random) when its turn comes. */
 export const MYSTERY = 'mystery';
 
@@ -225,6 +273,7 @@ function settleNext(room, ctx) {
 		dealAt: ctx.now + (changed ? revealMs : SAME_GAME_MS),
 		...(lineupIndex === undefined ? {} : { lineupIndex })
 	};
+	openCut(room, chooser.playerId, ctx);
 }
 
 /**
@@ -257,6 +306,7 @@ function assignChooser(room, now) {
 		choice: null
 	};
 	delete room.upNext;
+	dropCut(room);
 }
 
 /**
@@ -533,6 +583,13 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				room.lastChooserId = room.chooser.playerId;
 				delete room.chooser;
 			}
+			// The sealed deck (if the server sealed one) belongs to this hand now, with the cut used.
+			delete room.handSeal;
+			if (room.seal) {
+				room.handSeal = { ...room.seal, cutAt: payload.cutAt, cutBy: room.cut?.by ?? null };
+				delete room.seal;
+			}
+			delete room.cut;
 			// Follow the lineup: which slot this hand plays, and how many hands it has had.
 			const lineupIndex = room.upNext?.lineupIndex ?? payload.lineupIndex;
 			if (Number.isInteger(lineupIndex) && lineupIndex >= 0) {
@@ -616,6 +673,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			room.chooser.deadline = (ctx?.now ?? 0) + (solo ? SOLO_CHOOSE_MS : CHOOSE_MS);
 			// Changing the game un-settles it until the new pick.
 			delete room.upNext;
+			dropCut(room);
 		} else if (action === 'chooseNext') {
 			require(room.chooser && !playing(room), 'Nobody is picking the next game right now');
 			const picker = room.players.find((p) => p.id === room.chooser.playerId);
@@ -631,7 +689,48 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				by: id
 			};
 			delete room.upNext;
+			dropCut(room);
 			settleNext(room, ctx);
+		} else if (action === 'prepareStart') {
+			// The night's first hand: settle its game (the lineup's first, or the host's choice) and
+			// open the cut, so everyone sees the rules and the deck is cut before the first deal.
+			require(id === room.hostId, 'Only the host can start the game', 'FORBIDDEN');
+			require(!playing(room) && !room.chooser && !room.upNext, 'The game is already under way');
+			require(room.boot !== undefined, 'This table starts with a plain deal');
+			const slots = (ctx?.lineup ?? []).filter((v) => v === MYSTERY || getVariant(v));
+			const fromLineup = slots.length > 0;
+			const rulesVersion = fromLineup
+				? slots[0] === MYSTERY
+					? drawRandom(
+							room,
+							listVariants().map((variant) => variant.rulesVersion),
+							ctx.randomInt
+						)
+					: slots[0]
+				: typeof payload.rulesVersion === 'string' && getVariant(payload.rulesVersion)
+					? payload.rulesVersion
+					: room.rulesVersion;
+			require(Number.isFinite(ctx?.now), 'Missing clock');
+			const revealMs = humansSeated(room) <= 1 ? SOLO_REVEAL_MS : REVEAL_MS;
+			room.upNext = {
+				rulesVersion,
+				mode: fromLineup ? 'lineup' : 'picked',
+				by: id,
+				changed: true,
+				revealMs,
+				dealAt: ctx.now + revealMs,
+				...(fromLineup ? { lineupIndex: 0 } : {})
+			};
+			openCut(room, id, ctx);
+		} else if (action === 'cutDeck') {
+			// The cutter cuts the sealed deck: the deal starts this many cards down.
+			require(room.cut && !playing(room), 'There is no deck to cut right now');
+			require(room.cut.by === id, 'It is not your turn to cut', 'FORBIDDEN');
+			require(room.cut.at === null, 'The deck is already cut');
+			require(Number.isInteger(payload.at) &&
+				payload.at >= 1 &&
+				payload.at <= 51, 'Cut somewhere between the first and last card');
+			room.cut.at = payload.at;
 		} else if (action === 'settleNext') {
 			// The pick window ran out with no pick: settle the next game now (the server's timer).
 			require(room.chooser && !playing(room) && !room.upNext, 'Nothing to settle');
@@ -894,6 +993,17 @@ export function projection(room, id, connected) {
 		...(room.standing ? { standing: { ...room.standing } } : {}),
 		// The last five hands played here: the game and who won.
 		...(room.gameLog ? { gameLog: room.gameLog.map((entry) => ({ ...entry })) } : {}),
+		// The cut before the deal (who cuts, where, and the sealed deck's fingerprint), and once the
+		// hand is dealt, the seal and later the proof for the cards that were shown.
+		...(room.cut
+			? {
+					cut: {
+						...room.cut,
+						...(room.seal?.commitment ? { commitment: room.seal.commitment } : {})
+					}
+				}
+			: {}),
+		...(room.handSeal ? { deckProof: deckProof(room, reveal) } : {}),
 		// Where the night is in tonight's lineup: the slot playing and how many hands it has had.
 		...(room.lineupAt ? { lineupAt: { ...room.lineupAt } } : {}),
 		// The settled next game: what, how it was chosen, and when it will be dealt.

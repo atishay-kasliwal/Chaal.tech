@@ -12,6 +12,7 @@
 		badge,
 		seconds,
 		total,
+		note = '',
 		onclose
 	}: {
 		rulesVersion: string;
@@ -21,6 +22,8 @@
 		/** Whole seconds left until the deal. */
 		seconds: number;
 		total: number;
+		/** A line about the deck, e.g. who is cutting it. */
+		note?: string;
 		onclose: () => void;
 	} = $props();
 
@@ -69,7 +72,7 @@
 		</ul>
 	{/if}
 	<footer>
-		<span class="hint">Dealing when the countdown ends</span>
+		<span class="hint">{note || 'Dealing when the countdown ends'}</span>
 		<button class="got-it" onclick={onclose}>Got it</button>
 	</footer>
 </div>

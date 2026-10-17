@@ -40,6 +40,8 @@
 	import ActionDock from './ActionDock.svelte';
 	import TableMat from './TableMat.svelte';
 	import NextGameCard from './NextGameCard.svelte';
+	import DeckCut from './DeckCut.svelte';
+	import VerifyDeck from './VerifyDeck.svelte';
 	import { properName } from '#lib/names.js';
 	import { matFor, REVIEW_GAMES, REVIEW_MS } from './table-cards.js';
 	import {
@@ -74,7 +76,8 @@
 		onleave,
 		emailInvites,
 		tableCards,
-		gameTitle
+		gameTitle,
+		onprepare
 	}: {
 		room: RoomData;
 		selfId: string;
@@ -96,6 +99,8 @@
 		tableCards?: Snippet;
 		/** Overrides the game name in the top bar. */
 		gameTitle?: string;
+		/** Start the night: settle the first game and open the first cut (the deal follows). */
+		onprepare?: () => Promise<boolean>;
 	} = $props();
 
 	type InviteReply = {
@@ -381,6 +386,7 @@
 			dealAt = handId
 				? Math.max(reviewUntil, Date.now() + (reason === 'last-player' ? 5000 : 8000))
 				: null;
+			baseDealAt = dealAt ?? 0;
 		});
 	});
 	// Once the next game is settled, everyone gets time to read it: 15 seconds for a new game
@@ -392,15 +398,73 @@
 	$effect(() => {
 		const key = settledKey;
 		untrack(() => {
-			if (!key || !settled || dealAt === null || key === seenSettled) return;
+			// Between hands, or in the waiting room once the host starts the night.
+			if (!key || !settled || key === seenSettled || (dealAt === null && room.isStarted)) return;
 			seenSettled = key;
 			const wait = settled.changed ? settled.revealMs : 4000;
-			dealAt = Math.max(reviewUntil, Date.now() + wait);
+			baseDealAt = Math.max(reviewUntil, Date.now() + wait);
+			dealAt = Math.max(baseDealAt, cutReadyAt);
 		});
 	});
+
+	// ——— The cut: the deal waits for it (or for its 15 seconds to run out) ———
+	let baseDealAt = 0;
+	let cutReadyAt = 0;
+	let cutSeen: string | null = null;
+	/** When the cut's time runs out, on this device's clock. */
+	let cutDeadline = $state(0);
+	const cut = $derived(room.cut ?? null);
+	const cutState = $derived(cut ? `${cut.by}:${cut.deadline}:${cut.at}` : null);
+	$effect(() => {
+		void cutState;
+		untrack(() => {
+			if (!cut) {
+				cutReadyAt = 0;
+				return;
+			}
+			const id = `${cut.by}:${cut.deadline}`;
+			if (cutSeen !== id) {
+				cutSeen = id;
+				cutDeadline = Date.now() + cut.ms;
+			}
+			cutReadyAt = cut.at === null ? cutDeadline + 400 : Date.now() + 1500;
+			if (dealAt !== null) dealAt = Math.max(baseDealAt, cutReadyAt);
+		});
+	});
+	const cutLeft = $derived(
+		cut && cut.at === null ? Math.max(0, Math.ceil((cutDeadline - now) / 1000)) : 0
+	);
+	/** Your turn to cut: the deck-cut card replaces the rules card for you. */
+	const cutting = $derived(!!cut && cut.by === selfId && cut.at === null && cutLeft > 0);
+	const cutterName = $derived(
+		cut
+			? cut.by === selfId
+				? 'You'
+				: (room.usersList.find((u) => u.id === cut.by)?.username ?? 'Someone')
+			: ''
+	);
+	/** One line for everyone else: who is cutting, then where they cut. */
+	const cutNote = $derived(
+		!cut
+			? ''
+			: cut.at === null
+				? cutLeft > 0
+					? `✂ ${cutterName} ${cut.by === selfId ? 'are' : 'is'} cutting the deck · ${cutLeft}s`
+					: ''
+				: `✂ ${cutterName} cut the deck after card ${cut.at}`
+	);
+	const cutDeck = (at: number) => void send('cutDeck', [at]);
+	async function startNight() {
+		dealError = '';
+		if (onprepare && !room.upNext) {
+			if (!(await onprepare())) dealError = 'Could not start. Check the players at the table';
+		} else await dealNow();
+	}
 	/** The rules card: open in the last seconds before a new game, unless you closed it. */
 	let closedReveal = $state<string | null>(null);
-	const revealLeft = $derived(settled && dealAt !== null && result ? Math.max(0, dealAt - now) : 0);
+	const revealLeft = $derived(
+		settled && dealAt !== null && (result || !room.isStarted) ? Math.max(0, dealAt - now) : 0
+	);
 	const revealOpen = $derived(
 		!!settled?.changed &&
 			settled.revealMs > 0 &&
@@ -715,7 +779,7 @@
 
 	// ——— Panels and preferences ———
 	let panel = $state<
-		'scores' | 'rules' | 'settings' | 'invite' | 'pick' | 'lineup' | 'game' | null
+		'scores' | 'rules' | 'settings' | 'invite' | 'pick' | 'lineup' | 'game' | 'verify' | null
 	>(null);
 
 	// ——— Invites ———
@@ -1138,6 +1202,12 @@
 								>{/if}
 						</p>
 					{/if}
+					{#if cutNote}<p class="cut-note">{cutNote}</p>{/if}
+					{#if room.deckProof?.leaves}
+						<button class="verify-link" onclick={() => (panel = 'verify')}
+							>🔒 Fair deck · verify</button
+						>
+					{/if}
 					{#if dealIn !== null}
 						<div class="next" data-testid="next-round-controls">
 							{#if isHost}
@@ -1201,7 +1271,7 @@
 						<div class="lobby-actions">
 							<button
 								class="deal-btn"
-								onclick={dealNow}
+								onclick={startNight}
 								disabled={!canDeal}
 								data-testid="deal-first"
 							>
@@ -1228,6 +1298,7 @@
 							the game when everyone is here
 						</p>
 					{/if}
+					{#if cutNote}<p class="cut-note">{cutNote}</p>{/if}
 					<!-- Tonight's lineup: each game deals itself in; tap one to see how it's played. -->
 					{#if lineup.length}
 						<div
@@ -1319,13 +1390,22 @@
 			</ol>
 		{/if}
 
-		{#if revealOpen && settled}
+		{#if cutting && cut}
+			<DeckCut
+				gameName={settled ? nameOfVariant(settled.rulesVersion) : nameOfVariant(room.rulesVersion)}
+				commitment={cut.commitment ?? ''}
+				seconds={cutLeft}
+				total={Math.round(cut.ms / 1000)}
+				oncut={cutDeck}
+			/>
+		{:else if revealOpen && settled}
 			<NextGameCard
 				rulesVersion={settled.rulesVersion}
 				name={nameOfVariant(settled.rulesVersion)}
 				badge={revealBadge}
 				seconds={Math.ceil(revealLeft / 1000)}
 				total={Math.round(settled.revealMs / 1000)}
+				note={cutNote}
 				onclose={() => (closedReveal = settledKey)}
 			/>
 		{/if}
@@ -1395,24 +1475,31 @@
 						? infoGame
 							? nameOfVariant(infoGame)
 							: (variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti')
-						: panel === 'lineup'
-							? 'Tonight’s lineup'
-							: panel === 'pick'
-								? 'Pick the next game'
-								: panel === 'scores'
-									? 'Tonight'
-									: panel === 'rules'
-										? 'Hand rankings'
-										: panel === 'invite'
-											? 'Invite friends'
-											: 'Table settings'}
+						: panel === 'verify'
+							? 'Fair deck check'
+							: panel === 'lineup'
+								? 'Tonight’s lineup'
+								: panel === 'pick'
+									? 'Pick the next game'
+									: panel === 'scores'
+										? 'Tonight'
+										: panel === 'rules'
+											? 'Hand rankings'
+											: panel === 'invite'
+												? 'Invite friends'
+												: 'Table settings'}
 				</h2>
 				<button class="tool" onclick={() => (panel = null)} aria-label="Close"
 					><X class="h-4 w-4" /></button
 				>
 			</header>
 			<div class="sheet-body">
-				{#if panel === 'game'}
+				{#if panel === 'verify' && room.deckProof?.leaves}
+					<VerifyDeck
+						proof={room.deckProof as Parameters<typeof VerifyDeck>[1]['proof']}
+						names={Object.fromEntries(room.usersList.map((user) => [user.id, user.username]))}
+					/>
+				{:else if panel === 'game'}
 					{@const how = HOW_TO_PLAY[infoGame ?? room.rulesVersion]}
 					<div class="how">
 						<p class="how-win">{how?.win ?? variant?.description}</p>
@@ -2482,6 +2569,21 @@
 	}
 	.hidden-feed {
 		display: none;
+	}
+	.cut-note {
+		color: #f4d68c;
+		font-size: 0.85rem;
+		font-weight: 700;
+	}
+	.verify-link {
+		color: rgb(241 235 220 / 70%);
+		font-size: 0.78rem;
+		text-decoration: underline;
+		text-decoration-color: rgb(244 214 140 / 40%);
+		cursor: pointer;
+	}
+	.verify-link:hover {
+		color: #f4d68c;
 	}
 	/* Top bar: where the night is in tonight's lineup; opens the lineup. */
 	.lineup-pill {

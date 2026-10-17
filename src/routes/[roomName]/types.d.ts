@@ -73,6 +73,16 @@ interface RoomData {
 	lineup?: string[];
 	/** The last pick, which stands for later hands until someone changes it. */
 	standing?: { choice: string; by: string };
+	/** The cut before the deal: who cuts, by when, where (null until cut), and the deck's seal. */
+	cut?: { by: string; ms: number; deadline: number; at: number | null; commitment?: string };
+	/** The sealed deck: its fingerprint during the hand; after it, the proof for shown cards. */
+	deckProof?: {
+		commitment: string;
+		cutAt: number;
+		by: string | null;
+		leaves?: string[];
+		cards?: { pos: number; rank: number; suit: string; salt: string }[];
+	};
 	/** Hands each lineup game is played for (0 = one round). */
 	lineupHands?: number;
 	/** Where the night is in the lineup: the slot playing and how many hands it has had. */

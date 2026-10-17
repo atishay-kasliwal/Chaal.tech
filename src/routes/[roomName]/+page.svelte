@@ -300,6 +300,7 @@
 			bind:autoDeal
 			send={sendAction}
 			ondeal={dealTeenPatti}
+			onprepare={() => sendAction('prepareStart', [nextRulesVersion])}
 			nextVariant={nextVariantMode === 'random'
 				? 'Random'
 				: (VARIANT_BY_VERSION[nextRulesVersion]?.selectionLabel.split(': ')[0] ?? 'Classic')}
