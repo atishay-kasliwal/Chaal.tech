@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { EyeOff, Eye, Swords, Sparkles, Coins } from '@lucide/svelte';
 	import PlayingCard from '#lib/components/PlayingCard.svelte';
+	import GamesCarousel from '#lib/games/GamesCarousel.svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import { onMount } from 'svelte';
@@ -177,6 +178,8 @@
 				</div>
 			</div>
 		</div>
+
+		<GamesCarousel />
 
 		<section
 			class="card bg-base-100 shadow-xl"
