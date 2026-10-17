@@ -131,6 +131,9 @@
 		notice = body.notice ?? '';
 	}
 
+	/** The live table an owner is about to end (asking after this hand or now). */
+	let endingTable = $state<string | null>(null);
+
 	async function send(payload?: Record<string, unknown>) {
 		busy = true;
 		error = '';
@@ -331,6 +334,44 @@
 										>{table.isStarted ? 'Playing' : 'Waiting'}</span
 									>
 									<a class="open" href="/{table.name}">Open</a>
+									{#if endingTable === table.name}
+										<span class="end-choices">
+											{#if table.isStarted}
+												<button
+													class="end"
+													disabled={busy}
+													onclick={() =>
+														void send({
+															action: 'end-table',
+															room: table.name,
+															mode: 'after-hand'
+														}).then(() => (endingTable = null))}>After this hand</button
+												>
+												<button
+													class="end ghost"
+													disabled={busy}
+													onclick={() =>
+														void send({ action: 'end-table', room: table.name, mode: 'now' }).then(
+															() => (endingTable = null)
+														)}>Now, refund</button
+												>
+											{:else}
+												<button
+													class="end"
+													disabled={busy}
+													onclick={() =>
+														void send({ action: 'end-table', room: table.name, mode: 'now' }).then(
+															() => (endingTable = null)
+														)}>End the night</button
+												>
+											{/if}
+											<button class="end ghost" onclick={() => (endingTable = null)}>Cancel</button>
+										</span>
+									{:else}
+										<button class="end ghost" onclick={() => (endingTable = table.name)}
+											>End…</button
+										>
+									{/if}
 								</li>
 							{/each}
 						</ul>
@@ -568,6 +609,24 @@
 </ClubGate>
 
 <style>
+	.end-choices {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+	.end {
+		border-radius: 999px;
+		background: #b8432f;
+		padding: 0.3rem 0.8rem;
+		color: #fff2ee;
+		font-size: 0.82rem;
+		font-weight: 800;
+	}
+	.end.ghost {
+		border: 1px solid rgb(224 106 85 / 55%);
+		background: transparent;
+		color: #e0806e;
+	}
 	.admin {
 		display: grid;
 		gap: 1.1rem;

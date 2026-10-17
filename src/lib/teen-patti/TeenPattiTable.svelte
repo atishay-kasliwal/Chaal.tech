@@ -42,6 +42,7 @@
 	import NextGameCard from './NextGameCard.svelte';
 	import DeckCut from './DeckCut.svelte';
 	import VerifyDeck from './VerifyDeck.svelte';
+	import NightOver from './NightOver.svelte';
 	import { properName } from '#lib/names.js';
 	import { matFor, REVIEW_GAMES, REVIEW_MS } from './table-cards.js';
 	import {
@@ -463,6 +464,12 @@
 				: `✂ ${cutterName} cut the deck after card ${cut.at}`
 	);
 	const cutDeck = (at: number) => void send('cutDeck', [at]);
+	// ——— Ending the night (club owners) ———
+	let confirmEnd = $state(false);
+	const endNight = (mode: 'after-hand' | 'now') => {
+		confirmEnd = false;
+		void send('endNight', [mode]);
+	};
 	async function startNight() {
 		dealError = '';
 		if (onprepare && !room.upNext) {
@@ -941,6 +948,9 @@
 			{#if comingNext && comingNext !== (variant?.selectionLabel.split(': ')[0] ?? '')}
 				<span class="dot">·</span>
 				<span class="up-next">Next: <strong>{comingNext}</strong></span>
+			{/if}
+			{#if room.ending}
+				<span class="ending-pill">🌙 Last hand of the night</span>
 			{/if}
 			{#if lineup.length}
 				<button class="lineup-pill" onclick={() => (panel = 'lineup')} title="Tonight’s lineup"
@@ -1797,12 +1807,44 @@
 							</div>
 						</div>
 					{/if}
+					{#if isOwner && room.boot !== undefined && !room.ended}
+						<!-- Owners end the table: everyone gets the summary and a thank-you email. -->
+						<section class="end-night">
+							<h3>End the night</h3>
+							{#if room.ending}
+								<p>Ending after this hand. Everyone will see the summary.</p>
+							{:else if confirmEnd}
+								<p>Everyone sees who settles with whom, and gets a thank-you email.</p>
+								<div class="end-actions">
+									{#if live}
+										<button class="danger" onclick={() => endNight('after-hand')}
+											>End after this hand</button
+										>
+										<button class="danger ghost" onclick={() => endNight('now')}
+											>End now, refund this hand</button
+										>
+									{:else}
+										<button class="danger" onclick={() => endNight('now')}>End the night</button>
+									{/if}
+									<button class="mini" onclick={() => (confirmEnd = false)}>Cancel</button>
+								</div>
+							{:else}
+								<button class="danger ghost" onclick={() => (confirmEnd = true)}
+									>End the night…</button
+								>
+							{/if}
+						</section>
+					{/if}
 					{@render settings()}
 				{/if}
 			</div>
 		</div>
 	{/if}
 </div>
+
+{#if room.ended}
+	<NightOver ended={room.ended} {selfId} {onleave} />
+{/if}
 
 <style>
 	:global(.toast) {
@@ -2619,6 +2661,52 @@
 	}
 	.hidden-feed {
 		display: none;
+	}
+	.ending-pill {
+		border-radius: 999px;
+		background: rgb(196 155 255 / 16%);
+		padding: 0.15rem 0.6rem;
+		color: #d9c2ff;
+		font-size: 0.78rem;
+		font-weight: 750;
+	}
+	.end-night {
+		display: grid;
+		gap: 0.6rem;
+		margin-bottom: 1.2rem;
+		border: 1px solid rgb(224 106 85 / 30%);
+		border-radius: 1rem;
+		background: rgb(224 106 85 / 6%);
+		padding: 0.9rem 1rem;
+	}
+	.end-night h3 {
+		color: #f0a898;
+		font-size: 0.8rem;
+		font-weight: 800;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+	.end-night p {
+		color: rgb(241 235 220 / 70%);
+		font-size: 0.85rem;
+	}
+	.end-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.end-night .danger {
+		justify-self: start;
+		border-radius: 999px;
+		background: #b8432f;
+		padding: 0.5rem 1.1rem;
+		color: #fff2ee;
+		font-weight: 800;
+	}
+	.end-night .danger.ghost {
+		border: 1px solid rgb(224 106 85 / 60%);
+		background: transparent;
+		color: #f0a898;
 	}
 	.cut-note {
 		color: #f4d68c;

@@ -141,6 +141,15 @@
 		rummy: 'Indian Rummy'
 	};
 
+	/** Ended tables from the last week, newest first: who settles with whom. */
+	interface Night {
+		table: string;
+		endedAt: string;
+		hands: number;
+		settleUp: { from: string; fromName: string; to: string; toName: string; amount: number }[];
+	}
+	let nights = $state<Night[]>([]);
+
 	async function load() {
 		try {
 			const response = await socket.authorizedFetch('/club');
@@ -149,6 +158,7 @@
 			members = body.members;
 			online = body.online;
 			tables = body.tables;
+			nights = body.nights ?? [];
 			error = '';
 		} catch (failure) {
 			error =
@@ -427,6 +437,32 @@
 							>
 						</section>
 						<section class="last-night" aria-labelledby="last-night-title">
+							{#if nights.length}
+								{@const night = nights[0]}
+								<!-- The last ended table: who still owes whom. -->
+								<div class="settle-card">
+									<p class="eyebrow">Last night · settle up</p>
+									{#if night.settleUp.length}
+										<ul>
+											{#each night.settleUp as payment (`${payment.from}-${payment.to}`)}
+												<li>
+													<strong>{properName(payment.fromName)}</strong>
+													<span>pays</span>
+													<strong>{properName(payment.toName)}</strong>
+													<em>₹{payment.amount.toLocaleString('en-IN')}</em>
+												</li>
+											{/each}
+										</ul>
+									{:else}
+										<p class="notebook-copy">Everyone finished square.</p>
+									{/if}
+									<p class="notebook-copy">
+										{night.hands} hand{night.hands === 1 ? '' : 's'} · {when(
+											new Date(night.endedAt).getTime()
+										)}
+									</p>
+								</div>
+							{/if}
 							<p class="eyebrow">From the record book</p>
 							<h2 id="last-night-title">
 								{pastHands.length && !historyError
@@ -615,6 +651,33 @@
 </ClubGate>
 
 <style>
+	.settle-card {
+		margin-bottom: 1.2rem;
+		border-radius: 1rem;
+		background: rgb(244 214 140 / 8%);
+		padding: 0.9rem 1rem;
+	}
+	.settle-card ul {
+		display: grid;
+		gap: 0.35rem;
+		margin: 0.4rem 0;
+		padding: 0;
+		list-style: none;
+	}
+	.settle-card li {
+		display: flex;
+		align-items: baseline;
+		gap: 0.4rem;
+	}
+	.settle-card li span {
+		opacity: 0.65;
+		font-size: 0.85rem;
+	}
+	.settle-card li em {
+		margin-left: auto;
+		font-style: normal;
+		font-weight: 800;
+	}
 	.club-room {
 		position: relative;
 		isolation: isolate;

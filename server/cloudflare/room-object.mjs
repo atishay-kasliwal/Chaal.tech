@@ -20,7 +20,8 @@ import { inviteEmails, planInvites, inviteMessage, sendWithResend } from './invi
 import { verifyGameToken } from './security.mjs';
 import { clubDirectory } from './club-directory.mjs';
 import { trackClubHand, archiveHands } from '../club/history.mjs';
-import { withClubDatabase, invitableEmails, emailsForMembers } from '../club/members.mjs';
+import { withClubDatabase, invitableEmails, emailsForMembers, memberRole, membersForPlayers } from '../club/members.mjs';
+import { saveNight, nightEmail } from '../club/nights.mjs';
 import { clubSettings } from '../club/admin.mjs';
 import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
 
@@ -37,7 +38,7 @@ const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
 	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
 	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit',
-	'setBalanceHidden', 'showCards', 'chooseNext', 'openPick', 'tableAction', 'prepareStart', 'cutDeck', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
+	'setBalanceHidden', 'showCards', 'chooseNext', 'openPick', 'tableAction', 'prepareStart', 'cutDeck', 'endNight', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
 ]);
 
 /**
@@ -246,6 +247,7 @@ export class RoomDurableObject {
 			});
 		}
 		if (url.pathname === '/create' && request.method === 'POST') return this.createRoom(request);
+		if (url.pathname === '/end' && request.method === 'POST') return this.endFromAdmin(request);
 		// The lobby asks directly when a table has been quiet, in case a report was missed.
 		if (url.pathname === '/lobby-summary' && request.method === 'GET') {
 			const room = this.room()?.snapshot;
@@ -531,7 +533,11 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 				action = 'openPick';
 				payload = {};
 				text = null;
-			} else if (event === 'prepareStart') {
+			} else if (event === 'endNight') {
+	action = 'endNight';
+	payload = { mode: args[0] };
+	text = null;
+} else if (event === 'prepareStart') {
 	action = 'prepareStart';
 	payload = { rulesVersion: args[0] };
 	text = null;
@@ -612,7 +618,10 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		}
 
 		const now = Date.now();
+		// Only club owners may end a table: checked against the guest list, not the table.
+		const canEnd = action === 'endNight' ? await this.isOwner(attachment.memberId) : false;
 		const room = transition(before, playerId, action, payload, {
+			canEnd,
 			now,
 			turnMs: this.turnMs(),
 			handId: randomHandId(),
@@ -627,6 +636,7 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		const result = { ok: true, roomName: room.name, revision: room.revision, handId: room.handId };
 		await sealDeck(room);
 		this.commit(room, playerId, meta.commandId, commandFingerprint, result, movements(before, room, event), before.revision);
+		if (room.ended && !before.ended) await this.afterNight(room);
 		if (room.result && room.result.handId !== before.result?.handId)
 			text = `${room.result.winnerName} won ${room.result.amount} chips`;
 		return {
@@ -794,6 +804,78 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		return this.connectedRoom(room.name).size + bots;
 	}
 
+	async isOwner(memberId) {
+		try {
+			return (await withClubDatabase(this.env, (db) => memberRole(db, memberId))) === 'owner';
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * A table just ended for the night: drop it from the club's live list, save the night for the
+	 * club page, thank everyone who played by email, and close the table in 30 minutes (time to
+	 * read the summary and settle up).
+	 */
+	async afterNight(room) {
+		this.reportToLobby(room, true);
+		this.setMeta('endedAt', Date.now());
+		const night = { table: room.name, ...room.ended, endedAt: new Date(room.ended.at || Date.now()) };
+		try {
+			await withClubDatabase(this.env, async (db) => {
+				await saveNight(db, night);
+				if (!this.env.RESEND_API_KEY) return;
+				const people = await membersForPlayers(db, room.ended.players.map((p) => p.id));
+				const gameName = (version) => getVariant(version)?.name ?? version;
+				for (const person of people) {
+					if (!person.email) continue;
+					const message = nightEmail({
+						playerId: person.playerId,
+						name: person.nickname || room.ended.players.find((p) => p.id === person.playerId)?.name,
+						night: room.ended,
+						gameName,
+						appUrl: this.env.APP_URL ?? 'https://chaal.tech'
+					});
+					await sendWithResend({
+						apiKey: this.env.RESEND_API_KEY,
+						from: this.env.INVITE_FROM ?? 'Chaal <invites@chaal.tech>',
+						emails: [person.email],
+						message
+					}).catch((error) => console.error('Night email failed:', error?.message ?? 'Error'));
+				}
+			});
+		} catch (error) {
+			console.error('Saving the night failed:', error?.code ?? error?.name ?? 'Error');
+		}
+		await this.scheduleAlarm();
+	}
+
+	/** An owner ends a table from the Admin page (they may not be sitting at it). */
+	async endFromAdmin(request) {
+		const stored = this.room();
+		if (!stored) return json({ ok: true, closed: true });
+		const before = stored.snapshot;
+		if (before.ended) return json({ ok: true });
+		const body = await request.json().catch(() => ({}));
+		const mode = body?.mode === 'now' ? 'now' : 'after-hand';
+		const actor = before.players.find((p) => p.seatNumber !== null && !p.departed && !p.bot);
+		if (!actor || before.boot === undefined) {
+			await this.closeTable(before, 'An owner closed this table.');
+			return json({ ok: true, closed: true });
+		}
+		const room = transition(before, actor.id, 'endNight', { mode }, {
+			now: Date.now(),
+			turnMs: this.turnMs(),
+			connected: this.connectedRoom(before.name),
+			canEnd: true
+		});
+		const commandId = `end:${before.revision}`;
+		this.commit(room, actor.id, commandId, await hash(commandId), { ok: true }, movements(before, room, 'endNight'), before.revision);
+		this.publish(room.name, room.ended ? 'The table has ended for the night' : 'The table ends after this hand');
+		if (room.ended) await this.afterNight(room);
+		return json({ ok: true, ending: !room.ended });
+	}
+
 	/** Tell everyone still here, then close the table for good. */
 	async closeTable(room, reason) {
 		await this.flushHistory();
@@ -878,6 +960,7 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 			const commandId = `bot:${before.handId}:${before.revision}`;
 			await sealDeck(room);
 			this.commit(room, move.botId, commandId, await hash(commandId), { ok: true }, movements(before, room, `bot-${move.action}`), before.revision);
+			if (room.ended && !before.ended) await this.afterNight(room);
 			this.publish(room.name, room.result && !before.result
 				? `${room.result.winnerName} won ${room.result.amount} chips`
 				: botMoveText(before, move));
@@ -903,6 +986,8 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		if (botTurn) deadlines.push(botTurn.at);
 		if (playing(room) && Number.isSafeInteger(room.deadline)) deadlines.push(room.deadline);
 		if (!playing(room) && room.chooser && !room.upNext) deadlines.push(room.chooser.deadline);
+		const endedAt = this.getMeta('endedAt');
+		if (endedAt) deadlines.push(endedAt + 30 * 60 * 1000);
 		const hostRecovery = this.getMeta('hostRecovery');
 		if (hostRecovery?.at) deadlines.push(hostRecovery.at);
 		// Start (or stop) the idle clock: one or no players for idleCloseMs() closes the table.
@@ -951,6 +1036,7 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 				const commandId = `timeout:${before.handId}:${before.revision}`;
 				await sealDeck(room);
 				this.commit(room, before.currentPlayerId, commandId, await hash(commandId), { ok: true }, movements(before, room, 'timeout'), before.revision);
+				if (room.ended && !before.ended) await this.afterNight(room);
 				changed = true;
 				announcement = room.result
 					? `${room.result.winnerName} won ${room.result.amount} chips`
@@ -1001,6 +1087,12 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 				}
 			}
 			this.deleteMeta('hostRecovery');
+		}
+
+		const endedAt = this.getMeta('endedAt');
+		if (endedAt && endedAt + 30 * 60 * 1000 <= now && this.room()) {
+			await this.closeTable(this.room().snapshot, 'This table has ended for the night. See you next time!');
+			return;
 		}
 
 		const lonelySince = this.getMeta('lonelySince');

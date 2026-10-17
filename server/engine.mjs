@@ -127,6 +127,34 @@ export const SAME_GAME_MS = 4 * 1000;
 
 const humansSeated = (room) => seated(room).filter((p) => !p.bot && !p.departed).length;
 
+/**
+ * End the night: the table's last word. Records how the night went and who settles with whom,
+ * then the table takes no more hands.
+ */
+function finishNight(room, by, ctx) {
+	const people = room.players
+		.filter((p) => !p.bot && room.realNet?.[p.id] !== undefined)
+		.map((p) => ({ id: p.id, name: p.username, net: room.realNet[p.id] }));
+	const stats = room.nightStats ?? { hands: 0, games: {}, biggest: null };
+	room.ended = {
+		at: ctx?.now ?? 0,
+		by,
+		startedAt: room.nightStartedAt ?? null,
+		hands: stats.hands,
+		games: { ...stats.games },
+		biggest: stats.biggest ? { ...stats.biggest } : null,
+		realNet: people,
+		settleUp: settleUp(people),
+		players: room.players
+			.filter((p) => !p.bot && (p.seatNumber !== null || room.realNet?.[p.id] !== undefined))
+			.map((p) => ({ id: p.id, name: p.username }))
+	};
+	delete room.ending;
+	delete room.chooser;
+	delete room.upNext;
+	dropCut(room);
+}
+
 /** Time the cutter gets to cut the sealed deck before the deal (alongside the rules card). */
 export const CUT_MS = 15 * 1000;
 
@@ -569,9 +597,11 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 		require(player &&
 			player.seatNumber !== null &&
 			!player.departed, 'Join this room first', 'NOT_MEMBER');
+		require(!room.ended || action === 'leave', 'This table has ended for the night', 'TABLE_ENDED');
 		if (action === 'start') {
 			require(id === room.hostId, 'Only the room host can start a hand', 'FORBIDDEN');
 			require(!playing(room), 'A hand is already in progress');
+			require(!room.ending, 'The table is ending after this hand');
 			const nextVersion =
 				payload.rulesVersion === undefined ? room.rulesVersion : payload.rulesVersion;
 			require(typeof nextVersion === 'string' &&
@@ -612,6 +642,8 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				), 'Invalid server deck', 'INVARIANT');
 			const deck = structuredClone(ctx.deck);
 			room.rulesVersion = nextVersion;
+			if (room.boot !== undefined && room.nightStartedAt === undefined && Number.isFinite(ctx?.now))
+				room.nightStartedAt = ctx.now;
 			// The last few games dealt, so Random can let each one rest a while.
 			// Only tables with the next-game pick need it; older tables keep their exact state.
 			if (room.boot !== undefined)
@@ -734,6 +766,28 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			delete room.upNext;
 			dropCut(room);
 			settleNext(room, ctx);
+		} else if (action === 'endNight') {
+			// Club owners end the table: after this hand (the default), or now with every bet refunded.
+			require(ctx?.canEnd === true, 'Only club owners can end the table', 'FORBIDDEN');
+			require(room.boot !== undefined, 'This table closes on its own');
+			require(payload.mode === 'after-hand' ||
+				payload.mode === 'now', 'End after this hand, or now');
+			if (playing(room) && payload.mode === 'after-hand') room.ending = { by: id };
+			else {
+				if (playing(room)) {
+					// Nobody wins or loses this hand: everyone gets back what they put in.
+					for (const p of room.players) {
+						p.balance += p.handBet ?? 0;
+						if (p.handBet !== undefined) p.handBet = 0;
+					}
+					room.pot = 0;
+					room.isStarted = false;
+					room.currentPlayerId = null;
+					room.deadline = null;
+					room.turnMs = null;
+				}
+				finishNight(room, id, ctx);
+			}
 		} else if (action === 'prepareStart') {
 			// The night's first hand: settle its game (the lineup's first, or the host's choice) and
 			// open the cut, so everyone sees the rules and the deck is cut before the first deal.
@@ -949,6 +1003,29 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			}
 		}
 	}
+	// The night so far: hands played, games, the biggest pot. Ending after this hand happens now.
+	if (
+		room.boot !== undefined &&
+		!playing(room) &&
+		room.result &&
+		room.nightStats?.lastHand !== room.result.handId
+	) {
+		const stats = room.nightStats ?? { hands: 0, games: {}, biggest: null };
+		room.nightStats = {
+			lastHand: room.result.handId,
+			hands: stats.hands + 1,
+			games: { ...stats.games, [room.rulesVersion]: (stats.games[room.rulesVersion] ?? 0) + 1 },
+			biggest:
+				!stats.biggest || room.result.amount > stats.biggest.amount
+					? {
+							amount: room.result.amount,
+							winner: room.result.winnerName,
+							rulesVersion: room.rulesVersion
+						}
+					: stats.biggest
+		};
+		if (room.ending) finishNight(room, room.ending.by, ctx);
+	}
 	// A hand just ended on a table with options: remember it (the last five games played), then
 	// open the pick for the next game.
 	if (
@@ -968,6 +1045,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 	// A hand just ended on a table with options: open the pick for the next game.
 	if (
 		room.boot !== undefined &&
+		!room.ended &&
 		!playing(room) &&
 		room.result &&
 		room.chooser?.handId !== room.result.handId &&
@@ -1043,6 +1121,9 @@ export function projection(room, id, connected) {
 					return { realNet: people, settleUp: settleUp(people) };
 				})()
 			: {}),
+		// The table is ending after this hand, or has ended (with the night's summary).
+		...(room.ending ? { ending: true } : {}),
+		...(room.ended ? { ended: structuredClone(room.ended) } : {}),
 		// The last five hands played here: the game and who won.
 		...(room.gameLog ? { gameLog: room.gameLog.map((entry) => ({ ...entry })) } : {}),
 		// The cut before the deal (who cuts, where, and the sealed deck's fingerprint), and once the

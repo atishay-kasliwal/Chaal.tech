@@ -35,6 +35,7 @@ import {
 	saveLineup,
 	decideGameNight
 } from '../club/admin.mjs';
+import { recentNights } from '../club/nights.mjs';
 import { openPoll, publicPoll, saveAvailability, pollSummary } from '../club/availability.mjs';
 import { sendAddedEmail } from '../club/beta-emails.mjs';
 
@@ -314,7 +315,21 @@ export default {
 							});
 						else if (action === 'role') await setMemberRole(db, body.memberId, body.role);
 						else if (action === 'settings') await saveClubSettings(db, body.settings, actorId);
-						else if (action === 'lineup') {
+						else if (action === 'end-table') {
+	// End a live table for the night: after its hand (default) or now with bets refunded.
+	if (typeof body.room !== 'string' || !/^[a-z0-9-]{3,64}$/.test(body.room))
+		throw new ClubError('Unknown table', 'INVALID_ADMIN_REQUEST', 400);
+	const ended = await roomStub(env, body.room)
+		.fetch('https://room.internal/end', {
+			method: 'POST',
+			body: JSON.stringify({ mode: body.mode === 'now' ? 'now' : 'after-hand' })
+		})
+		.then((result) => result.json());
+	notice = ended.ending
+		? 'That table ends after this hand. Everyone gets the summary and a thank-you email.'
+		: 'That table has ended for the night. Everyone gets the summary and a thank-you email.';
+}
+else if (action === 'lineup') {
 							await saveLineup(db, body.lineup, actorId, new Date(), body.hands ?? 1);
 							notice = 'Lineup saved. Every table follows it from the next hand.';
 						}
@@ -358,13 +373,15 @@ export default {
 			const player = await authenticatedPlayer(request, env);
 			if (!player) return response({ code: 'SIGN_IN', error: 'Invalid session' }, 401, origin, env);
 			try {
-				const [members, lobby] = await Promise.all([
+				const [members, lobby, nights] = await Promise.all([
 					roster(env),
 					clubDirectory(env)
 						.fetch('https://club.internal/lobby')
-						.then((result) => result.json())
+						.then((result) => result.json()),
+					// The last few ended tables, for "Last night" on the club page.
+					withClubDatabase(env, (db) => recentNights(db)).catch(() => [])
 				]);
-				return response({ ok: true, members, ...lobby }, 200, origin, env);
+				return response({ ok: true, members, ...lobby, nights }, 200, origin, env);
 			} catch (error) {
 				return clubFailure(error, origin, env);
 			}

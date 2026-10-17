@@ -87,6 +87,20 @@ interface RoomData {
 	realNet?: { id: string; name: string; net: number }[];
 	/** The fewest payments that settle tonight's real money. */
 	settleUp?: { from: string; fromName: string; to: string; toName: string; amount: number }[];
+	/** The table ends after this hand. */
+	ending?: boolean;
+	/** The table has ended: the night's summary. */
+	ended?: {
+		at: number;
+		by: string;
+		startedAt: number | null;
+		hands: number;
+		games: Record<string, number>;
+		biggest: { amount: number; winner: string; rulesVersion: string } | null;
+		realNet: { id: string; name: string; net: number }[];
+		settleUp: { from: string; fromName: string; to: string; toName: string; amount: number }[];
+		players: { id: string; name: string }[];
+	};
 	/** Hands each lineup game is played for (0 = one round). */
 	lineupHands?: number;
 	/** Where the night is in the lineup: the slot playing and how many hands it has had. */

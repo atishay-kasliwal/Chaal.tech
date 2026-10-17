@@ -247,3 +247,33 @@ export async function invitableEmails(db, emails) {
 	const known = new Set(members.map((member) => normalizeEmail(member.email)));
 	return emails.filter((email) => known.has(normalizeEmail(email)));
 }
+
+/** A member's role ('owner' or 'member'), or null when they are not on the guest list. */
+export async function memberRole(db, memberId) {
+	if (typeof memberId !== 'string' || !memberId || memberId.length > 64) return null;
+	const member = await db
+		.collection(MEMBERS)
+		.findOne(
+			{ ...idQuery(memberId), status: { $in: ['invited', 'active'] } },
+			{ projection: { role: 1 } }
+		);
+	return member ? (member.role ?? 'member') : null;
+}
+
+/** Email and name for the members behind these table player ids (people only; bots have none). */
+export async function membersForPlayers(db, playerIds) {
+	const ids = [...new Set(playerIds)].filter((id) => typeof id === 'string' && id.length <= 64);
+	if (!ids.length) return [];
+	const members = await db
+		.collection(MEMBERS)
+		.find(
+			{ playerId: { $in: ids }, status: { $in: ['invited', 'active'] } },
+			{ projection: { playerId: 1, email: 1, nickname: 1 } }
+		)
+		.toArray();
+	return members.map((member) => ({
+		playerId: member.playerId,
+		email: normalizeEmail(member.email),
+		nickname: member.nickname ?? ''
+	}));
+}
