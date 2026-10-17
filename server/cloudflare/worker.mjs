@@ -39,6 +39,7 @@ import {
 import { recentNights } from '../club/nights.mjs';
 import { openPoll, publicPoll, saveAvailability, pollSummary } from '../club/availability.mjs';
 import { sendAddedEmail } from '../club/beta-emails.mjs';
+import { engineBuild } from './build.mjs';
 
 export { RoomDurableObject, ClubDirectory };
 
@@ -205,11 +206,20 @@ export default {
 			result.headers.set('Access-Control-Max-Age', '86400');
 			return result;
 		}
+		// Recorded hands name the engine build; without a valid one the service does not run.
+		const build = engineBuild(env);
 		if (url.pathname === '/health' && request.method === 'GET')
-			return response({ ok: true, service: 'chaal-game' }, 200, origin, env);
+			return response(
+				build
+					? { ok: true, service: 'chaal-game', engineBuild: build }
+					: { ok: false, service: 'chaal-game', error: 'ENGINE_BUILD is missing or invalid' },
+				build ? 200 : 503,
+				origin,
+				env
+			);
 		if (url.pathname === '/ready' && request.method === 'GET')
-			return response({ ok: true, storage: 'durable-objects' }, 200, origin, env);
-		if (!env.SESSION_SECRET && url.pathname !== '/health' && url.pathname !== '/ready')
+			return response({ ok: !!build, storage: 'durable-objects' }, build ? 200 : 503, origin, env);
+		if (!env.SESSION_SECRET || !build)
 			return response({ error: 'Game service is not configured' }, 503, origin, env);
 		if (url.pathname === '/auth/google' && request.method === 'POST') {
 			// Browsers always send Origin on this POST; a missing one is not a signed-in page.
