@@ -66,7 +66,7 @@
 	<div class="relative grid w-full">
 		{#key page.url.pathname}
 			<div
-				class="col-start-1 row-start-1 w-full"
+				class="col-start-1 row-start-1 min-w-0 w-full"
 				in:fly={{ y: 20, opacity: 0, duration: 400, delay: 400 }}
 				out:fade={{ duration: 400 }}
 			>
