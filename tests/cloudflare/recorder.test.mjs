@@ -106,7 +106,19 @@ test('a real hand with a bot is recorded in three tiers and replays exactly from
 		checked: 1, reproduced: 1, compatible: 0, unavailable: [], mismatched: [], missingPublic: [], keptForRebuild: []
 	});
 
-	// The room reported its recorder counters after flushing.
+	// Analytics through the real Worker, as the signed-in host.
+	const stats = (path, token = hostSession.clubToken) =>
+		fetch(`${baseURL}${path}`, { headers: { Origin: origin, ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+	const overview = await (await stats('/analytics/overview')).json();
+	assert.equal(overview.ok, true, JSON.stringify(overview));
+	assert.ok(overview.overview.hands >= 1);
+	const detail = await (await stats(`/analytics/hand?id=${encodeURIComponent(record._id)}`)).json();
+	assert.equal(detail.hand.handId, record._id);
+	assert.ok(detail.hand.yourCards.final.length, 'the viewer sees their own cards');
+	assert.equal((await stats('/analytics/overview?window=forever')).status, 400);
+	assert.equal((await stats('/analytics/overview', null)).status, 401);
+
+		// The room reported its recorder counters after flushing.
 	const status = await until(() => db.collection(COLLECTIONS.status).findOne({ room }));
 	assert.equal(status.stats.handsStarted, 1);
 	assert.equal(status.stats.captured, 1);

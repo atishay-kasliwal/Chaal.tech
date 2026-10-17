@@ -1,4 +1,5 @@
 import { clubHistory } from '../club/history.mjs';
+import { analyticsResponse, adminAnalytics } from '../analytics/api.mjs';
 import { roomName } from '../engine.mjs';
 import {
 	issueClubToken,
@@ -18,7 +19,8 @@ import {
 	assertActive,
 	publicProfile,
 	updateProfile,
-	activeRoster
+	activeRoster,
+	markSeen
 } from '../club/members.mjs';
 import { verifyGoogleCredential } from '../club/google.mjs';
 import {
@@ -145,6 +147,9 @@ async function adminState(env, db) {
 	return { members, settings, beta, poll, tables: lobby.tables ?? [], online: lobby.online ?? [] };
 }
 
+/** Admin analytics window: "all" (or nothing) means no window; anything else is validated. */
+const windowParams = (window) => new URLSearchParams(window && window !== 'all' ? { window } : {});
+
 function clubFailure(error, origin, env) {
 	if (error instanceof ClubError)
 		return response(
@@ -243,6 +248,8 @@ export default {
 				const body = request.method === 'POST' ? await jsonBody(request, 40_000) : null;
 				const { member, settings, members } = await withClubDatabase(env, async (db) => {
 					const current = await signedInMember(request, env, db);
+					// Activity is a nice-to-have: a failed write never blocks the profile.
+					await markSeen(db, current).catch(() => {});
 					const updated =
 						request.method === 'GET'
 							? current
@@ -361,9 +368,25 @@ else if (action === 'lineup') {
 							notice = `Beta night set for ${await decideGameNight(db, body.start, betaSettings(env).appUrl)}.`;
 						else throw new ClubError('Unknown admin action', 'INVALID_ADMIN_REQUEST', 400);
 					}
-					return { ...(await adminState(env, db)), notice };
+					// Owner analytics on the normalised basis (boots, fair share); public records only.
+					const analytics = url.searchParams.has('analytics')
+						? await adminAnalytics(db, windowParams(url.searchParams.get('analytics')))
+						: undefined;
+					return { ...(await adminState(env, db)), notice, analytics };
 				});
 				if (request.method === 'POST') rosterCache.at = 0;
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) {
+				return clubFailure(error, origin, env);
+			}
+		}
+		const analyticsRoute = /^\/analytics\/([a-z]+)$/.exec(url.pathname);
+		if (analyticsRoute && request.method === 'GET') {
+			// The viewer is always the signed-in member; every privacy rule is enforced server side.
+			try {
+				const result = await withClubDatabase(env, async (db) =>
+					analyticsResponse(db, await signedInMember(request, env, db), analyticsRoute[1], url.searchParams)
+				);
 				return response({ ok: true, ...result }, 200, origin, env);
 			} catch (error) {
 				return clubFailure(error, origin, env);

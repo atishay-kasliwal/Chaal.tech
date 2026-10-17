@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient } from 'mongodb';
-import { MEMBERS, ensureIndexes } from '../../server/club/members.mjs';
+import { MEMBERS, ensureIndexes, markSeen } from '../../server/club/members.mjs';
 import {
 	DEFAULT_SETTINGS,
 	normalizeSettings,
@@ -135,4 +135,14 @@ test('owners can link and clear a known mascot without changing membership', asy
 	assert.equal(member.mascotId, null);
 	assert.equal(member.status, 'invited');
 	assert.equal(member.role, 'member');
+});
+
+test('last seen is written at most once every ten minutes', async () => {
+	await members.insertOne({ email: 'seen@example.com', playerId: 'pseen', status: 'active', role: 'member' });
+	const member = await members.findOne({ playerId: 'pseen' });
+	const day = Date.UTC(2026, 9, 10, 12);
+	const seen = new Date(day);
+	await markSeen(db, member, seen);
+	await markSeen(db, { ...member, lastSeenAt: seen }, new Date(day + 60_000));
+	assert.equal((await members.findOne({ _id: member._id })).lastSeenAt.getTime(), day);
 });

@@ -19,6 +19,7 @@
 	import { clearPendingJoinName, takeInviteFriends } from '#lib/start/player-name.js';
 	import ClubGate from '#lib/club/ClubGate.svelte';
 	import { club } from '#lib/club/club.svelte.js';
+	import { track } from '#lib/analytics.js';
 	import { validateRoomAccess } from '#lib/utils/room.js';
 	import type { MediaState } from '#lib/media/controller.js';
 	let mediaState = $state.raw<MediaState | null>(null);
@@ -183,6 +184,7 @@
 		autoJoinBusy = true;
 		void socket.command('joinRoom', [name, data.roomName], false).then((reply) => {
 			if (reply.ok) {
+				track('table_join', { game_type: roomData?.gameType ?? 'teen-patti' });
 				autoJoinBusy = false;
 				usernameCreated = true;
 				username = name;
