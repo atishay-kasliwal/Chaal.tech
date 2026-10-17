@@ -1,323 +1,529 @@
 <script lang="ts">
-	import { GripVertical, ChevronUp, ChevronDown, X, Plus } from '@lucide/svelte';
-	import { VARIANT_CATALOG, VARIANT_BY_VERSION, type RulesVersion } from '#lib/variant-catalog.js';
+	import { ChevronLeft, ChevronRight, X, Shuffle, Eraser, Info } from '@lucide/svelte';
+	import { VARIANT_CATALOG } from '#lib/variant-catalog.js';
+	import {
+		MYSTERY,
+		LINEUP_HANDS,
+		GAME_FAMILIES,
+		familyOf,
+		handsLabel,
+		slotName,
+		slotHint
+	} from './lineup.js';
 
 	/**
-	 * Tonight's lineup: the games in play order. Owners drag to reorder (or use the arrows on a
-	 * phone), remove with ×, add from the list, then save. Everyone else sees it read-only.
+	 * Tonight's lineup. Owners build it like a playlist: tap games in the order you want them,
+	 * nudge a slot with the arrows, add a Mystery slot, choose how many hands each game gets.
+	 * Everyone else sees the night's progress; tapping a game explains it.
 	 */
 	let {
 		lineup,
+		hands = 1,
+		at,
 		current = '',
 		editable = false,
 		saving = false,
-		onsave
+		onsave,
+		oninfo
 	}: {
 		lineup: string[];
-		/** The game being played right now, highlighted. */
+		hands?: number;
+		/** Where the night is: the slot playing and how many hands it has had. */
+		at?: { index: number; rulesVersion: string; played: number };
+		/** The game being played right now. */
 		current?: string;
 		editable?: boolean;
 		saving?: boolean;
-		onsave?: (lineup: string[]) => void;
+		onsave?: (lineup: string[], hands: number) => void;
+		/** Show how a game is played. */
+		oninfo?: (version: string) => void;
 	} = $props();
 
 	let draft = $state<string[]>([]);
+	let draftHands = $state(1);
 	let synced = $state('');
 	// Follow the saved lineup until the owner starts editing.
 	$effect(() => {
-		const saved = JSON.stringify(lineup);
+		const saved = JSON.stringify([lineup, hands]);
 		if (saved !== synced) {
 			synced = saved;
 			draft = [...lineup];
+			draftHands = hands;
 		}
 	});
-	const changed = $derived(JSON.stringify(draft) !== JSON.stringify(lineup));
-	const nameOf = (version: string) =>
-		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(': ')[0] ?? version;
-	const hintOf = (version: string) =>
-		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(': ')[1] ?? '';
-	const at = $derived(draft.indexOf(current));
-	const nextIndex = $derived(draft.length ? (at + 1) % draft.length : -1);
+	const changed = $derived(JSON.stringify([draft, draftHands]) !== synced);
+	/** The slot picked in the queue, to nudge or remove. */
+	let selected = $state<number | null>(null);
+	let family = $state<string>('all');
 
-	function move(from: number, to: number) {
-		if (to < 0 || to >= draft.length || from === to) return;
+	const playingIndex = $derived(
+		at &&
+			lineup[at.index] !== undefined &&
+			(at.rulesVersion === current || lineup[at.index] === MYSTERY)
+			? at.index
+			: lineup.indexOf(current)
+	);
+	const perGame = $derived(hands === 0 ? null : hands);
+	const shown = $derived(
+		VARIANT_CATALOG.filter(
+			(variant) => family === 'all' || familyOf(variant.rulesVersion) === family
+		)
+	);
+	/** Positions (1-based) of a game in the queue, for its badge. */
+	const positions = (version: string) =>
+		draft.flatMap((slot, index) => (slot === version ? [index + 1] : []));
+
+	function toggle(version: string) {
+		const where = draft.lastIndexOf(version);
+		if (where >= 0 && version !== MYSTERY) {
+			draft = draft.filter((_, index) => index !== where);
+			selected = null;
+		} else if (draft.length < 30) draft = [...draft, version];
+	}
+	function move(index: number, by: number) {
+		const to = index + by;
+		if (to < 0 || to >= draft.length) return;
 		const next = [...draft];
-		const [item] = next.splice(from, 1);
-		next.splice(to, 0, item);
+		[next[index], next[to]] = [next[to], next[index]];
 		draft = next;
+		selected = to;
 	}
-	const remove = (index: number) => (draft = draft.filter((_, i) => i !== index));
-	let adding = $state('');
-	function add() {
-		if (!adding) return;
-		draft = [...draft, adding];
-		adding = '';
+	function remove(index: number) {
+		draft = draft.filter((_, i) => i !== index);
+		selected = null;
 	}
-
-	// Drag and drop between rows.
-	let dragging = $state<number | null>(null);
-	let over = $state<number | null>(null);
+	function shuffle() {
+		const next = [...draft];
+		for (let i = next.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[next[i], next[j]] = [next[j], next[i]];
+		}
+		draft = next;
+		selected = null;
+	}
 </script>
 
-<div class="lineup">
-	{#if !draft.length}
-		<p class="empty">
-			{editable
-				? 'No lineup yet: every game is open. Add games below to set the order for tonight.'
-				: 'No lineup tonight: any game can be picked.'}
-		</p>
-	{:else}
-		<ol>
-			{#each draft as version, index (index + version)}
-				<li
-					class:now={index === at}
-					class:next={index === nextIndex && index !== at}
-					class:dragging={dragging === index}
-					class:over={over === index && dragging !== index}
-					draggable={editable}
-					ondragstart={(event) => {
-						dragging = index;
-						event.dataTransfer?.setData('text/plain', String(index));
-					}}
-					ondragover={(event) => {
-						if (dragging === null) return;
-						event.preventDefault();
-						over = index;
-					}}
-					ondrop={(event) => {
-						event.preventDefault();
-						if (dragging !== null) move(dragging, index);
-						dragging = over = null;
-					}}
-					ondragend={() => (dragging = over = null)}
+<div class="lineup" class:editable>
+	<!-- The night, in order. -->
+	<ol class="queue" aria-label="Tonight’s lineup in play order">
+		{#each editable ? draft : lineup as slot, index (`${slot}-${index}`)}
+			{@const done = !editable && playingIndex >= 0 && index < playingIndex}
+			{@const now = !editable && index === playingIndex}
+			<li>
+				<button
+					class="chip"
+					class:mystery={slot === MYSTERY}
+					class:done
+					class:now
+					class:selected={editable && selected === index}
+					onclick={() =>
+						editable
+							? (selected = selected === index ? null : index)
+							: slot !== MYSTERY && oninfo?.(slot)}
+					aria-pressed={editable ? selected === index : undefined}
 				>
-					{#if editable}<span class="grip" aria-hidden="true"><GripVertical size={16} /></span>{/if}
-					<span class="num">{index + 1}</span>
-					<span class="game">
-						<strong>{nameOf(version)}</strong>
-						{#if hintOf(version)}<small>{hintOf(version)}</small>{/if}
+					<span class="pos">{done ? '✓' : now ? '▶' : index + 1}</span>
+					{slot === MYSTERY ? '🎲 ' : ''}{slotName(slot)}
+					{#if now && at && perGame}<small>{Math.min(at.played, perGame)}/{perGame}</small>{/if}
+				</button>
+				{#if editable && selected === index}
+					<span class="nudge">
+						<button onclick={() => move(index, -1)} disabled={index === 0} aria-label="Earlier"
+							><ChevronLeft size={14} /></button
+						>
+						<button
+							onclick={() => move(index, 1)}
+							disabled={index === draft.length - 1}
+							aria-label="Later"><ChevronRight size={14} /></button
+						>
+						<button onclick={() => remove(index)} aria-label="Remove"><X size={14} /></button>
 					</span>
-					{#if index === at}<span class="tag now-tag">Now</span>{:else if index === nextIndex}<span
-							class="tag">Next</span
-						>{/if}
-					{#if editable}
-						<span class="row-tools">
-							<button
-								type="button"
-								aria-label="Move {nameOf(version)} up"
-								disabled={index === 0}
-								onclick={() => move(index, index - 1)}><ChevronUp size={15} /></button
-							>
-							<button
-								type="button"
-								aria-label="Move {nameOf(version)} down"
-								disabled={index === draft.length - 1}
-								onclick={() => move(index, index + 1)}><ChevronDown size={15} /></button
-							>
-							<button
-								type="button"
-								aria-label="Remove {nameOf(version)}"
-								onclick={() => remove(index)}><X size={15} /></button
-							>
-						</span>
-					{/if}
-				</li>
-			{/each}
-		</ol>
-	{/if}
+				{/if}
+			</li>
+		{:else}
+			<li class="empty">
+				{editable
+					? 'Tap games below in the order you want to play them.'
+					: 'No lineup tonight: any game can come up.'}
+			</li>
+		{/each}
+	</ol>
 
-	{#if editable}
-		<div class="add">
-			<select bind:value={adding} aria-label="Add a game">
-				<option value="">Add a game…</option>
-				{#each VARIANT_CATALOG as option (option.rulesVersion)}
-					<option value={option.rulesVersion}>{option.selectionLabel}</option>
-				{/each}
-			</select>
-			<button type="button" class="add-btn" disabled={!adding} onclick={add}
-				><Plus size={15} /> Add</button
-			>
-		</div>
-		<div class="save-row">
-			{#if changed}
-				<button type="button" class="ghost" onclick={() => (draft = [...lineup])}
-					>Undo changes</button
-				>
-			{/if}
-			<button
-				type="button"
-				class="save"
-				disabled={!changed || saving}
-				onclick={() => onsave?.([...draft])}
-				>{saving ? 'Saving…' : changed ? 'Save lineup' : 'Saved'}</button
-			>
-		</div>
-		<p class="note">
-			Drag to reorder. Whoever picks the next game can still choose something else.
-		</p>
+	{#if !editable}
+		{#if lineup.length}
+			<p class="pace">
+				Each game: <strong>{handsLabel(hands)}</strong>{#if oninfo}<span
+						>· tap a game for its rules</span
+					>{/if}
+			</p>
+		{/if}
 	{:else}
-		<p class="note">Set by the club owner. Whoever picks the next game can still choose another.</p>
+		<div class="controls">
+			<div class="hands" role="radiogroup" aria-label="Hands per game">
+				{#each LINEUP_HANDS as value (value)}
+					<button
+						role="radio"
+						aria-checked={draftHands === value}
+						class:on={draftHands === value}
+						onclick={() => (draftHands = value)}>{value === 0 ? 'Round' : value}</button
+					>
+				{/each}
+				<span class="hands-label">{handsLabel(draftHands)} each</span>
+			</div>
+			<span class="tools">
+				<button onclick={shuffle} disabled={draft.length < 2}><Shuffle size={14} /> Shuffle</button>
+				<button onclick={() => ((draft = []), (selected = null))} disabled={!draft.length}
+					><Eraser size={14} /> Clear</button
+				>
+			</span>
+		</div>
+
+		<div class="families" role="tablist" aria-label="Game families">
+			{#each [{ id: 'all', label: 'All' }, ...GAME_FAMILIES] as item (item.id)}
+				<button
+					role="tab"
+					aria-selected={family === item.id}
+					class:on={family === item.id}
+					onclick={() => (family = item.id)}>{item.label}</button
+				>
+			{/each}
+		</div>
+
+		<div class="tiles">
+			<button class="tile mystery" onclick={() => toggle(MYSTERY)}>
+				{#if positions(MYSTERY).length}<span class="badges"
+						>{#each positions(MYSTERY) as n (n)}<i>{n}</i>{/each}</span
+					>{/if}
+				<strong>🎲 Mystery</strong>
+				<small>A surprise game when its turn comes</small>
+			</button>
+			{#each shown as variant (variant.rulesVersion)}
+				{@const at = positions(variant.rulesVersion)}
+				<button
+					class="tile fam-{familyOf(variant.rulesVersion)}"
+					class:picked={at.length > 0}
+					onclick={() => toggle(variant.rulesVersion)}
+				>
+					{#if at.length}<span class="badges"
+							>{#each at as n (n)}<i>{n}</i>{/each}</span
+						>{/if}
+					<strong>{slotName(variant.rulesVersion)}</strong>
+					<small>{slotHint(variant.rulesVersion)}</small>
+					{#if oninfo}<span
+							class="info"
+							role="button"
+							tabindex="0"
+							aria-label="How {slotName(variant.rulesVersion)} works"
+							onclick={(event) => {
+								event.stopPropagation();
+								oninfo(variant.rulesVersion);
+							}}
+							onkeydown={(event) => {
+								if (event.key === 'Enter') {
+									event.stopPropagation();
+									oninfo(variant.rulesVersion);
+								}
+							}}><Info size={13} /></span
+						>{/if}
+				</button>
+			{/each}
+		</div>
+
+		<div class="save-bar">
+			<span>{draft.length} game{draft.length === 1 ? '' : 's'} · {handsLabel(draftHands)} each</span
+			>
+			<button class="save" disabled={!changed || saving} onclick={() => onsave?.(draft, draftHands)}
+				>{saving ? 'Saving…' : 'Save lineup'}</button
+			>
+		</div>
 	{/if}
 </div>
 
 <style>
 	.lineup {
 		display: grid;
-		/* minmax(0, …): long game names in the add list must not widen the drawer. */
-		grid-template-columns: minmax(0, 1fr);
-		gap: 0.7rem;
+		gap: 0.9rem;
 		color: #f1ebdc;
 	}
-	.empty,
-	.note {
-		color: rgb(241 235 220 / 60%);
-		font-size: 0.82rem;
-	}
-	ol {
-		display: grid;
-		gap: 0.4rem;
-	}
-	li {
+	.queue {
 		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.queue li {
+		display: inline-flex;
 		align-items: center;
-		gap: 0.55rem;
-		border: 1px solid rgb(240 209 140 / 14%);
-		border-radius: 0.85rem;
-		background: rgb(255 255 255 / 4%);
-		padding: 0.55rem 0.6rem;
-		transition:
-			border-color 120ms ease,
-			background 120ms ease,
-			opacity 120ms ease;
+		gap: 0.2rem;
 	}
-	li[draggable='true'] {
-		cursor: grab;
-	}
-	li.dragging {
-		opacity: 0.4;
-	}
-	li.over {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 12%);
-	}
-	li.now {
-		border-color: rgb(244 214 140 / 55%);
-		background: linear-gradient(100deg, rgb(244 214 140 / 16%), rgb(244 214 140 / 4%));
-	}
-	.grip {
-		color: rgb(241 235 220 / 35%);
-	}
-	.num {
-		display: grid;
-		width: 1.5rem;
-		height: 1.5rem;
-		flex-shrink: 0;
-		place-items: center;
-		border-radius: 999px;
-		background: rgb(255 255 255 / 7%);
-		font-size: 0.72rem;
-		font-weight: 750;
-	}
-	li.now .num {
-		background: #f4d68c;
-		color: #24180a;
-	}
-	.game {
-		display: grid;
-		min-width: 0;
-		flex: 1;
-		line-height: 1.2;
-	}
-	.game strong {
+	.queue .empty {
+		color: rgb(241 235 220 / 60%);
 		font-size: 0.9rem;
 	}
-	.game small {
-		overflow: hidden;
-		color: rgb(241 235 220 / 50%);
-		font-size: 0.72rem;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	.tag {
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		border: 1px solid rgb(244 214 140 / 28%);
 		border-radius: 999px;
-		background: rgb(255 255 255 / 8%);
-		padding: 0.05rem 0.5rem;
-		color: rgb(241 235 220 / 70%);
-		font-size: 0.68rem;
-		font-weight: 700;
+		background: rgb(255 255 255 / 4%);
+		padding: 0.3rem 0.75rem 0.3rem 0.35rem;
+		color: #f1ebdc;
+		font-size: 0.88rem;
+		font-weight: 650;
+		cursor: pointer;
+		transition:
+			background 160ms,
+			border-color 160ms;
 	}
-	.now-tag {
-		background: rgb(244 214 140 / 20%);
-		color: #f4d68c;
-	}
-	.row-tools {
-		display: flex;
-		gap: 0.1rem;
-	}
-	.row-tools button {
+	.chip .pos {
 		display: grid;
-		width: 1.7rem;
-		height: 1.7rem;
+		min-width: 1.4rem;
+		height: 1.4rem;
 		place-items: center;
 		border-radius: 999px;
-		color: rgb(241 235 220 / 65%);
-		cursor: pointer;
-	}
-	.row-tools button:hover:not(:disabled) {
-		background: rgb(255 255 255 / 8%);
+		background: rgb(244 214 140 / 18%);
 		color: #f4d68c;
+		font-size: 0.75rem;
+		font-weight: 800;
 	}
-	.row-tools button:disabled {
-		opacity: 0.25;
-		cursor: default;
+	.chip small {
+		color: #f4d68c;
+		font-weight: 800;
 	}
-	.add {
-		display: flex;
-		gap: 0.4rem;
+	.chip.done {
+		opacity: 0.55;
 	}
-	.add select {
-		width: 100%;
-		min-width: 0;
-		flex: 1;
-		border: 1px solid rgb(240 209 140 / 25%);
-		border-radius: 0.7rem;
-		background: rgb(0 0 0 / 30%);
-		padding: 0.5rem;
+	.chip.now {
+		border-color: #f4d68c;
+		background: rgb(244 214 140 / 14%);
+		box-shadow: 0 0 14px rgb(244 214 140 / 25%);
+	}
+	.chip.now .pos {
+		background: #f4d68c;
+		color: #2d1f05;
+	}
+	.chip.selected {
+		border-color: #f4d68c;
+		background: rgb(244 214 140 / 16%);
+	}
+	.chip.mystery .pos {
+		background: rgb(196 155 255 / 22%);
+		color: #d9c2ff;
+	}
+	.nudge {
+		display: inline-flex;
+		gap: 0.15rem;
+	}
+	.nudge button {
+		display: grid;
+		width: 1.6rem;
+		height: 1.6rem;
+		place-items: center;
+		border-radius: 999px;
+		background: rgb(255 255 255 / 8%);
 		color: #f1ebdc;
+	}
+	.nudge button:disabled {
+		opacity: 0.3;
+	}
+	.pace {
+		color: rgb(241 235 220 / 70%);
 		font-size: 0.85rem;
 	}
-	.add-btn,
-	.ghost {
+	.pace strong {
+		color: #f4d68c;
+	}
+	.pace span {
+		margin-left: 0.3rem;
+	}
+	.controls {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.6rem;
+		border-top: 1px solid rgb(255 255 255 / 7%);
+		padding-top: 0.8rem;
+	}
+	.hands {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		border: 1px solid rgb(240 209 140 / 30%);
-		border-radius: 0.7rem;
-		padding: 0.45rem 0.8rem;
-		color: #f4d68c;
-		font-size: 0.85rem;
-		cursor: pointer;
 	}
-	.add-btn:disabled {
-		opacity: 0.4;
-		cursor: default;
+	.hands button,
+	.families button {
+		border: 1px solid rgb(244 214 140 / 25%);
+		border-radius: 999px;
+		padding: 0.25rem 0.7rem;
+		color: rgb(241 235 220 / 80%);
+		font-size: 0.82rem;
+		font-weight: 700;
 	}
-	.save-row {
-		display: flex;
-		justify-content: flex-end;
+	.hands button.on,
+	.families button.on {
+		border-color: #f4d68c;
+		background: #f4d68c;
+		color: #2d1f05;
+	}
+	.hands-label {
+		margin-left: 0.3rem;
+		color: rgb(241 235 220 / 60%);
+		font-size: 0.8rem;
+	}
+	.tools {
+		display: inline-flex;
 		gap: 0.4rem;
+	}
+	.tools button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		border-radius: 999px;
+		background: rgb(255 255 255 / 6%);
+		padding: 0.3rem 0.7rem;
+		color: #f1ebdc;
+		font-size: 0.8rem;
+		font-weight: 700;
+	}
+	.tools button:disabled {
+		opacity: 0.35;
+	}
+	.families {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+	.tiles {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+		gap: 0.55rem;
+	}
+	.tile {
+		position: relative;
+		display: grid;
+		gap: 0.2rem;
+		align-content: start;
+		min-height: 4.6rem;
+		border: 1px solid rgb(255 255 255 / 9%);
+		border-radius: 0.9rem;
+		background: linear-gradient(180deg, rgb(255 255 255 / 5%), transparent), rgb(12 22 17 / 80%);
+		padding: 0.65rem 0.75rem;
+		text-align: left;
+		cursor: pointer;
+		transition:
+			transform 140ms ease,
+			border-color 140ms ease,
+			box-shadow 140ms ease;
+	}
+	.tile:hover {
+		transform: translateY(-2px);
+		border-color: rgb(244 214 140 / 40%);
+	}
+	.tile:active {
+		transform: scale(0.97);
+	}
+	.tile strong {
+		color: #f1ebdc;
+		font-size: 0.92rem;
+	}
+	.tile small {
+		color: rgb(241 235 220 / 60%);
+		font-size: 0.75rem;
+		line-height: 1.3;
+	}
+	.tile::before {
+		position: absolute;
+		top: 0.65rem;
+		bottom: 0.65rem;
+		left: 0;
+		width: 3px;
+		border-radius: 0 3px 3px 0;
+		background: var(--fam, #f4d68c);
+		content: '';
+	}
+	.fam-classic {
+		--fam: #f4d68c;
+	}
+	.fam-jokers {
+		--fam: #ff9f7a;
+	}
+	.fam-four {
+		--fam: #7cc4ff;
+	}
+	.fam-table {
+		--fam: #7be0a6;
+	}
+	.tile.mystery {
+		--fam: #c49bff;
+		background:
+			radial-gradient(circle at 85% 20%, rgb(196 155 255 / 22%), transparent 60%),
+			rgb(12 22 17 / 80%);
+	}
+	.tile.picked {
+		border-color: #f4d68c;
+		box-shadow:
+			0 0 0 1px rgb(244 214 140 / 40%),
+			0 6px 16px rgb(0 0 0 / 35%);
+	}
+	.badges {
+		position: absolute;
+		top: -0.45rem;
+		right: -0.35rem;
+		display: flex;
+		gap: 0.15rem;
+	}
+	.badges i {
+		display: grid;
+		min-width: 1.35rem;
+		height: 1.35rem;
+		place-items: center;
+		border-radius: 999px;
+		background: #f4d68c;
+		box-shadow: 0 2px 6px rgb(0 0 0 / 45%);
+		color: #2d1f05;
+		font-size: 0.72rem;
+		font-style: normal;
+		font-weight: 850;
+	}
+	.info {
+		position: absolute;
+		right: 0.45rem;
+		bottom: 0.4rem;
+		display: grid;
+		width: 1.4rem;
+		height: 1.4rem;
+		place-items: center;
+		border-radius: 999px;
+		color: rgb(241 235 220 / 55%);
+	}
+	.info:hover {
+		background: rgb(255 255 255 / 8%);
+		color: #f4d68c;
+	}
+	.save-bar {
+		position: sticky;
+		bottom: 0;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.8rem;
+		border-top: 1px solid rgb(255 255 255 / 8%);
+		background: rgb(8 16 12 / 95%);
+		padding: 0.7rem 0 0.2rem;
+		color: rgb(241 235 220 / 70%);
+		font-size: 0.85rem;
 	}
 	.save {
 		border-radius: 999px;
-		background: linear-gradient(#f0d18c, #c9963d);
-		padding: 0.55rem 1.2rem;
-		color: #1c1406;
-		font-weight: 750;
-		cursor: pointer;
+		background: linear-gradient(180deg, #f7dc95, #d9ac4c);
+		padding: 0.5rem 1.3rem;
+		color: #2d1f05;
+		font-weight: 800;
 	}
 	.save:disabled {
-		background: rgb(255 255 255 / 10%);
-		color: rgb(241 235 220 / 55%);
-		cursor: default;
+		opacity: 0.45;
 	}
 </style>

@@ -230,7 +230,7 @@
 		void goto('/club', { replaceState: true });
 	});
 
-	/** Practice tables from the create page: seat the requested bots, then deal once. */
+	/** Practice tables from the create page: seat the requested bots; the host starts the game. */
 	let practiceDone = false;
 	$effect(() => {
 		const room = roomData;
@@ -252,7 +252,7 @@
 				for (let tries = 0; tries < 50 && socket.roomData?.revision === revision; tries++)
 					await new Promise((resolve) => setTimeout(resolve, 40));
 			}
-			await dealTeenPatti();
+			// No dealing yet: the host starts the night from the waiting room when ready.
 		})();
 	});
 	onMount(() => {

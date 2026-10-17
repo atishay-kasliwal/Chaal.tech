@@ -17,10 +17,14 @@ import { getVariant } from '../variants/index.mjs';
 
 /** Most games a night's lineup can hold. */
 export const LINEUP_MAX = 30;
+/** A lineup slot that draws a surprise game when its turn comes. */
+export const MYSTERY = 'mystery';
+/** Hands each lineup game is played for; 0 means one round (a hand per player at the table). */
+export const LINEUP_HANDS = [1, 2, 3, 0];
+const lineupItem = (v) => typeof v === 'string' && (v === MYSTERY || !!getVariant(v));
 const cleanLineup = (lineup) =>
-	Array.isArray(lineup)
-		? lineup.filter((v) => typeof v === 'string' && getVariant(v)).slice(0, LINEUP_MAX)
-		: [];
+	Array.isArray(lineup) ? lineup.filter(lineupItem).slice(0, LINEUP_MAX) : [];
+const cleanHands = (hands) => (LINEUP_HANDS.includes(hands) ? hands : 1);
 
 export const SETTINGS = 'club_settings';
 
@@ -75,22 +79,33 @@ export function normalizeSettings(input = {}) {
 export async function clubSettings(db) {
 	const saved = await db.collection(SETTINGS).findOne({ _id: 'club' });
 	// The night's lineup: Teen Patti variants in play order. Empty means every game.
-	return { ...normalizeSettings(saved ?? DEFAULT_SETTINGS), lineup: cleanLineup(saved?.lineup) };
+	return {
+		...normalizeSettings(saved ?? DEFAULT_SETTINGS),
+		lineup: cleanLineup(saved?.lineup),
+		lineupHands: cleanHands(saved?.lineupHands)
+	};
 }
 
 /** Set the night's lineup (owners only, checked by the caller). */
-export async function saveLineup(db, lineup, byMemberId, now = new Date()) {
+export async function saveLineup(db, lineup, byMemberId, now = new Date(), hands = 1) {
 	if (!Array.isArray(lineup) || lineup.length > LINEUP_MAX)
 		throw invalid(`A lineup holds up to ${LINEUP_MAX} games`);
 	const clean = cleanLineup(lineup);
 	if (clean.length !== lineup.length) throw invalid('Unknown game in the lineup');
-	await db
-		.collection(SETTINGS)
-		.updateOne(
-			{ _id: 'club' },
-			{ $set: { lineup: clean, lineupUpdatedAt: now, lineupUpdatedBy: byMemberId } },
-			{ upsert: true }
-		);
+	if (!LINEUP_HANDS.includes(hands))
+		throw invalid('Play each game for 1, 2 or 3 hands, or one round');
+	await db.collection(SETTINGS).updateOne(
+		{ _id: 'club' },
+		{
+			$set: {
+				lineup: clean,
+				lineupHands: hands,
+				lineupUpdatedAt: now,
+				lineupUpdatedBy: byMemberId
+			}
+		},
+		{ upsert: true }
+	);
 	return clean;
 }
 

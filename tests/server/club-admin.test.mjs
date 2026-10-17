@@ -33,7 +33,7 @@ test.after(async () => {
 const idOf = async (email) => String((await members.findOne({ email }))._id);
 
 test('settings default sensibly, keep the boot within 1/20 of the chips, and reject bad saves', async () => {
-	assert.deepEqual(await clubSettings(db), { ...DEFAULT_SETTINGS, lineup: [] });
+	assert.deepEqual(await clubSettings(db), { ...DEFAULT_SETTINGS, lineup: [], lineupHands: 1 });
 	assert.equal(
 		normalizeSettings({ table: { chips: 1000, boot: 100, potLimit: 0 } }).table.boot,
 		50
@@ -43,7 +43,7 @@ test('settings default sensibly, keep the boot within 1/20 of the chips, and rej
 		look: { felt: 'onyx', cardBack: 'crimson' }
 	};
 	assert.deepEqual(await saveClubSettings(db, wanted, 'owner'), wanted);
-	assert.deepEqual(await clubSettings(db), { ...wanted, lineup: [] });
+	assert.deepEqual(await clubSettings(db), { ...wanted, lineup: [], lineupHands: 1 });
 	await assert.rejects(
 		saveClubSettings(db, { ...wanted, table: { chips: 10, boot: 5, potLimit: 0 } }, 'owner'),
 		/Starting chips/
@@ -109,4 +109,15 @@ test('owners set the lineup for the night; unknown games are refused', async () 
 	await assert.rejects(saveLineup(db, 'classic-1', 'owner'), /up to/);
 	await saveLineup(db, [], 'owner');
 	assert.deepEqual((await clubSettings(db)).lineup, []);
+});
+
+test('a lineup can hold Mystery slots and play each game for a few hands', async () => {
+	await saveLineup(db, ['classic-1', 'mystery', 'muflis-1'], 'owner', new Date(), 3);
+	const settings = await clubSettings(db);
+	assert.deepEqual(settings.lineup, ['classic-1', 'mystery', 'muflis-1']);
+	assert.equal(settings.lineupHands, 3);
+	await saveLineup(db, ['classic-1'], 'owner', new Date(), 0);
+	assert.equal((await clubSettings(db)).lineupHands, 0);
+	await assert.rejects(saveLineup(db, ['classic-1'], 'owner', new Date(), 7), /1, 2 or 3 hands/);
+	await saveLineup(db, [], 'owner');
 });

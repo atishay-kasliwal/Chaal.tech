@@ -73,6 +73,10 @@ interface RoomData {
 	lineup?: string[];
 	/** The last pick, which stands for later hands until someone changes it. */
 	standing?: { choice: string; by: string };
+	/** Hands each lineup game is played for (0 = one round). */
+	lineupHands?: number;
+	/** Where the night is in the lineup: the slot playing and how many hands it has had. */
+	lineupAt?: { index: number; rulesVersion: string; played: number };
 	/** The last five hands played at this table: the game and who won. */
 	gameLog?: { handId: string; rulesVersion: string; winner: string }[];
 	/** The next game once settled: what, how it was chosen, by whom, and the rules-card time. */

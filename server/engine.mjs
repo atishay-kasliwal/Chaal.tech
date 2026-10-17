@@ -126,6 +126,29 @@ export const SAME_GAME_MS = 4 * 1000;
 
 const humansSeated = (room) => seated(room).filter((p) => !p.bot && !p.departed).length;
 
+/** A lineup slot that draws a surprise game (same rule as Random) when its turn comes. */
+export const MYSTERY = 'mystery';
+
+/**
+ * Where the night's lineup goes next. Each slot plays for `hands` hands (0 = one round: a hand
+ * per player seated), then the next slot; the lineup loops. A table that hasn't followed the
+ * lineup yet starts after the game it is playing (or at the top).
+ */
+function lineupStep(room, slots, hands) {
+	const at = room.lineupAt;
+	const perGame = hands === 0 ? Math.max(1, seated(room).filter((p) => !p.departed).length) : hands;
+	if (
+		at &&
+		slots[at.index] !== undefined &&
+		at.rulesVersion === room.rulesVersion &&
+		at.played < perGame
+	)
+		return { index: at.index, slot: slots[at.index], repeat: true };
+	const from = at && slots[at.index] !== undefined ? at.index : slots.indexOf(room.rulesVersion);
+	const index = (from + 1) % slots.length;
+	return { index, slot: slots[index], repeat: false };
+}
+
 /** A game Random just played sits out this many hands before it can come up again. */
 export const RANDOM_COOLDOWN = 4;
 
@@ -171,17 +194,25 @@ function drawRandom(room, pool, randomInt) {
 function settleNext(room, ctx) {
 	if (!room.chooser || room.upNext || !ctx?.randomInt || !Number.isFinite(ctx.now)) return;
 	const chooser = room.chooser;
-	const lineup = (ctx.lineup ?? []).filter((version) => getVariant(version));
-	const choice = chooser.choice ?? room.standing?.choice ?? (lineup.length ? 'next' : 'random');
-	const pool = lineup.length ? lineup : listVariants().map((variant) => variant.rulesVersion);
-	const rulesVersion =
-		choice === 'random'
-			? drawRandom(room, pool, ctx.randomInt)
-			: choice === 'next'
-				? (nextInLineup(lineup, room.rulesVersion) ?? room.rulesVersion)
-				: choice === 'keep'
-					? room.rulesVersion
-					: choice;
+	// The lineup's slots (games and Mystery slots), and just its games for Random to draw from.
+	const slots = (ctx.lineup ?? []).filter((v) => v === MYSTERY || getVariant(v));
+	const lineup = slots.filter((version) => getVariant(version));
+	const choice = chooser.choice ?? room.standing?.choice ?? (slots.length ? 'next' : 'random');
+	const everyGame = listVariants().map((variant) => variant.rulesVersion);
+	const pool = lineup.length ? lineup : everyGame;
+	let lineupIndex;
+	let rulesVersion;
+	if (choice === 'random') rulesVersion = drawRandom(room, pool, ctx.randomInt);
+	else if (choice === 'next' && slots.length) {
+		const step = lineupStep(room, slots, ctx.lineupHands ?? 1);
+		lineupIndex = step.index;
+		rulesVersion = step.repeat
+			? room.rulesVersion
+			: step.slot === MYSTERY
+				? drawRandom(room, everyGame, ctx.randomInt)
+				: step.slot;
+	} else if (choice === 'next') rulesVersion = room.rulesVersion;
+	else rulesVersion = choice === 'keep' ? room.rulesVersion : choice;
 	const by = chooser.choice ? chooser.playerId : (room.standing?.by ?? null);
 	const changed = rulesVersion !== room.rulesVersion;
 	const revealMs = changed ? (humansSeated(room) <= 1 ? SOLO_REVEAL_MS : REVEAL_MS) : 0;
@@ -191,7 +222,8 @@ function settleNext(room, ctx) {
 		by,
 		changed,
 		revealMs,
-		dealAt: ctx.now + (changed ? revealMs : SAME_GAME_MS)
+		dealAt: ctx.now + (changed ? revealMs : SAME_GAME_MS),
+		...(lineupIndex === undefined ? {} : { lineupIndex })
 	};
 }
 
@@ -500,6 +532,17 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			if (room.chooser) {
 				room.lastChooserId = room.chooser.playerId;
 				delete room.chooser;
+			}
+			// Follow the lineup: which slot this hand plays, and how many hands it has had.
+			const lineupIndex = room.upNext?.lineupIndex ?? payload.lineupIndex;
+			if (Number.isInteger(lineupIndex) && lineupIndex >= 0) {
+				const same =
+					room.lineupAt?.index === lineupIndex && room.lineupAt.rulesVersion === nextVersion;
+				room.lineupAt = {
+					index: lineupIndex,
+					rulesVersion: nextVersion,
+					played: same ? room.lineupAt.played + 1 : 1
+				};
 			}
 			delete room.upNext;
 			room.isStarted = true;
@@ -851,6 +894,8 @@ export function projection(room, id, connected) {
 		...(room.standing ? { standing: { ...room.standing } } : {}),
 		// The last five hands played here: the game and who won.
 		...(room.gameLog ? { gameLog: room.gameLog.map((entry) => ({ ...entry })) } : {}),
+		// Where the night is in tonight's lineup: the slot playing and how many hands it has had.
+		...(room.lineupAt ? { lineupAt: { ...room.lineupAt } } : {}),
 		// The settled next game: what, how it was chosen, and when it will be dealt.
 		...(room.upNext ? { upNext: { ...room.upNext } } : {}),
 		// Chip requests are private to the two players involved.

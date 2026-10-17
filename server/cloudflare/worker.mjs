@@ -315,7 +315,7 @@ export default {
 						else if (action === 'role') await setMemberRole(db, body.memberId, body.role);
 						else if (action === 'settings') await saveClubSettings(db, body.settings, actorId);
 						else if (action === 'lineup') {
-							await saveLineup(db, body.lineup, actorId);
+							await saveLineup(db, body.lineup, actorId, new Date(), body.hands ?? 1);
 							notice = 'Lineup saved. Every table follows it from the next hand.';
 						}
 						else if (action === 'beta-send') {

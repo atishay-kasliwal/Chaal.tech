@@ -459,10 +459,18 @@ export class RoomDurableObject {
 				if (before.gameType === 'texas-holdem') {
 					payload = { cutAt: args[1], cardsToDeal: args[2], rulesVersion: args[3] };
 				} else if (!before.gameType || before.gameType === 'teen-patti') {
-					// A game already settled (and shown to everyone) is what gets dealt.
+					// A game already settled (and shown to everyone) is what gets dealt. The night's first hand
+// opens the lineup (a Mystery first slot draws a game).
+const lineup = await this.lineup();
+const opening = !before.upNext && !before.lineupAt && !before.chooser && lineup.length > 0;
+const firstGame = opening && lineup[0] === 'mystery'
+	? listVariants()[secureRandomInt(listVariants().length)].rulesVersion
+	: lineup[0];
 const picked = before.upNext
 	? { mode: 'selected', rulesVersion: before.upNext.rulesVersion }
-	: nextHandChoice(before, Date.now(), await this.lineup());
+	: opening
+		? { mode: 'selected', rulesVersion: firstGame }
+		: nextHandChoice(before, Date.now(), lineup.filter((v) => getVariant(v)));
 					const mode = picked?.mode ?? args[4] ?? 'selected';
 					if (mode !== 'selected' && mode !== 'random')
 						throw new GameError('Choose a variant or random mode', 'INVALID_ACTION');
@@ -473,7 +481,7 @@ const picked = before.upNext
 						: (picked?.rulesVersion ?? args[3] ?? before.rulesVersion);
 					const variant = getVariant(rulesVersion);
 					if (!variant) throw new GameError('Unsupported game rules version', 'UNSUPPORTED_RULES');
-					payload = { cutAt: args[1], cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion };
+					payload = { cutAt: args[1], cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(opening ? { lineupIndex: 0 } : {}) };
 				} else payload = {};
 				text = 'Game started';
 			} else if (event === 'ready') {
@@ -723,7 +731,8 @@ const picked = before.upNext
 	/** The club's lineup for tonight, cached for a few seconds; empty when unreachable. */
 	/** What settling the next game needs: tonight's lineup and a secure random draw. */
 	async pickContext() {
-		return { lineup: await this.lineup(), randomInt: secureRandomInt };
+		const lineup = await this.lineup();
+		return { lineup, lineupHands: this.lineupCache?.hands ?? 1, randomInt: secureRandomInt };
 	}
 
 	async lineup() {
@@ -731,9 +740,9 @@ const picked = before.upNext
 		if (cached && Date.now() - cached.at < 15000) return cached.lineup;
 		try {
 			const settings = await withClubDatabase(this.env, (db) => clubSettings(db));
-			this.lineupCache = { at: Date.now(), lineup: settings.lineup ?? [] };
+			this.lineupCache = { at: Date.now(), lineup: settings.lineup ?? [], hands: settings.lineupHands ?? 1 };
 		} catch {
-			this.lineupCache = { at: Date.now(), lineup: cached?.lineup ?? [] };
+			this.lineupCache = { at: Date.now(), lineup: cached?.lineup ?? [], hands: cached?.hands ?? 1 };
 		}
 		return this.lineupCache.lineup;
 	}
@@ -741,7 +750,10 @@ const picked = before.upNext
 	/** A player's view of the room, with tonight's lineup when there is one. */
 	view(room, playerId, connected) {
 		const view = projection(room, playerId, connected);
-		if (this.lineupCache?.lineup?.length) view.lineup = this.lineupCache.lineup;
+		if (this.lineupCache?.lineup?.length) {
+			view.lineup = this.lineupCache.lineup;
+			view.lineupHands = this.lineupCache.hands ?? 1;
+		}
 		return view;
 	}
 

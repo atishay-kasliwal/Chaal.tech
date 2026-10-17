@@ -345,9 +345,10 @@
 					</p>
 					<LineupEditor
 						lineup={club.settings.lineup ?? []}
+						hands={club.settings.lineupHands ?? 1}
 						editable
 						saving={busy}
-						onsave={(lineup) => void send({ action: 'lineup', lineup })}
+						onsave={(lineup, hands) => void send({ action: 'lineup', lineup, hands })}
 					/>
 				</section>
 			{:else if tab === 'defaults'}

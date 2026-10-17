@@ -24,6 +24,8 @@ export interface ClubSettings {
 	};
 	/** Tonight's games in play order; empty means any game. */
 	lineup?: string[];
+	/** Hands each lineup game is played for; 0 means one round. */
+	lineupHands?: number;
 }
 export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
 	table: { chips: 1000, boot: 10, potLimit: 128 },

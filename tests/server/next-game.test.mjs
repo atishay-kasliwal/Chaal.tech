@@ -282,3 +282,81 @@ test('a lineup too small to rest four games gets the one played longest ago', ()
 	for (let i = 1; i < played.length; i++) assert.notEqual(played[i], played[i - 1]);
 	assert.equal(new Set(played).size, 3);
 });
+
+// Tonight's lineup: hands per game, Mystery slots, and looping.
+const followLineup = (room, lineup, hands, randomInt = seq([0])) => {
+	room = finish(deal(room, room.upNext?.rulesVersion ?? room.rulesVersion));
+	// Nobody picks: the lineup decides.
+	return transition(
+		room,
+		room.chooser.playerId,
+		'settleNext',
+		{},
+		pickCtx({ now: room.chooser.deadline, lineup, lineupHands: hands, randomInt })
+	);
+};
+
+test('a lineup plays each game for its hands, then moves on and loops', () => {
+	const lineup = ['muflis-1', 'ak47-1'];
+	let room = finish(deal(table()));
+	room = transition(
+		room,
+		room.chooser.playerId,
+		'settleNext',
+		{},
+		pickCtx({ now: room.chooser.deadline, lineup, lineupHands: 2 })
+	);
+	const order = [];
+	for (let hand = 0; hand < 7; hand++) {
+		order.push(room.upNext.rulesVersion);
+		room = followLineup(room, lineup, 2);
+	}
+	assert.deepEqual(order, [
+		'muflis-1',
+		'muflis-1',
+		'ak47-1',
+		'ak47-1',
+		'muflis-1',
+		'muflis-1',
+		'ak47-1'
+	]);
+	// The same game again needs no rules card; a new one does.
+	assert.equal(projection(room, 'a', connected).lineupAt.played >= 1, true);
+});
+
+test('a Mystery slot draws a game the night is not playing', () => {
+	const lineup = ['muflis-1', 'mystery', 'ak47-1'];
+	let room = finish(deal(table()));
+	room = transition(
+		room,
+		room.chooser.playerId,
+		'settleNext',
+		{},
+		pickCtx({ now: room.chooser.deadline, lineup, lineupHands: 1 })
+	);
+	assert.equal(room.upNext.rulesVersion, 'muflis-1');
+	room = followLineup(room, lineup, 1, seq([5, 2, 7]));
+	const mystery = room.upNext.rulesVersion;
+	assert.equal(room.upNext.lineupIndex, 1);
+	assert.notEqual(mystery, 'muflis-1');
+	room = followLineup(room, lineup, 1);
+	assert.equal(room.upNext.rulesVersion, 'ak47-1');
+});
+
+test('one round per game: a hand for each player seated', () => {
+	const lineup = ['muflis-1', 'ak47-1'];
+	let room = finish(deal(table())); // a, b, c and a bot: four seats
+	room = transition(
+		room,
+		room.chooser.playerId,
+		'settleNext',
+		{},
+		pickCtx({ now: room.chooser.deadline, lineup, lineupHands: 0 })
+	);
+	const order = [];
+	for (let hand = 0; hand < 5; hand++) {
+		order.push(room.upNext.rulesVersion);
+		room = followLineup(room, lineup, 0);
+	}
+	assert.deepEqual(order, ['muflis-1', 'muflis-1', 'muflis-1', 'muflis-1', 'ak47-1']);
+});

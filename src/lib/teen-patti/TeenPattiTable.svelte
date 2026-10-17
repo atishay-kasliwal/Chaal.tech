@@ -31,6 +31,9 @@
 	import ChipStack from '#lib/components/ChipStack.svelte';
 	import FriendPicker from '#lib/club/FriendPicker.svelte';
 	import LineupEditor from '#lib/club/LineupEditor.svelte';
+	import { lineupNext, slotName, handsLabel, MYSTERY } from '#lib/club/lineup.js';
+	import GameDemo from '#lib/games/GameDemo.svelte';
+	import { GAME_GUIDES } from '#lib/games/catalog.js';
 	import { club } from '#lib/club/club.svelte.js';
 	import BotAvatar from './BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
@@ -228,18 +231,28 @@
 	const lineup = $derived(
 		(isOwner ? club.settings.lineup : (room.lineup ?? club.settings.lineup)) ?? []
 	);
-	const upNext = $derived.by(() => {
-		if (!lineup.length) return null;
-		const at = lineup.indexOf(room.rulesVersion);
-		return lineup[(at + 1) % lineup.length];
-	});
+	/** Hands each lineup game is played for (0 = one round). */
+	const lineupHands = $derived(
+		(isOwner ? club.settings.lineupHands : (room.lineupHands ?? club.settings.lineupHands)) ?? 1
+	);
+	/** The lineup slot that comes next: the same game while it has hands left, then the next. */
+	const upNext = $derived(
+		lineupNext(lineup, room.lineupAt, room.rulesVersion, lineupHands, room.usersList.length)
+			?.slot ?? null
+	);
+	/** Where the night is in the lineup, for the top bar: "3/8". */
+	const lineupPos = $derived(
+		room.lineupAt && lineup[room.lineupAt.index] !== undefined ? room.lineupAt.index + 1 : 0
+	);
+	/** A game to explain in the game panel (from the lineup); the current game otherwise. */
+	let infoGame = $state<string | null>(null);
 	let savingLineup = $state(false);
-	async function saveLineup(next: string[]) {
+	async function saveLineup(next: string[], hands: number) {
 		savingLineup = true;
 		try {
 			const { response, body } = await club.request('/admin', {
 				method: 'POST',
-				body: JSON.stringify({ action: 'lineup', lineup: next })
+				body: JSON.stringify({ action: 'lineup', lineup: next, hands })
 			});
 			if (response.ok && body.settings) club.applySettings(body.settings);
 		} finally {
@@ -258,7 +271,10 @@
 		chooser ? Math.max(0, Math.ceil((chooser.deadline - now) / 1000)) : 0
 	);
 	const nameOfVariant = (version: string) =>
-		VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(': ')[0] ?? 'Teen Patti';
+		version === MYSTERY
+			? slotName(MYSTERY)
+			: (VARIANT_BY_VERSION[version as RulesVersion]?.selectionLabel.split(': ')[0] ??
+				'Teen Patti');
 	/** The last games played at this table, newest first. */
 	const gameLog = $derived([...(room.gameLog ?? [])].reverse());
 	/** The next game once the server has settled it (a Random draw is already made). */
@@ -840,12 +856,25 @@
 			</button>
 		</div>
 		<div class="variant" data-testid="variant-label">
-			<button class="variant-name" onclick={() => (panel = 'game')} title="How this game works"
+			<button
+				class="variant-name"
+				onclick={() => {
+					infoGame = null;
+					panel = 'game';
+				}}
+				title="How this game works"
 				>{gameTitle ?? variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti'}</button
 			>
 			{#if comingNext && comingNext !== (variant?.selectionLabel.split(': ')[0] ?? '')}
 				<span class="dot">·</span>
 				<span class="up-next">Next: <strong>{comingNext}</strong></span>
+			{/if}
+			{#if lineup.length}
+				<button class="lineup-pill" onclick={() => (panel = 'lineup')} title="Tonight’s lineup"
+					>{lineupPos
+						? `Lineup ${lineupPos}/${lineup.length}`
+						: `Lineup · ${lineup.length} games`}</button
+				>
 			{/if}
 			<span class="dot">·</span>
 			<span>Boot {money(boot)}</span>
@@ -1003,6 +1032,7 @@
 			class="center"
 			class:with-mat={hasMat && room.isStarted}
 			class:reviewing={hasMat && room.isStarted && !!result}
+			class:waiting={!room.isStarted && !result}
 			data-testid="table-center"
 			style:top="{centerTop}px"
 		>
@@ -1146,19 +1176,44 @@
 				</div>
 			{:else if !room.isStarted}
 				<div class="lobby" in:fade>
+					<p class="lobby-eyebrow">
+						Waiting room · {room.usersList.length}/6 seated · boot {money(
+							boot
+						)}{#if lineup.length}&nbsp;· lineup: {handsLabel(lineupHands).toLowerCase()} each{/if}
+					</p>
 					<p class="lobby-title">
 						<Sparkles class="h-4 w-4" />
-						{eligible.length < 2 ? 'Waiting for players' : 'Table is ready'}
+						{eligible.length < 2
+							? 'Waiting for friends to join'
+							: `${room.usersList.length} at the table`}
 					</p>
-					<p class="lobby-sub">
-						{room.usersList.length}/6 seated · {money(room.table)} buy-in · boot {money(boot)}
-					</p>
+					<!-- Who's here: everyone seated, people first. -->
+					<ul class="here" aria-label="At the table">
+						{#each [...room.usersList].sort((a, b) => Number(!!a.bot) - Number(!!b.bot)) as user, index (user.id)}
+							<li style:--i={index} class:bot={!!user.bot}>
+								<span class="dot" class:on={user.connected}
+								></span>{user.username}{#if user.id === room.hostId}<small>host</small
+									>{:else if user.bot}<small>bot</small>{/if}
+							</li>
+						{/each}
+					</ul>
 					{#if isHost}
-						<button class="deal-btn" onclick={dealNow} disabled={!canDeal} data-testid="deal-first">
-							<Play class="h-4 w-4" /> Deal first hand
-						</button>
-						{@render variantChip()}
-						{@render botAdder()}
+						<div class="lobby-actions">
+							<button
+								class="deal-btn"
+								onclick={dealNow}
+								disabled={!canDeal}
+								data-testid="deal-first"
+							>
+								<Play class="h-4 w-4" /> Start the night
+							</button>
+							<button class="mini" onclick={oninvite}
+								><UserPlus class="h-3.5 w-3.5" /> Invite</button
+							>
+							{#if !lineup.length}{@render variantChip()}{/if}
+							{@render botAdder()}
+						</div>
+
 						{#if !canDeal}
 							<p class="lobby-hint">
 								{eligible.length < 2
@@ -1168,7 +1223,41 @@
 						{/if}
 						{#if dealError}<p class="deal-error">{dealError}</p>{/if}
 					{:else}
-						<p class="lobby-hint">The host deals when everyone is here</p>
+						<p class="lobby-hint">
+							{room.usersList.find((user) => user.id === room.hostId)?.username ?? 'The host'} starts
+							the game when everyone is here
+						</p>
+					{/if}
+					<!-- Tonight's lineup: each game deals itself in; tap one to see how it's played. -->
+					{#if lineup.length}
+						<div
+							class="night"
+							aria-label="Tonight’s lineup: tap a game for its rules"
+							title="Tonight’s lineup · {handsLabel(lineupHands)} each · tap a game for its rules"
+						>
+							{#each lineup as slot, index (`${slot}-${index}`)}
+								{@const guide = GAME_GUIDES.find((game) => game.id === slot)}
+								<button
+									class="night-game"
+									class:mystery={slot === MYSTERY}
+									style:--i={index}
+									onclick={() => {
+										if (slot === MYSTERY) return;
+										infoGame = slot;
+										panel = 'game';
+									}}
+								>
+									<span class="night-no">{index + 1}</span>
+									{#if guide}<GameDemo game={guide} compact />{:else}<span class="mystery-face"
+											>🎲</span
+										>{/if}
+									<strong>{nameOfVariant(slot)}</strong>
+									<small
+										>{slot === MYSTERY ? 'A surprise game' : (HOW_TO_PLAY[slot]?.win ?? '')}</small
+									>
+								</button>
+							{/each}
+						</div>
 					{/if}
 				</div>
 			{:else}
@@ -1303,7 +1392,9 @@
 			<header class="sheet-head">
 				<h2>
 					{panel === 'game'
-						? (variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti')
+						? infoGame
+							? nameOfVariant(infoGame)
+							: (variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti')
 						: panel === 'lineup'
 							? 'Tonight’s lineup'
 							: panel === 'pick'
@@ -1322,7 +1413,7 @@
 			</header>
 			<div class="sheet-body">
 				{#if panel === 'game'}
-					{@const how = HOW_TO_PLAY[room.rulesVersion]}
+					{@const how = HOW_TO_PLAY[infoGame ?? room.rulesVersion]}
 					<div class="how">
 						<p class="how-win">{how?.win ?? variant?.description}</p>
 						{#if how}
@@ -1338,10 +1429,16 @@
 				{:else if panel === 'lineup'}
 					<LineupEditor
 						{lineup}
+						hands={lineupHands}
+						at={room.lineupAt}
 						current={room.rulesVersion}
 						editable={isOwner}
 						saving={savingLineup}
 						onsave={saveLineup}
+						oninfo={(version) => {
+							infoGame = version;
+							panel = 'game';
+						}}
 					/>
 				{:else if panel === 'pick'}
 					{#if chooser && picking && myPick}
@@ -2386,6 +2483,20 @@
 	.hidden-feed {
 		display: none;
 	}
+	/* Top bar: where the night is in tonight's lineup; opens the lineup. */
+	.lineup-pill {
+		border: 1px solid rgb(244 214 140 / 35%);
+		border-radius: 999px;
+		background: rgb(244 214 140 / 8%);
+		padding: 0.15rem 0.6rem;
+		color: #f4d68c;
+		font-size: 0.78rem;
+		font-weight: 750;
+		cursor: pointer;
+	}
+	.lineup-pill:hover {
+		background: rgb(244 214 140 / 18%);
+	}
 	.game-log {
 		position: absolute;
 		top: 0.4rem;
@@ -2511,7 +2622,164 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.4rem;
+		gap: 0.5rem;
+		width: 100%;
+	}
+	/* The waiting room gets the middle of the table, a little below the top seat. */
+	.center.waiting {
+		width: min(48rem, 84%);
+		translate: -50% calc(-50% + 0.6rem);
+	}
+	.night-game :global(.demo.compact) {
+		--card-w: 38px;
+		--card-h: 55px;
+		min-height: 76px;
+		padding: 12px 4px 4px;
+	}
+	.night-game :global(.demo.compact .scene-number) {
+		font-size: 72px;
+		top: 4px;
+	}
+	.lobby-eyebrow {
+		color: rgb(244 227 181 / 60%);
+		font-size: 0.7rem;
+		font-weight: 800;
+		letter-spacing: 0.22em;
+		text-transform: uppercase;
+	}
+	.here {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.35rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.here li {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		border: 1px solid rgb(244 214 140 / 22%);
+		border-radius: 999px;
+		background: rgb(6 14 10 / 55%);
+		padding: 0.2rem 0.65rem;
+		color: #f1ebdc;
+		font-size: 0.85rem;
+		font-weight: 650;
+		animation: pop-in 380ms calc(var(--i) * 70ms) both cubic-bezier(0.2, 0.9, 0.3, 1.3);
+	}
+	.here li small {
+		color: #f4d68c;
+		font-size: 0.68rem;
+		font-weight: 800;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+	.here li.bot small {
+		color: rgb(241 235 220 / 50%);
+	}
+	.here .dot {
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 999px;
+		background: rgb(255 255 255 / 25%);
+	}
+	.here .dot.on {
+		background: #6fe0a0;
+		box-shadow: 0 0 8px #6fe0a0;
+	}
+	.night {
+		display: flex;
+		max-width: 100%;
+		gap: 0.6rem;
+		overflow-x: auto;
+		padding: 0.6rem 0.2rem 0.5rem;
+		scroll-snap-type: x mandatory;
+	}
+	.night-game {
+		position: relative;
+		display: grid;
+		flex: 0 0 8.6rem;
+		justify-items: center;
+		gap: 0.1rem;
+		border: 1px solid rgb(244 214 140 / 25%);
+		border-radius: 1rem;
+		background:
+			radial-gradient(ellipse at 50% 0%, rgb(244 214 140 / 12%), transparent 70%),
+			rgb(6 14 10 / 78%);
+		padding: 0.2rem 0.6rem 0.65rem;
+		cursor: pointer;
+		scroll-snap-align: start;
+		animation: pop-in 460ms calc(var(--i) * 110ms) both cubic-bezier(0.2, 0.9, 0.3, 1.2);
+		transition:
+			transform 160ms ease,
+			border-color 160ms ease;
+	}
+	.night-game:hover {
+		transform: translateY(-3px);
+		border-color: #f4d68c;
+	}
+	.night-game :global(.demo) {
+		width: 100%;
+	}
+	.night-game strong {
+		color: #f7dc95;
+		font-size: 0.92rem;
+	}
+	.night-game small {
+		color: rgb(241 235 220 / 70%);
+		font-size: 0.72rem;
+		line-height: 1.3;
+		text-align: center;
+	}
+	.night-no {
+		position: absolute;
+		top: 0.4rem;
+		left: 0.5rem;
+		display: grid;
+		width: 1.35rem;
+		height: 1.35rem;
+		place-items: center;
+		border-radius: 999px;
+		background: #f4d68c;
+		color: #2d1f05;
+		font-size: 0.72rem;
+		font-weight: 850;
+	}
+	.night-game.mystery {
+		border-color: rgb(196 155 255 / 40%);
+		background:
+			radial-gradient(ellipse at 50% 20%, rgb(196 155 255 / 22%), transparent 70%),
+			rgb(6 14 10 / 78%);
+	}
+	.mystery-face {
+		display: grid;
+		height: 76px;
+		place-items: center;
+		font-size: 2.6rem;
+		animation: wobble 2.4s ease-in-out infinite;
+	}
+	.lobby-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.6rem;
+	}
+	.lobby-actions :global(.bot-adder) {
+		margin: 0;
+	}
+	@keyframes pop-in {
+		from {
+			opacity: 0;
+			transform: translateY(10px) scale(0.92);
+		}
+	}
+	@keyframes wobble {
+		50% {
+			transform: rotate(-10deg) scale(1.08);
+		}
 	}
 	.lobby-title {
 		display: inline-flex;
