@@ -43,6 +43,7 @@ import { openPoll, publicPoll, saveAvailability, pollSummary } from '../club/ava
 import { sendAddedEmail } from '../club/beta-emails.mjs';
 import { memoryHealth } from '../bots/memory/diagnostics.mjs';
 import { adminBotIntel, adminClubIntel, adminEvolve, adminExport, adminQuality } from '../analytics/intel/admin.mjs';
+import { useMomentBackend } from '../bots/memory/moments.mjs';
 import { OPPONENT_ROUTES, inLiveHand } from '../analytics/intel/api.mjs';
 import { rebuildMemory } from '../bots/memory/store.mjs';
 import { botDirectory, adminBots, manageBot } from '../bots/directory.mjs';
@@ -208,6 +209,7 @@ async function jsonBody(request, limit = 8192) {
 
 export default {
 	async fetch(request, env) {
+		useMomentBackend(env);
 		const url = new URL(request.url);
 		const origin = request.headers.get('Origin');
 		if (origin && !originAllowed(request, env))

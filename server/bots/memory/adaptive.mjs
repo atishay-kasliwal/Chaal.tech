@@ -15,7 +15,41 @@ export function defaultMemory(tendencies) {
 		seenResponse: Math.min(1, .3 + tendencies.pressureRead * 2),
 		blindResponse: Math.min(1, .2 + tendencies.bluff * 3), recencyWeight: .5 };
 }
+/** Optional memory settings (absent = off, so every earlier style plays exactly as it did). */
+export const FOCUS = Object.freeze(['balanced', 'bluffs', 'overbets', 'tilt', 'careful']);
+export const MEMORY_OPTIONAL = Object.freeze({ lineWeight: [0, .15] });
 const subject = user => user.botId ? `bot:${user.botId}` : user.id;
+
+/**
+ * Hand-by-hand reading of the opponent's line, from PUBLIC information only: how much they have put in
+ * beyond what this bot has, whether they are still blind (a blind bet says less), and the bot's own
+ * memory of how THIS person usually bets. Each character weighs a different habit (the focus).
+ * Returns the threat in 0..1 and the strength adjustment it causes; never a guess at the cards.
+ */
+export function readLine(view, seatId, snapshot, memory) {
+	const me = view.usersList.find(u => u.id === seatId);
+	const boot = Math.max(view.boot ?? 1, 1);
+	let threat = 0, who = null, habit = 1;
+	for (const opp of view.usersList.filter(u => u.id !== seatId && u.cardsInHand?.length && !u.isPacked)) {
+		const press = Math.max(0, Math.min(1, ((opp.handBet ?? 0) - (me?.handBet ?? 0)) / (boot * 8)));
+		const model = snapshot.models.find(m => m.playerId === subject(opp));
+		const h = model ? habitFactor(model, memory.focus ?? 'balanced', snapshot.asOf) : 1;
+		const t = Math.min(1, press * (opp.isBlind ? .5 : 1) * h);
+		if (t > threat) { threat = t; who = subject(opp); habit = h; }
+	}
+	const adjust = -(memory.lineWeight ?? 0) * threat;
+	return { threat: Math.round(threat * 1e4) / 1e4, habit: Math.round(habit * 1e4) / 1e4, focus: memory.focus ?? 'balanced', adjust: Math.round(adjust * 1e6) / 1e6, who };
+}
+/** >1 means "take their betting more seriously", <1 "they bet like this a lot". Gated like every adaptation. */
+function habitFactor(model, focus, asOf) {
+	const usable = key => { const m = model.metrics[key]; return m && m.opportunities >= 30 && m.hands >= 20 && model.nights >= 3 && m.confidence >= .15 && m.lastObserved < asOf ? m : null; };
+	if (focus === 'careful') return 1.15;
+	if (focus === 'bluffs') { const m = usable('blind:raise') ?? usable('all:raise'); return m ? 1 - Math.max(-.3, Math.min(.45, (m.observed - m.baseline) * 1.5)) : 1; }
+	if (focus === 'overbets') { const v = model.values.stakeMultiple; return v && v.sampleSize >= 30 && v.mean > 1.6 ? .75 : 1; }
+	if (focus === 'tilt') { const after = usable('after-loss:raise'), all = usable('all:raise'); return after && all && after.observed - all.observed > .1 ? .8 : 1; }
+	const m = usable('all:raise');
+	return m ? 1 - Math.max(-.2, Math.min(.3, (m.observed - m.baseline))) : 1;
+}
 export function publicDecisionContext(view, seatId) {
 	const me = view.usersList.find(u => u.id === seatId);
 	return { blind: !!me?.isBlind, live: view.usersList.filter(u => u.id !== seatId && u.cardsInHand?.length && !u.isPacked).length,
@@ -42,7 +76,9 @@ function evidence(metric, model, recencyWeight, asOf) {
 export function adaptiveDecision(view, seatId, random, style, memory) {
 	const snapshot = memory ?? unavailableMemory({ botId: style.botId, game: view.gameType ?? 'teen-patti', variant: view.rulesVersion ?? null, handId: view.handId, asOf: 0, nightId: null }, 'provider-not-connected');
 	validateSnapshot(snapshot, view, seatId, style.botId);
-	const base = decide(view, seatId, random, style.tendencies);
+	// Reading the line only ever uses a real, validated memory snapshot: with none, the base style plays.
+	const line = style.memory?.lineWeight && snapshot.status === 'available' ? readLine(view, seatId, snapshot, style.memory) : null;
+	const base = decide(view, seatId, random, style.tendencies, line ? { strengthAdjust: line.adjust } : {});
 	if (!base) return null;
 	const legal = view.legalActions;
 	const baseKey = choiceKey(base, legal);
@@ -94,6 +130,7 @@ export function adaptiveDecision(view, seatId, random, style, memory) {
 		baseProbabilities: { [baseKey]: 1 }, finalProbabilities,
 		adaptations: epsilon ? [{ ...adaptation, effect: epsilon }] : [], redirected,
 		confidence: adaptation?.evidence.confidence ?? 0,
+		...(line ? { lineRead: line } : {}),
 		reasonCodes: [base.reason, ...(epsilon ? [adaptation.reason] : []), ...(snapshot.status === 'unavailable' ? ['memory-unavailable'] : [])],
 		chosenAction: choiceKey(move, legal)
 	};

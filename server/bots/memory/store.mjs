@@ -1,6 +1,7 @@
 /** Derived cache only. Hand records are authoritative. Runtime never creates schema. */
 import { observeHand, MEMORY_VERSION, contextId } from './observations.mjs';
 import { emptyMemory, accumulate } from './model.mjs';
+import { momentIndexFor, momentsFrom } from './moments.mjs';
 
 export const MEMORY_COLLECTION = 'bot_memory';
 export const MEMORY_STATUS = 'bot_memory_status';
@@ -83,6 +84,8 @@ export async function updateMemoryForHand(db, handId) {
 		try {
 			const observation = observeHand(record, botId);
 			if (observation) await updateContext(db, botId, record.gameType, record.rulesVersion ?? null, observation);
+			// Moment memory is a separate, optional store: its failure never holds back the statistical memory.
+			if (observation) await momentIndexFor(db).upsert(momentsFrom(observation)).catch(() => {});
 			await db.collection(MEMORY_STATUS).updateOne({ _id: botId }, { $set: {
 				status: 'ready', schema: MEMORY_VERSION, lastUpdated: Date.now(), lastHandId: handId,
 				lastError: null, updateMs: performance.now() - start

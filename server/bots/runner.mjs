@@ -30,8 +30,28 @@ export function pickBotName(room, random) {
  * How long a bot "thinks". The table should feel unhurried: at least 2 seconds before the turn
  * passes to a bot's move, and at least 1 second between a bot looking at its cards and betting.
  */
-export function botDelay(random, quick = false) {
-	return quick ? 1000 + Math.floor(random() * 700) : 2000 + Math.floor(random() * 2000);
+export function botDelay(random, quick = false, feel = {}) {
+	const base = quick ? 1000 + Math.floor(random() * 700) : 2000 + Math.floor(random() * 2000);
+	const tempo = TEMPO[feel.botId] ?? 1;
+	// Bigger decisions take longer: facing a raise, or a big pot.
+	const weight = 1 + (feel.facingRaise ? 0.3 : 0) + (feel.bigPot ? 0.25 : 0);
+	// Now and then a long think, the way a person sometimes stalls on a hard one.
+	const stall = !quick && random() < 0.08 ? 1500 + Math.floor(random() * 2000) : 0;
+	return Math.min(7000, Math.round(base * tempo * weight + stall));
+}
+
+/** How quickly each character plays: Virat is decisive, Dhoni takes his time, Samay is quick but erratic. */
+export const TEMPO = Object.freeze({ 'rohit-sharma': 1, 'virat-kohli': 0.8, 'ms-dhoni': 1.35, gg: 1.15, 'samay-raina': 0.9 });
+
+/** What about the table should slow a bot down, from the room (no cards involved). */
+export function thinkingContext(room, botPlayerId) {
+	const bot = room.players.find((p) => p.id === botPlayerId);
+	const boot = room.boot ?? 1;
+	return {
+		botId: bot?.bot?.botId ?? bot?.bot?.style?.botId ?? String(bot?.bot?.styleId ?? '').split('@')[0],
+		facingRaise: (room.maxStake ?? 0) > boot * 2,
+		bigPot: (room.pot ?? 0) >= boot * 20
+	};
 }
 
 /** True when at least one person (not a bot) is connected, so bots are worth running. */
