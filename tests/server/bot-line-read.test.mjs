@@ -97,3 +97,36 @@ test('blind match closes the "keep raising" exploit: staying blind against a bli
 	bad.configHash = characterHash(bad);
 	assert.ok(configErrors(bad).some((e) => /blindMatch/.test(e)));
 });
+
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoClient } from 'mongodb';
+import { seedCharacters } from '../../server/bots/directory.mjs';
+import { publishV3, FOCUS } from '../../server/bots/v3.mjs';
+
+test('publishing version 3: a new immutable version per bot, with its reason, and a second run changes nothing', async () => {
+	const mongo = await MongoMemoryServer.create();
+	const client = new MongoClient(mongo.getUri());
+	await client.connect();
+	try {
+		const db = client.db('v3');
+		await seedCharacters(db);
+		const owner = { _id: 'owner1', role: 'owner', status: 'active' };
+		const before = await db.collection('bot_styles').find({}).toArray();
+		const first = await publishV3(db, owner, { hands: 30 });
+		assert.equal(first.length, 5);
+		assert.ok(first.every((r) => r.styleId?.endsWith('@2') || r.held), JSON.stringify(first));
+		for (const r of first.filter((x) => x.styleId)) {
+			const style = await db.collection('bot_styles').findOne({ _id: r.styleId });
+			assert.equal(style.status, 'published');
+			assert.equal(style.tendencies.blindMatch, 1);
+			assert.equal(style.memory.focus, FOCUS[style.botId]);
+			assert.equal((await db.collection('bots').findOne({ _id: style.botId })).currentStyle, r.styleId);
+			assert.ok((await db.collection('bot_evolution').findOne({ draftStyleId: r.styleId })).review.note.length > 20);
+		}
+		for (const old of before) assert.deepEqual(await db.collection('bot_styles').findOne({ _id: old._id }), old, 'earlier versions untouched');
+		assert.ok((await publishV3(db, owner, { hands: 30 })).every((r) => r.skipped));
+	} finally {
+		await client.close();
+		await mongo.stop();
+	}
+});
