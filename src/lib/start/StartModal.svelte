@@ -44,6 +44,10 @@
 		width: min(26rem, calc(100% - 2rem));
 		max-height: calc(100dvh - 2rem);
 		overflow-y: auto;
+		overscroll-behavior: contain;
+		/* A visible, slim scrollbar, so a short window never looks like the options are cut off. */
+		scrollbar-width: thin;
+		scrollbar-color: rgb(226 184 98 / 50%) transparent;
 		translate: -50% -50%;
 		border: 1px solid rgb(240 209 140 / 18%);
 		border-radius: 1.5rem;

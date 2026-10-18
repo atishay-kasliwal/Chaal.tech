@@ -588,6 +588,10 @@
 	/** Phones with three or more friends use a two-column grid with the pot underneath. */
 	const phoneGrid = $derived(portrait && opponents.length >= 3);
 	const gridRows = $derived(Math.ceil(opponents.length / 2));
+	/** The waiting room: nobody is playing yet, so the lobby panel needs the middle of the table. */
+	const lobbyMode = $derived(!room.isStarted && !result);
+	/** Rough height of the lobby panel (title, roster, buttons, character picker). */
+	const LOBBY_HALF = $derived(portrait ? 210 : 175);
 	const seatW = $derived.by(() => {
 		const n = opponents.length;
 		if (phoneGrid) {
@@ -602,7 +606,9 @@
 					n <= 2 ? 0.48 : n === 3 ? 0.44 : 0.38
 				];
 		const byHeight = (arenaH * hShare - 30) / 0.75;
-		return Math.max(96, Math.min(arenaW * wShare, byHeight, 36 * 16));
+		const size = Math.max(96, Math.min(arenaW * wShare, byHeight, 36 * 16));
+		// Smaller tiles while waiting, so the roster and Start button fit below the top seat.
+		return lobbyMode ? Math.max(96, size * 0.85) : size;
 	});
 	const seatH = $derived(seatW * 0.75 + 30);
 	const seatPositions = $derived.by(() => {
@@ -648,6 +654,8 @@
 		);
 		if (!blocking.length) return arenaH * 0.52;
 		const below = Math.max(...blocking.map((seat) => seat.top + seatH / 2)) + 34;
+		// The lobby panel hangs from just under the seats instead of centring in what is left.
+		if (lobbyMode && !portrait) return below - 18 + LOBBY_HALF;
 		// Keep the pot's lines clear of your hand, which rises out of the dock below.
 		return Math.min(below + Math.max(0, arenaH - below) / 2, arenaH - (portrait ? 110 : 150));
 	});
