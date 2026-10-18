@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { MongoClient } from 'mongodb';
 import { migrateAnalytics, readSealed, verifyStoredHands } from '../../server/analytics/store.mjs';
@@ -95,7 +97,7 @@ test('adaptive bot memory works through owner API, real room alarms, persistence
 	const context=await browser.newContext({viewport:{width:1440,height:1000}});
 	await context.addInitScript(({token,member})=>{localStorage.setItem('chaal-club-session-v1',token);localStorage.setItem('chaal-club-member-v1',JSON.stringify(member));},{token:owner.clubToken,member:onboard.body.member});
 	const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-	const output='/private/tmp/chaal-phase4-browser';await mkdir(output,{recursive:true});
+	const output=join(tmpdir(),'chaal-phase4-browser');await mkdir(output,{recursive:true});
 	await page.goto(`${process.env.CHAAL_BROWSER_URL}/bots/${botId}`);
 	await page.getByText(/remembers 81 hands with you/).waitFor();
 	await page.screenshot({path:`${output}/relationship-desktop.png`,fullPage:true});
