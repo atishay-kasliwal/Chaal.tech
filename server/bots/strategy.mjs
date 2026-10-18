@@ -187,12 +187,12 @@ export const REASONS = Object.freeze([
  * @param view the bot's own projection (server/engine.mjs projection for the bot id)
  * @returns {{ action: string, payload: object, reason: string }}
  */
-export function decide(view, botId, random, profile) {
-	const move = choose(view, botId, random, profile);
+export function decide(view, botId, random, profile, extra = {}) {
+	const move = choose(view, botId, random, profile, extra);
 	return move && { action: move.action, payload: move.payload, reason: move.reason };
 }
 
-function choose(view, botId, random, styleProfile) {
+function choose(view, botId, random, styleProfile, extra = {}) {
 	const legal = view.legalActions;
 	const me = view.usersList.find((user) => user.id === botId);
 	const level = me?.bot ?? 'normal';
@@ -237,7 +237,10 @@ function choose(view, botId, random, styleProfile) {
 
 	// Blind phase: keep betting blind for a while (cheap, and it pressures seen players).
 	if (!seen) {
-		const stayBlind = legal.see ? roundsPlayed < profile.blindRounds + random() * 1.5 : true; // Pot Blind: nobody may look.
+		// Blind match (optional trait): a seen player facing a blind one pays double and cannot Show, so a
+		// bot with this trait stays blind for as long as a live opponent does.
+		const matchBlind = profile.blindMatch && opponents.some((user) => user.isBlind);
+		const stayBlind = legal.see ? matchBlind || roundsPlayed < profile.blindRounds + random() * 1.5 : true; // Pot Blind: nobody may look.
 		if (!stayBlind) return { action: 'see', payload: {}, reason: 'blind-see' };
 		if (legal.show && (roundsPlayed > 3 || random() < (profile.blindShowChance ?? 0.25)))
 			return { action: 'show', payload: {}, reason: 'blind-show' };
@@ -259,6 +262,8 @@ function choose(view, botId, random, styleProfile) {
 	if (seenBetters.length) strength *= 1 - (profile.pressureRead ?? (level === 'hard' ? 0.1 : 0));
 	if (profile.shortStackCall !== undefined && me.balance < boot * 15) strength -= profile.shortStackCall;
 	if (profile.largePotCaution !== undefined) strength -= profile.largePotCaution * Math.min(1, view.pot / Math.max(me.balance, 1));
+	// A reading of the opponent's betting line (adaptive styles with a line weight). 0 for everyone else.
+	strength += extra.strengthAdjust ?? 0;
 	strength += (random() - 0.5) * profile.randomness;
 
 	if (legal.show && opponents.length === 1) {

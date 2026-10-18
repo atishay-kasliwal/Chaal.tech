@@ -26,7 +26,8 @@ import { botSeat } from '../bots/directory.mjs';
 import { ADAPTIVE_POLICY } from '../bots/memory/adaptive.mjs';
 import { decisionScope, loadMemory, timedMemory } from '../bots/memory/provider.mjs';
 import { clubSettings } from '../club/admin.mjs';
-import { nextBotMove, botDue, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
+import { useMomentBackend } from '../bots/memory/moments.mjs';
+import { nextBotMove, botDue, botDelay, thinkingContext, humansPresent, botMoveText } from '../bots/runner.mjs';
 import { recordCommitSafely, stepRecorder, botRandom, abandonOpenHand } from '../analytics/recorder.mjs';
 import { archiveRecorderRow, isRecorderRow, writeRoomStatus } from '../analytics/store.mjs';
 import { engineBuild } from './build.mjs';
@@ -113,6 +114,7 @@ export class RoomDurableObject {
 	constructor(ctx, env) {
 		this.ctx = ctx;
 		this.env = env;
+		useMomentBackend(env);
 		this.sql = ctx.storage.sql;
 		this.ensureSchema();
 	}
@@ -1057,7 +1059,7 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 			revision: room.revision,
 			handId: room.handId,
 			botId: dueBot,
-			at: Date.now() + botDelay(secureRandom, quick)
+			at: Date.now() + botDelay(secureRandom, quick, thinkingContext(room, dueBot))
 		};
 		this.setMeta('botTurn', next);
 		return next;

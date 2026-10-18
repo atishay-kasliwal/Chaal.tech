@@ -36,6 +36,7 @@
 		"bots:memory:migrate": "node --env-file-if-exists=.env scripts/bot-memory.mjs migrate",
 		"bots:memory:rebuild": "node --env-file-if-exists=.env scripts/bot-memory.mjs rebuild",
 		"bots:memory:health": "node --env-file-if-exists=.env scripts/bot-memory.mjs health",
+		"bots:moments:index": "node --env-file-if-exists=.env scripts/bot-moments.mjs",
 		"bots:simulate": "node scripts/bot-memory-simulate.mjs"
 	},
 	"devDependencies": {
