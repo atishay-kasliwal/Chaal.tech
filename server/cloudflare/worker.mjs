@@ -41,6 +41,10 @@ import {
 import { recentNights } from '../club/nights.mjs';
 import { openPoll, publicPoll, saveAvailability, pollSummary } from '../club/availability.mjs';
 import { sendAddedEmail } from '../club/beta-emails.mjs';
+import { memoryHealth } from '../bots/memory/diagnostics.mjs';
+import { adminBotIntel, adminClubIntel, adminEvolve, adminExport, adminQuality } from '../analytics/intel/admin.mjs';
+import { OPPONENT_ROUTES, inLiveHand } from '../analytics/intel/api.mjs';
+import { rebuildMemory } from '../bots/memory/store.mjs';
 import { botDirectory, adminBots, manageBot } from '../bots/directory.mjs';
 import { engineBuild } from './build.mjs';
 
@@ -146,6 +150,17 @@ async function adminState(env, db) {
 			.then((result) => result.json())
 	]);
 	return { members, settings, beta, poll, tables: lobby.tables ?? [], online: lobby.online ?? [] };
+}
+
+/** True while the member is connected to a table whose hand is in progress. */
+async function memberInLiveHand(env, member) {
+	try {
+		const lobby = await (await clubDirectory(env).fetch('https://club.internal/lobby')).json();
+		return inLiveHand(lobby.tables, member._id);
+	} catch {
+		// If the lobby cannot answer, do not block; the privacy-relevant data is still per viewer.
+		return false;
+	}
 }
 
 /** Admin analytics window: "all" (or nothing) means no window; anything else is validated. */
@@ -315,6 +330,41 @@ export default {
 				return response({ ok: true, ...result }, 200, origin, env);
 			} catch (error) { return clubFailure(error, origin, env); }
 		}
+		if (url.pathname === '/admin/bots/memory' && ['GET', 'POST'].includes(request.method)) {
+			try {
+				const body = request.method === 'POST' ? await jsonBody(request) : null;
+				const result = await withClubDatabase(env, async db => {
+					await signedInOwner(request, env, db);
+					if (body) {
+						if (body.action !== 'rebuild' || typeof body.botId !== 'string' || !/^[a-z][a-z0-9-]{1,47}$/.test(body.botId))
+							throw new ClubError('Choose a bot to rebuild', 'INVALID_BOT_REQUEST', 400);
+						await rebuildMemory(db, { botId: body.botId });
+					}
+					return memoryHealth(db);
+				});
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
+		const intel = /^\/admin\/intel\/(club|bots|quality|export)$/.exec(url.pathname);
+		if (intel && request.method === 'GET') {
+			try {
+				const result = await withClubDatabase(env, async (db) => {
+					await signedInOwner(request, env, db);
+					if (intel[1] === 'club') return adminClubIntel(db);
+					if (intel[1] === 'bots') return adminBotIntel(db);
+					if (intel[1] === 'quality') return adminQuality(db);
+					return adminExport(db, { since: Number(url.searchParams.get('since')) || 0, limit: Number(url.searchParams.get('limit')) || 2000 });
+				});
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
+		if (url.pathname === '/admin/bots/evolution' && request.method === 'POST') {
+			try {
+				const body = await jsonBody(request);
+				const result = await withClubDatabase(env, async (db) => adminEvolve(db, await signedInOwner(request, env, db), body));
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
 		if (url.pathname === '/admin/bots' && ['GET', 'POST'].includes(request.method)) {
 			try {
 				const body = request.method === 'POST' ? await jsonBody(request) : null;
@@ -415,9 +465,12 @@ else if (action === 'lineup') {
 		if (analyticsRoute && request.method === 'GET') {
 			// The viewer is always the signed-in member; every privacy rule is enforced server side.
 			try {
-				const result = await withClubDatabase(env, async (db) =>
-					analyticsResponse(db, await signedInMember(request, env, db), analyticsRoute[1], url.searchParams)
-				);
+				const result = await withClubDatabase(env, async (db) => {
+					const member = await signedInMember(request, env, db);
+					// Opponent-level stats wait while this member is in a live hand (see docs/ANALYTICS_PHASE5.md).
+					const live = OPPONENT_ROUTES.includes(analyticsRoute[1]) && (await memberInLiveHand(env, member));
+					return analyticsResponse(db, member, analyticsRoute[1], url.searchParams, Date.now(), { live });
+				});
 				return response({ ok: true, ...result }, 200, origin, env);
 			} catch (error) {
 				return clubFailure(error, origin, env);

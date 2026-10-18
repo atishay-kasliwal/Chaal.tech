@@ -14,6 +14,8 @@
  * row stays queued to retry (every write is an idempotent upsert keyed by a deterministic id).
  */
 import { finishCapture } from './recorder.mjs';
+import { updateMemoryForHand } from '../bots/memory/store.mjs';
+import { recordAdaptationReport } from '../bots/memory/diagnostics.mjs';
 import { LEGACY_BOTS, STYLES } from '../bots/identity.mjs';
 
 export const SCHEMA_VERSION = 2;
@@ -241,7 +243,11 @@ export async function archiveRecorderRow(db, payload) {
 	await ensureAnalyticsSchema(db);
 	if (payload.type === 'capture') {
 		const finished = finishCapture(payload);
-		if (finished.ok) await writeHand(db, finished.records);
+		if (finished.ok) {
+			await writeHand(db, finished.records);
+			await updateMemoryForHand(db, finished.records.public._id);
+			await recordAdaptationReport(db, finished.records);
+		}
 		else {
 			if (finished.raw) await keepRaw(db, finished.raw);
 			await writeFailure(db, finished.failure);
@@ -265,6 +271,7 @@ export async function archiveRecorderRow(db, payload) {
 			if (await db.collection(COLLECTIONS.failures).findOne({ handId: payload.handId })) return;
 			throw new NotReady(`Hand ${payload.handId} is not stored yet`);
 		}
+		await updateMemoryForHand(db, payload.handId);
 	} else throw new Error(`Unknown recorder row ${payload.type}`);
 }
 

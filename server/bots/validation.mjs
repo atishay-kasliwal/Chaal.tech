@@ -1,4 +1,5 @@
 /** Publication checks run off the live game loop, against human-visible projections. */
+import { ADAPTIVE_POLICY, adaptiveDecision } from './memory/adaptive.mjs';
 import { configErrors, characterHash } from './config.mjs';
 import { newRoom, transition, projection, playing } from '../engine.mjs';
 import { freshDeck } from '../classic.mjs';
@@ -67,18 +68,15 @@ export function validateStyle(style, { hands = 24 } = {}) {
 				const view = projection(room, actor, new Set(['human']));
 				const moveSeed = Math.floor(random() * 4294967296);
 				const profile = actor === 'bot-validation' ? style.tendencies : PROFILES.normal;
-				const move = decide(view, actor, randomFor(moveSeed), profile);
+				const choose = (view, rng) => actor === 'bot-validation' && style.policy === ADAPTIVE_POLICY
+					? adaptiveDecision(view, actor, rng, style) : decide(view, actor, rng, profile);
+				const move = choose(view, randomFor(moveSeed));
 				if (!move) throw new Error('Policy did not return a legal move');
 				if (actor === 'bot-validation') {
 					const changed = structuredClone(room);
 					for (const opponent of changed.players.filter((p) => p.id !== actor))
 						opponent.cards = opponent.cards.map((_, i) => ({ rank: 2 + i, suit: 'clubs' }));
-					const other = decide(
-						projection(changed, actor, new Set(['human'])),
-						actor,
-						randomFor(moveSeed),
-						profile
-					);
+					const other = choose(projection(changed, actor, new Set(['human'])), randomFor(moveSeed));
 					if (canonicalJson(move) !== canonicalJson(other))
 						throw new Error('Hidden-card invariance failed');
 					comparisons++;

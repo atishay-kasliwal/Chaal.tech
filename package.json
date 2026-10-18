@@ -27,7 +27,16 @@
 		"analytics:replay": "node --env-file-if-exists=.env scripts/analytics-replay.mjs",
 		"analytics:health": "node --env-file-if-exists=.env scripts/analytics-health.mjs",
 		"analytics:validate": "node --env-file-if-exists=.env scripts/analytics-validate.mjs",
-		"analytics:corpus": "node scripts/replay-corpus.mjs"
+		"analytics:corpus": "node scripts/replay-corpus.mjs",
+		"analytics:intel:migrate": "node --env-file-if-exists=.env scripts/analytics-intel.mjs migrate",
+		"analytics:export": "node --env-file-if-exists=.env scripts/analytics-intel.mjs export",
+		"analytics:quality": "node --env-file-if-exists=.env scripts/analytics-intel.mjs quality",
+		"analytics:benchmark": "node scripts/analytics-benchmark.mjs",
+		"analytics:simulate": "node scripts/intel-simulate.mjs",
+		"bots:memory:migrate": "node --env-file-if-exists=.env scripts/bot-memory.mjs migrate",
+		"bots:memory:rebuild": "node --env-file-if-exists=.env scripts/bot-memory.mjs rebuild",
+		"bots:memory:health": "node --env-file-if-exists=.env scripts/bot-memory.mjs health",
+		"bots:simulate": "node scripts/bot-memory-simulate.mjs"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.1.1",

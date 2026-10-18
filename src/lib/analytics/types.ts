@@ -244,3 +244,189 @@ export interface HandView {
 	outcome: { pot: number | null; potUnits: number | null; winners: Actor[] };
 	youLeftAt: number | null;
 }
+
+/* ------------------------------------------ Phase 5: intelligence ------------------------------------------ */
+
+export interface Compare {
+	n: number;
+	actual: number | null;
+	expected: number | null;
+	difference: number | null;
+	low: number | null;
+	high: number | null;
+	z: number | null;
+	p: number | null;
+	evidence: Evidence;
+	tier: 'weak' | 'moderate' | 'strong';
+	verdict: 'above' | 'below' | 'as-expected' | 'insufficient';
+}
+export interface StrengthBand {
+	hands: number;
+	wins: number;
+	units: number;
+	perHand: number | null;
+	stayRate: number | null;
+	evidence: Evidence;
+}
+export interface SkillGame {
+	game: string;
+	model: 'exact' | 'estimated' | 'outcome-only' | 'unavailable';
+	unit?: string;
+	hands: number;
+	cards?: Compare;
+	play?: Compare;
+	outcome?: Compare;
+	wins?: Compare;
+	boots?: { total: number; perHand: number | null; low: number | null; high: number | null };
+	byStrength?: Record<'weak' | 'average' | 'strong', StrengthBand>;
+	decisions?: Record<string, unknown> & {
+		kind?: string;
+		evaluated?: number;
+		mistakes?: number;
+		mistakeRate?: number | null;
+		betsLostPer100?: number | null;
+		common?: { action: string; total: number; dealerUp: number; cost: number; count: number }[];
+		evidence?: Evidence;
+		packedStrongHands?: { k: number; n: number; rate: number | null };
+		playedWeakToTheEnd?: { k: number; n: number; rate: number | null };
+		foldedAbovePotOdds?: number;
+		continuedBelowPotOdds?: number;
+		note?: string;
+	};
+	points?: { perHand: number | null; total: number };
+	limitations: string[];
+	reason?: string;
+}
+export interface NightLuck {
+	nightId: string;
+	at: number;
+	hands: number;
+	units: number;
+	luck: 'hot' | 'cold' | 'average' | 'unknown';
+	cards: Compare | null;
+	blackjack: Compare | null;
+}
+export interface Dimension {
+	id: string;
+	label: string;
+	kind: 'skill' | 'result' | 'style';
+	recent: { n: number; value: number | null };
+	baseline: { n: number; value: number | null };
+	change: number | null;
+	p: number | null;
+	tier: string;
+	evidence: Evidence;
+	direction: 'better' | 'worse' | 'steady' | 'unclear' | 'changed';
+	note: string | null;
+}
+export interface Improvement {
+	window: { days: number; recentHands: number; baselineHands: number };
+	verdict: 'improving' | 'slipping' | 'mixed' | 'steady' | 'not-enough';
+	dimensions: Dimension[];
+	luckNote: string | null;
+}
+export interface SkillView {
+	skill: { games: Record<string, SkillGame>; nights: NightLuck[]; method: Record<string, string> };
+	improvement: Improvement;
+}
+export interface RecordItem {
+	id: string;
+	label: string;
+	value: number | string;
+	unit: string;
+	nightId?: string;
+	handId?: string;
+	subject?: string;
+	at?: number;
+	detail?: string;
+	holder?: string | null;
+	game?: string;
+}
+export interface Achievement {
+	id: string;
+	title: string;
+	description: string;
+	earnedAt: number | null;
+	progress: { value: number; target: number } | null;
+}
+export interface RecordsView {
+	empty: boolean;
+	records: RecordItem[];
+	achievements: { earned: Achievement[]; next: Achievement[] };
+}
+export interface RecapHighlight {
+	id: string;
+	topic: string;
+	scope: 'personal' | 'social' | 'club';
+	text: string;
+	evidence: { nightId?: string | null; hands?: string[] };
+}
+export interface Recap {
+	nightId: string;
+	startedAt: number;
+	endedAt: number;
+	minutes: number;
+	hands: number;
+	results: { humans: { subject: string; hands: number; units: number; you: boolean }[]; bots: { subject: string; hands: number; units: number }[] };
+	you: { hands: number; units: number; luck: string | null };
+	highlights: RecapHighlight[];
+	empty: string | null;
+}
+export interface BoardTitle {
+	id: string;
+	label: string;
+	subject: string;
+	name: string;
+	kind: 'human' | 'bot';
+	headline: string;
+	facts: string[];
+	handId?: string;
+}
+export interface RivalBoard {
+	mostPlayed: BoardTitle | null;
+	closest: BoardTitle | null;
+	longest: BoardTitle | null;
+	biggestSwing: BoardTitle | null;
+	recentChallenger: BoardTitle | null;
+	botNemesis: BoardTitle | null;
+	botHandledBest: BoardTitle | null;
+	note: string | null;
+}
+export interface RivalPage {
+	name: string;
+	kind: 'human' | 'bot';
+	headline: string;
+	hands: number;
+	nights: number;
+	firstMet: number | null;
+	lastMet: number;
+	units: number;
+	moments: { handId: string; at: number; gameType: string; hand: string | null }[];
+	largestPots: { handId: string; at: number; potUnits: number; units: number }[];
+	recentForm: { handId: string; at: number; units: number | null; gameType: string }[];
+	variants: { key: string; hands: number }[];
+	memory: { familiarity: string; moment: string | null; hands: number } | null;
+}
+export interface FairnessView {
+	you: {
+		verdict: string;
+		sample: { cards: number; hands: number };
+		ranks: { rank: number; count: number; expected: number; low: number; high: number; within: boolean }[];
+		suits: { suit: string; count: number; expected: number; low: number; high: number; within: boolean }[];
+		outsideBand: number | null;
+		expectedOutside: number;
+		convergence: { cards: number; deviation: number; typical: number }[];
+		mostDealt: { rank: number; suit: string; count: number; expected: number }[];
+	};
+	club: { cards: number; note: string; ranks: { rank: number; count: number; expected: number }[]; suits: { suit: string; count: number; expected: number }[] } | null;
+	integrity: { hands: number; sealedBeforeDealing: number; cutByAPlayer: number; replayVerified: number } | null;
+	explain: { what: string[]; cannot: string[]; howToRead: string };
+}
+export interface ClubRecordsView {
+	empty: boolean;
+	records: RecordItem[];
+}
+export interface TimelineView {
+	empty: boolean;
+	events: { id: string; type: string; at: number; text: string; nightId?: string; handId?: string }[];
+}

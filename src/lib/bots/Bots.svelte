@@ -82,6 +82,18 @@
 			<section class="rivalry" aria-labelledby="your-record">
 				<p class="eyebrow">YOU TWO AT THE TABLE</p>
 				<h2 id="your-record">A little history<span>.</span></h2>
+				{#if bot.memory?.status === 'remembered'}
+					<div class="remembered">
+						<p class="eyebrow">{bot.memory.familiarity}</p>
+						<p><strong>{bot.name}</strong> {bot.memory.moment?.replace(/^Remembers/, 'remembers')}</p>
+						{#if bot.memory.firstPlayed && bot.memory.lastPlayed}<p class="fine">
+							First table together: {date(bot.memory.firstPlayed)} · Last played: {date(bot.memory.lastPlayed)}
+						</p>{/if}
+						{#each bot.memory.contexts.filter(c => c.hands >= 6).slice(0, 4) as context (context.variant)}
+							<p class="fine">{context.variant.replace(/-1$/, '').replaceAll('-', ' ')} · {context.familiarity}</p>
+						{/each}
+					</div>
+				{/if}
 				{#if !bot.record}
 					<p class="empty">
 						You haven’t played {bot.name} yet.<br /><span
@@ -174,7 +186,7 @@
 						<p class="bio">{bot.description}</p>
 						<p class="fine">Teen Patti · {bot.style?.difficulty.declared}</p>
 						<p class="connection">
-							{bot.record
+							{bot.memory?.status === 'remembered' ? `${bot.memory.familiarity} · ${bot.memory.hands} hands together` : bot.record
 								? `${bot.record.hands} hands together`
 								: 'Your first hand is still to come'}
 						</p>
@@ -190,6 +202,7 @@
 </ClubGate>
 
 <style>
+	.remembered { border-left: 2px solid #d6b467; padding: .25rem 1.25rem; margin: 1.5rem 0 2rem; color: #ded9c9; }
 	.bot-room {
 		max-width: 1360px;
 		margin: 0 auto;

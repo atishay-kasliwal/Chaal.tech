@@ -121,7 +121,8 @@
 	}
 	let analytics = $state<Analytics | null>(null);
 	let analyticsWindow = $state<'all' | '30d' | 'recent-nights'>('all');
-	let analyticsSort = $state<'results' | 'hands' | 'active'>('results');
+	// Lead with who is playing, not with a league table of results.
+	let analyticsSort = $state<'results' | 'hands' | 'active'>('active');
 	const WINDOWS = [
 		['all', 'All time'],
 		['30d', 'Last 30 days'],
@@ -263,6 +264,7 @@
 			<p class="eyebrow">Club owner</p>
 			<h1>Admin</h1>
 			<a class="btn btn-ghost rounded-full" href="/admin/bots">Manage characters ↗</a>
+			<a class="btn btn-ghost rounded-full" href="/admin/intel">Club intelligence ↗</a>
 		</header>
 
 		{#if !isOwner}

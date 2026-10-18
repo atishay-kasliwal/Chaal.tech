@@ -13,6 +13,7 @@ import { nights, hands, handDetail } from './compute/history.mjs';
 import { insights } from './compute/insights.mjs';
 import { playerRecords, recordById, ownPrivate, subjectNames, clubRecords } from './data.mjs';
 import { ClubError } from '../club/members.mjs';
+import { INTEL_ROUTES, OPPONENT_ROUTES, intelResponse, rankedInsights, rivalExtras } from './intel/api.mjs';
 
 /** A ClubError, so the Worker's club error handling returns it with its status. */
 export class AnalyticsError extends ClubError {
@@ -21,7 +22,7 @@ export class AnalyticsError extends ClubError {
 	}
 }
 
-export const ROUTES = Object.freeze(['overview', 'games', 'cards', 'patterns', 'rivals', 'rival', 'insights', 'nights', 'hands', 'hand', 'trends']);
+export const ROUTES = Object.freeze(['overview', 'games', 'cards', 'patterns', 'rivals', 'rival', 'insights', 'nights', 'hands', 'hand', 'trends', ...INTEL_ROUTES]);
 
 /** Only known values pass; anything else is an error, never silently widened. */
 export function parseFilter(params) {
@@ -56,6 +57,18 @@ export function parseFilter(params) {
 	if (night) {
 		if (night.length > 160) throw new AnalyticsError('Unknown night');
 		filter.night = night;
+	}
+	// A bot by its permanent id is the same filter as opponent=bot:<id>.
+	const bot = get('bot');
+	if (bot) {
+		if (!/^[a-z][a-z0-9-]{1,47}$/.test(bot)) throw new AnalyticsError('Unknown bot');
+		filter.opponent = `bot:${bot}`;
+	}
+	for (const [key, edge] of [['from', 0], ['until', 1]]) {
+		const value = get(key);
+		if (!value) continue;
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(Date.parse(value))) throw new AnalyticsError('Dates look like 2026-03-31');
+		filter[key] = Date.parse(value) + edge * 24 * 60 * 60 * 1000;
 	}
 	return filter;
 }
@@ -93,11 +106,14 @@ async function patternsFor(db, viewer, filter, now) {
  * @param route one of ROUTES
  * @param params URLSearchParams
  */
-export async function analyticsResponse(db, member, route, params, now = Date.now()) {
+export async function analyticsResponse(db, member, route, params, now = Date.now(), { live = false } = {}) {
 	if (!ROUTES.includes(route)) throw new AnalyticsError('Unknown analytics view', 404);
 	const viewer = member.playerId;
 	if (!viewer) return { route, empty: true };
+	// While you are in a live hand, opponent-specific analytics wait: scouting mid-game would change the game.
+	if (live && OPPONENT_ROUTES.includes(route)) throw new ClubError('Opponent stats open up between hands', 'IN_LIVE_HAND', 423);
 	const filter = parseFilter(params);
+	if (INTEL_ROUTES.includes(route)) return intelResponse(db, member, route, params, filter, now);
 
 	if (route === 'overview' || route === 'games' || route === 'trends' || route === 'nights' || route === 'hands') {
 		const records = await playerRecords(db, viewer);
@@ -145,13 +161,15 @@ export async function analyticsResponse(db, member, route, params, now = Date.no
 		const chosen = records.filter((r) => keep.has(r._id));
 		const names = await subjectNames(db);
 		if (route === 'rivals') {
-			const list = rivalries(chosen, viewer);
-			return { route, filter, rivals: list, names: pick(names, list.map((r) => r.subject)) };
+			const list = rivalries(chosen, viewer, now);
+			const board = await rivalExtras(db, viewer, 'board', { rivals: list, names, now });
+			return { route, filter, rivals: list, board, names: pick(names, [...list.map((r) => r.subject)]) };
 		}
 		if (!filter.opponent) throw new AnalyticsError('Choose an opponent');
 		const detail = rivalry(chosen, viewer, filter.opponent);
 		if (!detail) throw new AnalyticsError('You have not played with them yet', 404);
-		return { route, filter, rival: detail, names: pick(names, [filter.opponent]) };
+		const page = await rivalExtras(db, viewer, 'page', { chosen, subject: filter.opponent, names, now });
+		return { route, filter, rival: detail, page, names: pick(names, [filter.opponent]) };
 	}
 
 	if (route === 'hand') {
@@ -183,7 +201,8 @@ export async function analyticsResponse(db, member, route, params, now = Date.no
 		},
 		names
 	);
-	return { route, filter, insights: list, names: pick(names, list.map((i) => i.opponent).filter(Boolean)) };
+	const top = await rankedInsights(db, viewer, list, now);
+	return { route, filter, insights: list, top, names: pick(names, list.map((i) => i.opponent).filter(Boolean)) };
 }
 
 /**

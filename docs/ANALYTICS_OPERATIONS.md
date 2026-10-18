@@ -207,3 +207,7 @@ Durable Object writes, which come from the Cloudflare dashboard) and prints PASS
 11. **Check volume.** Collection sizes from `db.<collection>.stats()` (or the Atlas UI) per hand,
     compared with the table above; and the Durable Object's rows written from the Cloudflare
     dashboard for the night.
+
+## Phase 5
+
+Intelligence views, owner analytics, data-quality checks and the bot evolution workflow are described in [ANALYTICS_PHASE5.md](ANALYTICS_PHASE5.md); metrics in [ANALYTICS_METRICS.md](ANALYTICS_METRICS.md).

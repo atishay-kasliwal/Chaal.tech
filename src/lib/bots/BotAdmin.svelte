@@ -2,9 +2,11 @@
 	import { onMount } from 'svelte';
 	import { club } from '#lib/club/club.svelte.js';
 	import BotPortrait from './BotPortrait.svelte';
+	import BotMemoryAdmin from './BotMemoryAdmin.svelte';
 
 	interface Config {
 		policy: string;
+		memory?: Record<string, string | number>;
 		supportedGames: string[];
 		supportedVariants: string[];
 		tendencies: Record<string, number>;
@@ -131,6 +133,7 @@
 		configText = JSON.stringify(
 			{
 				policy: style.policy,
+				...(style.memory ? { memory: style.memory } : {}),
 				supportedGames: style.supportedGames,
 				supportedVariants: style.supportedVariants,
 				tendencies: style.tendencies,
@@ -205,6 +208,13 @@
 			}}>Create a character</button
 		>
 	</header>
+	<BotMemoryAdmin />
+	{#if bot?.currentStyle && bot.status !== 'retired'}<button disabled={busy} onclick={async () => {
+		if (await request({ action: 'adaptive-draft', botId: selected })) {
+			const draft = styles.find(s => s.botId === selected && s.status === 'draft');
+			if (draft) inspect(draft);
+		}
+	}}>Create adaptive style draft</button><p class="fine">A new version with bounded memory settings. Validate and publish when ready; current tables keep their style.</p>{/if}
 	{#if error}<p role="alert" class="error">{error}</p>{/if}{#if notice}<p
 			role="status"
 			class="notice"

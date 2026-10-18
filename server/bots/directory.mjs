@@ -1,4 +1,4 @@
-/** Permanent global characters, immutable publications, club availability. No game memory. */
+/** Permanent global characters, immutable publications, club availability. */
 import { ClubError } from '../club/members.mjs';
 import { BOT_CHARACTERS } from '../../shared/bot-characters.mjs';
 import { CHARACTER_SEEDS } from './characters.mjs';
@@ -7,6 +7,8 @@ import { CHARACTER_POLICY, characterHash, configErrors, runtimeStyle } from './c
 import { validateStyle } from './validation.mjs';
 import { identityForStyle } from './identity.mjs';
 import { playerRecords } from '../analytics/data.mjs';
+import { publicMemory } from './memory/diagnostics.mjs';
+import { ADAPTIVE_POLICY, defaultMemory } from './memory/adaptive.mjs';
 import { rivalry, rivalries } from '../analytics/compute/rivals.mjs';
 
 const fail = (message, status = 400) => new ClubError(message, 'INVALID_BOT_REQUEST', status);
@@ -52,6 +54,7 @@ function cleanIdentity(input) {
 function draftConfig(input) {
 	const config = {
 		policy: input?.policy,
+		...(input?.memory !== undefined ? { memory: structuredClone(input.memory) } : {}),
 		tendencies: input?.tendencies,
 		supportedGames: input?.supportedGames,
 		supportedVariants: input?.supportedVariants,
@@ -123,6 +126,7 @@ export async function botDirectory(db, member, { id } = {}) {
 		if (!id && !style) continue;
 		list.push({
 			...publicBot(bot, style, enabled.has(bot._id)),
+			memory: await publicMemory(db, bot._id, member.playerId).catch(() => ({ status: 'unavailable', contexts: [], moment: null })),
 			record: id
 				? rivalry(records, member.playerId, `bot:${bot._id}`)
 				: (history.get(`bot:${bot._id}`) ?? null)
@@ -232,6 +236,14 @@ export async function manageBot(db, owner, body, now = new Date()) {
 	const id = cleanId(body?.botId);
 	const bot = await db.collection('bots').findOne({ _id: id });
 	if (!bot) throw fail('Unknown bot', 404);
+	if (body.action === 'adaptive-draft') {
+		const current = await db.collection('bot_styles').findOne({ _id: bot.currentStyle, status: 'published' });
+		if (!current) throw fail('Publish a base character style first');
+		return manageBot(db, owner, { action: 'draft', botId: id, config: {
+			...current, policy: ADAPTIVE_POLICY, memory: current.memory ?? defaultMemory(current.tendencies),
+			notes: 'Persistent observer-scoped memory. Bounded adaptation; existing seats keep their frozen policy.'
+		} }, now);
+	}
 	if (body.action === 'identity') {
 		if (bot.status !== 'draft') throw fail('Only draft identities can be edited');
 		const identity = cleanIdentity(body.identity);

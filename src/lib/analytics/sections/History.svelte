@@ -5,7 +5,7 @@
 	import { track } from '#lib/analytics.js';
 	import type { HandsPage, NightRow } from '../types.js';
 
-	let { filter, onOpenHand }: { filter: Filter; onOpenHand: (id: string) => void } = $props();
+	let { filter, onOpenHand, onRecap }: { filter: Filter; onOpenHand: (id: string) => void; onRecap: (nightId: string) => void } = $props();
 	let nights = $state<NightRow[] | null>(null);
 	let night = $state<string | null>(null);
 	let handsPage = $state<HandsPage | null>(null);
@@ -32,7 +32,7 @@
 
 {#if error}<p class="notice" role="alert">{error}</p>
 {:else if night}
-	<button class="link back" onclick={() => (night = null)}>← All nights</button>
+	<span class="nav"><button class="link back" onclick={() => (night = null)}>← All nights</button><button class="link" onclick={() => onRecap(night ?? '')}>Recap of this night</button></span>
 	{#if !handsPage}<p class="muted">Loading hands…</p>
 	{:else}
 		<section class="panel">

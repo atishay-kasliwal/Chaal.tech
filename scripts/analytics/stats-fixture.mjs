@@ -72,6 +72,14 @@ const night = fixture[analyticsUrl('nights', base)].nights[0];
 await add('hands', { ...base, night: night.nightId, page: 0 });
 const hand = fixture[analyticsUrl('hands', { ...base, night: night.nightId, page: 0 })].hands[0];
 await add('hand', { id: hand.handId });
+// Phase 5 views.
+await add('skill', base);
+await add('records', {});
+await add('fairness', base);
+await add('club', {});
+await add('timeline', {});
+await add('recap', {});
+await add('recap', { night: night.nightId });
 writeFileSync(new URL('../../src/routes/test-stats/fixture.json', import.meta.url), JSON.stringify(fixture));
 console.log(`fixture: ${Object.keys(fixture).length} responses, ${fixture[analyticsUrl('overview', base)].overview.hands} hands for asha`);
 await client.close();

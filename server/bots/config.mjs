@@ -1,4 +1,6 @@
 /** Versioned character policy contract. No database, memory or privileged room state. */
+import { ADAPTIVE_POLICY, MEMORY_RANGES } from './memory/adaptive.mjs';
+import { MEMORY_VERSION } from './memory/observations.mjs';
 import { canonicalJson, fingerprint64 } from '../analytics/hash.mjs';
 
 export const CHARACTER_POLICY = 'tp-character@1';
@@ -24,14 +26,15 @@ export function characterHash(style) {
 			policy: style.policy,
 			tendencies: style.tendencies,
 			supportedGames: style.supportedGames,
-			supportedVariants: style.supportedVariants
+			supportedVariants: style.supportedVariants,
+			...(style.policy === ADAPTIVE_POLICY ? { memory: style.memory } : {})
 		})
 	);
 }
 
 export function configErrors(style) {
 	const errors = [];
-	if (style?.policy !== CHARACTER_POLICY) errors.push('Unsupported policy');
+	if (![CHARACTER_POLICY, ADAPTIVE_POLICY].includes(style?.policy)) errors.push('Unsupported policy');
 	if (
 		!Array.isArray(style?.supportedGames) ||
 		style.supportedGames.length !== 1 ||
@@ -42,6 +45,14 @@ export function configErrors(style) {
 	// added as a separately versioned policy, rather than a silently ignored setting.
 	if (JSON.stringify(style?.supportedVariants) !== '["*"]')
 		errors.push('This policy requires all Teen Patti variants');
+	if (style?.policy === ADAPTIVE_POLICY) {
+		if (style.memory?.schema !== MEMORY_VERSION) errors.push('Unsupported memory schema');
+		for (const [key, [min, max]] of Object.entries(MEMORY_RANGES))
+			if (typeof style.memory?.[key] !== 'number' || !Number.isFinite(style.memory[key]) || style.memory[key] < min || style.memory[key] > max)
+				errors.push(`Memory ${key} must be ${min}–${max}`);
+		for (const key of Object.keys(style.memory ?? {}))
+			if (key !== 'schema' && !Object.hasOwn(MEMORY_RANGES, key)) errors.push(`Unknown memory setting: ${key}`);
+	} else if (style?.memory !== undefined) errors.push('Memory requires a new adaptive policy');
 	const profile = style?.tendencies;
 	if (!profile || typeof profile !== 'object' || Array.isArray(profile))
 		return [...errors, 'Missing tendencies'];
@@ -77,7 +88,8 @@ export function runtimeStyle(style) {
 			'supportedGames',
 			'supportedVariants',
 			'configHash',
-			'difficulty'
+			'difficulty',
+			...(style.policy === ADAPTIVE_POLICY ? ['memory'] : [])
 		].map((key) => [key, structuredClone(style[key])])
 	);
 }

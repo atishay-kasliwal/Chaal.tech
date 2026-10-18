@@ -23,6 +23,8 @@ import { trackClubHand, archiveHands } from '../club/history.mjs';
 import { withClubDatabase, ClubError, invitableEmails, emailsForMembers, memberRole, membersForPlayers } from '../club/members.mjs';
 import { saveNight, nightEmail } from '../club/nights.mjs';
 import { botSeat } from '../bots/directory.mjs';
+import { ADAPTIVE_POLICY } from '../bots/memory/adaptive.mjs';
+import { decisionScope, loadMemory, timedMemory } from '../bots/memory/provider.mjs';
 import { clubSettings } from '../club/admin.mjs';
 import { nextBotMove, botDue, botDelay, humansPresent, botMoveText } from '../bots/runner.mjs';
 import { recordCommitSafely, stepRecorder, botRandom, abandonOpenHand } from '../analytics/recorder.mjs';
@@ -1070,7 +1072,24 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		const connected = this.connectedRoom(before.name);
 		// Every random draw the bot makes is logged so its decision can be replayed exactly.
 		const draws = botRandom(randomUint32);
-		const move = nextBotMove(before, connected, draws.random);
+		const decisionStarted = performance.now();
+		const snapshots = new Map();
+		let lookupMs = 0;
+		const memoryMetrics = { episodeMs: null };
+		// At most one actor: off-turn table/discard work has the same priority as the runner.
+		const candidates = before.players.filter(p => p.bot && !p.departed && !p.isPacked && p.cards.length);
+		const actor = candidates.find(p => { const l = projection(before, p.id, connected).legalActions; return l.discard || l.table?.length; })
+			?? candidates.find(p => p.id === before.currentPlayerId);
+		if (actor?.bot.style?.policy === ADAPTIVE_POLICY) {
+			const scope = decisionScope(projection(before, actor.id, connected), actor.id, actor.bot.style.botId, this.getMeta('recorder'), Date.now());
+			const loaded = await timedMemory(() => withClubDatabase(this.env, db => loadMemory(db, scope, memoryMetrics)), scope);
+			snapshots.set(actor.id, loaded.snapshot);
+			lookupMs = loaded.lookupMs;
+		}
+		// The room may have advanced while Mongo was in flight. Never apply an old decision.
+		if (this.room()?.snapshot.revision !== before.revision) return false;
+		const move = nextBotMove(before, connected, draws.random, undefined, id => snapshots.get(id));
+		const timings = { lookupMs, episodeMs: memoryMetrics.episodeMs, decisionMs: performance.now() - decisionStarted };
 		if (!move) return false;
 		try {
 			const recorder = stepRecorder({
@@ -1085,7 +1104,8 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 			this.commit(room, move.botId, commandId, await hash(commandId), { ok: true }, movements(before, room, `bot-${move.action}`), before.revision,
 				recorder.step(move.botId, move.action, move.payload, {
 					kind: 'bot',
-					bot: { seed: draws.seed, draws: draws.draws, reason: move.reason ?? null },
+					bot: { seed: draws.seed, draws: draws.draws, reason: move.reason ?? null,
+						...(move.adaptive ? { memory: move.memory, adaptive: move.adaptive, timings } : {}) },
 					...(seal ? { seal } : {})
 				}));
 			if (room.ended && !before.ended) await this.afterNight(room);

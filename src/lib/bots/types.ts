@@ -12,7 +12,18 @@ export interface BotRecord {
 	biggestWin: { units: number; at: number } | null;
 	biggestLoss: { units: number; at: number } | null;
 }
+export interface BotMemory {
+	status: string;
+	hands?: number;
+	nights?: number;
+	firstPlayed?: number | null;
+	lastPlayed?: number | null;
+	familiarity?: string;
+	moment: string | null;
+	contexts: { game: string; variant: string; hands: number; familiarity: string }[];
+}
 export interface ClubBot {
+	memory?: BotMemory;
 	botId: string;
 	slug: string;
 	name: string;

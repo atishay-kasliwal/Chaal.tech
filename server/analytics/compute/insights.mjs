@@ -224,6 +224,7 @@ export function insights(pieces, names = {}) {
 
 function finish(c, subject, window, eligible, reason) {
 	const { text, p, q, evidence, ...rest } = c;
+	rest.magnitudeRatio = c.threshold ? round(Math.abs(c.effect ?? 0) / c.threshold, 2) : null;
 	delete rest.effect;
 	delete rest.threshold;
 	delete rest.significant;

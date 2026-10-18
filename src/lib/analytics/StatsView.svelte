@@ -13,15 +13,22 @@
 	import Rivals from './sections/Rivals.svelte';
 	import History from './sections/History.svelte';
 	import HandDetail from './sections/HandDetail.svelte';
+	import Skill from './sections/Skill.svelte';
+	import Records from './sections/Records.svelte';
+	import Club from './sections/Club.svelte';
+	import NightRecap from './sections/NightRecap.svelte';
 	import { onMount } from 'svelte';
 
 	const SECTIONS = [
 		['overview', 'Overview'],
+		['skill', 'Skill & luck'],
 		['games', 'Games'],
 		['cards', 'Cards'],
 		['style', 'Style'],
 		['rivals', 'Rivals'],
-		['history', 'History']
+		['records', 'Records'],
+		['history', 'Nights'],
+		['club', 'Club']
 	] as const;
 	type Section = (typeof SECTIONS)[number][0];
 	const WINDOWS = [
@@ -43,12 +50,15 @@
 		['bots', 'With bots']
 	] as const;
 
-	let { initial = 'overview', initialHand = null }: { initial?: string; initialHand?: string | null } = $props();
+	let { initial = 'overview', initialHand = null, initialRecap = null }: { initial?: string; initialHand?: string | null; initialRecap?: string | null } = $props();
 	// svelte-ignore state_referenced_locally
 	let section = $state<Section>(initial as Section);
 	let filter = $state<Filter>({ window: 'all', company: 'all' });
 	// svelte-ignore state_referenced_locally
 	let openHand = $state<string | null>(initialHand);
+	// svelte-ignore state_referenced_locally
+	let recap = $state<string | null>(initialRecap);
+	let moreFilters = $state(false);
 
 	onMount(() => track('analytics_opened'));
 	function go(next: string) {
@@ -59,6 +69,15 @@
 		filter = { ...filter, [key]: value || undefined };
 		// Only the kind of filter and its fixed option go to GA, never ids or names.
 		track('analytics_filter_used', { filter: key, value: value || 'all' });
+	}
+	function showRecap(nightId: string) {
+		recap = nightId;
+		track('night_recap_opened');
+	}
+	/** A date picked in the "more filters" row, as the API's YYYY-MM-DD. */
+	function setDate(key: 'from' | 'until', value: string) {
+		filter = { ...filter, [key]: value || undefined };
+		track('analytics_filter_used', { filter: key, value: value ? 'set' : 'all' });
 	}
 	function showHand(id: string) {
 		openHand = id;
@@ -84,8 +103,15 @@
 			<select aria-label="Company" value={filter.company} onchange={(e) => setFilter('company', e.currentTarget.value)}>
 				{#each COMPANY as [id, label] (id)}<option value={id}>{label}</option>{/each}
 			</select>
+			<button class="more" aria-expanded={moreFilters} onclick={() => (moreFilters = !moreFilters)}>Dates</button>
 		</div>
 	</header>
+	{#if moreFilters}
+		<div class="dates">
+			<label>From <input type="date" value={filter.from ?? ''} onchange={(e) => setDate('from', e.currentTarget.value)} /></label>
+			<label>To <input type="date" value={filter.until ?? ''} onchange={(e) => setDate('until', e.currentTarget.value)} /></label>
+		</div>
+	{/if}
 
 	<nav class="sections" aria-label="Stats sections">
 		{#each SECTIONS as [id, label] (id)}
@@ -93,12 +119,15 @@
 		{/each}
 	</nav>
 
-	{#if section === 'overview'}<Overview {filter} onOpenHand={showHand} onSection={go} />
+	{#if section === 'overview'}<Overview {filter} onOpenHand={showHand} onSection={go} onRecap={showRecap} />
+	{:else if section === 'skill'}<Skill {filter} onRecap={showRecap} />
 	{:else if section === 'games'}<Games {filter} />
 	{:else if section === 'cards'}<Cards {filter} />
 	{:else if section === 'style'}<StyleSection {filter} />
 	{:else if section === 'rivals'}<Rivals {filter} onOpenHand={showHand} />
-	{:else}<History {filter} onOpenHand={showHand} />{/if}
+	{:else if section === 'records'}<Records {filter} onOpenHand={showHand} onRecap={showRecap} />
+	{:else if section === 'club'}<Club onOpenHand={showHand} onRecap={showRecap} />
+	{:else}<History {filter} onOpenHand={showHand} onRecap={showRecap} />{/if}
 
 	<p class="footnote">
 		Stats cover hands recorded since analytics began. They are for after the game: nothing here
@@ -106,6 +135,7 @@
 	</p>
 </div>
 {#if openHand}<HandDetail handId={openHand} onClose={() => (openHand = null)} />{/if}
+{#if recap}<NightRecap nightId={recap === 'latest' ? null : recap} onClose={() => (recap = null)} onOpenHand={(id) => ((recap = null), showHand(id))} />{/if}
 
 <style>
 	.stats-view {
@@ -142,6 +172,32 @@
 		padding: 0.45rem 0.8rem;
 		color: #f1ebdc;
 		font-size: 0.82rem;
+	}
+	.more {
+		border: 1px solid rgb(240 209 140 / 22%);
+		border-radius: 999px;
+		padding: 0.45rem 0.8rem;
+		color: #e7c784;
+		font-size: 0.82rem;
+	}
+	.dates {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.8rem;
+		color: #b1b9ae;
+		font-size: 0.82rem;
+	}
+	.dates input {
+		border: 1px solid rgb(240 209 140 / 22%);
+		border-radius: 0.6rem;
+		background: #0f1a16;
+		padding: 0.3rem 0.5rem;
+		color: #f1ebdc;
+	}
+	.stats-view :global(.nav) {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
 	}
 	.sections {
 		display: flex;

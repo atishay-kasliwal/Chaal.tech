@@ -23,7 +23,7 @@ export const WINDOWS = Object.freeze(['recent-hands', 'recent-nights', '30d', 'a
 
 /**
  * @param facts sorted by completedAt
- * @param filter { window, game, variant, company: all|friends|bots, opponent: subject, night }
+ * @param filter { window, game, variant, company: all|friends|bots, opponent: subject, night, from, until (ms) }
  */
 export function filterFacts(facts, filter = {}, now = Date.now()) {
 	let out = facts.filter(
@@ -31,6 +31,8 @@ export function filterFacts(facts, filter = {}, now = Date.now()) {
 			(!filter.game || f.gameType === filter.game) &&
 			(!filter.variant || f.rulesVersion === filter.variant) &&
 			(!filter.night || f.nightId === filter.night) &&
+			(!filter.from || f.completedAt >= filter.from) &&
+			(!filter.until || f.completedAt < filter.until) &&
 			(!filter.opponent || f.opponents.some((o) => o.subject === filter.opponent)) &&
 			(filter.company === 'friends' ? !f.practice : filter.company === 'bots' ? f.practice : true)
 	);

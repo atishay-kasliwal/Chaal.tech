@@ -51,6 +51,10 @@ export function handFacts(record) {
 	const players = record.seats.length;
 	const game = record.gameType;
 	const facts = new Map();
+	// Who reached the end of the hand, and what each of them put in: the pot a player who packed early
+	// would have been playing for had they stayed (used to value cards without rewarding folding).
+	const finishers = outcome.players.filter((p) => p.exit === 'won' || p.exit === 'lost');
+	const perFinisher = finishers.length ? finishers.reduce((s, p) => s + (p.contributed ?? 0), 0) / finishers.length : null;
 	for (const seat of record.seats) {
 		const result = outcome.players.find((p) => p.p === seat.p) ?? { net: 0, contributed: 0, exit: 'unknown' };
 		const unit = unitFor(record, seat.p);
@@ -83,6 +87,11 @@ export function handFacts(record) {
 			stake: UNITS[game]?.stake ?? false,
 			contributed: result.contributed ?? 0,
 			potUnits: complete && outcome.pot !== null ? outcome.pot / unit : null,
+			// The pot had this player stayed to the end: unchanged for someone who did, larger for a folder.
+			stayPotUnits:
+				complete && outcome.pot !== null
+					? (outcome.pot + (result.exit === 'won' || result.exit === 'lost' || perFinisher === null ? 0 : Math.max(0, perFinisher - (result.contributed ?? 0)))) / unit
+					: null,
 			exit: result.exit,
 			shown: !!result.shown,
 			order: seat.order ?? null,

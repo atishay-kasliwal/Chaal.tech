@@ -125,11 +125,11 @@ export class TableSim {
 	/** The bot runner's move, with its random draws logged, as the room's alarm does. */
 	botMove() {
 		const rng = botRandom(() => Math.floor(this.random() * 0x1_0000_0000));
-		const move = nextBotMove(this.room, this.connected, rng.random);
+		const move = nextBotMove(this.room, this.connected, rng.random, undefined, this.memoryFor);
 		if (!move) return null;
 		this.act(move.botId, move.action, move.payload, {
 			kind: 'bot',
-			bot: { seed: rng.seed, draws: rng.draws, reason: move.reason }
+			bot: { seed: rng.seed, draws: rng.draws, reason: move.reason, ...(move.adaptive ? { memory: move.memory, adaptive: move.adaptive } : {}) }
 		});
 		return move;
 	}

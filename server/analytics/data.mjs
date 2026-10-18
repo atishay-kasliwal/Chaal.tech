@@ -103,3 +103,62 @@ export async function clubRecords(db, { full = false, since = 0, limit = 20000 }
 		.toArray();
 	return list.reverse();
 }
+
+/** Every public hand of one night, summary shape. For the night recap. */
+export async function nightRecords(db, nightId) {
+	return db.collection(COLLECTIONS.records).find({ nightId }, { projection: SUMMARY }).sort({ completedAt: 1 }).toArray();
+}
+
+/** Counts only, from the viewer's own hands: how many were sealed, cut by a player, replay-verified. */
+export async function integrityCounts(db, playerId) {
+	const [row] = await db
+		.collection(COLLECTIONS.records)
+		.aggregate([
+			{ $match: { 'seats.p': playerId } },
+			{
+				$group: {
+					_id: null,
+					hands: { $sum: 1 },
+					sealed: { $sum: { $cond: [{ $ifNull: ['$seal.commitment', false] }, 1, 0] } },
+					cutByPlayer: { $sum: { $cond: [{ $ifNull: ['$seal.cutBy', false] }, 1, 0] } },
+					replayVerified: { $sum: { $cond: [{ $in: ['$verified.replay', ['exact', 'reproduced', 'compatible']] }, 1, 0] } }
+				}
+			}
+		])
+		.toArray();
+	return row ? { hands: row.hands, sealed: row.sealed, cutByPlayer: row.cutByPlayer, replayVerified: row.replayVerified } : { hands: 0, sealed: 0, cutByPlayer: 0, replayVerified: 0 };
+}
+
+/**
+ * Anonymous counts of every card dealt across the club's latest private records: no player, no hand.
+ * Withheld unless enough different people contribute, so a viewer could never subtract their own cards
+ * from the total and learn another person's (individually harmless numbers must not combine into that).
+ */
+export const MIN_CLUB_CARD_PLAYERS = 5;
+export async function clubCardCounts(db, { limit = 4000 } = {}) {
+	const [{ players = 0 } = {}] = await db
+		.collection(COLLECTIONS.private)
+		.aggregate([{ $sort: { completedAt: -1 } }, { $limit: limit }, { $group: { _id: '$p' } }, { $count: 'players' }])
+		.toArray();
+	if (players < MIN_CLUB_CARD_PLAYERS) return { cards: 0, ranks: Array(13).fill(0), suits: Array(4).fill(0), withheld: true };
+	const rows = await db
+		.collection(COLLECTIONS.private)
+		.aggregate([
+			{ $match: { gameType: { $in: ['teen-patti', 'texas-holdem', 'blackjack'] } } },
+			{ $sort: { completedAt: -1 } },
+			{ $limit: limit },
+			{ $project: { dealt: 1, _id: 0 } },
+			{ $unwind: '$dealt' },
+			{ $group: { _id: { rank: '$dealt.rank', suit: '$dealt.suit' }, n: { $sum: 1 } } }
+		])
+		.toArray();
+	const ranks = Array(13).fill(0);
+	const suits = Array(4).fill(0);
+	const order = ['hearts', 'diamonds', 'clubs', 'spades'];
+	for (const r of rows) {
+		if (r._id.rank >= 2 && r._id.rank <= 14) ranks[r._id.rank - 2] += r.n;
+		const s = order.indexOf(r._id.suit);
+		if (s >= 0) suits[s] += r.n;
+	}
+	return { cards: ranks.reduce((a, b) => a + b, 0), ranks, suits };
+}

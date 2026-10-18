@@ -5,6 +5,9 @@ export interface Filter {
 	window?: 'all' | '30d' | 'recent-nights' | 'recent-hands';
 	game?: string;
 	company?: 'all' | 'friends' | 'bots';
+	/** Optional date range, YYYY-MM-DD. */
+	from?: string;
+	until?: string;
 }
 
 const cache = new Map<string, Promise<unknown>>();

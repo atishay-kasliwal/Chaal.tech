@@ -8,7 +8,7 @@
 	import InsightCard from './InsightCard.svelte';
 	import type { Insight, Overview as OverviewData } from '../types.js';
 
-	let { filter, onOpenHand, onSection }: { filter: Filter; onOpenHand: (id: string) => void; onSection: (s: string) => void } = $props();
+	let { filter, onOpenHand, onSection, onRecap }: { filter: Filter; onOpenHand: (id: string) => void; onSection: (s: string) => void; onRecap: (nightId: string) => void } = $props();
 	let data = $state<OverviewData | null>(null);
 	let insights = $state<Insight[]>([]);
 	let error = $state('');
@@ -18,7 +18,8 @@
 		data = null;
 		error = '';
 		fetchAnalytics<{ overview: OverviewData }>('overview', params).then((b) => (data = b.overview)).catch((e) => (error = e.message));
-		fetchAnalytics<{ insights: Insight[] }>('insights', params).then((b) => (insights = b.insights.filter((i) => i.eligible))).catch(() => (insights = []));
+		// The ranked few: confident, large, and not shown to you recently.
+		fetchAnalytics<{ insights: Insight[]; top?: Insight[] }>('insights', params).then((b) => (insights = b.top ?? b.insights.filter((i) => i.eligible))).catch(() => (insights = []));
 	});
 </script>
 
@@ -80,7 +81,7 @@
 		<div>
 			<h2>Recent nights</h2>
 			<NightBars nights={data.recentNights} />
-			<button class="link" onclick={() => onSection('history')}>All nights and hands</button>
+			<span class="nav"><button class="link" onclick={() => onSection('history')}>All nights and hands</button>{#if data.recentNights.length}<button class="link" onclick={() => onRecap(data?.recentNights.at(-1)?.nightId ?? '')}>Recap of your last night</button>{/if}</span>
 		</div>
 	</section>
 

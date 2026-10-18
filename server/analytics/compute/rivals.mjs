@@ -25,8 +25,10 @@ function emptyRival(subject, kind) {
 		contests: { won: 0, lost: 0, split: 0 },
 		biggestWin: null,
 		biggestLoss: null,
+		firstMet: Infinity,
 		lastMet: 0,
-		recent: []
+		recent: [],
+		pots: []
 	};
 }
 
@@ -57,7 +59,7 @@ function meetings(record, viewer) {
 }
 
 /** Every opponent the viewer has met, most-played first. `records` must all include the viewer. */
-export function rivalries(records, viewer) {
+export function rivalries(records, viewer, now = Date.now()) {
 	const rivals = new Map();
 	for (const record of [...records].sort((a, b) => a.completedAt - b.completedAt)) {
 		for (const m of meetings(record, viewer)) {
@@ -67,6 +69,7 @@ export function rivalries(records, viewer) {
 			r.games[record.gameType] = (r.games[record.gameType] ?? 0) + 1;
 			if (record.rulesVersion && record.gameType === 'teen-patti') r.variants[record.rulesVersion] = (r.variants[record.rulesVersion] ?? 0) + 1;
 			r.lastMet = Math.max(r.lastMet, record.completedAt);
+			r.firstMet = Math.min(r.firstMet, record.completedAt);
 			if (m.mine.complete) {
 				r.complete++;
 				const stake = UNITS[record.gameType]?.stake;
@@ -93,14 +96,15 @@ export function rivalries(records, viewer) {
 				if (stake && m.units > 0 && (!r.biggestWin || m.units > r.biggestWin.units)) r.biggestWin = { handId: record._id, units: round(m.units, 1), at: record.completedAt };
 				if (stake && m.units < 0 && (!r.biggestLoss || m.units < r.biggestLoss.units)) r.biggestLoss = { handId: record._id, units: round(m.units, 1), at: record.completedAt };
 				r.recent.push({ handId: record._id, at: record.completedAt, gameType: record.gameType, units: stake ? round(m.units, 1) : null, you: m.mine.won, them: m.theirs.won });
+				if (stake && m.mine.potUnits !== null) r.pots.push({ handId: record._id, at: record.completedAt, potUnits: round(m.mine.potUnits, 1), units: round(m.units, 1) });
 			}
 		}
 	}
-	return [...rivals.values()].map(summarise).sort((a, b) => b.hands - a.hands);
+	return [...rivals.values()].map((r) => summarise(r, now)).sort((a, b) => b.hands - a.hands);
 }
 
 /** The rivalry's headline, with wording no stronger than the evidence. */
-function summarise(r) {
+function summarise(r, now) {
 	const nights = [...r.nights.entries()].map(([nightId, n]) => ({ nightId, ...n, games: [...n.games] }));
 	const perHand = clusteredMean(nights.filter((n) => n.n).map((n) => ({ sum: n.sum, n: n.n })));
 	const level = evidence(r.complete, MIN_RIVAL_HANDS);
@@ -136,7 +140,13 @@ function summarise(r) {
 		contests: r.contests,
 		biggestWin: r.biggestWin,
 		biggestLoss: r.biggestLoss,
+		firstMet: Number.isFinite(r.firstMet) ? r.firstMet : null,
 		lastMet: r.lastMet,
+		recent30: (() => {
+			const recent = r.recent.filter((h) => h.units !== null && h.at >= now - 30 * 24 * 60 * 60 * 1000);
+			return { hands: recent.length, units: round(recent.reduce((s, h) => s + h.units, 0), 1) };
+		})(),
+		biggestPots: [...r.pots].sort((a, b) => b.potUnits - a.potUnits).slice(0, 3),
 		evidence: level,
 		verdict,
 		recentNights: nights.slice(-8).map((n) => ({ nightId: n.nightId, at: n.at, hands: n.n, units: round(n.sum, 1), games: n.games })),

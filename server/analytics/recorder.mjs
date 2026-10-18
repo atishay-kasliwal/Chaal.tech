@@ -18,6 +18,7 @@
 import { transition, projection, playing, limits } from '../engine.mjs';
 import { nextBotMove } from '../bots/runner.mjs';
 import { identityForSeat, STYLES, LEGACY_POLICY } from '../bots/identity.mjs';
+import { ADAPTIVE_POLICY } from '../bots/memory/adaptive.mjs';
 import { CHARACTER_POLICY, configErrors } from '../bots/config.mjs';
 import { getVariant } from '../variants/index.mjs';
 import { canonicalJson, fingerprint64 } from './hash.mjs';
@@ -457,7 +458,7 @@ export function replayHand(preDeal, steps, { bots = {}, botChecks = [], match = 
 function styleProfile(identity, bot) {
 	const style = bot?.style ?? (identity?.styleId ? STYLES[identity.styleId] : null);
 	if (!style || style.configHash !== identity?.configHash || style.botId !== identity.botId || style._id !== identity.styleId || style.version !== identity.styleVersion) return null;
-	if (style.policy === CHARACTER_POLICY ? configErrors(style).length > 0 : style.policy !== LEGACY_POLICY) return null;
+	if ([CHARACTER_POLICY, ADAPTIVE_POLICY].includes(style.policy) ? configErrors(style).length > 0 : style.policy !== LEGACY_POLICY) return null;
 	return style.tendencies;
 }
 
@@ -472,7 +473,10 @@ function verifyBotDecision(state, step, index, bots) {
 		return next();
 	};
 	const connected = new Set(step.ctx?.connected ?? []);
-	const move = nextBotMove(state, connected, random, (id) => styleProfile(bots[id], state.players.find(p => p.id === id)?.bot) ?? undefined);
+	const adaptive = state.players.find(p => p.id === step.actor)?.bot?.style?.policy === ADAPTIVE_POLICY;
+	if (adaptive && (!step.bot.memory || step.bot.memory.asOf > step.t)) throw new ReplayError('Missing/future frozen memory', index);
+	const move = nextBotMove(state, connected, random, (id) => styleProfile(bots[id], state.players.find(p => p.id === id)?.bot) ?? undefined, id => id === step.actor ? step.bot.memory : undefined);
+	if (adaptive && canonicalJson(move?.adaptive) !== canonicalJson(step.bot.adaptive)) throw new ReplayError('Adaptive trace is not reproducible', index);
 	if (
 		!move ||
 		move.botId !== step.actor ||
@@ -765,7 +769,8 @@ export function buildHandRecords(hand, { engine = null, room } = {}) {
 				probs: {},
 				reason: step.bot?.reason ?? null,
 				confidence: null,
-				memoryRefs: [],
+				memoryRefs: step.bot?.memory ? [step.bot.memory.id] : [],
+				...(step.bot?.adaptive ? { adaptive: clone(step.bot.adaptive) } : {}),
 				rngSeed: step.bot?.seed ?? null,
 				rngDraws: step.bot?.draws ?? 0,
 				verified: botChecks.find((check) => check.i === i)?.verified ?? 'not-checked'
