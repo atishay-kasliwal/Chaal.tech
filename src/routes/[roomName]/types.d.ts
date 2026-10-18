@@ -23,6 +23,11 @@ interface User {
 	wildCards?: number[];
 	/** Present for server-run bots: their difficulty. */
 	bot?: 'easy' | 'normal' | 'hard';
+	/** Server-validated cosmetic character, independent of difficulty. */
+	botCharacterId?: string;
+	botId?: string;
+	botStyleId?: string;
+	botMascotId?: string;
 	isBlind: boolean;
 	isPacked: boolean;
 	connected: boolean;

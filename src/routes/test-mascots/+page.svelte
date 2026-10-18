@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Mascot from '#lib/mascots/Mascot.svelte';
 	import { onDestroy } from 'svelte';
+	import { MASCOT_NAMES } from '#lib/mascots/catalog.js';
+	import { BOT_CHARACTERS } from '#lib/mascots/bots.js';
 	import { SHEET_CELLS, mascots, pick, reactions } from '#lib/mascots/mascots.svelte.js';
 
 	/**
@@ -10,12 +12,29 @@
 	 */
 	mascots.load();
 
-	const friends = $derived(Object.keys(mascots.manifest));
+	let group = $state<'members' | 'bots'>('members');
+	const names = {
+		...MASCOT_NAMES,
+		...Object.fromEntries(BOT_CHARACTERS.map((bot) => [bot.mascotId, bot.name]))
+	};
+	const friends = $derived(
+		Object.keys(mascots.manifest).filter((id) =>
+			group === 'bots' ? id.startsWith('bot-') : !id.startsWith('bot-')
+		)
+	);
 	let active = $state<string | null>(null);
 	let caption = $state('');
 	let size = $state(100);
 	let hold = $state<string | null>(null);
-	const faces = Object.values(SHEET_CELLS).flat();
+	const faces = $derived(
+		Object.entries(SHEET_CELLS)
+			.filter(
+				([sheet]) =>
+					friends.length > 0 &&
+					friends.every((id) => mascots.manifest[id]?.signature?.includes(sheet))
+			)
+			.flatMap(([, cells]) => cells)
+	);
 
 	let timers: ReturnType<typeof setTimeout>[] = [];
 	onDestroy(() => {
@@ -81,6 +100,23 @@
 		<p class="note">No mascot art installed yet.</p>
 	{:else}
 		<section class="controls">
+			<button
+				class:primary={group === 'members'}
+				aria-pressed={group === 'members'}
+				onclick={() => {
+					group = 'members';
+					hold = null;
+				}}>Club members</button
+			>
+			<button
+				class:primary={group === 'bots'}
+				aria-pressed={group === 'bots'}
+				onclick={() => {
+					group = 'bots';
+					hold = null;
+				}}>Bots</button
+			>
+
 			<button class="primary" onclick={playHand}>Play a hand</button>
 			<label>
 				Size
@@ -89,12 +125,15 @@
 			</label>
 			<label>
 				Hold a face
-				<select bind:value={hold}>
+				<select bind:value={hold} disabled={!faces.length}>
 					<option value={null}>none</option>
 					{#each faces as face (face)}<option value={face}>{face}</option>{/each}
 				</select>
 			</label>
 		</section>
+		{#if !faces.length}<p class="note">
+				Head directions are ready. Additional expression artwork is pending.
+			</p>{/if}
 		{#if caption}<p class="caption">{caption}</p>{/if}
 
 		<section class="table">
@@ -109,7 +148,7 @@
 					>
 						<div class="ring" class:on={active === id}>
 							<div class="frame">
-								<span class="name">{id}</span>
+								<span class="name">{names[id] ?? id}</span>
 								<span class="cam">camera</span>
 							</div>
 							<span class="peek" style:--size="{size}px">
@@ -122,7 +161,7 @@
 										: active === id
 											? '.pot'
 											: null}
-									label={id}
+									label={names[id] ?? id}
 								/>
 							</span>
 						</div>

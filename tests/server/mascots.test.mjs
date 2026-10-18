@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { BOT_CHARACTERS } from '../../src/lib/mascots/bots.js';
 import { MASCOT_IDS } from '../../server/club/mascots.mjs';
 import { MASCOT_NAMES, SHEET_CELLS } from '../../src/lib/mascots/catalog.ts';
 
@@ -9,7 +10,7 @@ test('every linked mascot and advertised expression sheet ships with the app', a
 		await readFile(new URL('../../static/mascots/manifest.json', import.meta.url), 'utf8')
 	);
 	assert.deepEqual(Object.keys(MASCOT_NAMES).sort(), [...MASCOT_IDS].sort());
-	assert.deepEqual(Object.keys(manifest).sort(), [...MASCOT_IDS].sort());
+	assert.deepEqual(Object.keys(manifest).sort(), [...MASCOT_IDS, ...BOT_CHARACTERS.map(bot => bot.mascotId)].sort());
 	const expected = ['directions', ...Object.keys(SHEET_CELLS)].sort();
 	for (const id of MASCOT_IDS) {
 		assert.deepEqual([...manifest[id].signature].sort(), expected);
@@ -29,3 +30,12 @@ test('expression names map to nine unique cells per atlas', () => {
 	for (const cells of Object.values(SHEET_CELLS)) assert.equal(cells.length, 9);
 	assert.equal(new Set(expressions).size, expressions.length);
 });
+
+ test('every permanent bot has an approved transparent directional atlas', async () => {
+ for (const bot of BOT_CHARACTERS) {
+ const bytes = await readFile(new URL(`../../static/mascots/${bot.mascotId}/signature/directions.webp`, import.meta.url));
+ assert.equal(bytes.toString('ascii', 0, 4), 'RIFF');
+ assert.equal(bytes.toString('ascii', 8, 12), 'WEBP');
+ assert.ok(bytes.length > 1000);
+ }
+ });

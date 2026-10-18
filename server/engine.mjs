@@ -4,6 +4,8 @@ import { getGameEngine } from './games/index.mjs';
 import { describeHand, describeKeep, wildIndexes } from './variants/describe.mjs';
 import { compareVectors } from './variants/hand-utils.mjs';
 import { settleUp } from './settle-up.mjs';
+import { botCharacter } from '../shared/bot-characters.mjs';
+import { configErrors } from './bots/config.mjs';
 
 export class GameError extends Error {
 	constructor(message, code = 'INVALID_ACTION') {
@@ -720,13 +722,23 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			require(typeof payload.name === 'string' &&
 				payload.name.trim().length >= 1 &&
 				payload.name.trim().length <= 24, 'Invalid bot name');
+			if (payload.characterId !== undefined) {
+				require(!!botCharacter(payload.characterId), 'Unknown bot character');
+				if (!payload.style) require(!room.players.some(p => !p.departed && p.bot?.characterId === payload.characterId), 'That bot is already at the table');
+			}
+			if (payload.style) {
+				require(payload.style.status === 'published' && configErrors(payload.style).length === 0, 'Invalid published bot style');
+				require(typeof payload.style.botId === 'string' && /^[a-z][a-z0-9-]{1,47}$/.test(payload.style.botId) && Number.isSafeInteger(payload.style.version) && payload.style.version >= 1 && payload.style._id === `${payload.style.botId}@${payload.style.version}`, 'Invalid bot identity');
+				require(payload.style.supportedGames.includes(room.gameType ?? 'teen-patti'), 'Bot does not support this game');
+				require(!room.players.some(p => !p.departed && p.bot?.style?.botId === payload.style.botId), 'That character is already at the table');
+			}
 			for (const departed of room.players) if (departed.departed) departed.seatNumber = null;
 			const used = new Set(seated(room).map((p) => p.seatNumber));
 			const seatNumber = Array.from({ length: 6 }, (_, n) => n).find((n) => !used.has(n));
 			require(seatNumber !== undefined, 'Room is full');
 			room.players.push({
 				id: payload.botId,
-				username: payload.name.trim().toLowerCase(),
+				username: payload.style ? payload.name.trim() : payload.name.trim().toLowerCase(),
 				balance: room.table,
 				handBet: 0,
 				seatNumber,
@@ -735,7 +747,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				isPacked: false,
 				ready: true,
 				departed: false,
-				bot: { level: payload.level, rebuys: 0 }
+				bot: { level: payload.level, rebuys: 0, ...(payload.characterId ? { characterId: payload.characterId } : {}), ...(payload.style ? { style: structuredClone(payload.style), mascotId: payload.mascotId } : {}) }
 			});
 			room.issuedChips += room.table;
 		} else if (action === 'openPick') {
@@ -1193,7 +1205,7 @@ export function projection(room, id, connected) {
 			isPacked: p.isPacked,
 			...(ctxReadySupported(room) ? { ready: p.ready === true } : {}),
 			connected: present(p, connected),
-			...(p.bot ? { bot: p.bot.level } : {}),
+			...(p.bot ? { bot: p.bot.level, ...(p.bot.characterId ? { botCharacterId: p.bot.characterId } : {}), ...(p.bot.style ? { botId: p.bot.style.botId, botStyleId: p.bot.style._id, botMascotId: p.bot.mascotId } : {}) } : {}),
 			hasLeft: p.departed,
 			...(p.folded ? { folded: true } : {}),
 			cardsInHand:

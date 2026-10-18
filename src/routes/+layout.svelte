@@ -10,9 +10,18 @@
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
 	import ProfilePanel from '#lib/club/ProfilePanel.svelte';
 	import { profileModal } from '#lib/club/profile-modal.svelte.js';
+	import { afterNavigate } from '$app/navigation';
+	import { identify, trackPage } from '#lib/analytics.js';
 
 	let { children } = $props();
 	onMount(() => club.start());
+	// Tag before the first page view so it already belongs to the signed-in friend.
+	$effect(() => {
+		if (club.status !== 'loading') identify(club.member?.memberId ?? null, club.member?.role);
+	});
+	afterNavigate(({ to }) => {
+		if (to) trackPage(to.url, to.route.id);
+	});
 </script>
 
 <nav class="site-nav navbar relative z-20" aria-label="Main navigation">
@@ -34,6 +43,14 @@
 				class="btn btn-ghost rounded-full"
 				aria-current={page.route.id === '/club' ? 'page' : undefined}>Club</a
 			>
+		{/if}
+		{#if club.member}
+			<a
+				href="/stats"
+				class="btn btn-ghost rounded-full"
+				aria-current={page.route.id === '/stats' ? 'page' : undefined}>Stats</a
+			>
+			<a href="/bots" class="btn btn-ghost rounded-full" aria-current={page.url.pathname.startsWith('/bots') ? 'page' : undefined}>Bots</a>
 		{/if}
 		{#if club.member?.role === 'owner'}
 			<a

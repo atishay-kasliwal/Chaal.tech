@@ -1,5 +1,7 @@
 import { browser } from '$app/env';
 import { serverConfigError, serverURL } from '#lib/config.js';
+import { track } from '#lib/analytics.js';
+import { MASCOT_SIZE, isMascotSize } from '#lib/mascots/size.js';
 
 export interface Member {
 	memberId: string;
@@ -24,6 +26,8 @@ export interface ClubSettings {
 		felt: 'emerald' | 'sapphire' | 'crimson' | 'onyx';
 		cardBack: 'navy' | 'crimson' | 'forest';
 	};
+	/** Drawn sprite size in pixels; missing on older cached settings. */
+	mascotSize?: number;
 	/** Tonight's games in play order; empty means any game. */
 	lineup?: string[];
 	/** Hands each lineup game is played for; 0 means one round. */
@@ -31,7 +35,8 @@ export interface ClubSettings {
 }
 export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
 	table: { chips: 1000, boot: 10, potLimit: 128 },
-	look: { felt: 'emerald', cardBack: 'navy' }
+	look: { felt: 'emerald', cardBack: 'navy' },
+	mascotSize: MASCOT_SIZE.default
 };
 /** Last known club settings, so the table opens in the chosen look before the server answers. */
 const settingsKey = 'chaal-club-settings-v1';
@@ -93,7 +98,7 @@ class Club {
 		this.token = read(tokenKey) ?? undefined;
 		try {
 			const cachedSettings = JSON.parse(read(settingsKey) ?? 'null');
-			if (cachedSettings?.look && cachedSettings?.table) this.settings = cachedSettings;
+			if (cachedSettings?.look && cachedSettings?.table) this.applySettings(cachedSettings);
 		} catch {
 			/* Defaults until the server answers. */
 		}
@@ -121,7 +126,15 @@ class Club {
 		if (this.token) headers.set('Authorization', `Bearer ${this.token}`);
 		const response = await fetch(`${serverURL}${path}`, { ...init, headers });
 		const body = await response.json().catch(() => ({}));
-		if (response.ok && requestToken === this.token && Array.isArray(body.members))
+		if (
+			response.ok &&
+			requestToken === this.token &&
+			Array.isArray(body.members) &&
+			body.members.every(
+				(entry: Record<string, unknown>) =>
+					typeof entry.memberId === 'string' && !('email' in entry)
+			)
+		)
 			this.members = body.members;
 		return { response, body };
 	}
@@ -134,9 +147,57 @@ class Club {
 		applyMotion(member.reducedMotion);
 	}
 
+	private settingsRevision = 0;
 	applySettings(settings: ClubSettings) {
-		this.settings = settings;
-		write(settingsKey, JSON.stringify(settings));
+		this.settingsRevision++;
+		this.settings = {
+			...settings,
+			mascotSize: isMascotSize(settings.mascotSize) ? settings.mascotSize : MASCOT_SIZE.default
+		};
+		write(settingsKey, JSON.stringify(this.settings));
+	}
+
+	/** Keep open tables in sync with owner changes without a page reload. */
+	watchSettings() {
+		let stopped = false;
+		let pending = false;
+		const refresh = async () => {
+			if (
+				pending ||
+				stopped ||
+				document.visibilityState !== 'visible' ||
+				this.status !== 'signedIn'
+			)
+				return;
+			pending = true;
+			const token = this.token;
+			const revision = this.settingsRevision;
+			try {
+				const { response, body } = await this.call('/club/settings');
+				if (
+					!stopped &&
+					token === this.token &&
+					revision === this.settingsRevision &&
+					response.ok &&
+					body.settings
+				) {
+					this.applySettings(body.settings);
+					if (body.member) this.accept(body.member);
+				}
+			} catch {
+				/* Keep the last confirmed size while offline. */
+			} finally {
+				pending = false;
+			}
+		};
+		void refresh();
+		const timer = setInterval(refresh, 15_000);
+		document.addEventListener('visibilitychange', refresh);
+		return () => {
+			stopped = true;
+			clearInterval(timer);
+			document.removeEventListener('visibilitychange', refresh);
+		};
 	}
 
 	/** A signed-in request to the club server, for owner tools such as the Admin page. */
@@ -183,6 +244,7 @@ class Club {
 			write(tokenKey, body.clubToken);
 			this.accept(body.member);
 			await this.refresh();
+			if (this.status === 'signedIn') track('login', { method: 'Google' });
 			return this.status === 'signedIn';
 		} catch {
 			this.notice = 'Can’t reach the club right now. Check your connection and try again.';

@@ -1,4 +1,5 @@
 import { clubHistory } from '../club/history.mjs';
+import { analyticsResponse, adminAnalytics } from '../analytics/api.mjs';
 import { roomName } from '../engine.mjs';
 import {
 	issueClubToken,
@@ -18,7 +19,8 @@ import {
 	assertActive,
 	publicProfile,
 	updateProfile,
-	activeRoster
+	activeRoster,
+	markSeen
 } from '../club/members.mjs';
 import { verifyGoogleCredential } from '../club/google.mjs';
 import {
@@ -39,6 +41,12 @@ import {
 import { recentNights } from '../club/nights.mjs';
 import { openPoll, publicPoll, saveAvailability, pollSummary } from '../club/availability.mjs';
 import { sendAddedEmail } from '../club/beta-emails.mjs';
+import { memoryHealth } from '../bots/memory/diagnostics.mjs';
+import { adminBotIntel, adminClubIntel, adminEvolve, adminExport, adminQuality } from '../analytics/intel/admin.mjs';
+import { OPPONENT_ROUTES, inLiveHand } from '../analytics/intel/api.mjs';
+import { rebuildMemory } from '../bots/memory/store.mjs';
+import { botDirectory, adminBots, manageBot } from '../bots/directory.mjs';
+import { engineBuild } from './build.mjs';
 
 export { RoomDurableObject, ClubDirectory };
 
@@ -144,6 +152,20 @@ async function adminState(env, db) {
 	return { members, settings, beta, poll, tables: lobby.tables ?? [], online: lobby.online ?? [] };
 }
 
+/** True while the member is connected to a table whose hand is in progress. */
+async function memberInLiveHand(env, member) {
+	try {
+		const lobby = await (await clubDirectory(env).fetch('https://club.internal/lobby')).json();
+		return inLiveHand(lobby.tables, member._id);
+	} catch {
+		// If the lobby cannot answer, do not block; the privacy-relevant data is still per viewer.
+		return false;
+	}
+}
+
+/** Admin analytics window: "all" (or nothing) means no window; anything else is validated. */
+const windowParams = (window) => new URLSearchParams(window && window !== 'all' ? { window } : {});
+
 function clubFailure(error, origin, env) {
 	if (error instanceof ClubError)
 		return response(
@@ -205,11 +227,20 @@ export default {
 			result.headers.set('Access-Control-Max-Age', '86400');
 			return result;
 		}
+		// Recorded hands name the engine build; without a valid one the service does not run.
+		const build = engineBuild(env);
 		if (url.pathname === '/health' && request.method === 'GET')
-			return response({ ok: true, service: 'chaal-game' }, 200, origin, env);
+			return response(
+				build
+					? { ok: true, service: 'chaal-game', engineBuild: build }
+					: { ok: false, service: 'chaal-game', error: 'ENGINE_BUILD is missing or invalid' },
+				build ? 200 : 503,
+				origin,
+				env
+			);
 		if (url.pathname === '/ready' && request.method === 'GET')
-			return response({ ok: true, storage: 'durable-objects' }, 200, origin, env);
-		if (!env.SESSION_SECRET && url.pathname !== '/health' && url.pathname !== '/ready')
+			return response({ ok: !!build, storage: 'durable-objects' }, build ? 200 : 503, origin, env);
+		if (!env.SESSION_SECRET || !build)
 			return response({ error: 'Game service is not configured' }, 503, origin, env);
 		if (url.pathname === '/auth/google' && request.method === 'POST') {
 			// Browsers always send Origin on this POST; a missing one is not a signed-in page.
@@ -228,11 +259,23 @@ export default {
 				return clubFailure(error, origin, env);
 			}
 		}
+		if (url.pathname === '/club/settings' && request.method === 'GET') {
+			try {
+				const result = await withClubDatabase(env, async db => {
+					const member = await signedInMember(request, env, db);
+					const [settings, members] = await Promise.all([clubSettings(db), activeRoster(db)]);
+					return {settings, members, member: publicProfile(member)};
+				});
+				return response(result, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
 		if (url.pathname === '/me' && (request.method === 'GET' || request.method === 'POST')) {
 			try {
 				const body = request.method === 'POST' ? await jsonBody(request, 40_000) : null;
 				const { member, settings, members } = await withClubDatabase(env, async (db) => {
 					const current = await signedInMember(request, env, db);
+					// Activity is a nice-to-have: a failed write never blocks the profile.
+					await markSeen(db, current).catch(() => {});
 					const updated =
 						request.method === 'GET'
 							? current
@@ -277,6 +320,61 @@ export default {
 			} catch (error) {
 				return clubFailure(error, origin, env);
 			}
+		}
+		if ((url.pathname === '/bots' || /^\/bots\/[a-z0-9-]+$/.test(url.pathname)) && request.method === 'GET') {
+			try {
+				const result = await withClubDatabase(env, async db => {
+					const member = await signedInMember(request, env, db);
+					return botDirectory(db, member, { id: url.pathname === '/bots' ? undefined : url.pathname.slice(6) });
+				});
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
+		if (url.pathname === '/admin/bots/memory' && ['GET', 'POST'].includes(request.method)) {
+			try {
+				const body = request.method === 'POST' ? await jsonBody(request) : null;
+				const result = await withClubDatabase(env, async db => {
+					await signedInOwner(request, env, db);
+					if (body) {
+						if (body.action !== 'rebuild' || typeof body.botId !== 'string' || !/^[a-z][a-z0-9-]{1,47}$/.test(body.botId))
+							throw new ClubError('Choose a bot to rebuild', 'INVALID_BOT_REQUEST', 400);
+						await rebuildMemory(db, { botId: body.botId });
+					}
+					return memoryHealth(db);
+				});
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
+		const intel = /^\/admin\/intel\/(club|bots|quality|export)$/.exec(url.pathname);
+		if (intel && request.method === 'GET') {
+			try {
+				const result = await withClubDatabase(env, async (db) => {
+					await signedInOwner(request, env, db);
+					if (intel[1] === 'club') return adminClubIntel(db);
+					if (intel[1] === 'bots') return adminBotIntel(db);
+					if (intel[1] === 'quality') return adminQuality(db);
+					return adminExport(db, { since: Number(url.searchParams.get('since')) || 0, limit: Number(url.searchParams.get('limit')) || 2000 });
+				});
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
+		if (url.pathname === '/admin/bots/evolution' && request.method === 'POST') {
+			try {
+				const body = await jsonBody(request);
+				const result = await withClubDatabase(env, async (db) => adminEvolve(db, await signedInOwner(request, env, db), body));
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
+		if (url.pathname === '/admin/bots' && ['GET', 'POST'].includes(request.method)) {
+			try {
+				const body = request.method === 'POST' ? await jsonBody(request) : null;
+				const result = await withClubDatabase(env, async db => {
+					const owner = await signedInOwner(request, env, db);
+					if (body) await manageBot(db, owner, body);
+					return adminBots(db, owner);
+				});
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
 		}
 		if (url.pathname === '/admin' && (request.method === 'GET' || request.method === 'POST')) {
 			try {
@@ -351,9 +449,28 @@ else if (action === 'lineup') {
 							notice = `Beta night set for ${await decideGameNight(db, body.start, betaSettings(env).appUrl)}.`;
 						else throw new ClubError('Unknown admin action', 'INVALID_ADMIN_REQUEST', 400);
 					}
-					return { ...(await adminState(env, db)), notice };
+					// Owner analytics on the normalised basis (boots, fair share); public records only.
+					const analytics = url.searchParams.has('analytics')
+						? await adminAnalytics(db, windowParams(url.searchParams.get('analytics')))
+						: undefined;
+					return { ...(await adminState(env, db)), notice, analytics };
 				});
 				if (request.method === 'POST') rosterCache.at = 0;
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) {
+				return clubFailure(error, origin, env);
+			}
+		}
+		const analyticsRoute = /^\/analytics\/([a-z]+)$/.exec(url.pathname);
+		if (analyticsRoute && request.method === 'GET') {
+			// The viewer is always the signed-in member; every privacy rule is enforced server side.
+			try {
+				const result = await withClubDatabase(env, async (db) => {
+					const member = await signedInMember(request, env, db);
+					// Opponent-level stats wait while this member is in a live hand (see docs/ANALYTICS_PHASE5.md).
+					const live = OPPONENT_ROUTES.includes(analyticsRoute[1]) && (await memberInLiveHand(env, member));
+					return analyticsResponse(db, member, analyticsRoute[1], url.searchParams, Date.now(), { live });
+				});
 				return response({ ok: true, ...result }, 200, origin, env);
 			} catch (error) {
 				return clubFailure(error, origin, env);

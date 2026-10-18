@@ -125,7 +125,9 @@ function compare(left, right) {
 	return Math.sign(left.length - right.length);
 }
 
-const PROFILES = Object.freeze({
+/** Style parameters per legacy level. Published as immutable styles in ./identity.mjs: edit only
+ * by publishing a new style version (a test pins their hash). */
+export const PROFILES = Object.freeze({
 	// A friendly "calling station": looks early, stays in with weak hands, rarely raises.
 	easy: {
 		blindRounds: 0.5,
@@ -159,14 +161,43 @@ const PROFILES = Object.freeze({
 });
 
 /**
- * @param view the bot's own projection (server/engine.mjs projection for the bot id)
- * @returns {{ action: string, payload: object }}
+ * Why a bot chose its move: a fixed category for recorded decision traces, never free text.
+ * @type {readonly string[]}
  */
-export function decide(view, botId, random) {
+export const REASONS = Object.freeze([
+	'table-move',
+	'discard',
+	'mistake',
+	'blind-see',
+	'blind-show',
+	'blind-no-bet',
+	'blind-stack-guard',
+	'blind-bluff-raise',
+	'blind-hold',
+	'show-strong',
+	'show-forced',
+	'no-bet-pack',
+	'strong-raise',
+	'pot-odds-call',
+	'bluff-raise',
+	'weak-pack'
+]);
+
+/**
+ * @param view the bot's own projection (server/engine.mjs projection for the bot id)
+ * @returns {{ action: string, payload: object, reason: string }}
+ */
+export function decide(view, botId, random, profile) {
+	const move = choose(view, botId, random, profile);
+	return move && { action: move.action, payload: move.payload, reason: move.reason };
+}
+
+function choose(view, botId, random, styleProfile) {
 	const legal = view.legalActions;
 	const me = view.usersList.find((user) => user.id === botId);
 	const level = me?.bot ?? 'normal';
-	const profile = PROFILES[level] ?? PROFILES.normal;
+	// A published style's tendencies when given; otherwise the legacy level's (the same values).
+	const profile = styleProfile ?? PROFILES[level] ?? PROFILES.normal;
 	const variant = getVariant(view.rulesVersion);
 	// Some games give each player their own jokers (a Chatai line, a Kiss-Miss-Bliss pair).
 	const handState = variant.stateFor
@@ -183,12 +214,13 @@ export function decide(view, botId, random) {
 
 	// Table moves first: open the mat card it paid for, lock its best line, make a joker.
 	if (legal.table?.length)
-		return { action: 'table', payload: tableMove(view, me, variant, random) };
+		return { action: 'table', payload: tableMove(view, me, variant, random), reason: 'table-move' };
 	// Discard variants: throw the card that leaves the strongest three.
 	if (legal.discard)
 		return {
 			action: 'discard',
-			payload: { index: bestDiscard(me.cardsInHand, variant, handState) }
+			payload: { index: bestDiscard(me.cardsInHand, variant, handState) },
+			reason: 'discard'
 		};
 	if (!myTurn) return null;
 
@@ -196,7 +228,7 @@ export function decide(view, botId, random) {
 	if (random() < profile.mistake) {
 		const options = [pack, ...(legal.bet ? [low] : []), ...(canRaise ? [high] : [])];
 		if (legal.show) options.push({ action: 'show', payload: {} });
-		return options[Math.floor(random() * options.length)];
+		return { ...options[Math.floor(random() * options.length)], reason: 'mistake' };
 	}
 
 	const boot = view.boot ?? 1;
@@ -206,12 +238,16 @@ export function decide(view, botId, random) {
 	// Blind phase: keep betting blind for a while (cheap, and it pressures seen players).
 	if (!seen) {
 		const stayBlind = legal.see ? roundsPlayed < profile.blindRounds + random() * 1.5 : true; // Pot Blind: nobody may look.
-		if (!stayBlind) return { action: 'see', payload: {} };
-		if (legal.show && (roundsPlayed > 3 || random() < 0.25)) return { action: 'show', payload: {} };
-		if (!legal.bet) return pack;
+		if (!stayBlind) return { action: 'see', payload: {}, reason: 'blind-see' };
+		if (legal.show && (roundsPlayed > 3 || random() < (profile.blindShowChance ?? 0.25)))
+			return { action: 'show', payload: {}, reason: 'blind-show' };
+		if (!legal.bet) return { ...pack, reason: 'blind-no-bet' };
 		// Pot Blind tables get expensive: bow out once the stake eats a big share of the stack.
-		if (!legal.see && legal.minBet > me.balance * 0.25 && random() < 0.5) return pack;
-		return canRaise && random() < profile.bluff + 0.05 ? high : low;
+		if (!legal.see && legal.minBet > me.balance * (profile.stackRisk ?? 0.25) && random() < 0.5)
+			return { ...pack, reason: 'blind-stack-guard' };
+		return canRaise && random() < profile.bluff + 0.05
+			? { ...high, reason: 'blind-bluff-raise' }
+			: { ...low, reason: 'blind-hold' };
 	}
 
 	const known = [handState?.indicator].filter(Boolean);
@@ -220,20 +256,26 @@ export function decide(view, botId, random) {
 	let strength = single ** Math.max(1, opponents.length * 0.8);
 	// A seen opponent who has been betting big is probably holding something.
 	const seenBetters = opponents.filter((user) => !user.isBlind && (user.handBet ?? 0) > me.handBet);
-	if (level === 'hard' && seenBetters.length) strength *= 0.9;
+	if (seenBetters.length) strength *= 1 - (profile.pressureRead ?? (level === 'hard' ? 0.1 : 0));
+	if (profile.shortStackCall !== undefined && me.balance < boot * 15) strength -= profile.shortStackCall;
+	if (profile.largePotCaution !== undefined) strength -= profile.largePotCaution * Math.min(1, view.pot / Math.max(me.balance, 1));
 	strength += (random() - 0.5) * profile.randomness;
 
 	if (legal.show && opponents.length === 1) {
-		if (strength >= profile.show) return { action: 'show', payload: {} };
+		if (strength >= profile.show) return { action: 'show', payload: {}, reason: 'show-strong' };
 	}
-	if (!legal.bet) return legal.show && strength >= 0.35 ? { action: 'show', payload: {} } : pack;
+	if (!legal.bet)
+		return legal.show && strength >= 0.35
+			? { action: 'show', payload: {}, reason: 'show-forced' }
+			: { ...pack, reason: 'no-bet-pack' };
 
 	// Pot odds: the cheaper the call relative to the pot, the looser the bot plays.
 	const cost = legal.minBet;
 	const potOdds = cost / Math.max(view.pot + cost, 1);
 	const callLine = Math.min(profile.call, profile.call * 0.6 + potOdds);
-	if (strength >= profile.raise && canRaise) return random() < 0.7 ? high : low;
-	if (strength >= callLine) return low;
-	if (canRaise && random() < profile.bluff) return high;
-	return pack;
+	if (strength >= profile.raise && canRaise)
+		return { ...(random() < (profile.strongRaiseChance ?? 0.7) ? high : low), reason: 'strong-raise' };
+	if (strength >= callLine) return { ...low, reason: 'pot-odds-call' };
+	if (canRaise && random() < profile.bluff) return { ...high, reason: 'bluff-raise' };
+	return { ...pack, reason: 'weak-pack' };
 }

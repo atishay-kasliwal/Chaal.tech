@@ -16,6 +16,8 @@ import {
 	GameError
 } from './engine.mjs';
 import { nextBotMove, botDue, pickBotName, botDelay, humansPresent } from './bots/runner.mjs';
+import { CHARACTER_SEEDS } from './bots/characters.mjs';
+import { runtimeStyle } from './bots/config.mjs';
 import { shuffledDeck } from './classic.mjs';
 import { createMediaService } from './media.mjs';
 import { createGameRoom, listGameTypes } from './games/index.mjs';
@@ -393,8 +395,11 @@ export function createGameServer({
 					action = 'addBot';
 					payload = {
 						botId: `bot-${randomUUID()}`,
-						name: pickBotName(before, Math.random),
-						level: args[0]
+						...(['easy', 'normal', 'hard'].includes(args[0]) ? {name: pickBotName(before, Math.random), level: args[0]} : (() => {
+							const character = CHARACTER_SEEDS.find(seed => seed.bot._id === args[0]);
+							if (!character) throw new GameError('Choose a bot character');
+							return {name: character.bot.name, level: 'normal', mascotId: character.bot.avatar.mascotId, style: {...runtimeStyle(character.style), status: 'published'}};
+						})())
 					};
 					text = null;
 				} else if (event === 'setPotLimit') {

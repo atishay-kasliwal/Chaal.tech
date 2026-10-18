@@ -218,3 +218,18 @@ test('mascot links are owner-only and reach member profiles', async () => {
 	});
 	assert.equal(changed.body.member.mascotId, 'mradul');
 });
+
+
+test('only owners resize mascots, and signed-in tables can refresh the saved size', async () => {
+	const owner = await createSession({ nickname: 'Size owner' });
+	const friend = await createSession({ nickname: 'Size friend' });
+	assert.equal((await get('/club/settings')).response.status, 401);
+	await members.updateOne({ email: owner.email }, { $set: { role: 'owner' } });
+	const initial = await get('/club/settings', friend.clubToken);
+	assert.equal(initial.response.status, 200);
+	const body = { action: 'settings', settings: { ...initial.body.settings, mascotSize: 135 } };
+	assert.equal((await post('/admin', { token: friend.clubToken, body })).response.status, 403);
+	assert.equal((await post('/admin', { token: owner.clubToken, body })).response.status, 200);
+	assert.equal((await get('/club/settings', friend.clubToken)).body.settings.mascotSize, 135);
+	assert.equal((await post('/admin', { token: owner.clubToken, body: { ...body, settings: { ...body.settings, mascotSize: 9999 } } })).response.status, 400);
+});

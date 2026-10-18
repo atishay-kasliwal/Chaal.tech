@@ -1,0 +1,30 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "id": "bot-rohit-sharma",
+      "sheet": "directions",
+      "path": "design/mascots/bots/rohit-sharma/directions-v1.png"
+    },
+    {
+      "id": "bot-virat-kohli",
+      "sheet": "directions",
+      "path": "design/mascots/bots/virat-kohli/directions-v1.png"
+    },
+    {
+      "id": "bot-ms-dhoni",
+      "sheet": "directions",
+      "path": "design/mascots/bots/ms-dhoni/directions-v1.png"
+    },
+    {
+      "id": "bot-gg",
+      "sheet": "directions",
+      "path": "design/mascots/bots/gg/directions-v1.png"
+    },
+    {
+      "id": "bot-samay-raina",
+      "sheet": "directions",
+      "path": "design/mascots/bots/samay-raina/directions-v1.png"
+    }
+  ]
+}

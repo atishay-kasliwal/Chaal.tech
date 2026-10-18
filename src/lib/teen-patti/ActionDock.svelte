@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { Eye, EyeOff, Hand, Gavel, Coins, TrendingUp } from '@lucide/svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import type { MediaParticipant } from '#lib/media/controller.js';
@@ -33,7 +34,8 @@
 		onaskchips,
 		oncancelask,
 		onpeek,
-		onshowcards
+		onshowcards,
+		waitingActions
 	}: {
 		me: User;
 		room: RoomData;
@@ -64,6 +66,7 @@
 		onpeek: () => void;
 		/** Show your cards to the whole table after packing or after the hand. */
 		onshowcards: () => void;
+		waitingActions?: Snippet;
 	} = $props();
 
 	const legal = $derived(room.legalActions);
@@ -278,6 +281,7 @@
 	</div>
 
 	<div class="actions">
+		{#if !room.isStarted && waitingActions}{@render waitingActions()}{/if}
 		<ChipAsk {room} selfId={me.id} {connected} onask={onaskchips} oncancel={oncancelask} />
 		<div class="turn-line">
 			{#if playing && myTurn}
