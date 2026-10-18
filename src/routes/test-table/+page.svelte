@@ -320,6 +320,20 @@
 				},
 				actions: [{ label: 'Clear' }, { label: 'Make joker', primary: true }]
 			}
+		},
+		{
+			title: 'Waiting room with three characters',
+			game: 'Classic',
+			room: room(
+				{ isStarted: false, pot: 0, handId: null as unknown as string, legalActions: { start: true, bet: false, pack: false, show: false, minBet: 0, maxBet: 0 } },
+				[
+					me([]),
+					user('b1', 1, 'Rohit Sharma', { bot: 'normal', botMascotId: 'bot-rohit-sharma', cardsInHand: [], handBet: 0 }),
+					user('b2', 2, 'Virat Kohli', { bot: 'normal', botMascotId: 'bot-virat-kohli', cardsInHand: [], handBet: 0 }),
+					user('b3', 3, 'MS Dhoni', { bot: 'normal', botMascotId: 'bot-ms-dhoni', cardsInHand: [], handBet: 0 })
+				]
+			),
+			mat: { layout: 'grid', prompt: '', cards: [] }
 		}
 	];
 
