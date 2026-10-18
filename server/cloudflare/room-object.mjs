@@ -605,7 +605,7 @@ const picked = before.upNext
 					const variant = getVariant(rulesVersion);
 					if (!variant) throw new GameError('Unsupported game rules version', 'UNSUPPORTED_RULES');
 					// A sealed deck is dealt from where the cutter cut it (or a random cut if they didn't).
-const cutAt = before.seal ? (before.cut?.at ?? 1 + secureRandomInt(51)) : args[1];
+const cutAt = before.seal ? (before.cut?.at ?? 1 + secureRandomInt(51)) : (Number.isInteger(args[1]) && args[1] >= 0 && args[1] <= 51 ? args[1] : 1 + secureRandomInt(51));
 payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(opening ? { lineupIndex: 0 } : {}) };
 				} else payload = {};
 				text = 'Game started';

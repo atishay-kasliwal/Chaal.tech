@@ -110,3 +110,18 @@ test('after each hand the next picker cuts; changing the game reseals', () => {
 	assert.equal(room.cut, undefined);
 	assert.equal(room.seal, undefined, 'a new game gets a new sealed deck');
 });
+
+test('one person against bots: no cut is opened, the night starts straight away', () => {
+	let room = newRoom('solo-room', 1000, 'a', 'classic-1', { boot: 10, autoReady: true });
+	room = transition(room, 'a', 'join', { username: 'a' }, ctx);
+	room = transition(room, 'a', 'addBot', { botId: 'bot-solotest1', name: 'Rohit', level: 'normal' }, ctx);
+	room = transition(room, 'a', 'prepareStart', {}, ctx);
+	assert.equal(room.cut, undefined);
+	assert.equal(room.seal, undefined);
+	assert.ok(room.upNext, 'the game is still settled');
+	// With a second person at the table the cut is back.
+	let friends = newRoom('pair-room', 1000, 'a', 'classic-1', { boot: 10, autoReady: true });
+	for (const id of ['a', 'b']) friends = transition(friends, id, 'join', { username: id }, ctx);
+	friends = transition(friends, 'a', 'addBot', { botId: 'bot-solotest2', name: 'Rohit', level: 'normal' }, ctx);
+	assert.ok(transition(friends, 'a', 'prepareStart', {}, ctx).cut);
+});

@@ -169,6 +169,8 @@ function openCut(room, by, ctx) {
 	delete room.seal;
 	const cutter = room.players.find((p) => p.id === by && !p.bot && !p.departed);
 	if (room.boot === undefined || !cutter || !Number.isFinite(ctx?.now)) return;
+	// One person against bots: nobody else could be cheated, so there is nothing to cut and no wait.
+	if (humansSeated(room) <= 1) return;
 	room.cut = { by, ms: CUT_MS, deadline: ctx.now + CUT_MS, at: null };
 }
 /** Forget a cut (and its sealed deck) when the next game is no longer settled. */
