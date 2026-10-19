@@ -14,10 +14,15 @@
 	let event = $state<PresenceEvent | null>(null);
 	let actor = $state('guddu');
 	let reducedMotion = $state(false);
+	let headFollow = $state(true);
+	let perspective = $state(true);
+	let breathing = $state(true);
 	let previewStarted = false;
 	let attention = $state<Point>({ x: 0, y: 0 });
 	let frame = $state<PresenceFrame | null>(null);
 	let command = $state<AnimationCommand | null>(null);
+	let blinkRequest = $state<{ id: number; durationMs: number } | null>(null);
+	let blinkSerial = 0;
 	let paused = $state(false),
 		fallback = $state(false),
 		stress = $state(false),
@@ -41,7 +46,7 @@
 		still: 'At ease',
 		notice: 'Noticing',
 		eyes: 'Gaze leads',
-		head: 'Portrait follows',
+		head: 'Head follows',
 		hold: 'Holding attention',
 		return: 'Settling back'
 	};
@@ -114,14 +119,26 @@
 		];
 		for (const [at, fn] of beats) timers.push(setTimeout(fn, at));
 	}
+	function watchGlance() {
+		stopHand();
+		paused = false;
+		fallback = false;
+		actor = 'guddu';
+		emit('PLAYER_RAISED', 'raise');
+	}
 	function report(f: PresenceFrame) {
 		frame = f;
-		// Start one public-event demonstration on the first active frame. Manual controls
-		// cancel its timer, and reduced-motion instances never emit an active frame.
+		// Show one real blink on arrival; ordinary randomized blinks continue afterwards.
 		if (!previewStarted) {
 			previewStarted = true;
-			timers.push(setTimeout(playHand, 450));
+			timers.push(setTimeout(() => blinkOnce(), 800));
 		}
+	}
+	function blinkOnce(
+		durationMs = (DHONI_PRESENCE.blinkDurationMs[0] + DHONI_PRESENCE.blinkDurationMs[1]) / 2
+	) {
+		stopHand();
+		blinkRequest = { id: ++blinkSerial, durationMs };
 	}
 	function motionPreference(enabled: boolean) {
 		reducedMotion = enabled;
@@ -149,10 +166,10 @@
 	<header>
 		<div>
 			<p class="eyebrow">CHAAL / MOTION STUDIES / 01</p>
-			<h1>A seat with a little <em>life.</em></h1>
-			<p class="intro">MS Dhoni. The same artwork, a quieter rhythm.</p>
+			<h1>Eyes that <em>notice.</em></h1>
+			<p class="intro">A glance first. A small reaction. A quiet breath between moments.</p>
 		</div>
-		<span class="local"><span></span> LOCAL PROTOTYPE</span>
+		<span class="local"><span></span> DHONI PREVIEW</span>
 	</header>
 	<div class="study-grid">
 		<section class="stage" aria-label="Dhoni motion preview">
@@ -188,6 +205,10 @@
 						{attention}
 						{paused}
 						{fallback}
+						{headFollow}
+						{perspective}
+						{breathing}
+						{blinkRequest}
 						onFrame={report}
 						onCommand={planned}
 						onReducedMotion={motionPreference}
@@ -205,6 +226,39 @@
 				>
 			</div>
 			<div class="stage-controls">
+				<button
+					class="quiet"
+					aria-pressed={perspective}
+					disabled={!headFollow || fallback}
+					onclick={() => (perspective = !perspective)}
+					>{perspective ? 'Compare flat head' : 'Enable depth turn'}</button
+				>
+				<button
+					class="quiet"
+					aria-pressed={!breathing}
+					disabled={!headFollow || fallback || paused || reducedMotion}
+					onclick={() => (breathing = !breathing)}
+					>{breathing ? 'Compare still body' : 'Enable breathing'}</button
+				>
+				<button
+					class="quiet"
+					aria-pressed={!headFollow}
+					onclick={() => {
+						stopHand();
+						headFollow = !headFollow;
+					}}>{headFollow ? 'Compare face only' : 'Enable head follow'}</button
+				>
+				<button class="gold" disabled={reducedMotion} onclick={watchGlance}>Watch a glance</button>
+				<button
+					class="gold"
+					disabled={paused || fallback || reducedMotion}
+					onclick={() => blinkOnce()}>Blink now</button
+				>
+				<button
+					class="quiet"
+					disabled={paused || fallback || reducedMotion}
+					onclick={() => blinkOnce(1600)}>Slow blink</button
+				>
 				<button class="gold" onclick={playHand}
 					>{playing ? 'Restart hand' : 'Play a hand'} <span aria-hidden="true">↗</span></button
 				><button
@@ -244,14 +298,15 @@
 				>
 			</label>
 			<p class="stage-note">
-				Original portrait · continuous whole-image motion. Facial layers are pending.
+				Independent eyes, brows, head and mouth. Slow blinks. Barely visible breathing.
 			</p>
 		</section>
 		<aside class="director">
 			<p class="eyebrow">BEHAVIOR, THEN MOVEMENT</p>
-			<h2>Notice. Follow.<br /><em> Settle.</em></h2>
+			<h2>The face moves.<br /><em> The portrait stays.</em></h2>
 			<p class="explainer">
-				Trigger a public moment. A new event can gently interrupt the current movement.
+				Watch a glance, or choose a player and trigger a raise. His eyes move first, his head
+				follows with a restrained turn, then his attention returns quietly to the table.
 			</p>
 			<div class="event-controls" aria-label="Public table events">
 				{#each buttons as b (b.type)}<button
@@ -269,21 +324,47 @@
 					<span>LIVE INTENT</span>
 				</div>
 				<div class="channel">
-					<div><span>Eye gaze</span><small>Artwork pending</small></div>
+					<div><span>Eye gaze</span><small>Visible</small></div>
 					<div class="gaze-meter" aria-hidden="true">
 						<i style:left="{50 + (frame?.eyes.x ?? 0) * 42}%"></i>
 					</div>
 				</div>
 				<div class="channel">
-					<div><span>Portrait movement</span><small>Visible</small></div>
+					<div><span>Head follow</span><small>Visible</small></div>
 					<div class="gaze-meter" aria-hidden="true">
 						<i style:left="{50 + (frame?.head.x ?? 0) * 42}%"></i>
 					</div>
 				</div>
 				<div class="channel">
-					<div><span>Blink cue</span><small>Eyelids pending</small></div>
+					<div><span>Eyelids</span><small>Visible</small></div>
 					<div class="blink-meter" aria-hidden="true">
 						<i style:width="{(frame?.blink ?? 0) * 100}%"></i>
+					</div>
+				</div>
+				<div class="channel">
+					<div>
+						<span>Body breathing</span><small>{breathing && headFollow ? 'Subtle' : 'Off'}</small>
+					</div>
+					<div class="blink-meter" aria-hidden="true">
+						<i
+							style:width="{breathing && headFollow
+								? ((frame?.breath ?? 0) / DHONI_PRESENCE.breathScale) * 100
+								: 0}%"
+						></i>
+					</div>
+				</div>
+				<div class="channel">
+					<div>
+						<span>Mouth</span><small
+							>{(frame?.mouth ?? 0) > 0.08
+								? 'Soft smile'
+								: (frame?.mouth ?? 0) < -0.08
+									? 'Composed'
+									: 'At ease'}</small
+						>
+					</div>
+					<div class="gaze-meter" aria-hidden="true">
+						<i style:left="{50 + (frame?.mouth ?? 0) * 42}%"></i>
 					</div>
 				</div>
 			</div>
@@ -295,9 +376,10 @@
 			<div class="honest-note">
 				<span>ARTWORK CHECK</span>
 				<p>
-					The supplied face is one flattened image. Independent eyes, blinking and brows need
-					separated artwork. The meters show their real animation commands; those features are not
-					painted onto this portrait.
+					The approved head and face move together over a clean neck underpainting. Only the shirt
+					and shoulders expand slightly with breathing; the head does not bob. Mouth expressions
+					blend two painted closed-lip poses. The depth mesh turns the painted face within a small
+					range. Full side profiles still need additional artwork.
 				</p>
 			</div>
 			<details class="ledger">
@@ -316,8 +398,8 @@
 			<p class="eyebrow">A REUSABLE DIRECTOR</p>
 			<h2>One personality.<br />Independent rhythms.</h2>
 			<p>
-				Calm pauses, small reactions and four quiet idle variations. The next glance never needs the
-				same timing as the last.
+				Random blink spacing, quiet breaths and a pause after each exhale. Each copy keeps its own
+				rhythm.
 			</p>
 			<p class="fine">
 				{DHONI_PRESENCE.id} · Gaze first · interruptible transitions · automatic return to neutral
@@ -358,7 +440,14 @@
 	</section>
 	{#if stress}<div class="copies" aria-label="Five additional copies for performance testing">
 			{#each [1, 2, 3, 4, 5] as n (n)}<div>
-					<PresenceCharacter {event} {attention} {paused} /><span>Dhoni · instance {n + 1}</span>
+					<PresenceCharacter
+						{event}
+						{attention}
+						{paused}
+						{headFollow}
+						{breathing}
+						{perspective}
+					/><span>Dhoni · instance {n + 1}</span>
 				</div>{/each}
 		</div>{/if}
 	<details class="asset-plan">
@@ -369,8 +458,9 @@
 				brows, eyes, lids, mouth, neck and shoulders. No change to the approved drawing style.
 			</p>
 			<p>
-				The renderer already accepts these layers. This preview uses the original center sprite
-				until artist-prepared textures are supplied.
+				This preview uses separate painted irises and brows, clean sockets and painted eyelids. The
+				approved head is separated from breathing shoulders with clean neck overlap. The mouth
+				blends real painted poses. A complete Live2D model has not been authored yet.
 			</p>
 			<p>
 				Required: body, neck, clean head, hair, left/right brows, mouth; left/right sclera, pupils,

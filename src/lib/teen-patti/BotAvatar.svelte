@@ -1,5 +1,10 @@
 <script lang="ts">
 	import Mascot from '#lib/mascots/Mascot.svelte';
+	import { presencePreviewAvailable } from '#lib/mascots/presence/preview.js';
+	import type {
+		PublicPresenceTurn,
+		PublicPresenceGeometry
+	} from '#lib/mascots/presence/table-bridge.js';
 	/** A friendly face for a bot seat, stable per bot name. No camera, no network. */
 	let {
 		name,
@@ -8,8 +13,44 @@
 		size = 210,
 		reaction = null,
 		watch = null,
-		thinking = false
-	}: { name: string; level: string; mascotId?: string; size?: number; reaction?: string | null; watch?: string | null; thinking?: boolean } = $props();
+		thinking = false,
+		presencePreview = false,
+		publicSeatId = '',
+		publicFeed = [],
+		publicTurn = null,
+		publicHandKey = null,
+		publicGeometry = { seats: [], pot: { x: 50, y: 50 } }
+	}: {
+		name: string;
+		level: string;
+		mascotId?: string;
+		size?: number;
+		reaction?: string | null;
+		watch?: string | null;
+		thinking?: boolean;
+		presencePreview?: boolean;
+		publicSeatId?: string;
+		publicFeed?: readonly unknown[];
+		publicTurn?: PublicPresenceTurn | null;
+		publicHandKey?: string | null;
+		publicGeometry?: PublicPresenceGeometry;
+	} = $props();
+	let Animated = $state<typeof import('#lib/mascots/presence/TableBotPresence.svelte').default>();
+	const enabled = $derived(
+		presencePreviewAvailable && presencePreview && mascotId === 'bot-ms-dhoni'
+	);
+	$effect(() => {
+		if (!enabled || Animated) return;
+		let alive = true;
+		void import('#lib/mascots/presence/TableBotPresence.svelte')
+			.then((module) => {
+				if (alive) Animated = module.default;
+			})
+			.catch(() => {});
+		return () => {
+			alive = false;
+		};
+	});
 	const faces = ['😎', '🤠', '🧐', '😏', '🤓', '🥸', '😄', '🤩', '😌', '🙃', '😼', '🦁'];
 	const palettes = [
 		['#3b2a6b', '#7a4fd0'],
@@ -25,7 +66,21 @@
 </script>
 
 <div class="bot-avatar" style:--from={palette[0]} style:--to={palette[1]} data-testid="bot-avatar">
-	{#if mascotId}<Mascot id={mascotId} label={name} {size} {reaction} {watch} />{:else}<span class="face" class:thinking aria-hidden="true">{face}</span>{/if}
+	{#if enabled && Animated}<div class="presence" style:--presence-size="{size}px">
+			<Animated
+				seatId={publicSeatId}
+				feed={publicFeed}
+				turn={publicTurn}
+				handKey={publicHandKey}
+				geometry={publicGeometry}
+			/>
+		</div>{:else if mascotId}<Mascot
+			id={mascotId}
+			label={name}
+			{size}
+			{reaction}
+			{watch}
+		/>{:else}<span class="face" class:thinking aria-hidden="true">{face}</span>{/if}
 	<span class="badge-bot">Bot{mascotId ? '' : ` · ${level}`}</span>
 	{#if thinking}
 		<span class="dots" aria-label="thinking"><i></i><i></i><i></i></span>
@@ -33,6 +88,14 @@
 </div>
 
 <style>
+	.presence {
+		position: absolute;
+		width: min(var(--presence-size), 100%);
+		left: 50%;
+		top: 58%;
+		translate: -50% -38.6%;
+		aspect-ratio: 1;
+	}
 	.bot-avatar {
 		position: relative;
 		display: grid;

@@ -5,6 +5,10 @@
 	import { presenceClock } from './clock.js';
 	import { DHONI_ART, DHONI_PRESENCE } from './personality.js';
 	import LayeredCharacter from './LayeredCharacter.svelte';
+	import BlinkFace from './BlinkFace.svelte';
+	import FacialEyes from './FacialEyes.svelte';
+	import HeadCharacter from './HeadCharacter.svelte';
+	import { blinkStage } from './blink-art.js';
 	import type {
 		AnimationCommand,
 		Personality,
@@ -18,9 +22,13 @@
 		attention = { x: 0, y: 0 },
 		paused = false,
 		fallback = false,
+		headFollow = true,
+		breathing = true,
+		perspective = false,
 		seed,
 		personality = DHONI_PRESENCE,
 		rig = null,
+		blinkRequest = null,
 		onFrame,
 		onCommand,
 		onReducedMotion
@@ -29,9 +37,13 @@
 		attention?: Point;
 		paused?: boolean;
 		fallback?: boolean;
+		headFollow?: boolean;
+		breathing?: boolean;
+		perspective?: boolean;
 		seed?: number;
 		personality?: Readonly<Personality>;
 		rig?: RigAssets | null;
+		blinkRequest?: { id: number; durationMs: number } | null;
 		onFrame?: (frame: PresenceFrame) => void;
 		onCommand?: (command: AnimationCommand) => void;
 		onReducedMotion?: (enabled: boolean) => void;
@@ -41,6 +53,10 @@
 	let visible = $state(false);
 	let reduced = $state(false);
 	let failed = $state(false);
+	let eyesFailed = $state(false);
+	let headFailed = $state(false);
+	let eyeRenderer = $state<{ draw(frame: PresenceFrame): void }>();
+	let lastBlinkRequest = 0;
 	const showFallback = $derived(fallback || failed);
 	onMount(() => {
 		director = new PresenceDirector(
@@ -73,9 +89,11 @@
 	$effect(() => {
 		if (!root || !director) return;
 		const target = root,
-			engine = director;
+			engine = director,
+			facial = eyeRenderer;
 		engine.reset(presenceClock.now());
 		const draw = (frame: PresenceFrame) => {
+			facial?.draw(frame);
 			target.style.setProperty('--eye-x', String(frame.eyes.x));
 			target.style.setProperty('--eye-y', String(frame.eyes.y));
 			target.style.setProperty(
@@ -92,7 +110,9 @@
 			);
 			target.style.setProperty('--breath-scale', String(1 + frame.breath));
 			target.style.setProperty('--blink', String(frame.blink));
+			target.dataset.blinkStage = blinkStage(frame.blink);
 			target.style.setProperty('--brow', String(frame.brow));
+			target.style.setProperty('--mouth', String(frame.mouth));
 			target.dataset.phase = frame.phase;
 			target.dataset.blinks = String(frame.blinks);
 			target.dataset.event = frame.event;
@@ -107,6 +127,7 @@
 				lean: 0,
 				blink: 0,
 				breath: 0,
+				mouth: 0,
 				phase: 'still',
 				event: 'NEUTRAL',
 				variation: 'rest',
@@ -129,6 +150,12 @@
 		const command = director.dispatch(event, attention, presenceClock.now());
 		if (command) onCommand?.(command);
 	});
+	$effect(() => {
+		if (!blinkRequest || !director || paused || reduced || !visible || showFallback) return;
+		if (blinkRequest.id === lastBlinkRequest) return;
+		lastBlinkRequest = blinkRequest.id;
+		director.blink(presenceClock.now(), blinkRequest.durationMs);
+	});
 </script>
 
 <div
@@ -137,21 +164,40 @@
 	role="img"
 	aria-label="MS Dhoni bot, {rig
 		? 'layered character'
-		: 'portrait motion preview; independent facial layers pending'}"
+		: eyesFailed
+			? 'eyelid animation preview'
+			: headFollow && !headFailed
+				? 'independent eyes, eyebrows and head'
+				: 'independent eyes and eyebrows'}"
 	data-testid="presence-character"
-	data-renderer={showFallback ? 'legacy' : rig ? 'layered' : 'portrait'}
+	data-renderer={showFallback
+		? 'legacy'
+		: rig
+			? 'layered'
+			: eyesFailed
+				? 'blink-frames'
+				: headFollow && !headFailed
+					? 'head-parts'
+					: 'facial-eyes'}
 	data-motion={paused || reduced ? 'paused' : 'enabled'}
 >
 	{#if showFallback}<div class="legacy">
 			<Mascot id={DHONI_ART.id} label="MS Dhoni" size={360} poke={false} />
 		</div>
 	{:else if rig}<LayeredCharacter {rig} />
+	{:else if !eyesFailed && headFollow && !headFailed}
+		<HeadCharacter
+			bind:this={eyeRenderer}
+			{personality}
+			{breathing}
+			{perspective}
+			onerror={() => (headFailed = true)}
+			onFaceError={() => (eyesFailed = true)}
+		/>
+	{:else if !eyesFailed}
+		<FacialEyes bind:this={eyeRenderer} onerror={() => (eyesFailed = true)} />
 	{:else}
-		<div class="breath">
-			<div class="portrait" style:background-image="url({DHONI_ART.atlas})"></div>
-		</div>
-		<!-- Asset load detection only; the visible picture reuses the exact approved atlas. -->
-		<img class="preload" src={DHONI_ART.atlas} alt="" onerror={() => (failed = true)} />
+		<BlinkFace onerror={() => (failed = true)} />
 	{/if}
 </div>
 
@@ -163,31 +209,6 @@
 		contain: layout style;
 		isolation: isolate;
 	}
-	.breath,
-	.portrait {
-		position: absolute;
-		inset: 0;
-	}
-	.breath {
-		transform-origin: 50% 74%;
-		transform: scaleY(var(--breath-scale, 1));
-	}
-	.portrait {
-		background-size: 300% 300%;
-		background-position: 50% 50%;
-		background-repeat: no-repeat;
-		clip-path: inset(8% 0 25%);
-		transform-origin: 50% 69%;
-		transform: translate(var(--portrait-x, 0%), var(--portrait-y, 0%))
-			rotate(var(--head-roll, 0deg));
-	}
-	.preload {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		opacity: 0;
-		pointer-events: none;
-	}
 	.legacy {
 		position: absolute;
 		inset: 0;
@@ -197,12 +218,5 @@
 	.legacy :global(.mascot) {
 		width: 100%;
 		height: 100%;
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.breath,
-		.portrait {
-			transform: none;
-		}
 	}
 </style>

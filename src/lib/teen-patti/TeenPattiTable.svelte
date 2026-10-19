@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, untrack, type Snippet } from 'svelte';
+	import { wantsPresencePreview } from '#lib/mascots/presence/preview.js';
 	import { fade, fly } from 'svelte/transition';
 	import {
 		Copy,
@@ -543,6 +544,7 @@
 
 	// ——— Narration, chips and sounds ———
 	let feed = $state<FeedEvent[]>([]);
+	let presencePreview = $state(false);
 	/** The log as hands, newest first: each starts at its deal, with the winner pulled out. */
 	const handsLog = $derived.by(() => {
 		const hands: {
@@ -666,6 +668,16 @@
 		const seat = seatPositions[index];
 		return seat ? { x: (seat.left / arenaW) * 100, y: (seat.top / arenaH) * 100 } : POT_POINT;
 	};
+	// Explicit public-only cosmetic input. No User/RoomData object crosses this boundary.
+	const presenceTurn = $derived(
+		live && current
+			? { key: `${room.deadline ?? 'open'}:${current.id}`, playerId: current.id }
+			: null
+	);
+	const presenceGeometry = $derived({
+		seats: room.usersList.map((user) => ({ id: user.id, ...pointFor(user.id) })),
+		pot: potPoint()
+	});
 
 	$effect(() => {
 		const snapshot = room;
@@ -781,7 +793,11 @@
 	async function addBot(botId: string) {
 		if (!canAddBot || addingBot) return;
 		addingBot = true;
-		try { await send('addBot', [botId]); } finally { addingBot = false; }
+		try {
+			await send('addBot', [botId]);
+		} finally {
+			addingBot = false;
+		}
 	}
 
 	const removeBot = (botId: string) => void send('removeBot', [botId]);
@@ -876,6 +892,7 @@
 	let arena: HTMLElement | undefined = $state();
 
 	onMount(() => {
+		presencePreview = wantsPresencePreview(window.location.search);
 		const stopSettings = club.watchSettings();
 		sound = soundEnabled();
 		const tick = setInterval(() => (now = Date.now()), 250);
@@ -930,13 +947,25 @@
 
 {#snippet waitingHostActions()}
 	<div class="mobile-lobby-actions">
-		<button class="deal-btn" onclick={startNight} disabled={!canDeal} data-testid="mobile-deal-first"><Play class="h-4 w-4" /> Start the night</button>
+		<button
+			class="deal-btn"
+			onclick={startNight}
+			disabled={!canDeal}
+			data-testid="mobile-deal-first"><Play class="h-4 w-4" /> Start the night</button
+		>
 		<button class="mini" onclick={openInvite}><UserPlus class="h-3.5 w-3.5" /> Add company</button>
 	</div>
 {/snippet}
 
 {#snippet botAdder()}
-	<BotPicker occupied={room.usersList.filter(user => !user.hasLeft && user.botId).map(user => user.botId!)} game={room.gameType ?? 'teen-patti'} busy={!canAddBot || addingBot} onpick={addBot} />
+	<BotPicker
+		occupied={room.usersList
+			.filter((user) => !user.hasLeft && user.botId)
+			.map((user) => user.botId!)}
+		game={room.gameType ?? 'teen-patti'}
+		busy={!canAddBot || addingBot}
+		onpick={addBot}
+	/>
 {/snippet}
 
 <div class="tp-shell" data-testid="table-scene" data-game="teen-patti">
@@ -1077,6 +1106,11 @@
 			>
 				<TpSeat
 					user={entry.user}
+					{presencePreview}
+					publicFeed={feed}
+					publicTurn={presenceTurn}
+					publicHandKey={room.handId}
+					publicGeometry={presenceGeometry}
 					{boot}
 					active={current?.id === entry.user.id}
 					host={room.hostId === entry.user.id}
@@ -1105,7 +1139,11 @@
 			>
 				<span class="spotlight-frame">
 					{#if spotlightUser.bot}
-						<BotAvatar name={spotlightUser.username} level={spotlightUser.bot} mascotId={spotlightUser.botMascotId} />
+						<BotAvatar
+							name={spotlightUser.username}
+							level={spotlightUser.bot}
+							mascotId={spotlightUser.botMascotId}
+						/>
 					{:else}
 						<SeatVideo
 							participant={mediaState?.participants.find((p) => p.identity === spotlightUser.id)}
@@ -3019,12 +3057,29 @@
 		font-size: 2.6rem;
 		animation: wobble 2.4s ease-in-out infinite;
 	}
-	.lobby-bots { width: 100%; max-width: 620px; }
-	.mobile-lobby-actions { display: none; }
-	@media(max-width: 640px) {
-		.lobby-bots, .lobby .lobby-actions { display: none; }
-		.mobile-lobby-actions { display: flex; align-items: center; justify-content: center; gap: .6rem; margin-bottom: .6rem; }
-		.mobile-lobby-actions .deal-btn { padding: .6rem .9rem; font-size: .8rem; }
+	.lobby-bots {
+		width: 100%;
+		max-width: 620px;
+	}
+	.mobile-lobby-actions {
+		display: none;
+	}
+	@media (max-width: 640px) {
+		.lobby-bots,
+		.lobby .lobby-actions {
+			display: none;
+		}
+		.mobile-lobby-actions {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.6rem;
+			margin-bottom: 0.6rem;
+		}
+		.mobile-lobby-actions .deal-btn {
+			padding: 0.6rem 0.9rem;
+			font-size: 0.8rem;
+		}
 	}
 	.lobby-actions {
 		display: flex;
@@ -3708,4 +3763,5 @@
 		.flying-chip {
 			display: none;
 		}
-	}</style>
+	}
+</style>
