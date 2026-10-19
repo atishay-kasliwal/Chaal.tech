@@ -25,12 +25,12 @@ try {
 		root = page.getByTestId('presence-character');
 	const enabledBox = await frame.boundingBox();
 	await page.screenshot({ path: path.join(output, 'table-desktop.png'), fullPage: true });
-	await page.getByRole('checkbox', { name: 'Local Dhoni feature flag' }).uncheck();
+	await page.getByRole('checkbox', { name: 'Dhoni preview' }).uncheck();
 	assert.equal(await page.getByTestId('presence-character').count(), 0);
 	await frame.locator('.mascot').waitFor();
 	const fallbackBox = await frame.boundingBox();
 	assert.ok(Math.abs(enabledBox.height - fallbackBox.height) < 1, 'flag must preserve seat height');
-	await page.getByRole('checkbox', { name: 'Local Dhoni feature flag' }).check();
+	await page.getByRole('checkbox', { name: 'Dhoni preview' }).check();
 	await page.waitForFunction(
 		() => document.querySelector('[data-testid="head-character"]')?.dataset.artReady === 'true'
 	);

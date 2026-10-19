@@ -82,7 +82,7 @@ The local verification includes:
 
 Final results:
 
-- `npm test`: **546 passed**, including 23 presence tests.
+- `npm test`: **561 passed**, including 23 presence tests.
 - `npm run test:cloudflare`: **27 passed**, including the real-hand Dhoni renderer test.
 - `npm run check`: **0 errors, 0 warnings**.
 - `npm run lint`, `npm run build`, scoped formatting and `git diff --check`: passed. Build retains the existing large-chunk warning.
