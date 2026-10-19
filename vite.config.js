@@ -1,10 +1,10 @@
 import adapter from '@sveltejs/adapter-cloudflare';
-import { readdirSync } from 'node:fs';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv } from 'vite';
 import { isPublicServerOrigin } from './scripts/public-server-origin.mjs';
+import { pagesAssetExclusions } from './scripts/pages-asset-routes.mjs';
 
 export default defineConfig(({ command, mode }) => {
 	if (command === 'build' && mode === 'production' && process.env.npm_lifecycle_event !== 'check') {
@@ -39,16 +39,9 @@ export default defineConfig(({ command, mode }) => {
 			sveltekit({
 				preprocess: vitePreprocess(),
 				adapter: adapter({
-					// One rule per public asset folder keeps full decks below Pages' 100-rule limit.
+					// Group deck assets below Pages' rule limit; keep prototype pages on the Worker.
 					routes: {
-						exclude: [
-							'<build>',
-							'<prerendered>',
-							'<redirects>',
-							...readdirSync(new URL('./static/', import.meta.url), { withFileTypes: true })
-								.filter((entry) => !entry.name.startsWith('_'))
-								.map((entry) => `/${entry.name}${entry.isDirectory() ? '/*' : ''}`)
-						]
+						exclude: ['<build>', '<prerendered>', '<redirects>', ...pagesAssetExclusions()]
 					}
 				})
 			})
