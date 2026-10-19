@@ -13,6 +13,10 @@
 	import { MASCOT_SIZE } from '#lib/mascots/size.js';
 	import { mascotFor, mascots, reactions, speech } from '#lib/mascots/mascots.svelte.js';
 	import { restingFace, WATCH_ACTIVE } from '#lib/mascots/table-reactions.js';
+	import type {
+		PublicPresenceTurn,
+		PublicPresenceGeometry
+	} from '#lib/mascots/presence/table-bridge.js';
 
 	let {
 		user,
@@ -30,7 +34,12 @@
 		showMedia,
 		mediaParticipant,
 		onspotlight,
-		onremove
+		onremove,
+		presencePreview = false,
+		publicFeed = [],
+		publicTurn = null,
+		publicHandKey = null,
+		publicGeometry = { seats: [], pot: { x: 50, y: 50 } }
 	}: {
 		user: User;
 		boot: number;
@@ -51,6 +60,11 @@
 		onspotlight?: () => void;
 		/** Host only, between hands: take this bot off the table. */
 		onremove?: () => void;
+		presencePreview?: boolean;
+		publicFeed?: readonly unknown[];
+		publicTurn?: PublicPresenceTurn | null;
+		publicHandKey?: string | null;
+		publicGeometry?: PublicPresenceGeometry;
 	} = $props();
 
 	/** Phones have less felt between seats and pot, so bets draw at most two stacks there. */
@@ -120,7 +134,21 @@
 				title="Tap to see {user.username} large"
 			></button>
 			{#if user.bot}
-				<BotAvatar name={user.username} level={user.bot} mascotId={user.botMascotId} thinking={active} size={mascotSize * 2.1} reaction={face} watch={active ? '.pot' : WATCH_ACTIVE} />
+				<BotAvatar
+					name={user.username}
+					level={user.bot}
+					mascotId={user.botMascotId}
+					thinking={active}
+					size={mascotSize * 2.1}
+					reaction={face}
+					watch={active ? '.pot' : WATCH_ACTIVE}
+					{presencePreview}
+					publicSeatId={user.id}
+					{publicFeed}
+					{publicTurn}
+					{publicHandKey}
+					{publicGeometry}
+				/>
 				{#key said?.key}{#if said}<span class="said" role="status">{said.text}</span>{/if}{/key}
 			{:else}
 				<SeatVideo

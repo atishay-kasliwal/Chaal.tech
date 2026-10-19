@@ -1,0 +1,96 @@
+{
+  "files": [
+    {
+      "file": "portrait-v1.webp",
+      "source": "mascots/bot-ms-dhoni/signature/directions.webp",
+      "filter": "crop=360:360:360:360",
+      "bytes": 60650,
+      "width": 360,
+      "height": 360,
+      "decodedBytes": 518400
+    },
+    {
+      "file": "clean-v1.webp",
+      "source": "prototypes/dhoni-eyes/clean-v1.webp",
+      "filter": "scale=1080:1080:flags=bilinear,crop=360:360:360:360",
+      "bytes": 72398,
+      "width": 360,
+      "height": 360,
+      "decodedBytes": 518400
+    },
+    {
+      "file": "lids-v1.webp",
+      "source": "prototypes/dhoni-blink/closed-v1.webp",
+      "filter": "scale=1080:1080:flags=bilinear,crop=360:360:360:360",
+      "bytes": 59206,
+      "width": 360,
+      "height": 360,
+      "decodedBytes": 518400
+    },
+    {
+      "file": "neck-v1.webp",
+      "source": "prototypes/dhoni-head/neck-v1.webp",
+      "filter": "scale=1080:1080:flags=bilinear,crop=360:360:360:360",
+      "bytes": 25356,
+      "width": 360,
+      "height": 360,
+      "decodedBytes": 518400
+    },
+    {
+      "file": "iris-left-v1.webp",
+      "source": "prototypes/dhoni-eyes/irises-v1.webp",
+      "filter": "crop=326:326:223:463,scale=56:66:flags=lanczos",
+      "bytes": 5374,
+      "width": 56,
+      "height": 66,
+      "decodedBytes": 14784
+    },
+    {
+      "file": "brow-left-v1.webp",
+      "source": "prototypes/dhoni-eyes/brows-v1.webp",
+      "filter": "crop=459:133:113:561,scale=172:46:flags=lanczos",
+      "bytes": 9904,
+      "width": 172,
+      "height": 46,
+      "decodedBytes": 31648
+    },
+    {
+      "file": "iris-right-v1.webp",
+      "source": "prototypes/dhoni-eyes/irises-v1.webp",
+      "filter": "crop=327:326:702:463,scale=56:66:flags=lanczos",
+      "bytes": 5396,
+      "width": 56,
+      "height": 66,
+      "decodedBytes": 14784
+    },
+    {
+      "file": "brow-right-v1.webp",
+      "source": "prototypes/dhoni-eyes/brows-v1.webp",
+      "filter": "crop=458:132:684:562,scale=172:46:flags=lanczos",
+      "bytes": 10058,
+      "width": 172,
+      "height": 46,
+      "decodedBytes": 31648
+    },
+    {
+      "file": "mouth-smile-v1.webp",
+      "source": "prototypes/dhoni-mouth/smile-v1.webp",
+      "filter": "scale=1080:1080:flags=bilinear,crop=70:34:505:521,scale=210:102:flags=lanczos",
+      "bytes": 15118,
+      "width": 210,
+      "height": 102,
+      "decodedBytes": 85680
+    },
+    {
+      "file": "mouth-composed-v1.webp",
+      "source": "prototypes/dhoni-mouth/composed-v1.webp",
+      "filter": "scale=1080:1080:flags=bilinear,crop=70:34:505:521,scale=210:102:flags=lanczos",
+      "bytes": 15180,
+      "width": 210,
+      "height": 102,
+      "decodedBytes": 85680
+    }
+  ],
+  "bytes": 278640,
+  "decodedBytes": 2337824
+}

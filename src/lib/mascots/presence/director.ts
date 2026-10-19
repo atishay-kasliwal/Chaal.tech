@@ -25,7 +25,8 @@ const neutral = (): MotionChannels => ({
 	brow: 0,
 	lean: 0,
 	blink: 0,
-	breath: 0
+	breath: 0,
+	mouth: 0
 });
 
 export function seededCosmetics(seed: number) {
@@ -52,8 +53,10 @@ export class PresenceDirector {
 	private blinkStart: number | null = null;
 	private blinkMs = 160;
 	private doubleBlink = false;
-	private breathPhase: number;
+	private breathAt: number;
 	private breathPeriod: number;
+	private breathDepth: number;
+	private breathRandom: () => number;
 	private blinkCount = 0;
 	private interruptions = 0;
 	private idleVariation = -1;
@@ -63,14 +66,19 @@ export class PresenceDirector {
 		this.random = random;
 		this.nextIdle = now + this.range(personality.idleGapMs);
 		this.nextBlink = now + this.range(personality.blinkGapMs);
-		this.breathPhase = random() * Math.PI * 2;
-		this.breathPeriod = this.range(personality.breathPeriodMs);
+		this.breathRandom = seededCosmetics(random() * 4294967296);
+		this.breathAt = now + this.breathRange([180, 1250]);
+		this.breathPeriod = this.breathRange(personality.breathPeriodMs);
+		this.breathDepth = this.breathRange([0.78, 1]);
 	}
 	private range(r: readonly [number, number]) {
 		return r[0] + (r[1] - r[0]) * this.random();
 	}
 	private choose<T>(choices: readonly T[]) {
 		return choices[Math.floor(this.random() * choices.length)];
+	}
+	private breathRange(r: readonly [number, number]) {
+		return r[0] + (r[1] - r[0]) * this.breathRandom();
 	}
 
 	dispatch(raw: unknown, attention: Point, now: number) {
@@ -89,68 +97,25 @@ export class PresenceDirector {
 		const p = this.personality;
 		const eyesAt = now + this.range(p.noticeMs);
 		const headAt = eyesAt + this.range(p.headLagMs);
+		const mouthAt = headAt + this.range(p.mouthLagMs);
 		const headMs = this.range(p.headMs),
-			eyeMs = this.range(p.eyeMs);
+			eyeMs = this.range(p.eyeMs),
+			mouthMs = this.range(p.mouthMs);
 		const intensity = this.range([0.82, 1.08]);
-		let target = point(attention),
-			roll = 0,
-			lean = 0,
-			brow = 0,
-			variation = 'attend';
-		switch (event.type) {
-			case 'PLAYER_RAISED':
-				variation = this.choose(['notice', 'consider']);
-				brow = 0.55;
-				lean = 0.18;
-				break;
-			case 'PLAYER_CALLED':
-				variation = 'acknowledge';
-				target = { x: target.x * 0.65, y: target.y * 0.65 };
-				lean = 0.08;
-				break;
-			case 'PLAYER_FOLDED':
-				variation = 'release';
-				lean = -0.08;
-				break;
-			case 'BOT_TURN':
-				variation = 'settle-in';
-				target = { x: 0, y: 0.45 };
-				lean = 0.28;
-				brow = 0.18;
-				break;
-			case 'BOT_WON':
-				variation = this.choose(['quiet-nod', 'small-lift']);
-				target = { x: 0, y: 0.12 };
-				roll = 0.24;
-				lean = 0.12;
-				brow = 0.35;
-				break;
-			case 'BOT_LOST':
-				variation = this.choose(['exhale', 'accept']);
-				target = { x: 0.12, y: 0.28 };
-				roll = -0.24;
-				lean = -0.2;
-				brow = -0.28;
-				break;
-			case 'IDLE': {
-				// Pick a different variation from the previous idle; stillness dominates the schedule.
-				this.idleVariation = (this.idleVariation + 1 + Math.floor(this.random() * 3)) % 4;
-				variation = ['pot-glance', 'small-tilt', 'settle', 'look-away'][this.idleVariation];
-				target = [
-					{ x: 0, y: 0.23 },
-					{ x: 0.2, y: 0 },
-					{ x: 0, y: 0.08 },
-					{ x: -0.26, y: -0.06 }
-				][this.idleVariation];
-				roll = this.idleVariation === 1 ? 0.3 : 0;
-				lean = this.idleVariation === 2 ? -0.15 : 0;
-				break;
-			}
-			case 'NEUTRAL':
-				target = { x: 0, y: 0 };
-				variation = 'neutral';
-				break;
-		}
+		let reaction;
+		if (event.type === 'IDLE') {
+			const count = p.idles.length;
+			if (!count) return null;
+			this.idleVariation =
+				(this.idleVariation + 1 + Math.floor(this.random() * Math.max(1, count - 1))) % count;
+			reaction = p.idles[this.idleVariation];
+		} else reaction = p.reactions[event.type];
+		const attended = point(attention),
+			scale = reaction.attentionScale ?? 1;
+		const target = reaction.target
+			? point(reaction.target)
+			: point({ x: attended.x * scale, y: attended.y * scale });
+		const variation = this.choose(reaction.variations);
 		const from: MotionChannels = {
 			eyes: current.eyes,
 			head: current.head,
@@ -158,7 +123,8 @@ export class PresenceDirector {
 			brow: current.brow,
 			lean: current.lean,
 			blink: 0,
-			breath: 0
+			breath: 0,
+			mouth: current.mouth
 		};
 		this.command = {
 			event,
@@ -170,19 +136,31 @@ export class PresenceDirector {
 			headAt: event.type === 'NEUTRAL' ? now : headAt,
 			eyeMs,
 			headMs,
-			holdUntil: headAt + headMs + this.range(p.holdMs),
+			mouthAt: event.type === 'NEUTRAL' ? now : mouthAt,
+			mouthMs,
+			holdUntil: Math.max(headAt + headMs, mouthAt + mouthMs) + this.range(p.holdMs),
 			returnMs: this.range(p.returnMs),
-			roll: roll * intensity,
-			lean: lean * intensity,
-			brow: brow * p.browStrength * intensity
+			roll: reaction.roll * intensity,
+			lean: reaction.lean * intensity,
+			brow: reaction.brow * p.browStrength * intensity,
+			mouth: clamp(reaction.mouth * p.mouthStrength * intensity, -1, 1)
 		};
 		if (event.type === 'NEUTRAL') {
 			this.command.eyeMs = this.command.returnMs;
 			this.command.headMs = this.command.returnMs;
+			this.command.mouthMs = this.command.returnMs;
 			this.command.holdUntil = now + this.command.returnMs;
 		}
 		this.lastEvent = event.type;
 		return structuredClone(this.command);
+	}
+
+	/** A local review control; independent of public attention commands and game RNG. */
+	blink(now: number, durationMs = this.range(this.personality.blinkDurationMs)) {
+		if (this.blinkStart !== null) return;
+		this.blinkStart = now;
+		this.blinkMs = clamp(durationMs, 135, 1800);
+		this.blinkCount++;
 	}
 
 	/** Stop active choreography on pause/offscreen; resume from neutral with fresh schedules. */
@@ -192,6 +170,9 @@ export class PresenceDirector {
 		this.blinkStart = null;
 		this.nextBlink = now + this.range(this.personality.blinkGapMs);
 		this.nextIdle = now + this.range(this.personality.idleGapMs);
+		this.breathAt = now + this.breathRange([180, 1250]);
+		this.breathPeriod = this.breathRange(this.personality.breathPeriodMs);
+		this.breathDepth = this.breathRange([0.78, 1]);
 	}
 	private sample(now: number): PresenceFrame {
 		const out: PresenceFrame = {
@@ -237,6 +218,7 @@ export class PresenceDirector {
 		out.roll = blend(c.from.roll, c.roll, head) * returning;
 		out.lean = blend(c.from.lean, c.lean, head) * returning;
 		out.brow = blend(c.from.brow, c.brow, head) * returning;
+		out.mouth = blend(c.from.mouth, c.mouth, ease((now - c.mouthAt) / c.mouthMs)) * returning;
 		out.phase =
 			returning === 0
 				? 'still'
@@ -259,9 +241,7 @@ export class PresenceDirector {
 		if (!this.command && now >= this.nextIdle)
 			this.dispatch({ id: `idle:${now}`, type: 'IDLE' }, { x: 0, y: 0 }, now);
 		if (this.blinkStart === null && now >= this.nextBlink) {
-			this.blinkStart = now;
-			this.blinkMs = this.range(this.personality.blinkDurationMs);
-			this.blinkCount++;
+			this.blink(now);
 		}
 		const out = this.sample(now);
 		if (this.blinkStart !== null) {
@@ -269,16 +249,26 @@ export class PresenceDirector {
 			out.blink = t < 0.38 ? ease(t / 0.38) : 1 - ease((t - 0.38) / 0.62);
 			if (t >= 1) {
 				this.blinkStart = null;
-				const again = !this.doubleBlink && this.random() < 0.075;
+				const again = !this.doubleBlink && this.random() < this.personality.doubleBlinkChance;
 				this.doubleBlink = again;
 				this.nextBlink =
 					now + (again ? this.range([180, 280]) : this.range(this.personality.blinkGapMs));
 			}
 		}
 		out.blinks = this.blinkCount;
-		out.breath =
-			Math.sin(this.breathPhase + (now / this.breathPeriod) * Math.PI * 2) *
-			this.personality.breathScale;
+		// Quiet inhale, slower exhale, then rest. Choose timing/depth once per cycle,
+		// never per frame or in response to table events. No catch-up loop after a gap.
+		if (now >= this.breathAt + this.breathPeriod) {
+			this.breathAt = now;
+			this.breathPeriod = this.breathRange(this.personality.breathPeriodMs);
+			this.breathDepth = this.breathRange([0.78, 1]);
+		}
+		const breathProgress = (now - this.breathAt) / this.breathPeriod;
+		const envelope =
+			breathProgress < 0.36
+				? ease(breathProgress / 0.36)
+				: 1 - ease((breathProgress - 0.36) / 0.52);
+		out.breath = envelope * this.breathDepth * this.personality.breathScale;
 		return out;
 	}
 }

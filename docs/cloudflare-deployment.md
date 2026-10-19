@@ -52,16 +52,16 @@ npm run deploy:backend
 Wrangler prints the Worker URL, normally `https://chaal-game.<account-subdomain>.workers.dev`. Set that exact origin as `VITE_SERVER_URL` when building and deploying the existing Pages project:
 
 ```sh
-VITE_SERVER_URL=https://chaal-game.<account-subdomain>.workers.dev npm run deploy:pages -- --project-name=chaal-tech --branch=main
+VITE_BOT_PRESENCE_PREVIEW=true VITE_SERVER_URL=https://chaal-game.<account-subdomain>.workers.dev npm run deploy:pages -- --project-name=chaal-tech --branch=main
 ```
 
 The Worker allowlist currently permits `chaal.tech`, `www.chaal.tech`, the existing `chaal-tech.pages.dev` site, and localhost development origins. If the Pages project URL changes, update `ALLOWED_ORIGINS` in `wrangler.game.toml` and redeploy the Worker.
 
 The first production deployment is live at `https://chaal-tech.pages.dev`; the game Worker is `https://chaal-game.s6-backend-spike.workers.dev`. The Pages project has `chaal.tech` and `www.chaal.tech` attached, but both remain pending until DNS points at Pages. Add these records in the `chaal.tech` Cloudflare DNS zone:
 
-| Type | Name | Target | Proxy |
-| --- | --- | --- | --- |
-| CNAME | `@` | `chaal-tech.pages.dev` | Proxied |
+| Type  | Name  | Target                 | Proxy   |
+| ----- | ----- | ---------------------- | ------- |
+| CNAME | `@`   | `chaal-tech.pages.dev` | Proxied |
 | CNAME | `www` | `chaal-tech.pages.dev` | Proxied |
 
 Use Auto TTL. The current Cloudflare login can manage Workers and Pages but has Zone read access only, so it cannot create those DNS records through the API. The game API can stay on its `workers.dev` hostname; a custom `api.chaal.tech` hostname is optional.
@@ -98,3 +98,7 @@ The deploy job needs two repository secrets (Settings → Secrets and variables 
 - `CLOUDFLARE_API_TOKEN` — an API token with **Account › Workers Scripts › Edit** and **Account › Cloudflare Pages › Edit** for that account.
 
 Without them the deploy job is skipped with a warning and tests still run. Worker secrets (`SESSION_SECRET`, `RESEND_API_KEY`, LiveKit) live in Cloudflare and are not touched by deploys.
+
+## Dhoni animation preview
+
+The release workflow builds with `VITE_BOT_PRESENCE_PREVIEW=true`. This exposes `/prototypes/bot-presence` and its `/table` review. Append `?botPresence=dhoni` to a room URL to animate only Dhoni with public table events; normal rooms keep their existing mascots. Remove the query parameter to turn the preview off. Building without the environment flag disables the review routes and live-table opt-in. No new Worker secret, database migration or bot policy version is needed for the animation.
