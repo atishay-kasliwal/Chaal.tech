@@ -10,6 +10,7 @@ import { playerRecords } from '../analytics/data.mjs';
 import { publicMemory } from './memory/diagnostics.mjs';
 import { ADAPTIVE_POLICY, defaultMemory } from './memory/adaptive.mjs';
 import { rivalry, rivalries } from '../analytics/compute/rivals.mjs';
+import { momentIndexFor, recallRelationship } from './memory/moments.mjs';
 
 const fail = (message, status = 400) => new ClubError(message, 'INVALID_BOT_REQUEST', status);
 const statuses = ['draft', 'active', 'disabled', 'retired'];
@@ -127,6 +128,8 @@ export async function botDirectory(db, member, { id } = {}) {
 		list.push({
 			...publicBot(bot, style, enabled.has(bot._id)),
 			memory: await publicMemory(db, bot._id, member.playerId).catch(() => ({ status: 'unavailable', contexts: [], moment: null })),
+			// What this bot remembers of the viewer's moments with it, for table talk. Their own history only.
+			recall: member.playerId ? await recallRelationship(momentIndexFor(db), { botId: bot._id, playerId: member.playerId }).catch(() => ({ moments: 0, mood: 'new', lastAt: null })) : { moments: 0, mood: 'new', lastAt: null },
 			record: id
 				? rivalry(records, member.playerId, `bot:${bot._id}`)
 				: (history.get(`bot:${bot._id}`) ?? null)

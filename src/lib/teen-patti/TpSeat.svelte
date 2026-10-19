@@ -11,7 +11,7 @@
 	import Mascot from '#lib/mascots/Mascot.svelte';
 	import { club } from '#lib/club/club.svelte.js';
 	import { MASCOT_SIZE } from '#lib/mascots/size.js';
-	import { mascotFor, mascots, reactions } from '#lib/mascots/mascots.svelte.js';
+	import { mascotFor, mascots, reactions, speech } from '#lib/mascots/mascots.svelte.js';
 	import { restingFace, WATCH_ACTIVE } from '#lib/mascots/table-reactions.js';
 	import type {
 		PublicPresenceTurn,
@@ -82,6 +82,7 @@
 	const mascot = $derived(user.bot ? null : mascotFor(user.id));
 	const mascotSize = $derived(club.settings.mascotSize ?? MASCOT_SIZE.default);
 	const face = $derived(reactions.byPlayer[user.id]?.pose ?? restingFace({ away }));
+	const said = $derived(user.bot ? speech.byPlayer[user.id] : undefined);
 	const revealed = $derived(user.cardsInHand.some((card) => card.rank > 0));
 	const progress = $derived(total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0);
 	const seconds = $derived(Math.ceil(remaining / 1000));
@@ -148,6 +149,7 @@
 					{publicHandKey}
 					{publicGeometry}
 				/>
+				{#key said?.key}{#if said}<span class="said" role="status">{said.text}</span>{/if}{/key}
 			{:else}
 				<SeatVideo
 					participant={showMedia && !away ? mediaParticipant : undefined}
@@ -590,6 +592,37 @@
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.clock.hurry {
+			animation: none;
+		}
+	}
+	/* A character's line: a small bubble over the tile, never covering the name or the chips. */
+	.said {
+		position: absolute;
+		left: 50%;
+		bottom: 2.1rem;
+		z-index: 6;
+		max-width: 88%;
+		translate: -50% 0;
+		border-radius: 0.9rem 0.9rem 0.9rem 0.2rem;
+		background: #f7f1dc;
+		padding: 0.3rem 0.7rem;
+		color: #1d1a10;
+		font-size: clamp(0.72rem, 1.1vw, 0.9rem);
+		font-weight: 650;
+		line-height: 1.25;
+		text-align: center;
+		box-shadow: 0 0.4rem 1.2rem rgb(0 0 0 / 45%);
+		pointer-events: none;
+		animation: said-in 220ms ease-out;
+	}
+	@keyframes said-in {
+		from {
+			opacity: 0;
+			translate: -50% 0.4rem;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.said {
 			animation: none;
 		}
 	}

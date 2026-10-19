@@ -1,5 +1,5 @@
 /** Versioned character policy contract. No database, memory or privileged room state. */
-import { ADAPTIVE_POLICY, MEMORY_RANGES } from './memory/adaptive.mjs';
+import { ADAPTIVE_POLICY, FOCUS, MEMORY_OPTIONAL, MEMORY_RANGES } from './memory/adaptive.mjs';
 import { MEMORY_VERSION } from './memory/observations.mjs';
 import { canonicalJson, fingerprint64 } from '../analytics/hash.mjs';
 
@@ -19,6 +19,9 @@ export const RANGES = Object.freeze({
 	blindShowChance: [0, 1],
 	stackRisk: [0.05, 0.8]
 });
+
+/** Optional traits: absent means "off", present must be in range. Added after v1 so old styles stay valid. */
+export const OPTIONAL_RANGES = Object.freeze({ blindMatch: [0, 1] });
 
 export function characterHash(style) {
 	return fingerprint64(
@@ -50,8 +53,12 @@ export function configErrors(style) {
 		for (const [key, [min, max]] of Object.entries(MEMORY_RANGES))
 			if (typeof style.memory?.[key] !== 'number' || !Number.isFinite(style.memory[key]) || style.memory[key] < min || style.memory[key] > max)
 				errors.push(`Memory ${key} must be ${min}–${max}`);
+		for (const [key, [min, max]] of Object.entries(MEMORY_OPTIONAL))
+			if (style.memory?.[key] !== undefined && (typeof style.memory[key] !== 'number' || !Number.isFinite(style.memory[key]) || style.memory[key] < min || style.memory[key] > max))
+				errors.push(`Memory ${key} must be ${min}–${max}`);
+		if (style.memory?.focus !== undefined && !FOCUS.includes(style.memory.focus)) errors.push('Unknown memory focus');
 		for (const key of Object.keys(style.memory ?? {}))
-			if (key !== 'schema' && !Object.hasOwn(MEMORY_RANGES, key)) errors.push(`Unknown memory setting: ${key}`);
+			if (key !== 'schema' && key !== 'focus' && !Object.hasOwn(MEMORY_RANGES, key) && !Object.hasOwn(MEMORY_OPTIONAL, key)) errors.push(`Unknown memory setting: ${key}`);
 	} else if (style?.memory !== undefined) errors.push('Memory requires a new adaptive policy');
 	const profile = style?.tendencies;
 	if (!profile || typeof profile !== 'object' || Array.isArray(profile))
@@ -65,8 +72,11 @@ export function configErrors(style) {
 		)
 			errors.push(`${key} must be ${min}–${max}`);
 	}
+	for (const [key, [min, max]] of Object.entries(OPTIONAL_RANGES))
+		if (profile[key] !== undefined && (typeof profile[key] !== 'number' || !Number.isFinite(profile[key]) || profile[key] < min || profile[key] > max))
+			errors.push(`${key} must be ${min}–${max}`);
 	for (const key of Object.keys(profile))
-		if (!Object.hasOwn(RANGES, key)) errors.push(`Unknown tendency: ${key}`);
+		if (!Object.hasOwn(RANGES, key) && !Object.hasOwn(OPTIONAL_RANGES, key)) errors.push(`Unknown tendency: ${key}`);
 	if (profile.raise < profile.call)
 		errors.push('Raise threshold must be at least the call threshold');
 	if (!['relaxed', 'balanced', 'challenging'].includes(style?.difficulty?.declared))

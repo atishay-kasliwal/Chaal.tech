@@ -60,6 +60,7 @@
 	import ClassicCard from '#lib/components/ClassicCard.svelte';
 	import { describeChange, type FeedEvent } from './feed.js';
 	import { reactToEvents } from '#lib/mascots/table-reactions.js';
+	import { talkToEvents, recalls } from '#lib/mascots/table-talk.js';
 	import { reactions } from '#lib/mascots/mascots.svelte.js';
 	import { MASCOT_SIZE } from '#lib/mascots/size.js';
 	import BotPicker from '#lib/bots/BotPicker.svelte';
@@ -687,6 +688,7 @@
 			if (!events.length) return;
 			feed = [...feed, ...events].slice(-40);
 			reactToEvents(events, snapshot);
+			talkToEvents(events, snapshot);
 			for (const event of events) {
 				if (event.kind === 'blind' || event.kind === 'chaal' || event.kind === 'raise') {
 					launch(pointFor(event.playerId), potPoint(), event.amount ?? 0);
@@ -895,6 +897,15 @@
 		presencePreview = wantsPresencePreview(window.location.search);
 		const stopSettings = club.watchSettings();
 		sound = soundEnabled();
+		// What each character remembers of you, for table talk. A failure just means a neutral hello.
+		void club
+			.request('/bots')
+			.then(({ response, body }) => {
+				if (!response.ok) return;
+				for (const bot of body.bots ?? [])
+					if (bot.avatar?.mascotId && bot.recall) recalls[bot.avatar.mascotId] = bot.recall;
+			})
+			.catch(() => {});
 		const tick = setInterval(() => (now = Date.now()), 250);
 		const observer = new ResizeObserver(([entry]) => {
 			arenaW = entry.contentRect.width;
