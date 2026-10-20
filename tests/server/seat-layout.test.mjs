@@ -4,6 +4,11 @@ import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { arrangeSeats } from '../../src/lib/seat-layout.ts';
 
+// Approved frontend redesign replaces only these frozen visual baselines.
+const redesigned = JSON.parse(
+	await readFile('tests/fixtures/frontend-redesign-preservation.json', 'utf8')
+);
+
 const brandedFiles = new Set([
 	'src/app.html',
 	'static/android-chrome-192x192.png',
@@ -59,6 +64,16 @@ test('Sparse seats and turn/pack/presence changes never assign different identit
 test('Phase 5 module baselines remain intact except approved room layout and variant changes', async () => {
 	const baseline = JSON.parse(await readFile('tests/fixtures/phase4-preservation.json', 'utf8'));
 	for (const [file, hash] of Object.entries(baseline)) {
+		if (redesigned[file]) {
+			assert.equal(
+				createHash('sha256')
+					.update(await readFile(file))
+					.digest('hex'),
+				redesigned[file],
+				file
+			);
+			continue;
+		}
 		if (
 			brandedFiles.has(file) ||
 			file === 'src/lib/config.ts' ||

@@ -7,6 +7,11 @@ import { freshDeck } from '../../server/classic.mjs';
 import { DEFAULT_RULES_VERSION, getVariant, listVariants } from '../../server/variants/index.mjs';
 import { replayClassic } from '../helpers/classic-characterization.mjs';
 
+// Approved frontend redesign replaces only these frozen visual baselines.
+const redesigned = JSON.parse(
+	await readFile('tests/fixtures/frontend-redesign-preservation.json', 'utf8')
+);
+
 const baseline = JSON.parse(
 	await readFile(new URL('../fixtures/phase1-classic.json', import.meta.url), 'utf8')
 );
@@ -129,8 +134,18 @@ for (const fixture of baseline.cases) {
 	});
 }
 
-test('Existing frontend outside the extracted room template retains the original source hashes', async () => {
+test('Frontend outside the extracted room template retains original or approved redesign hashes', async () => {
 	for (const [file, sha] of Object.entries(baseline.frontend)) {
+		if (redesigned[file]) {
+			assert.equal(
+				createHash('sha256')
+					.update(await readFile(file))
+					.digest('hex'),
+				redesigned[file],
+				file
+			);
+			continue;
+		}
 		if (brandedFiles.has(file)) continue;
 		if (
 			file === 'src/lib/config.ts' ||
@@ -203,6 +218,16 @@ test('Existing frontend outside the extracted room template retains the original
 test('Phase 4 preservation checks account for the additive media and Phase 7 variant engine changes', async () => {
 	const frozen = JSON.parse(await readFile('tests/fixtures/phase3-preservation.json', 'utf8'));
 	for (const [file, sha] of Object.entries(frozen)) {
+		if (redesigned[file]) {
+			assert.equal(
+				createHash('sha256')
+					.update(await readFile(file))
+					.digest('hex'),
+				redesigned[file],
+				file
+			);
+			continue;
+		}
 		if (brandedFiles.has(file)) continue;
 		if (
 			file === 'src/lib/config.ts' ||

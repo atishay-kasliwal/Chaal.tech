@@ -3,6 +3,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
+// Approved frontend redesign replaces only these frozen visual baselines.
+const redesigned = JSON.parse(
+	await readFile('tests/fixtures/frontend-redesign-preservation.json', 'utf8')
+);
+
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const manifest = JSON.parse(await readFile('docs/phase0/import-provenance.json', 'utf8'));
 const changed = new Set([
@@ -31,7 +36,7 @@ const changed = new Set([
 	'src/routes/+page.svelte'
 ]);
 
-test('Preserved landing, theme, waiting table, toast and unbranded original files remain byte-identical', async () => {
+test('Original files and approved redesign visuals match their preservation baselines', async () => {
 	const retained = manifest.files.filter(
 		(entry) =>
 			(entry.path.startsWith('src/') || entry.path.startsWith('static/')) &&
@@ -39,6 +44,10 @@ test('Preserved landing, theme, waiting table, toast and unbranded original file
 	);
 	assert.equal(retained.length, 8);
 	for (const entry of retained) {
+		if (redesigned[entry.path]) {
+			assert.equal(digest(await readFile(entry.path)), redesigned[entry.path], entry.path);
+			continue;
+		}
 		let bytes = await readFile(entry.path);
 		if (entry.path === 'src/app.html')
 			bytes = Buffer.from(
