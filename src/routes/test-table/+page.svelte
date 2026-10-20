@@ -367,7 +367,7 @@
 {/key}
 
 <nav class="scenes" aria-label="Preview scenes">
-	<span>{index + 1}. {scene.title}</span>
+	<span title={scene.title}>{index + 1}. {scene.title}</span>
 	{#each scenes as scene, i (scene.title)}
 		<button class:on={i === index} onclick={() => (index = i)}>{i + 1}</button>
 	{/each}
@@ -383,28 +383,88 @@
 		align-items: center;
 		gap: 0.3rem;
 		translate: -50% 0;
-		border: 1px solid rgb(244 214 140 / 40%);
+		border: 1px solid rgb(242 220 145 / 40%);
 		border-radius: 999px;
 		background: rgb(8 12 10 / 92%);
 		padding: 0.3rem 0.4rem 0.3rem 0.9rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.8rem;
 		white-space: nowrap;
 	}
 	.scenes span {
 		margin-right: 0.4rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-weight: 700;
 	}
 	.scenes button {
 		width: 1.7rem;
 		height: 1.7rem;
 		border-radius: 999px;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-weight: 700;
 	}
 	.scenes button.on {
-		background: #f4d68c;
-		color: #2d1f05;
+		background: #f2dc91;
+		color: #211c2e;
+	}
+
+	.scenes {
+		max-width: calc(100vw - 24px);
+	}
+	.scenes span {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.scenes button {
+		flex-shrink: 0;
+	}
+	@media (max-width: 639px) {
+		.scenes {
+			top: 52px;
+			left: 12px;
+			right: 12px;
+			width: auto;
+			max-width: none;
+			translate: none;
+			border-radius: 10px;
+			padding: 6px;
+			gap: 3px;
+		}
+		.scenes span {
+			font-size: 10px;
+			flex: 1;
+		}
+		.scenes button {
+			width: 24px;
+			height: 28px;
+			font-size: 11px;
+		}
+		:global(.tp-shell .topbar) {
+			margin-bottom: 42px;
+		}
+	}
+
+	@media (max-width: 639px) {
+		.scenes {
+			display: grid;
+			grid-template-columns: repeat(8, minmax(0, 1fr));
+			gap: 3px;
+		}
+		.scenes span {
+			grid-column: 1/-1;
+			overflow: visible;
+			text-overflow: clip;
+			white-space: normal;
+			line-height: 1.3;
+			margin: 0;
+			padding: 2px 3px;
+		}
+		.scenes button {
+			width: 100%;
+		}
+		:global(.tp-shell .topbar) {
+			margin-bottom: 72px;
+		}
 	}
 </style>

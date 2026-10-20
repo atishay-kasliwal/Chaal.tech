@@ -105,16 +105,16 @@
 	}
 	.trigger,
 	.sent {
-		border: 1px dashed rgb(240 200 110 / 45%);
-		background: rgb(240 200 110 / 7%);
+		border: 1px dashed rgb(242 220 145 / 45%);
+		background: rgb(242 220 145 / 7%);
 		padding: 0.45rem 0.7rem;
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.trigger {
 		cursor: pointer;
 	}
 	.trigger:hover {
-		background: rgb(240 200 110 / 14%);
+		background: rgb(242 220 145 / 14%);
 	}
 	.sent {
 		border-style: solid;
@@ -124,10 +124,10 @@
 		min-width: 0;
 	}
 	.hint {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 	}
 	.link {
-		color: #f4d68c;
+		color: #f2dc91;
 		text-decoration: underline;
 		cursor: pointer;
 	}
@@ -140,7 +140,7 @@
 		width: min(22rem, calc(100vw - 1.5rem));
 		flex-direction: column;
 		align-items: stretch;
-		border: 1px solid rgb(240 200 110 / 45%);
+		border: 1px solid rgb(242 220 145 / 45%);
 		background: rgb(10 18 15 / 97%);
 		padding: 0.7rem 0.8rem;
 		box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 60%);
@@ -149,7 +149,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.close {
 		display: grid;
@@ -157,7 +157,7 @@
 		width: 1.4rem;
 		height: 1.4rem;
 		border-radius: 999px;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		cursor: pointer;
 	}
 	.pills {
@@ -166,22 +166,22 @@
 		gap: 0.35rem;
 	}
 	.pills button {
-		border: 1px solid rgb(240 200 110 / 25%);
+		border: 1px solid rgb(242 220 145 / 25%);
 		border-radius: 999px;
 		padding: 0.25rem 0.65rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		cursor: pointer;
 	}
 	.pills button.on {
-		border-color: #f4d68c;
-		background: rgb(240 200 110 / 18%);
-		color: #f4d68c;
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 18%);
+		color: #f2dc91;
 	}
 	.send {
 		border-radius: 0.6rem;
-		background: #f4d68c;
+		background: #f2dc91;
 		padding: 0.5rem;
-		color: #24180a;
+		color: #211c2e;
 		font-weight: 700;
 		cursor: pointer;
 	}

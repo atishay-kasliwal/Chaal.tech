@@ -187,7 +187,12 @@
 				<span class="away-icon"><WifiOff class="h-4 w-4" /></span>
 			{/if}
 			{#if inHand && user.cardsInHand.length}
-				<div class="hand" class:big={revealed && showdown} aria-label="{user.username} cards">
+				<div
+					class="hand"
+					class:big={revealed && showdown}
+					role="group"
+					aria-label="{user.username} cards"
+				>
 					{#key dealKey}
 						{#each user.cardsInHand as card, index (index)}
 							<TpCard
@@ -274,7 +279,7 @@
 		--ring-color: #7fd49b;
 	}
 	.ring.warn {
-		--ring-color: #e9bf62;
+		--ring-color: #f2dc91;
 	}
 	.ring.hurry {
 		--ring-color: #f0715f;
@@ -286,8 +291,8 @@
 			0 0 1.8rem rgb(233 191 98 / 40%);
 	}
 	.winner .ring {
-		background: linear-gradient(135deg, #f7df9d, #c08a34);
-		box-shadow: 0 0 2rem rgb(240 200 110 / 55%);
+		background: linear-gradient(135deg, #f2dc91, #e1ca89);
+		box-shadow: 0 0 2rem rgb(242 220 145 / 55%);
 	}
 	/* The mascot straddles the tile's right border: half over the video, half outside,
 	   starting at the bottom edge and dipping a little below it. Offsets are in cell sizes, since each sheet
@@ -352,7 +357,7 @@
 		height: 1.6rem;
 		place-items: center;
 		border-radius: 999px;
-		background: rgb(8 14 12 / 75%);
+		background: rgb(33 28 46 / 75%);
 		color: #f0a898;
 		font-size: 1rem;
 		font-weight: 700;
@@ -369,7 +374,7 @@
 		top: 0.4rem;
 		left: 0.4rem;
 		border-radius: 999px;
-		background: rgb(8 14 12 / 78%);
+		background: rgb(33 28 46 / 78%);
 		padding: 0.12rem 0.5rem;
 		color: #e9e2cf;
 		font-size: 0.62rem;
@@ -397,7 +402,7 @@
 		top: 2.1rem;
 		right: 0.4rem;
 		border-radius: 999px;
-		background: rgb(8 14 12 / 82%);
+		background: rgb(33 28 46 / 82%);
 		padding: 0.12rem 0.5rem;
 		font-size: 0.72rem;
 		font-variant-numeric: tabular-nums;
@@ -433,7 +438,7 @@
 		align-items: center;
 		gap: 0.4rem;
 		border-radius: 999px;
-		background: rgb(8 14 12 / 78%);
+		background: rgb(33 28 46 / 78%);
 		padding: 0.15rem 0.55rem 0.15rem 0.6rem;
 		line-height: 1.15;
 		box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
@@ -445,7 +450,7 @@
 		align-items: center;
 		gap: 0.25rem;
 		overflow: hidden;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.85rem;
 		font-weight: 650;
 		text-overflow: ellipsis;
@@ -453,20 +458,20 @@
 	}
 	.name :global(.crown) {
 		flex-shrink: 0;
-		color: #e9bf62;
+		color: #f2dc91;
 	}
 	.balance {
 		display: inline-flex;
 		flex-shrink: 0;
 		align-items: center;
 		gap: 0.2rem;
-		color: #f0d18c;
+		color: #f2dc91;
 		font-size: 0.82rem;
 		font-variant-numeric: tabular-nums;
 		font-weight: 700;
 	}
 	.balance.hidden-balance {
-		color: rgb(240 209 140 / 55%);
+		color: rgb(242 220 145 / 55%);
 		font-style: italic;
 		font-weight: 600;
 	}
@@ -499,15 +504,15 @@
 		translate: -50% 0;
 		white-space: nowrap;
 		border-radius: 999px;
-		background: rgb(8 14 12 / 70%);
+		background: rgb(33 28 46 / 70%);
 		padding: 0.1rem 0.6rem;
 		color: #e9e2cf;
 		font-size: 0.75rem;
 		font-weight: 650;
 	}
 	.hand-label.win {
-		background: linear-gradient(135deg, #f7df9d, #c08a34);
-		color: #24180a;
+		background: linear-gradient(135deg, #f2dc91, #e1ca89);
+		color: #211c2e;
 	}
 	/* This hand's bet: real chips on the felt in front of the seat, amount beside them. */
 	.bet {
@@ -526,7 +531,7 @@
 	}
 	.bet-amount {
 		border-radius: 999px;
-		background: rgb(6 12 10 / 62%);
+		background: rgb(24 20 34 / 62%);
 		padding: 0.05rem 0.45rem;
 	}
 	.packed,

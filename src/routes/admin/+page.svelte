@@ -8,7 +8,13 @@
 	import Mascot from '#lib/mascots/Mascot.svelte';
 	import { MASCOT_SIZE } from '#lib/mascots/size.js';
 	import { club, DEFAULT_CLUB_SETTINGS, type ClubSettings } from '#lib/club/club.svelte.js';
-	import { ago, fairPhrase, gameName as gameTitle, resultsPhrase, signed } from '#lib/analytics/format.js';
+	import {
+		ago,
+		fairPhrase,
+		gameName as gameTitle,
+		resultsPhrase,
+		signed
+	} from '#lib/analytics/format.js';
 
 	/** Owner tools: the guest list, live tables, table defaults, the table look and beta emails. */
 	interface AdminMember {
@@ -44,8 +50,21 @@
 		nights: number;
 		games: Record<string, number>;
 		withBots: number;
-		fairShare: { verdict: string; hands: number; wins: number; expected: number; ratio: number | null };
-		results: { verdict: string; hands: number; perHand: number | null; perHandLow: number | null; perHandHigh: number | null; units: number };
+		fairShare: {
+			verdict: string;
+			hands: number;
+			wins: number;
+			expected: number;
+			ratio: number | null;
+		};
+		results: {
+			verdict: string;
+			hands: number;
+			perHand: number | null;
+			perHandLow: number | null;
+			perHandHigh: number | null;
+			units: number;
+		};
 		lastPlayedAt: number | null;
 		lastSeenAt: string | null;
 	}
@@ -139,7 +158,8 @@
 					? y.row.hands - x.row.hands
 					: analyticsSort === 'active'
 						? activeAt(y.row) - activeAt(x.row)
-						: (y.row.results.perHand ?? -Infinity) - (x.row.results.perHand ?? -Infinity) || y.row.hands - x.row.hands
+						: (y.row.results.perHand ?? -Infinity) - (x.row.results.perHand ?? -Infinity) ||
+							y.row.hands - x.row.hands
 			)
 	);
 
@@ -262,7 +282,7 @@
 	<div class="admin">
 		<header>
 			<p class="eyebrow">Club owner</p>
-			<h1>Admin</h1>
+			<h1>Behind the club.</h1>
 			<a class="btn btn-ghost rounded-full" href="/admin/bots">Manage characters ↗</a>
 			<a class="btn btn-ghost rounded-full" href="/admin/intel">Club intelligence ↗</a>
 		</header>
@@ -419,8 +439,8 @@
 					</div>
 					<p class="note">
 						Results are in boots (Hold’em big blinds, Blackjack bets), so tables with different
-						stakes compare fairly. Wins are judged against a fair share: one in two heads-up, one
-						in six at a full table. Recorded hands only; the leaderboard keeps older history.
+						stakes compare fairly. Wins are judged against a fair share: one in two heads-up, one in
+						six at a full table. Recorded hands only; the leaderboard keeps older history.
 					</p>
 					{#if !analytics}
 						<p class="note">Loading…</p>
@@ -440,17 +460,26 @@
 									<span
 										class="net"
 										class:up={row.results.verdict === 'winning'}
-										class:down={row.results.verdict === 'losing'}
-										>{resultsPhrase(row.results)}</span
+										class:down={row.results.verdict === 'losing'}>{resultsPhrase(row.results)}</span
 									>
 									<dl class="stats">
-										<div><dt>Hands</dt><dd>{row.hands}</dd></div>
-										<div><dt>Nights</dt><dd>{row.nights}</dd></div>
+										<div>
+											<dt>Hands</dt>
+											<dd>{row.hands}</dd>
+										</div>
+										<div>
+											<dt>Nights</dt>
+											<dd>{row.nights}</dd>
+										</div>
 										<div>
 											<dt>Boots a hand</dt>
 											<dd>
-												{signed(row.results.perHand, 2)}{#if row.results.perHandLow !== null}<span class="ci"
-														>{signed(row.results.perHandLow, 1)} to {signed(row.results.perHandHigh, 1)}</span
+												{signed(row.results.perHand, 2)}{#if row.results.perHandLow !== null}<span
+														class="ci"
+														>{signed(row.results.perHandLow, 1)} to {signed(
+															row.results.perHandHigh,
+															1
+														)}</span
 													>{/if}
 											</dd>
 										</div>
@@ -458,7 +487,10 @@
 											<dt>Wins vs fair share</dt>
 											<dd>{row.fairShare.wins} / {row.fairShare.expected}</dd>
 										</div>
-										<div><dt>With bots</dt><dd>{row.withBots}</dd></div>
+										<div>
+											<dt>With bots</dt>
+											<dd>{row.withBots}</dd>
+										</div>
 									</dl>
 									<small class="games">{fairPhrase(row.fairShare)}</small>
 									{#if Object.keys(row.games).length}
@@ -837,10 +869,10 @@
 		margin: 0 auto;
 		max-width: 46rem;
 		padding: 1.5rem 0.5rem 3rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.eyebrow {
-		color: #e2b862;
+		color: #f2dc91;
 		font-size: 0.8rem;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -855,7 +887,7 @@
 		font-weight: 700;
 	}
 	h2 small {
-		color: rgb(241 235 220 / 50%);
+		color: var(--muted);
 		font-size: 0.85rem;
 	}
 	.step {
@@ -865,15 +897,15 @@
 		margin-right: 0.35rem;
 		place-items: center;
 		border-radius: 999px;
-		background: rgb(244 214 140 / 16%);
-		color: #f4d68c;
+		background: rgb(242 220 145 / 16%);
+		color: #f2dc91;
 		font-size: 0.75rem;
 	}
 	.ghost {
-		border: 1px solid rgb(240 209 140 / 25%);
+		border: 1px solid rgb(242 220 145 / 25%);
 		border-radius: 999px;
 		padding: 0.55rem 1rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		cursor: pointer;
 	}
 	.tabs {
@@ -883,28 +915,28 @@
 	}
 	.tabs button {
 		flex-shrink: 0;
-		border: 1px solid rgb(240 209 140 / 18%);
+		border: 1px solid rgb(242 220 145 / 18%);
 		border-radius: 999px;
 		padding: 0.45rem 0.95rem;
-		color: rgb(241 235 220 / 75%);
+		color: rgb(248 242 229 / 75%);
 		font-size: 0.85rem;
 		cursor: pointer;
 	}
 	.tabs button.on {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 14%);
-		color: #f4d68c;
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 14%);
+		color: #f2dc91;
 	}
 	.card {
 		display: grid;
 		gap: 0.6rem;
-		border: 1px solid rgb(240 209 140 / 16%);
+		border: 1px solid rgb(242 220 145 / 16%);
 		border-radius: 1.2rem;
-		background: #0f1a16;
+		background: #2c263b;
 		padding: 1.1rem;
 	}
 	.note {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.82rem;
 	}
 	.alert {
@@ -928,11 +960,11 @@
 	.field input {
 		min-width: 0;
 		flex: 1 1 10rem;
-		border: 1px solid rgb(240 209 140 / 20%);
+		border: 1px solid rgb(242 220 145 / 20%);
 		border-radius: 0.7rem;
 		background: rgb(0 0 0 / 25%);
 		padding: 0.6rem 0.75rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.check {
 		display: flex;
@@ -942,15 +974,15 @@
 	}
 	.primary {
 		border-radius: 999px;
-		background: linear-gradient(#f0d18c, #c9963d);
+		background: linear-gradient(#f2dc91, #f2dc91);
 		padding: 0.6rem 1.2rem;
-		color: #1c1406;
+		color: #211c2e;
 		font-weight: 700;
 		cursor: pointer;
 	}
 	.primary:disabled {
 		background: rgb(255 255 255 / 12%);
-		color: rgb(241 235 220 / 50%);
+		color: var(--muted);
 		cursor: default;
 	}
 	.rows {
@@ -977,7 +1009,7 @@
 		line-height: 1.25;
 	}
 	.who small {
-		color: rgb(241 235 220 / 55%);
+		color: var(--muted);
 		font-size: 0.75rem;
 		overflow-wrap: anywhere;
 	}
@@ -986,7 +1018,7 @@
 	}
 	.you {
 		margin-left: 0.3rem;
-		color: rgb(241 235 220 / 50%);
+		color: var(--muted);
 		font-size: 0.75rem;
 		font-weight: 500;
 	}
@@ -994,13 +1026,13 @@
 		border-radius: 999px;
 		background: rgb(255 255 255 / 6%);
 		padding: 0.15rem 0.55rem;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.7rem;
 		text-transform: capitalize;
 	}
 	.tag.owner {
-		background: rgb(244 214 140 / 14%);
-		color: #f4d68c;
+		background: rgb(242 220 145 / 14%);
+		color: #f2dc91;
 	}
 	.tag.live {
 		background: rgb(95 211 138 / 14%);
@@ -1017,10 +1049,10 @@
 	.actions button,
 	.rows li > button,
 	.open {
-		border: 1px solid rgb(240 209 140 / 22%);
+		border: 1px solid rgb(242 220 145 / 22%);
 		border-radius: 999px;
 		padding: 0.3rem 0.7rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.75rem;
 		cursor: pointer;
 	}
@@ -1033,7 +1065,7 @@
 		gap: 0.4rem;
 	}
 	.field > span {
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.8rem;
 	}
 	.pills,
@@ -1046,19 +1078,19 @@
 	.pills button,
 	.swatch,
 	.back {
-		border: 1px solid rgb(240 209 140 / 20%);
+		border: 1px solid rgb(242 220 145 / 20%);
 		border-radius: 999px;
 		padding: 0.35rem 0.8rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.8rem;
 		cursor: pointer;
 	}
 	.pills button.on,
 	.swatch.on,
 	.back.on {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 14%);
-		color: #f4d68c;
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 14%);
+		color: #f2dc91;
 	}
 	.pills button:disabled {
 		opacity: 0.35;
@@ -1097,15 +1129,15 @@
 		align-items: center;
 		gap: 0.4rem;
 		margin-left: auto;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.8rem;
 	}
 	.sort select {
-		border: 1px solid rgb(240 209 140 / 20%);
+		border: 1px solid rgb(242 220 145 / 20%);
 		border-radius: 0.5rem;
-		background: #122219;
+		background: #30293e;
 		padding: 0.25rem 0.4rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.net {
 		font-weight: 800;
@@ -1129,7 +1161,7 @@
 		padding: 0.3rem 0.5rem;
 	}
 	.stats dt {
-		color: rgb(241 235 220 / 50%);
+		color: var(--muted);
 		font-size: 0.65rem;
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
@@ -1141,13 +1173,13 @@
 	}
 	.ci {
 		display: block;
-		color: rgb(241 235 220 / 45%);
+		color: var(--muted);
 		font-size: 0.65rem;
 		font-weight: 500;
 	}
 	.games {
 		width: 100%;
-		color: rgb(241 235 220 / 55%);
+		color: var(--muted);
 		font-size: 0.75rem;
 	}
 	.mascot-choice {
@@ -1162,8 +1194,8 @@
 		padding: 0.3rem;
 		border: 1px solid #cbb98f44;
 		border-radius: 0.4rem;
-		background: #122219;
-		color: #f1ebdc;
+		background: #30293e;
+		color: #f8f2e5;
 	}
 	.mascot-sizing {
 		border-top: 1px solid #d7c29125;
@@ -1176,12 +1208,12 @@
 		gap: 1rem;
 	}
 	.mascot-sizing output {
-		color: #e7c784;
+		color: #f2dc91;
 		font-variant-numeric: tabular-nums;
 	}
 	.mascot-sizing input {
 		width: min(100%, 32rem);
-		accent-color: #d8b77b;
+		accent-color: #d5c39b;
 	}
 	.mascot-size-preview {
 		display: flex;
@@ -1197,5 +1229,84 @@
 	.mascot-size-preview figcaption {
 		color: #b5c2b2;
 		font-size: 0.7rem;
+	}
+
+	.admin {
+		max-width: 1200px;
+		padding: 48px 0 56px;
+		gap: 24px;
+	}
+	header {
+		padding-bottom: 8px;
+	}
+	h1 {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: clamp(48px, 6vw, 80px);
+		line-height: 0.95;
+		letter-spacing: -0.055em;
+	}
+	.eyebrow {
+		text-transform: none;
+		letter-spacing: 0;
+		font-size: 12px;
+		color: var(--muted);
+		margin-bottom: 14px;
+	}
+	.tabs {
+		padding: 6px;
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		background: var(--surface);
+	}
+	.tabs button {
+		border: 0;
+		border-radius: 8px;
+		min-height: 42px;
+		transition:
+			translate 0.2s,
+			background 0.2s;
+	}
+	.tabs button.on {
+		background: var(--butter);
+		color: var(--night);
+	}
+	.tabs button:hover {
+		translate: 0 -2px;
+	}
+	.card {
+		border-color: var(--line);
+		border-radius: 16px;
+		padding: 24px;
+		background: var(--surface);
+	}
+	h2 {
+		font-family: var(--font-display);
+		font-size: 24px;
+		font-weight: 600;
+		letter-spacing: -0.035em;
+	}
+	.primary {
+		min-height: 42px;
+		transition: translate 0.2s;
+	}
+	.primary:hover:not(:disabled) {
+		translate: 0 -2px;
+	}
+	@media (max-width: 600px) {
+		.admin {
+			padding: 32px 0 40px;
+			gap: 20px;
+		}
+		h1 {
+			font-size: 48px;
+		}
+		.card {
+			padding: 18px;
+		}
+		.tabs button {
+			font-size: 12px;
+			padding-inline: 14px;
+		}
 	}
 </style>

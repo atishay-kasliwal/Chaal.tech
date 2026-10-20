@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dialogFocus } from '#lib/components/dialog-focus.js';
 	import { properName } from '#lib/names.js';
 	import { untrack } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
@@ -115,6 +116,7 @@
 	<div
 		class="sheet"
 		role="dialog"
+		use:dialogFocus
 		aria-modal="true"
 		aria-label="Your profile"
 		transition:fly={{ y: 24, duration: 220 }}
@@ -242,11 +244,11 @@
 		max-height: calc(100dvh - 2rem);
 		overflow-y: auto;
 		translate: -50% -50%;
-		border: 1px solid rgb(240 209 140 / 18%);
+		border: 1px solid rgb(242 220 145 / 18%);
 		border-radius: 1.5rem;
-		background: #101a16;
+		background: #2c263b;
 		padding: 1.4rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		box-shadow: 0 2rem 5rem rgb(0 0 0 / 60%);
 	}
 	.sheet-body {
@@ -275,21 +277,21 @@
 	}
 	.who p,
 	.hint {
-		color: rgb(241 235 220 / 65%);
+		color: rgb(248 242 229 / 65%);
 		font-size: 0.85rem;
 	}
 	.field {
 		display: grid;
 		gap: 0.35rem;
 		font-size: 0.85rem;
-		color: rgb(241 235 220 / 75%);
+		color: rgb(248 242 229 / 75%);
 	}
 	.field input {
-		border: 1px solid rgb(240 209 140 / 25%);
+		border: 1px solid rgb(242 220 145 / 25%);
 		border-radius: 0.8rem;
 		background: rgb(0 0 0 / 30%);
 		padding: 0.7rem 0.9rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 1rem;
 	}
 	.motion {
@@ -303,13 +305,13 @@
 	}
 	.primary {
 		border-radius: 999px;
-		background: linear-gradient(#f0d18c, #c9963d);
+		background: linear-gradient(#f2dc91, #f2dc91);
 		padding: 0.8rem 1rem;
-		color: #1c1406;
+		color: #211c2e;
 		font-weight: 700;
 	}
 	.text-btn {
-		color: #e2b862;
+		color: #f2dc91;
 		font-size: 0.9rem;
 	}
 	@media (max-width: 639px) {

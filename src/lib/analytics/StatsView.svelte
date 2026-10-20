@@ -50,7 +50,11 @@
 		['bots', 'With bots']
 	] as const;
 
-	let { initial = 'overview', initialHand = null, initialRecap = null }: { initial?: string; initialHand?: string | null; initialRecap?: string | null } = $props();
+	let {
+		initial = 'overview',
+		initialHand = null,
+		initialRecap = null
+	}: { initial?: string; initialHand?: string | null; initialRecap?: string | null } = $props();
 	// svelte-ignore state_referenced_locally
 	let section = $state<Section>(initial as Section);
 	let filter = $state<Filter>({ window: 'all', company: 'all' });
@@ -89,37 +93,72 @@
 	<header>
 		<div>
 			<p class="eyebrow">Your game</p>
-			<h1>Stats</h1>
+			<h1>Your track record.</h1>
 		</div>
 		<div class="filters" aria-label="Filters">
-			<select aria-label="Time" value={filter.window} onchange={(e) => setFilter('window', e.currentTarget.value)}>
+			<select
+				aria-label="Time"
+				value={filter.window}
+				onchange={(e) => setFilter('window', e.currentTarget.value)}
+			>
 				{#each WINDOWS as [id, label] (id)}<option value={id}>{label}</option>{/each}
 			</select>
 			{#if section !== 'games'}
-				<select aria-label="Game" value={filter.game ?? ''} onchange={(e) => setFilter('game', e.currentTarget.value)}>
+				<select
+					aria-label="Game"
+					value={filter.game ?? ''}
+					onchange={(e) => setFilter('game', e.currentTarget.value)}
+				>
 					{#each GAMES as [id, label] (id)}<option value={id}>{label}</option>{/each}
 				</select>
 			{/if}
-			<select aria-label="Company" value={filter.company} onchange={(e) => setFilter('company', e.currentTarget.value)}>
+			<select
+				aria-label="Company"
+				value={filter.company}
+				onchange={(e) => setFilter('company', e.currentTarget.value)}
+			>
 				{#each COMPANY as [id, label] (id)}<option value={id}>{label}</option>{/each}
 			</select>
-			<button class="more" aria-expanded={moreFilters} onclick={() => (moreFilters = !moreFilters)}>Dates</button>
+			<button class="more" aria-expanded={moreFilters} onclick={() => (moreFilters = !moreFilters)}
+				>Dates</button
+			>
 		</div>
 	</header>
 	{#if moreFilters}
 		<div class="dates">
-			<label>From <input type="date" value={filter.from ?? ''} onchange={(e) => setDate('from', e.currentTarget.value)} /></label>
-			<label>To <input type="date" value={filter.until ?? ''} onchange={(e) => setDate('until', e.currentTarget.value)} /></label>
+			<label
+				>From <input
+					type="date"
+					value={filter.from ?? ''}
+					onchange={(e) => setDate('from', e.currentTarget.value)}
+				/></label
+			>
+			<label
+				>To <input
+					type="date"
+					value={filter.until ?? ''}
+					onchange={(e) => setDate('until', e.currentTarget.value)}
+				/></label
+			>
 		</div>
 	{/if}
 
 	<nav class="sections" aria-label="Stats sections">
 		{#each SECTIONS as [id, label] (id)}
-			<button class:on={section === id} aria-current={section === id ? 'page' : undefined} onclick={() => go(id)}>{label}</button>
+			<button
+				class:on={section === id}
+				aria-current={section === id ? 'page' : undefined}
+				onclick={() => go(id)}>{label}</button
+			>
 		{/each}
 	</nav>
 
-	{#if section === 'overview'}<Overview {filter} onOpenHand={showHand} onSection={go} onRecap={showRecap} />
+	{#if section === 'overview'}<Overview
+			{filter}
+			onOpenHand={showHand}
+			onSection={go}
+			onRecap={showRecap}
+		/>
 	{:else if section === 'skill'}<Skill {filter} onRecap={showRecap} />
 	{:else if section === 'games'}<Games {filter} />
 	{:else if section === 'cards'}<Cards {filter} />
@@ -135,7 +174,11 @@
 	</p>
 </div>
 {#if openHand}<HandDetail handId={openHand} onClose={() => (openHand = null)} />{/if}
-{#if recap}<NightRecap nightId={recap === 'latest' ? null : recap} onClose={() => (recap = null)} onOpenHand={(id) => ((recap = null), showHand(id))} />{/if}
+{#if recap}<NightRecap
+		nightId={recap === 'latest' ? null : recap}
+		onClose={() => (recap = null)}
+		onOpenHand={(id) => ((recap = null), showHand(id))}
+	/>{/if}
 
 <style>
 	.stats-view {
@@ -144,7 +187,7 @@
 		margin: 0 auto;
 		max-width: 64rem;
 		padding: clamp(1.2rem, 3vw, 2.5rem) 0.5rem 3rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	header {
 		display: flex;
@@ -154,7 +197,7 @@
 		gap: 1rem;
 	}
 	h1 {
-		font-family: Georgia, serif;
+		font-family: var(--font-display);
 		font-size: clamp(2.2rem, 5vw, 3.6rem);
 		font-weight: 400;
 		letter-spacing: -0.05em;
@@ -166,11 +209,11 @@
 		gap: 0.4rem;
 	}
 	select {
-		border: 1px solid rgb(240 209 140 / 22%);
+		border: 1px solid rgb(242 220 145 / 22%);
 		border-radius: 999px;
-		background: #0f1a16;
+		background: #2c263b;
 		padding: 0.45rem 0.8rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.82rem;
 	}
 	.more {
@@ -203,31 +246,31 @@
 		display: flex;
 		gap: 0.35rem;
 		overflow-x: auto;
-		border-bottom: 1px solid rgb(240 209 140 / 12%);
+		border-bottom: 1px solid rgb(242 220 145 / 12%);
 		padding-bottom: 0.6rem;
 	}
 	.sections button {
 		flex-shrink: 0;
 		border-radius: 999px;
 		padding: 0.45rem 0.95rem;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.88rem;
 	}
 	.sections button.on {
-		background: rgb(244 214 140 / 14%);
-		color: #f4d68c;
+		background: rgb(242 220 145 / 14%);
+		color: #f2dc91;
 	}
 	.footnote {
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.72rem;
 	}
 	/* Shared by every section. */
 	.stats-view :global(.panel) {
 		display: grid;
 		gap: 0.75rem;
-		border: 1px solid rgb(240 209 140 / 14%);
+		border: 1px solid rgb(242 220 145 / 14%);
 		border-radius: 1.2rem;
-		background: #0f1a16;
+		background: #2c263b;
 		padding: clamp(1rem, 2.5vw, 1.4rem);
 	}
 	.stats-view :global(.panel.two),
@@ -247,7 +290,7 @@
 		margin-top: 0.4rem;
 	}
 	.stats-view :global(.headline h2) {
-		font-family: Georgia, serif;
+		font-family: var(--font-display);
 		font-size: clamp(1.6rem, 3.4vw, 2.4rem);
 		font-weight: 400;
 		letter-spacing: -0.03em;
@@ -258,14 +301,14 @@
 	}
 	.stats-view :global(h3) {
 		margin-bottom: 0.25rem;
-		color: #d5b67a;
+		color: #d5c39b;
 		font-size: 0.72rem;
 		font-weight: 600;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
 	.stats-view :global(.eyebrow) {
-		color: #d5b67a;
+		color: #d5c39b;
 		font-size: 0.68rem;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
@@ -276,7 +319,7 @@
 		font-variant-numeric: tabular-nums;
 	}
 	.stats-view :global(.muted) {
-		color: #b1b9ae;
+		color: #beb5c9;
 	}
 	.stats-view :global(.small) {
 		font-size: 0.8rem;
@@ -301,12 +344,12 @@
 		border-radius: 0.8rem;
 		background: rgb(231 199 132 / 8%);
 		padding: 0.6rem 0.9rem;
-		color: #d5b67a;
+		color: #d5c39b;
 		font-size: 0.78rem;
 	}
 	.stats-view :global(.link) {
 		justify-self: start;
-		color: #e7c784;
+		color: #f2dc91;
 		font-size: 0.8rem;
 		text-decoration: underline;
 		text-underline-offset: 3px;
@@ -330,7 +373,7 @@
 	}
 	.stats-view :global(table.data-table th) {
 		padding: 0.35rem 0.4rem;
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.7rem;
 		font-weight: 500;
 		text-align: left;
@@ -341,7 +384,7 @@
 		font-variant-numeric: tabular-nums;
 	}
 	.stats-view :global(tr.dim) {
-		opacity: 0.45;
+		opacity: 1;
 	}
 	.stats-view :global(.situations),
 	.stats-view :global(.plain),
@@ -372,18 +415,18 @@
 		font-variant-numeric: tabular-nums;
 	}
 	.stats-view :global(.situations .pair.shifted strong) {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
-		.stats-view :global(.situations small) {
+	.stats-view :global(.situations small) {
 		display: block;
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.68rem;
 	}
 	.stats-view :global(.mark) {
-		color: rgb(241 235 220 / 30%);
+		color: rgb(248 242 229 / 30%);
 	}
 	.stats-view :global(.mark.lean) {
-		color: #e7c784;
+		color: #f2dc91;
 	}
 	.stats-view :global(.hand-list button),
 	.stats-view :global(.rival-list button) {
@@ -407,7 +450,7 @@
 	.stats-view :global(.hand-list small),
 	.stats-view :global(.who small) {
 		display: block;
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.7rem;
 	}
 	.stats-view :global(.who) {
@@ -431,7 +474,7 @@
 		justify-content: space-between;
 	}
 	.stats-view :global(.pager button) {
-		color: #e7c784;
+		color: #f2dc91;
 	}
 	.stats-view :global(.verdict) {
 		font-size: 1.05rem;
@@ -468,17 +511,17 @@
 		margin: 0 auto;
 		max-width: 40rem;
 		overflow-y: auto;
-		border: 1px solid rgb(240 209 140 / 20%);
+		border: 1px solid rgb(242 220 145 / 20%);
 		border-radius: 1.4rem 1.4rem 0 0;
-		background: #0f1a16;
+		background: #2c263b;
 		padding: 1.4rem 1.2rem 2rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	:global(.sheet .close) {
 		position: absolute;
 		top: 0.6rem;
 		right: 0.9rem;
-		color: #e7c784;
+		color: #f2dc91;
 		font-size: 1.6rem;
 	}
 	:global(.sheet .cards-row) {
@@ -505,29 +548,29 @@
 		font-size: 0.85rem;
 	}
 	:global(.sheet .steps-list .auto) {
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-style: italic;
 	}
 	:global(.sheet .steps-list .mine) {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	:global(.sheet .seats tr.you td) {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	:global(.sheet .muted) {
-		color: #b1b9ae;
+		color: #beb5c9;
 	}
 	:global(.sheet .small) {
 		font-size: 0.78rem;
 	}
 	:global(.sheet .eyebrow) {
-		color: #d5b67a;
+		color: #d5c39b;
 		font-size: 0.68rem;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
 	}
 	:global(.sheet h3) {
-		color: #d5b67a;
+		color: #d5c39b;
 		font-size: 0.72rem;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -547,5 +590,102 @@
 	}
 	:global(.sheet .down) {
 		color: #f0a090;
+	}
+
+	.stats-view {
+		max-width: 1200px;
+		padding: 48px 0 56px;
+		gap: 24px;
+	}
+	header {
+		padding-bottom: 12px;
+	}
+	h1 {
+		font-family: var(--font-display);
+		font-size: clamp(48px, 6vw, 80px);
+		font-weight: 700;
+		line-height: 0.95;
+	}
+	.eyebrow {
+		color: var(--muted);
+		font-size: 12px;
+		letter-spacing: 0;
+		text-transform: none;
+		margin-bottom: 12px;
+	}
+	.sections {
+		padding: 6px;
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		background: var(--surface);
+		gap: 4px;
+	}
+	.sections button {
+		min-height: 42px;
+		border-radius: 8px;
+		font-size: 13px;
+		transition:
+			translate 0.2s,
+			background 0.2s;
+	}
+	.sections button:hover {
+		translate: 0 -2px;
+		background: #ffffff0a;
+	}
+	.sections button.on {
+		background: var(--butter);
+		color: var(--night);
+	}
+	select {
+		border-radius: 8px;
+		min-height: 40px;
+		border-color: var(--line);
+	}
+	.stats-view :global(.panel) {
+		background: var(--surface);
+		border-color: var(--line);
+		border-radius: 16px;
+		box-shadow: none;
+	}
+	.stats-view :global(.panel h2) {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 23px;
+		letter-spacing: -0.035em;
+	}
+	@media (max-width: 600px) {
+		.stats-view {
+			padding-top: 32px;
+			gap: 20px;
+		}
+		h1 {
+			font-size: 50px;
+		}
+		.filters {
+			width: 100%;
+		}
+		.filters select {
+			flex: 1;
+			min-width: 0;
+			font-size: 12px;
+			padding-inline: 9px;
+		}
+		.sections button {
+			padding-inline: 13px;
+		}
+		.stats-view :global(.panel h2) {
+			font-size: 21px;
+		}
+	}
+
+	@media (max-width: 600px) {
+		.sections {
+			flex-wrap: wrap;
+			overflow: visible;
+		}
+		.sections button {
+			flex: 1 0 28%;
+			min-height: 40px;
+		}
 	}
 </style>

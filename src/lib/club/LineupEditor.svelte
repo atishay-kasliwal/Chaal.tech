@@ -243,7 +243,7 @@
 	.lineup {
 		display: grid;
 		gap: 0.9rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.queue {
 		display: flex;
@@ -259,18 +259,18 @@
 		gap: 0.2rem;
 	}
 	.queue .empty {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.9rem;
 	}
 	.chip {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
-		border: 1px solid rgb(244 214 140 / 28%);
+		border: 1px solid rgb(242 220 145 / 28%);
 		border-radius: 999px;
 		background: rgb(255 255 255 / 4%);
 		padding: 0.3rem 0.75rem 0.3rem 0.35rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.88rem;
 		font-weight: 650;
 		cursor: pointer;
@@ -284,30 +284,30 @@
 		height: 1.4rem;
 		place-items: center;
 		border-radius: 999px;
-		background: rgb(244 214 140 / 18%);
-		color: #f4d68c;
+		background: rgb(242 220 145 / 18%);
+		color: #f2dc91;
 		font-size: 0.75rem;
 		font-weight: 800;
 	}
 	.chip small {
-		color: #f4d68c;
+		color: #f2dc91;
 		font-weight: 800;
 	}
 	.chip.done {
 		opacity: 0.55;
 	}
 	.chip.now {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 14%);
-		box-shadow: 0 0 14px rgb(244 214 140 / 25%);
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 14%);
+		box-shadow: 0 0 14px rgb(242 220 145 / 25%);
 	}
 	.chip.now .pos {
-		background: #f4d68c;
-		color: #2d1f05;
+		background: #f2dc91;
+		color: #211c2e;
 	}
 	.chip.selected {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 16%);
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 16%);
 	}
 	.chip.mystery .pos {
 		background: rgb(196 155 255 / 22%);
@@ -324,17 +324,17 @@
 		place-items: center;
 		border-radius: 999px;
 		background: rgb(255 255 255 / 8%);
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.nudge button:disabled {
 		opacity: 0.3;
 	}
 	.pace {
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.85rem;
 	}
 	.pace strong {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.pace span {
 		margin-left: 0.3rem;
@@ -355,22 +355,22 @@
 	}
 	.hands button,
 	.families button {
-		border: 1px solid rgb(244 214 140 / 25%);
+		border: 1px solid rgb(242 220 145 / 25%);
 		border-radius: 999px;
 		padding: 0.25rem 0.7rem;
-		color: rgb(241 235 220 / 80%);
+		color: rgb(248 242 229 / 80%);
 		font-size: 0.82rem;
 		font-weight: 700;
 	}
 	.hands button.on,
 	.families button.on {
-		border-color: #f4d68c;
-		background: #f4d68c;
-		color: #2d1f05;
+		border-color: #f2dc91;
+		background: #f2dc91;
+		color: #211c2e;
 	}
 	.hands-label {
 		margin-left: 0.3rem;
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.8rem;
 	}
 	.tools {
@@ -384,7 +384,7 @@
 		border-radius: 999px;
 		background: rgb(255 255 255 / 6%);
 		padding: 0.3rem 0.7rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.8rem;
 		font-weight: 700;
 	}
@@ -420,17 +420,17 @@
 	}
 	.tile:hover {
 		transform: translateY(-2px);
-		border-color: rgb(244 214 140 / 40%);
+		border-color: rgb(242 220 145 / 40%);
 	}
 	.tile:active {
 		transform: scale(0.97);
 	}
 	.tile strong {
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.92rem;
 	}
 	.tile small {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.75rem;
 		line-height: 1.3;
 	}
@@ -441,11 +441,11 @@
 		left: 0;
 		width: 3px;
 		border-radius: 0 3px 3px 0;
-		background: var(--fam, #f4d68c);
+		background: var(--fam, #f2dc91);
 		content: '';
 	}
 	.fam-classic {
-		--fam: #f4d68c;
+		--fam: #f2dc91;
 	}
 	.fam-jokers {
 		--fam: #ff9f7a;
@@ -463,9 +463,9 @@
 			rgb(12 22 17 / 80%);
 	}
 	.tile.picked {
-		border-color: #f4d68c;
+		border-color: #f2dc91;
 		box-shadow:
-			0 0 0 1px rgb(244 214 140 / 40%),
+			0 0 0 1px rgb(242 220 145 / 40%),
 			0 6px 16px rgb(0 0 0 / 35%);
 	}
 	.badges {
@@ -481,9 +481,9 @@
 		height: 1.35rem;
 		place-items: center;
 		border-radius: 999px;
-		background: #f4d68c;
+		background: #f2dc91;
 		box-shadow: 0 2px 6px rgb(0 0 0 / 45%);
-		color: #2d1f05;
+		color: #211c2e;
 		font-size: 0.72rem;
 		font-style: normal;
 		font-weight: 850;
@@ -497,11 +497,11 @@
 		height: 1.4rem;
 		place-items: center;
 		border-radius: 999px;
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 	}
 	.info:hover {
 		background: rgb(255 255 255 / 8%);
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.save-bar {
 		position: sticky;
@@ -513,17 +513,52 @@
 		border-top: 1px solid rgb(255 255 255 / 8%);
 		background: rgb(8 16 12 / 95%);
 		padding: 0.7rem 0 0.2rem;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.85rem;
 	}
 	.save {
 		border-radius: 999px;
-		background: linear-gradient(180deg, #f7dc95, #d9ac4c);
+		background: linear-gradient(180deg, #f2dc91, #e1ca89);
 		padding: 0.5rem 1.3rem;
-		color: #2d1f05;
+		color: #211c2e;
 		font-weight: 800;
 	}
 	.save:disabled {
 		opacity: 0.45;
+	}
+
+	.tile {
+		background: var(--night);
+	}
+	.tile.mystery {
+		background: #41334f;
+	}
+	@media (max-width: 600px) {
+		.tiles {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 8px;
+		}
+		.tile {
+			min-width: 0;
+			min-height: 88px;
+			padding: 12px 10px;
+		}
+		.tile strong {
+			font-size: 13px;
+		}
+		.tile small {
+			font-size: 11px;
+			line-height: 1.4;
+		}
+		.save-bar {
+			position: sticky;
+			bottom: 12px;
+			z-index: 3;
+			border: 1px solid var(--line);
+			border-radius: 12px;
+			background: var(--surface);
+			padding: 12px;
+			box-shadow: 0 8px 30px #0005;
+		}
 	}
 </style>

@@ -9,18 +9,27 @@
 		detail?: string;
 		dim?: boolean;
 	}
-	let { bars, max, expectedLabel = 'expected' }: { bars: Bar[]; max?: number; expectedLabel?: string } = $props();
-	const top = $derived(max ?? Math.max(0.0001, ...bars.flatMap((b) => [b.value ?? 0, b.expected ?? 0])));
+	let {
+		bars,
+		max,
+		expectedLabel = 'expected'
+	}: { bars: Bar[]; max?: number; expectedLabel?: string } = $props();
+	const top = $derived(
+		max ?? Math.max(0.0001, ...bars.flatMap((b) => [b.value ?? 0, b.expected ?? 0]))
+	);
 </script>
 
 <ul class="bars">
 	{#each bars as bar (bar.key)}
 		<li class:dim={bar.dim}>
-			<span class="row-label">{bar.label}{#if bar.detail}<small>{bar.detail}</small>{/if}</span>
+			<span class="row-label"
+				>{bar.label}{#if bar.detail}<small>{bar.detail}</small>{/if}</span
+			>
 			<span class="track" aria-hidden="true">
 				<span class="fill" style:width="{((bar.value ?? 0) / top) * 100}%"></span>
 				{#if bar.expected !== null && bar.expected !== undefined}
-					<span class="tick" style:left="{(bar.expected / top) * 100}%" title={expectedLabel}></span>
+					<span class="tick" style:left="{(bar.expected / top) * 100}%" title={expectedLabel}
+					></span>
 				{/if}
 			</span>
 			<span class="value">{bar.text ?? bar.value ?? '–'}</span>
@@ -44,13 +53,13 @@
 		font-size: 0.85rem;
 	}
 	li.dim {
-		opacity: 0.45;
+		opacity: 1;
 	}
 	.row-label {
 		display: grid;
 	}
 	.row-label small {
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.68rem;
 	}
 	.track {
@@ -63,14 +72,14 @@
 		position: absolute;
 		inset: 0 auto 0 0;
 		border-radius: 999px;
-		background: linear-gradient(90deg, #c9963d, #e7c784);
+		background: linear-gradient(90deg, #f2dc91, #f2dc91);
 	}
 	.tick {
 		position: absolute;
 		top: -0.2rem;
 		bottom: -0.2rem;
 		width: 2px;
-		background: #f1ebdc;
+		background: #f8f2e5;
 		opacity: 0.8;
 	}
 	.value {

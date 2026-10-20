@@ -10,12 +10,17 @@
 	<footer>
 		<span class="tag">{EVIDENCE_LABEL[insight.confidence?.evidence] ?? 'Evidence'}</span>
 		{#if insight.type !== 'record' && insight.confidence?.q !== null}
-			<span class="muted tiny" title="Chance this is luck, after allowing for every pattern we checked">
+			<span
+				class="muted tiny"
+				title="Chance this is luck, after allowing for every pattern we checked"
+			>
 				{insight.confidence.q < 0.01 ? 'Very unlikely to be luck' : 'Unlikely to be luck'}
 			</span>
 		{/if}
 		{#if onOpenHand && insight.supportingHands?.length}
-			<button class="link" onclick={() => onOpenHand(insight.supportingHands.at(-1) ?? '')}>See a hand</button>
+			<button class="link" onclick={() => onOpenHand(insight.supportingHands.at(-1) ?? '')}
+				>See a hand</button
+			>
 		{/if}
 	</footer>
 </article>
@@ -30,7 +35,7 @@
 		padding: 1rem 1.1rem;
 	}
 	.insight.record {
-		border-color: rgb(241 235 220 / 12%);
+		border-color: rgb(248 242 229 / 12%);
 		background: rgb(255 255 255 / 3%);
 	}
 	p {
@@ -47,12 +52,12 @@
 		border-radius: 999px;
 		background: rgb(231 199 132 / 14%);
 		padding: 0.15rem 0.55rem;
-		color: #e7c784;
+		color: #f2dc91;
 		font-size: 0.68rem;
 	}
 	.link {
 		margin-left: auto;
-		color: #e7c784;
+		color: #f2dc91;
 		font-size: 0.75rem;
 		text-decoration: underline;
 		text-underline-offset: 3px;

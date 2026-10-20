@@ -162,7 +162,7 @@
 		letter-spacing: -0.055em;
 	}
 	h2 span {
-		color: #e5bb56;
+		color: #f2dc91;
 	}
 	.view-all {
 		color: #e5d7b7;
@@ -236,7 +236,7 @@
 		font-size: 9px;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: #a7b2a2;
+		color: #beb5c9;
 	}
 	h3 {
 		font-size: 16px;
@@ -246,7 +246,7 @@
 	}
 	.learn {
 		display: block;
-		color: #a7b2a2;
+		color: #beb5c9;
 		font-size: 11px;
 		margin-top: 9px;
 	}
@@ -263,7 +263,7 @@
 		font:
 			11px ui-monospace,
 			monospace;
-		color: #a7b2a2;
+		color: #beb5c9;
 	}
 	button {
 		width: 42px;
@@ -272,11 +272,11 @@
 		font-size: 22px;
 	}
 	button:hover {
-		color: #e5bb56;
+		color: #f2dc91;
 	}
 	a:focus-visible,
 	button:focus-visible {
-		outline: 2px solid #e5bb56;
+		outline: 2px solid #f2dc91;
 		outline-offset: 4px;
 	}
 	@media (max-width: 1000px) {

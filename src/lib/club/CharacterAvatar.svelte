@@ -60,7 +60,7 @@
 		border-radius: 999px;
 		background: radial-gradient(circle at 35% 30%, var(--from), var(--to) 75%);
 		box-shadow:
-			0 0 0 2px rgb(240 209 140 / 35%),
+			0 0 0 2px rgb(242 220 145 / 35%),
 			0 0.4rem 1rem rgb(0 0 0 / 35%);
 	}
 	.photo {
@@ -79,13 +79,13 @@
 		bottom: 2%;
 		width: max(9px, calc(var(--size) * 0.22));
 		height: max(9px, calc(var(--size) * 0.22));
-		border: 2px solid #101a16;
+		border: 2px solid #2c263b;
 		border-radius: 999px;
 	}
 	.dot.online {
 		background: #4ade80;
 	}
 	.dot.table {
-		background: #f0d18c;
+		background: #f2dc91;
 	}
 </style>

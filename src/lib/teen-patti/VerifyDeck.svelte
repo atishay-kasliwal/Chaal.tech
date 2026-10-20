@@ -86,7 +86,7 @@
 	.verify {
 		display: grid;
 		gap: 0.9rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.verdict {
 		display: flex;
@@ -114,7 +114,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 	}
 	dd {
 		margin: 0 0 0.4rem;
@@ -123,7 +123,7 @@
 		font-family: ui-monospace, monospace;
 		font-size: 0.75rem;
 		word-break: break-all;
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	ul {
 		display: grid;
@@ -142,13 +142,13 @@
 		min-width: 2.6rem;
 	}
 	li span {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 	}
 	li.ok :global(svg) {
 		color: #8fe0a8;
 	}
 	.how {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.8rem;
 		line-height: 1.45;
 	}

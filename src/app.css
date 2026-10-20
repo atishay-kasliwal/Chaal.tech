@@ -2,63 +2,66 @@
 @plugin 'daisyui' {
 	themes: teen-patti;
 }
-
-/*
-  Custom "Teen Patti" casino theme.
-  Uses DaisyUI v5 @plugin theme API.
-  Colors: dark-green felt background, gold primary/accent, red secondary.
-*/
 @plugin 'daisyui/theme' {
 	name: teen-patti;
 	default: true;
-	--color-base-100: oklch(12% 0.04 145); /* darkest green - cards, modals */
-	--color-base-200: oklch(15% 0.05 145); /* slightly lighter - inputs, table rows */
-	--color-base-300: oklch(20% 0.06 145); /* borders, dividers */
-	--color-base-content: oklch(90% 0.02 80); /* warm off-white text */
-
-	/* Gold — primary action color (buttons, links, focus rings) */
-	--color-primary: oklch(72% 0.17 80); /* rich gold */
-	--color-primary-content: oklch(18% 0.05 80); /* dark text on gold bg */
-
-	/* Muted gold — secondary / outline variant */
-	--color-secondary: oklch(40% 0.08 145); /* dark forest green */
-	--color-secondary-content: oklch(72% 0.17 80); /* gold text on green bg */
-
-	/* Red — accent (hearts/diamonds suits) */
-	--color-accent: oklch(52% 0.22 25); /* vivid red */
-	--color-accent-content: oklch(96% 0.01 0);
-
-	/* Neutral */
-	--color-neutral: oklch(18% 0.04 145);
-	--color-neutral-content: oklch(80% 0.02 80);
-
-	/* Semantic states */
-	--color-info: oklch(65% 0.15 220);
-	--color-info-content: oklch(98% 0 0);
-	--color-success: oklch(65% 0.18 145);
-	--color-success-content: oklch(98% 0 0);
-	--color-warning: oklch(72% 0.17 80); /* reuse gold */
-	--color-warning-content: oklch(18% 0.05 80);
-	--color-error: oklch(52% 0.22 25); /* reuse red */
-	--color-error-content: oklch(96% 0.01 0);
-
-	/* Shape & radius tokens */
-	--radius-selector: 0.75rem;
-	--radius-field: 0.75rem;
-	--radius-box: 1.25rem;
+	--color-base-100: #211c2e;
+	--color-base-200: #2c263b;
+	--color-base-300: #40364f;
+	--color-base-content: #f8f2e5;
+	--color-primary: #f2dc91;
+	--color-primary-content: #211c2e;
+	--color-secondary: #c5bddb;
+	--color-secondary-content: #211c2e;
+	--color-accent: #ee715b;
+	--color-accent-content: #211c2e;
+	--color-neutral: #30293e;
+	--color-neutral-content: #f8f2e5;
+	--color-info: #b5d4ee;
+	--color-info-content: #211c2e;
+	--color-success: #a9cfb5;
+	--color-success-content: #211c2e;
+	--color-warning: #f2dc91;
+	--color-warning-content: #211c2e;
+	--color-error: #f39788;
+	--color-error-content: #211c2e;
+	--radius-selector: 0.5rem;
+	--radius-field: 0.5rem;
+	--radius-box: 1rem;
 	--border: 1px;
 }
-
-/*
-  Global base layer: body background and font smoothing.
-*/
+@font-face {
+	font-family: 'Bricolage Grotesque';
+	src: url('/fonts/bricolage-grotesque-latin.woff2') format('woff2');
+	font-weight: 200 800;
+	font-style: normal;
+	font-display: swap;
+}
+:root {
+	--night: #211c2e;
+	--surface: #2c263b;
+	--paper: #f8f2e5;
+	--butter: #f2dc91;
+	--red: #ee715b;
+	--muted: #beb5c9;
+	--line: #ffffff24;
+	--font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+	--gutter: clamp(22px, 4.5vw, 64px);
+	font-family: Arial, Helvetica, sans-serif;
+	color-scheme: dark;
+}
 @layer base {
 	html {
-		background: oklch(10% 0.04 145);
+		background: var(--night);
+		color: var(--paper);
+		scroll-padding-top: 24px;
 	}
 	body {
+		margin: 0;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
+		font-size: 16px;
+		line-height: 1.55;
 	}
 	*,
 	::after,
@@ -66,5 +69,97 @@
 	::backdrop,
 	::file-selector-button {
 		border-color: var(--color-base-300);
+	}
+	button:not(:disabled),
+	summary,
+	select {
+		cursor: pointer;
+	}
+	button:disabled {
+		cursor: default;
+	}
+	h1,
+	h2,
+	h3 {
+		text-wrap: balance;
+	}
+	:focus-visible {
+		outline: 2px solid var(--butter);
+		outline-offset: 5px;
+	}
+	::selection {
+		background: var(--butter);
+		color: var(--night);
+	}
+}
+.skip-link {
+	position: fixed;
+	top: 12px;
+	left: 12px;
+	z-index: 100;
+	translate: 0 -160%;
+	padding: 12px 20px;
+	background: var(--butter);
+	color: var(--night);
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 600;
+}
+.skip-link:focus {
+	translate: 0;
+	outline-color: var(--red);
+}
+.home-header :focus-visible,
+.home-main .invitation :focus-visible,
+.home-main .last-hand :focus-visible {
+	outline-color: var(--night);
+}
+/* Shared UI feedback stays quiet enough for a live table. */
+.btn {
+	font-weight: 600;
+	box-shadow: none;
+	transition:
+		translate 0.2s,
+		background 0.2s;
+}
+@media (hover: hover) {
+	.btn:not(:disabled):hover {
+		translate: 0 -2px;
+	}
+}
+.btn:not(:disabled):active {
+	translate: 0 1px;
+}
+/* A dealt page hands into the next without delaying navigation. */
+::view-transition-old(root) {
+	animation: page-out 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+::view-transition-new(root) {
+	animation: page-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes page-out {
+	to {
+		opacity: 0;
+		translate: 0 -8px;
+	}
+}
+@keyframes page-in {
+	from {
+		opacity: 0;
+		translate: 0 14px;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation: none;
 	}
 }

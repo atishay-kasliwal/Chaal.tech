@@ -65,7 +65,7 @@
 		right: 0.75rem;
 		translate: 0 -50%;
 		border: 1px solid rgb(255 255 255 / 36%);
-		background: linear-gradient(135deg, #f7df9d, #bd842e);
+		background: linear-gradient(135deg, #f2dc91, #bd842e);
 		color: #25190d;
 	}
 	.rummy-seat :global(.card) {
@@ -129,7 +129,7 @@
 		width: 100%;
 		border: 0;
 		border-radius: 0.8rem;
-		background: #111a17;
+		background: #2c263b;
 	}
 	.rummy-seat .card-body > div:last-child > div:last-child {
 		position: absolute;

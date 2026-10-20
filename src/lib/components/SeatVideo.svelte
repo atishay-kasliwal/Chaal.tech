@@ -36,6 +36,7 @@
 	class="seat-video relative isolate overflow-hidden rounded-xl"
 	data-testid="seat-video"
 	data-player-id={participant?.identity}
+	role="group"
 	aria-label={name + ' video seat'}
 >
 	{#if participant?.video}
@@ -75,7 +76,7 @@
 <style>
 	.seat-video {
 		aspect-ratio: 16 / 9;
-		background: #111a17;
+		background: #2c263b;
 	}
 	.camera-placeholder {
 		background:
@@ -90,7 +91,7 @@
 		place-items: center;
 		border-radius: 999px;
 		background: rgb(227 184 88 / 14%);
-		color: #f0d18c;
+		color: #f2dc91;
 		font-size: clamp(0.9rem, 1.7vw, 1.3rem);
 		font-weight: 700;
 		letter-spacing: 0.04em;

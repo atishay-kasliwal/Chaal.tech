@@ -120,7 +120,7 @@
 		bottom: 0.4rem;
 		left: 0.4rem;
 		border-radius: 999px;
-		background: rgb(8 14 12 / 70%);
+		background: rgb(33 28 46 / 70%);
 		padding: 0.1rem 0.5rem;
 		color: #e9e2cf;
 		font-size: 0.58rem;

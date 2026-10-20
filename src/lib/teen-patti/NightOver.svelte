@@ -154,13 +154,13 @@
 		translate: -50% -50%;
 		border-radius: 1.6rem;
 		background:
-			radial-gradient(ellipse 80% 45% at 50% 0%, rgb(244 214 140 / 18%), transparent 70%),
+			radial-gradient(ellipse 80% 45% at 50% 0%, rgb(242 220 145 / 18%), transparent 70%),
 			linear-gradient(180deg, rgb(14 36 25 / 98%), rgb(6 16 11 / 98%));
 		padding: 1.6rem 1.6rem 1.3rem;
 		box-shadow:
 			inset 0 0 0 1px rgb(240 200 120 / 45%),
 			0 30px 80px rgb(0 0 0 / 65%);
-		color: #f1ebdc;
+		color: #f8f2e5;
 		text-align: center;
 	}
 	.moon {
@@ -170,22 +170,22 @@
 		height: 3.4rem;
 		place-items: center;
 		border-radius: 999px;
-		background: rgb(244 214 140 / 14%);
-		color: #f7dc95;
+		background: rgb(242 220 145 / 14%);
+		color: #f2dc91;
 		animation: glow 3s ease-in-out infinite;
 	}
 	h2 {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: clamp(1.8rem, 4vw, 2.3rem);
 		font-weight: 850;
 	}
 	.facts {
-		color: rgb(241 235 220 / 65%);
+		color: rgb(248 242 229 / 65%);
 		font-size: 0.9rem;
 	}
 	h3 {
 		margin-top: 0.4rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.75rem;
 		font-weight: 800;
 		letter-spacing: 0.18em;
@@ -204,26 +204,26 @@
 		align-items: center;
 		gap: 0.45rem;
 		border-radius: 0.8rem;
-		background: linear-gradient(90deg, rgb(244 214 140 / 10%), rgb(255 255 255 / 3%));
+		background: linear-gradient(90deg, rgb(242 220 145 / 10%), rgb(255 255 255 / 3%));
 		padding: 0.7rem 0.9rem;
 		animation: rise 420ms calc(300ms + var(--i) * 120ms) both ease-out;
 	}
 	.payments li.mine {
-		box-shadow: inset 0 0 0 1px rgb(244 214 140 / 55%);
+		box-shadow: inset 0 0 0 1px rgb(242 220 145 / 55%);
 	}
 	.arrow {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.85rem;
 	}
 	.amount {
 		margin-left: auto;
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.15rem;
 		font-weight: 850;
 		font-variant-numeric: tabular-nums;
 	}
 	.square {
-		color: rgb(241 235 220 / 75%);
+		color: rgb(248 242 229 / 75%);
 	}
 	.people {
 		display: flex;
@@ -238,7 +238,7 @@
 		font-size: 0.85rem;
 	}
 	.people li.me {
-		box-shadow: inset 0 0 0 1px rgb(244 214 140 / 40%);
+		box-shadow: inset 0 0 0 1px rgb(242 220 145 / 40%);
 	}
 	.people strong {
 		margin-left: 0.3rem;
@@ -262,7 +262,7 @@
 		text-align: left;
 	}
 	.highlights dt {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.72rem;
 		font-weight: 700;
 		letter-spacing: 0.08em;
@@ -273,11 +273,11 @@
 		font-weight: 700;
 	}
 	.highlights small {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-weight: 500;
 	}
 	.thanks {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.82rem;
 	}
 	.actions {
@@ -297,12 +297,12 @@
 		cursor: pointer;
 	}
 	.ghost {
-		border: 1px solid rgb(244 214 140 / 45%);
-		color: #f4d68c;
+		border: 1px solid rgb(242 220 145 / 45%);
+		color: #f2dc91;
 	}
 	.primary {
-		background: linear-gradient(180deg, #f7dc95, #d9ac4c);
-		color: #2d1f05;
+		background: linear-gradient(180deg, #f2dc91, #e1ca89);
+		color: #211c2e;
 	}
 	@keyframes rise {
 		from {
@@ -312,7 +312,7 @@
 	}
 	@keyframes glow {
 		50% {
-			box-shadow: 0 0 26px rgb(244 214 140 / 40%);
+			box-shadow: 0 0 26px rgb(242 220 145 / 40%);
 		}
 	}
 </style>

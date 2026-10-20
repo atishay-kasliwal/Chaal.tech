@@ -160,13 +160,13 @@
 		translate: -50% -50%;
 		border-radius: 1.4rem;
 		background:
-			radial-gradient(ellipse 80% 55% at 50% 0%, rgb(244 214 140 / 16%), transparent 70%),
+			radial-gradient(ellipse 80% 55% at 50% 0%, rgb(242 220 145 / 16%), transparent 70%),
 			linear-gradient(180deg, rgb(12 34 23 / 97%), rgb(6 18 12 / 97%));
 		padding: 1.1rem 1.4rem 1.1rem;
 		box-shadow:
 			inset 0 0 0 1px rgb(240 200 120 / 45%),
 			0 24px 60px rgb(0 0 0 / 60%);
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	header {
 		display: flex;
@@ -185,12 +185,12 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.6rem;
 		font-weight: 850;
 	}
 	.why {
-		color: rgb(241 235 220 / 75%);
+		color: rgb(248 242 229 / 75%);
 		font-size: 0.88rem;
 		line-height: 1.45;
 	}
@@ -206,7 +206,7 @@
 	}
 	.fan:focus-visible {
 		border-radius: 0.6rem;
-		box-shadow: 0 0 0 2px #f4d68c;
+		box-shadow: 0 0 0 2px #f2dc91;
 	}
 	.card {
 		position: absolute;
@@ -237,8 +237,8 @@
 		z-index: 60;
 		width: 3px;
 		border-radius: 3px;
-		background: #f4d68c;
-		box-shadow: 0 0 12px #f4d68c;
+		background: #f2dc91;
+		box-shadow: 0 0 12px #f2dc91;
 		pointer-events: none;
 	}
 	footer {
@@ -249,11 +249,11 @@
 		gap: 0.6rem;
 	}
 	.where {
-		color: rgb(241 235 220 / 80%);
+		color: rgb(248 242 229 / 80%);
 		font-size: 0.95rem;
 	}
 	.where strong {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.15rem;
 		font-variant-numeric: tabular-nums;
 	}
@@ -264,7 +264,7 @@
 		border-radius: 999px;
 		background: rgb(255 255 255 / 6%);
 		padding: 0.2rem 0.6rem;
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-family: ui-monospace, monospace;
 		font-size: 0.75rem;
 	}
@@ -273,9 +273,9 @@
 		align-items: center;
 		gap: 0.4rem;
 		border-radius: 999px;
-		background: linear-gradient(180deg, #f7dc95, #d9ac4c);
+		background: linear-gradient(180deg, #f2dc91, #e1ca89);
 		padding: 0.55rem 1.4rem;
-		color: #2d1f05;
+		color: #211c2e;
 		font-weight: 800;
 		cursor: pointer;
 	}
@@ -303,12 +303,12 @@
 		stroke: rgb(255 255 255 / 10%);
 	}
 	.deal-clock .left {
-		stroke: #f4d68c;
+		stroke: #f2dc91;
 		stroke-linecap: round;
 		transition: stroke-dashoffset 900ms linear;
 	}
 	.deal-clock strong {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.15rem;
 		font-variant-numeric: tabular-nums;
 	}

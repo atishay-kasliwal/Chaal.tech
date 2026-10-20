@@ -96,13 +96,13 @@
 		translate: -50% -50%;
 		border-radius: 1.4rem;
 		background:
-			radial-gradient(ellipse 80% 55% at 50% 0%, rgb(244 214 140 / 16%), transparent 70%),
+			radial-gradient(ellipse 80% 55% at 50% 0%, rgb(242 220 145 / 16%), transparent 70%),
 			linear-gradient(180deg, rgb(12 34 23 / 97%), rgb(6 18 12 / 97%));
 		padding: 1.1rem 1.4rem 1.1rem;
 		box-shadow:
 			inset 0 0 0 1px rgb(240 200 120 / 45%),
 			0 24px 60px rgb(0 0 0 / 60%);
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	header {
 		display: flex;
@@ -112,9 +112,9 @@
 	}
 	.badge {
 		border-radius: 999px;
-		background: rgb(244 214 140 / 14%);
+		background: rgb(242 220 145 / 14%);
 		padding: 0.3rem 0.8rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.85rem;
 		font-weight: 800;
 	}
@@ -139,12 +139,12 @@
 		stroke: rgb(255 255 255 / 10%);
 	}
 	.deal-clock .left {
-		stroke: #f4d68c;
+		stroke: #f2dc91;
 		stroke-linecap: round;
 		transition: stroke-dashoffset 900ms linear;
 	}
 	.deal-clock strong {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.15rem;
 		font-variant-numeric: tabular-nums;
 	}
@@ -157,7 +157,7 @@
 		text-transform: uppercase;
 	}
 	h2 {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: clamp(1.6rem, 3vw, 2.1rem);
 		font-weight: 850;
 		line-height: 1.15;
@@ -172,7 +172,7 @@
 		gap: 0.4rem;
 		margin-top: 0.7rem;
 		padding-left: 1.1rem;
-		color: rgb(241 235 220 / 85%);
+		color: rgb(248 242 229 / 85%);
 		font-size: 0.93rem;
 		line-height: 1.4;
 		list-style: disc;
@@ -185,14 +185,14 @@
 		margin-top: 1rem;
 	}
 	.hint {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.8rem;
 	}
 	.got-it {
 		border-radius: 999px;
-		background: linear-gradient(180deg, #f7dc95, #d9ac4c);
+		background: linear-gradient(180deg, #f2dc91, #e1ca89);
 		padding: 0.55rem 1.4rem;
-		color: #2d1f05;
+		color: #211c2e;
 		font-weight: 800;
 		cursor: pointer;
 	}

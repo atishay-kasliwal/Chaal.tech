@@ -49,6 +49,11 @@
 		object-fit: contain;
 		flex-shrink: 0;
 		border-radius: 6%;
+		box-shadow:
+			0 1px 0 #fff9 inset,
+			0 0 0 1px #211c2e16,
+			0 3px 4px #0002;
+		user-select: none;
 	}
 	.invalid {
 		display: grid;

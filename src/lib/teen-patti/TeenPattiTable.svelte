@@ -589,6 +589,8 @@
 	/** Room the pot and action line need between or below the tiles. */
 	const POT_SPACE = 132;
 	/** Phones with three or more friends use a two-column grid with the pot underneath. */
+	const hasMat = $derived.by(() => !!tableCards || !!mat);
+	const phoneMat = $derived(portrait && hasMat && room.isStarted);
 	const phoneGrid = $derived(portrait && opponents.length >= 3);
 	const gridRows = $derived(Math.ceil(opponents.length / 2));
 	/** The waiting room: nobody is playing yet, so the lobby panel needs the middle of the table. */
@@ -597,6 +599,8 @@
 	const LOBBY_HALF = $derived(portrait ? 210 : 175);
 	const seatW = $derived.by(() => {
 		const n = opponents.length;
+		if (phoneMat)
+			return Math.max(72, Math.min((arenaW - 28) / Math.min(Math.max(n, 1), 3), n > 3 ? 92 : 110));
 		if (phoneGrid) {
 			const byHeight = ((arenaH - POT_SPACE) / gridRows - 30 - 30) / 0.75;
 			return Math.max(96, Math.min(arenaW * 0.485, byHeight));
@@ -616,6 +620,16 @@
 	const seatH = $derived(seatW * 0.75 + 30);
 	const seatPositions = $derived.by(() => {
 		const n = opponents.length;
+		if (phoneMat) {
+			return opponents.map((_, index) => {
+				const row = Math.floor(index / 3);
+				const columns = Math.min(3, n - row * 3);
+				return {
+					left: arenaW / 2 + ((index % 3) - (columns - 1) / 2) * (seatW + 8),
+					top: row * (seatH + 16) + seatH / 2 + 4
+				};
+			});
+		}
 		if (portrait && n === 2)
 			// Two friends on a phone: staggered diagonally so each face gets most of the width.
 			return [
@@ -651,6 +665,10 @@
 	 */
 	const centerTop = $derived.by(() => {
 		if (!seatPositions.length) return arenaH * 0.5;
+		if (phoneMat) {
+			const below = Math.ceil(opponents.length / 3) * (seatH + 16) + 12;
+			return below + Math.max(0, arenaH - below - 45) / 2;
+		}
 		const potHalfWidth = portrait ? 120 : 210;
 		const blocking = seatPositions.filter(
 			(seat) => phoneGrid || Math.abs(seat.left - arenaW / 2) < seatW / 2 + potHalfWidth
@@ -772,7 +790,6 @@
 				})
 	);
 	/** Cards on the table this hand: the mat takes the centre and the pot steps aside. */
-	const hasMat = $derived(!!tableCards || !!mat);
 	const bet = (amount: number) => room.legalActions.bet && void send('play', [false, amount]);
 	const show = () => room.legalActions.show && void send('show', [room.name]);
 	const sitOut = (value: boolean) => void send('ready', [!value]);
@@ -892,6 +909,7 @@
 	);
 	let sound = $state(true);
 	let arena: HTMLElement | undefined = $state();
+	let layoutReady = $state(false);
 
 	onMount(() => {
 		presencePreview = wantsPresencePreview(window.location.search);
@@ -911,6 +929,7 @@
 			arenaW = entry.contentRect.width;
 			arenaH = Math.max(entry.contentRect.height, 1);
 			portrait = arenaW / arenaH < 1.15;
+			layoutReady = true;
 		});
 		if (arena) observer.observe(arena);
 		return () => {
@@ -979,7 +998,15 @@
 	/>
 {/snippet}
 
-<div class="tp-shell" data-testid="table-scene" data-game="teen-patti">
+<div
+	class="tp-shell"
+	class:layout-ready={layoutReady}
+	data-testid="table-scene"
+	data-game="teen-patti"
+>
+	<h1 class="sr-only">
+		{gameTitle ?? variant?.selectionLabel.split(': ')[0] ?? 'Teen Patti'} table
+	</h1>
 	<header class="topbar">
 		<div class="brand">
 			<img class="logo" src="/brand/chaal-mark.svg" width="34" height="34" alt="" />
@@ -1073,7 +1100,13 @@
 		<div class="offline" role="status">Reconnecting. Actions are paused</div>
 	{/if}
 
-	<main class="arena" class:portrait bind:this={arena} style:--seat-w="{seatW}px">
+	<main
+		class="arena"
+		class:portrait
+		class:phone-mat={phoneMat}
+		bind:this={arena}
+		style:--seat-w="{seatW}px"
+	>
 		{#if incomingAsks.length}
 			<div class="chip-prompts" role="alert">
 				{#each incomingAsks as ask (ask.from)}
@@ -1919,7 +1952,7 @@
 		z-index: 80;
 	}
 	.tp-shell {
-		--tp-gold: #e2b862;
+		--tp-gold: #f2dc91;
 		--tp-felt-glow: rgb(233 191 98 / 60%);
 		position: fixed;
 		inset: 0;
@@ -1933,7 +1966,7 @@
 			radial-gradient(ellipse 90% 75% at 50% 45%, #18201b 0%, #0d110e 55%, #060807 100%);
 		padding: 0.5rem max(0.75rem, env(safe-area-inset-right)) 0.75rem
 			max(0.75rem, env(safe-area-inset-left));
-		color: #f1ebdc;
+		color: #f8f2e5;
 		overflow: clip;
 	}
 	.tp-shell > :global([data-testid='action-dock']) {
@@ -1980,13 +2013,13 @@
 		border-radius: 999px;
 		background: rgb(255 255 255 / 5%);
 		padding: 0.35rem 0.75rem;
-		color: rgb(241 235 220 / 75%);
+		color: rgb(248 242 229 / 75%);
 		font-size: 0.8rem;
 		cursor: pointer;
 	}
 	.room-code:hover {
 		background: rgb(255 255 255 / 10%);
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.code {
 		overflow: hidden;
@@ -1999,34 +2032,34 @@
 		min-width: 0;
 		align-items: center;
 		gap: 0.4rem;
-		color: rgb(241 235 220 / 65%);
+		color: rgb(248 242 229 / 65%);
 		font-size: 0.82rem;
 		white-space: nowrap;
 	}
 	/* What's being played, on a gold pill so it reads at a glance. */
 	.variant-name {
-		border: 1px solid rgb(240 209 140 / 45%);
+		border: 1px solid rgb(242 220 145 / 45%);
 		border-radius: 999px;
-		background: linear-gradient(180deg, rgb(244 214 140 / 22%), rgb(244 214 140 / 10%));
+		background: linear-gradient(180deg, rgb(242 220 145 / 22%), rgb(242 220 145 / 10%));
 		padding: 0.18rem 0.75rem;
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 0.95rem;
 		font-weight: 750;
 		letter-spacing: 0.01em;
-		box-shadow: 0 0 1rem rgb(244 214 140 / 12%);
+		box-shadow: 0 0 1rem rgb(242 220 145 / 12%);
 	}
 	.variant-name {
 		cursor: pointer;
 	}
 	.variant-name:hover {
-		background: rgb(244 214 140 / 26%);
+		background: rgb(242 220 145 / 26%);
 	}
 	.up-next {
-		color: rgb(241 235 220 / 65%);
+		color: rgb(248 242 229 / 65%);
 		font-size: 0.85rem;
 	}
 	.up-next strong {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	/* "How this game works" panel. */
 	.how {
@@ -2034,7 +2067,7 @@
 		gap: 0.75rem;
 	}
 	.how-win {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.15rem;
 		font-weight: 800;
 		line-height: 1.3;
@@ -2043,22 +2076,22 @@
 		display: grid;
 		gap: 0.45rem;
 		padding-left: 1.1rem;
-		color: rgb(241 235 220 / 85%);
+		color: rgb(248 242 229 / 85%);
 		font-size: 0.95rem;
 		list-style: disc;
 	}
 	.how-next {
 		border-radius: 0.8rem;
-		background: rgb(244 214 140 / 10%);
+		background: rgb(242 220 145 / 10%);
 		padding: 0.6rem 0.8rem;
-		color: rgb(241 235 220 / 80%);
+		color: rgb(248 242 229 / 80%);
 	}
 	.how-next strong {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.how .link {
 		justify-self: start;
-		color: #f4d68c;
+		color: #f2dc91;
 		text-decoration: underline;
 		cursor: pointer;
 	}
@@ -2068,9 +2101,9 @@
 		width: 100%;
 		gap: 0.75rem;
 		margin-top: 0.45rem;
-		border: 1px solid rgb(244 214 140 / 30%);
+		border: 1px solid rgb(242 220 145 / 30%);
 		border-radius: 1.15rem;
-		background: linear-gradient(180deg, rgb(244 214 140 / 10%), rgb(244 214 140 / 4%));
+		background: linear-gradient(180deg, rgb(242 220 145 / 10%), rgb(242 220 145 / 4%));
 		padding: 0.85rem;
 	}
 	.pick-head {
@@ -2090,20 +2123,20 @@
 		border-radius: 999px;
 		background:
 			radial-gradient(closest-side, #0c1f15 78%, transparent 80% 100%),
-			conic-gradient(#f4d68c calc(var(--left) * 1turn), rgb(255 255 255 / 10%) 0);
-		color: #f7dc95;
+			conic-gradient(#f2dc91 calc(var(--left) * 1turn), rgb(255 255 255 / 10%) 0);
+		color: #f2dc91;
 		font-size: 0.9rem;
 		font-variant-numeric: tabular-nums;
 		font-weight: 800;
 		transition: background 300ms linear;
 	}
 	.pick-title {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.05rem;
 		font-weight: 800;
 	}
 	.pick-sub {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.78rem;
 	}
 	.pick-options {
@@ -2115,11 +2148,11 @@
 		display: grid;
 		justify-items: center;
 		gap: 0.15rem;
-		border: 1px solid rgb(240 209 140 / 22%);
+		border: 1px solid rgb(242 220 145 / 22%);
 		border-radius: 0.95rem;
 		background: rgb(255 255 255 / 4%);
 		padding: 0.7rem 0.4rem 0.6rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		cursor: pointer;
 		transition:
 			transform 140ms ease,
@@ -2127,62 +2160,62 @@
 			background 140ms ease;
 	}
 	.pick-option strong {
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.95rem;
 	}
 	.pick-option small {
 		max-width: 100%;
 		overflow: hidden;
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.72rem;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 	.pick-option:hover {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 10%);
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 10%);
 		transform: translateY(-2px);
 	}
 	.pick-option.keep {
 		border-color: transparent;
-		background: linear-gradient(180deg, #f3d996, #c9963d);
+		background: linear-gradient(180deg, #f3d996, #f2dc91);
 		box-shadow: 0 0.5rem 1.2rem rgb(201 150 61 / 30%);
-		color: #24180a;
+		color: #211c2e;
 	}
 	.pick-option.keep strong,
 	.pick-option.keep small {
-		color: #24180a;
+		color: #211c2e;
 	}
 	.pick-option.on {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 14%);
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 14%);
 	}
 	.pick-options.four {
 		grid-template-columns: repeat(4, 1fr);
 	}
 	.tool.has-lineup {
-		border-color: rgb(244 214 140 / 55%);
-		color: #f4d68c;
+		border-color: rgb(242 220 145 / 55%);
+		color: #f2dc91;
 	}
 	.next-game .link {
 		margin-left: 0.25rem;
-		color: rgb(244 214 140 / 80%);
+		color: rgb(242 220 145 / 80%);
 		font-size: 0.85em;
 		text-decoration: underline;
 		cursor: pointer;
 	}
 	.change-next {
 		margin-left: 0.4rem;
-		border: 1px solid rgb(244 214 140 / 45%);
+		border: 1px solid rgb(242 220 145 / 45%);
 		border-radius: 999px;
 		padding: 0.1rem 0.65rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.8rem;
 		font-weight: 700;
 		cursor: pointer;
 	}
 	.change-next:hover {
-		background: rgb(244 214 140 / 12%);
+		background: rgb(242 220 145 / 12%);
 	}
 	/* Phones: a compact pick so it clears your raised hand. */
 	.arena.portrait .result {
@@ -2231,7 +2264,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.6rem;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.85rem;
 	}
 	.pick-ring.small {
@@ -2246,11 +2279,11 @@
 	.pick-list button {
 		display: grid;
 		gap: 0.15rem;
-		border: 1px solid rgb(240 209 140 / 18%);
+		border: 1px solid rgb(242 220 145 / 18%);
 		border-radius: 0.9rem;
 		background: rgb(255 255 255 / 4%);
 		padding: 0.7rem 0.85rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		text-align: left;
 		cursor: pointer;
 		transition:
@@ -2266,49 +2299,49 @@
 	}
 	.pick-list button em {
 		border-radius: 999px;
-		background: rgb(244 214 140 / 16%);
+		background: rgb(242 220 145 / 16%);
 		padding: 0.05rem 0.5rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.68rem;
 		font-style: normal;
 		font-weight: 650;
 	}
 	.pick-list button small {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.78rem;
 		line-height: 1.35;
 	}
 	.pick-list button:hover {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 10%);
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 10%);
 	}
 	.pick-list button.current {
-		border-color: rgb(244 214 140 / 45%);
+		border-color: rgb(242 220 145 / 45%);
 	}
 	.next-game {
 		margin-top: 0.3rem;
-		color: rgb(241 235 220 / 75%);
+		color: rgb(248 242 229 / 75%);
 		font-size: 0.95rem;
 	}
 	.next-game strong {
-		color: #f7dc95;
+		color: #f2dc91;
 	}
 	.next-game small {
-		color: rgb(241 235 220 / 50%);
+		color: rgb(248 242 229 / 50%);
 	}
 	.next-game.waiting {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.45rem;
 		border-radius: 999px;
-		background: rgb(244 214 140 / 10%);
+		background: rgb(242 220 145 / 10%);
 		padding: 0.3rem 0.8rem;
 	}
 	.pulse {
 		width: 0.5rem;
 		height: 0.5rem;
 		border-radius: 999px;
-		background: #f4d68c;
+		background: #f2dc91;
 		animation: tp-pick-pulse 1.2s ease-in-out infinite;
 	}
 	@keyframes tp-pick-pulse {
@@ -2339,10 +2372,10 @@
 		width: 2.1rem;
 		height: 2.1rem;
 		place-items: center;
-		border: 1px solid rgb(241 235 220 / 14%);
+		border: 1px solid rgb(248 242 229 / 14%);
 		border-radius: 999px;
 		background: rgb(255 255 255 / 5%);
-		color: #f1ebdc;
+		color: #f8f2e5;
 		cursor: pointer;
 		transition: background 150ms ease;
 	}
@@ -2366,7 +2399,7 @@
 		font-size: 0.8rem;
 	}
 	.variant-chip {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.variant-chip strong {
 		font-weight: 750;
@@ -2387,15 +2420,15 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.6rem;
-		border: 1px solid rgb(240 200 110 / 55%);
+		border: 1px solid rgb(242 220 145 / 55%);
 		border-radius: 1rem;
-		background: rgb(12 20 16 / 96%);
+		background: rgb(33 28 46 / 96%);
 		padding: 0.8rem 0.9rem;
 		box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 55%);
 		font-size: 0.88rem;
 	}
 	.chip-prompt strong {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.chip-prompt-actions {
 		display: flex;
@@ -2409,16 +2442,16 @@
 		cursor: pointer;
 	}
 	.chip-prompt .give {
-		background: #f4d68c;
-		color: #24180a;
+		background: #f2dc91;
+		color: #211c2e;
 	}
 	.chip-prompt .give:disabled {
 		opacity: 0.5;
 		cursor: default;
 	}
 	.chip-prompt .decline {
-		border: 1px solid rgb(241 235 220 / 25%);
-		color: #f1ebdc;
+		border: 1px solid rgb(248 242 229 / 25%);
+		color: #f8f2e5;
 	}
 	/* Arena and felt */
 	.arena {
@@ -2581,18 +2614,18 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 0.5rem;
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.8rem;
 	}
 	.invite-big {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		border: 1px dashed rgb(240 200 110 / 55%);
+		border: 1px dashed rgb(242 220 145 / 55%);
 		border-radius: 999px;
-		background: rgb(6 12 10 / 40%);
+		background: rgb(24 20 34 / 40%);
 		padding: 0.7rem 1.3rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-weight: 700;
 		cursor: pointer;
 	}
@@ -2674,7 +2707,7 @@
 		text-transform: uppercase;
 	}
 	.pot-amount {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: clamp(1.6rem, 3.2vw, 2.5rem);
 		font-variant-numeric: tabular-nums;
 		font-weight: 850;
@@ -2685,7 +2718,7 @@
 	}
 	.stakes {
 		margin-top: 0.15rem;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.75rem;
 		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
@@ -2723,7 +2756,7 @@
 	}
 	.arena.portrait .feed-line {
 		border-radius: 999px;
-		background: rgb(6 12 10 / 72%);
+		background: rgb(24 20 34 / 72%);
 		padding: 0.15rem 0.7rem;
 		white-space: nowrap;
 	}
@@ -2755,7 +2788,7 @@
 		text-transform: uppercase;
 	}
 	.end-night p {
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.85rem;
 	}
 	.end-actions {
@@ -2777,33 +2810,33 @@
 		color: #f0a898;
 	}
 	.cut-note {
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.85rem;
 		font-weight: 700;
 	}
 	.verify-link {
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.78rem;
 		text-decoration: underline;
-		text-decoration-color: rgb(244 214 140 / 40%);
+		text-decoration-color: rgb(242 220 145 / 40%);
 		cursor: pointer;
 	}
 	.verify-link:hover {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	/* Top bar: where the night is in tonight's lineup; opens the lineup. */
 	.lineup-pill {
-		border: 1px solid rgb(244 214 140 / 35%);
+		border: 1px solid rgb(242 220 145 / 35%);
 		border-radius: 999px;
-		background: rgb(244 214 140 / 8%);
+		background: rgb(242 220 145 / 8%);
 		padding: 0.15rem 0.6rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.78rem;
 		font-weight: 750;
 		cursor: pointer;
 	}
 	.lineup-pill:hover {
-		background: rgb(244 214 140 / 18%);
+		background: rgb(242 220 145 / 18%);
 	}
 	.game-log {
 		position: absolute;
@@ -2822,21 +2855,21 @@
 		pointer-events: none;
 	}
 	.game-line {
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.85rem;
 		line-height: 1.2;
 		text-shadow: 0 1px 3px rgb(0 0 0 / 70%);
 		white-space: nowrap;
 	}
 	.game-line strong {
-		color: #f4d68c;
+		color: #f2dc91;
 		font-weight: 650;
 	}
 	.game-line span {
-		color: rgb(241 235 220 / 75%);
+		color: rgb(248 242 229 / 75%);
 	}
 	.feed-line {
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.85rem;
 		line-height: 1.2;
 	}
@@ -2844,13 +2877,13 @@
 		font-weight: 650;
 	}
 	.k-raise {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.k-pack {
 		color: #f0a898;
 	}
 	.k-win {
-		color: #f7dc95;
+		color: #f2dc91;
 	}
 	.k-see {
 		color: #b5dcff;
@@ -2864,29 +2897,29 @@
 		gap: 0.3rem;
 		border-radius: 1.5rem;
 		background:
-			radial-gradient(ellipse 80% 60% at 50% 0%, rgb(244 214 140 / 14%), transparent 70%),
+			radial-gradient(ellipse 80% 60% at 50% 0%, rgb(242 220 145 / 14%), transparent 70%),
 			linear-gradient(180deg, rgb(10 30 20 / 92%), rgb(5 16 11 / 92%));
 		padding: 1.1rem 1.3rem 1rem;
 		box-shadow:
 			inset 0 0 0 1px rgb(240 200 120 / 40%),
 			inset 0 1px 0 rgb(255 240 200 / 12%),
 			0 1.2rem 2.8rem rgb(0 0 0 / 50%),
-			0 0 3.5rem rgb(240 200 110 / 16%);
+			0 0 3.5rem rgb(242 220 145 / 16%);
 		backdrop-filter: blur(6px);
 	}
 	.result :global(.trophy) {
-		color: #f4d68c;
-		filter: drop-shadow(0 0 0.6rem rgb(244 214 140 / 55%));
+		color: #f2dc91;
+		filter: drop-shadow(0 0 0.6rem rgb(242 220 145 / 55%));
 	}
 	.result-title {
 		font-size: clamp(1.25rem, 2.4vw, 1.7rem);
 		font-weight: 800;
 	}
 	.result-title span {
-		color: #f7dc95;
+		color: #f2dc91;
 	}
 	.result-detail {
-		color: rgb(241 235 220 / 80%);
+		color: rgb(248 242 229 / 80%);
 		font-size: 0.85rem;
 	}
 	.next {
@@ -2896,7 +2929,7 @@
 		justify-content: center;
 		gap: 0.4rem;
 		margin-top: 0.35rem;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.8rem;
 		font-variant-numeric: tabular-nums;
 	}
@@ -2904,19 +2937,19 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.3rem;
-		border: 1px solid rgb(241 235 220 / 18%);
+		border: 1px solid rgb(248 242 229 / 18%);
 		border-radius: 999px;
 		background: rgb(255 255 255 / 6%);
 		padding: 0.25rem 0.7rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.75rem;
 		font-weight: 650;
 		cursor: pointer;
 	}
 	.mini.gold {
 		border-color: transparent;
-		background: linear-gradient(160deg, #f4d68c, #c99236);
-		color: #24180a;
+		background: linear-gradient(160deg, #f2dc91, #f2dc91);
+		color: #211c2e;
 	}
 	.mini:disabled {
 		cursor: not-allowed;
@@ -2968,24 +3001,24 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
-		border: 1px solid rgb(244 214 140 / 22%);
+		border: 1px solid rgb(242 220 145 / 22%);
 		border-radius: 999px;
-		background: rgb(6 14 10 / 55%);
+		background: rgb(24 20 34 / 55%);
 		padding: 0.2rem 0.65rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.85rem;
 		font-weight: 650;
 		animation: pop-in 380ms calc(var(--i) * 70ms) both cubic-bezier(0.2, 0.9, 0.3, 1.3);
 	}
 	.here li small {
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.68rem;
 		font-weight: 800;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 	}
 	.here li.bot small {
-		color: rgb(241 235 220 / 50%);
+		color: rgb(248 242 229 / 50%);
 	}
 	.here .dot {
 		width: 0.45rem;
@@ -3011,11 +3044,11 @@
 		flex: 0 0 8.6rem;
 		justify-items: center;
 		gap: 0.1rem;
-		border: 1px solid rgb(244 214 140 / 25%);
+		border: 1px solid rgb(242 220 145 / 25%);
 		border-radius: 1rem;
 		background:
-			radial-gradient(ellipse at 50% 0%, rgb(244 214 140 / 12%), transparent 70%),
-			rgb(6 14 10 / 78%);
+			radial-gradient(ellipse at 50% 0%, rgb(242 220 145 / 12%), transparent 70%),
+			rgb(24 20 34 / 78%);
 		padding: 0.2rem 0.6rem 0.65rem;
 		cursor: pointer;
 		scroll-snap-align: start;
@@ -3026,17 +3059,17 @@
 	}
 	.night-game:hover {
 		transform: translateY(-3px);
-		border-color: #f4d68c;
+		border-color: #f2dc91;
 	}
 	.night-game :global(.demo) {
 		width: 100%;
 	}
 	.night-game strong {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 0.92rem;
 	}
 	.night-game small {
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.72rem;
 		line-height: 1.3;
 		text-align: center;
@@ -3050,8 +3083,8 @@
 		height: 1.35rem;
 		place-items: center;
 		border-radius: 999px;
-		background: #f4d68c;
-		color: #2d1f05;
+		background: #f2dc91;
+		color: #211c2e;
 		font-size: 0.72rem;
 		font-weight: 850;
 	}
@@ -3059,7 +3092,7 @@
 		border-color: rgb(196 155 255 / 40%);
 		background:
 			radial-gradient(ellipse at 50% 20%, rgb(196 155 255 / 22%), transparent 70%),
-			rgb(6 14 10 / 78%);
+			rgb(24 20 34 / 78%);
 	}
 	.mystery-face {
 		display: grid;
@@ -3117,13 +3150,13 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 1.15rem;
 		font-weight: 800;
 	}
 	.lobby-sub,
 	.lobby-hint {
-		color: rgb(241 235 220 / 65%);
+		color: rgb(248 242 229 / 65%);
 		font-size: 0.8rem;
 	}
 	.deal-btn {
@@ -3132,9 +3165,9 @@
 		gap: 0.5rem;
 		margin-top: 0.4rem;
 		border-radius: 999px;
-		background: linear-gradient(160deg, #f4d68c, #c99236);
+		background: linear-gradient(160deg, #f2dc91, #f2dc91);
 		padding: 0.75rem 1.6rem;
-		color: #24180a;
+		color: #211c2e;
 		font-size: 1rem;
 		font-weight: 800;
 		box-shadow: 0 0.5rem 1.5rem rgb(201 146 54 / 35%);
@@ -3151,7 +3184,7 @@
 		z-index: 8;
 		display: grid;
 		place-items: center;
-		background: rgb(4 8 6 / 72%);
+		background: rgb(24 20 34 / 72%);
 		cursor: zoom-out;
 		backdrop-filter: blur(4px);
 	}
@@ -3171,7 +3204,7 @@
 		left: 0.7rem;
 		z-index: 2;
 		border-radius: 999px;
-		background: rgb(8 14 12 / 78%);
+		background: rgb(33 28 46 / 78%);
 		padding: 0.25rem 0.8rem;
 		font-weight: 700;
 	}
@@ -3221,7 +3254,7 @@
 		max-width: none;
 		flex-direction: column;
 		margin: 0;
-		background: #111b17;
+		background: #2c263b;
 		box-shadow: -1rem 0 3rem rgb(0 0 0 / 45%);
 	}
 	.sheet.wide {
@@ -3235,7 +3268,7 @@
 		padding: 1rem 1.1rem;
 	}
 	.sheet-head h2 {
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 1.1rem;
 		font-weight: 800;
 	}
@@ -3248,14 +3281,14 @@
 	}
 	.sheet-body h3 {
 		margin-top: 0.6rem;
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.72rem;
 		font-weight: 700;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
 	}
 	.muted {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.85rem;
 	}
 	.money {
@@ -3266,14 +3299,14 @@
 		padding-top: 1rem;
 	}
 	.money h3 {
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.8rem;
 		font-weight: 800;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
 	}
 	.money-note {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.8rem;
 		line-height: 1.4;
 	}
@@ -3293,11 +3326,11 @@
 		padding: 0.45rem 0.7rem;
 	}
 	.real li.me {
-		box-shadow: inset 0 0 0 1px rgb(244 214 140 / 35%);
+		box-shadow: inset 0 0 0 1px rgb(242 220 145 / 35%);
 	}
 	.real small {
 		margin-left: 0.4rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.7rem;
 		font-weight: 800;
 	}
@@ -3315,16 +3348,16 @@
 		align-items: center;
 		gap: 0.45rem;
 		border-radius: 0.7rem;
-		background: linear-gradient(90deg, rgb(244 214 140 / 10%), rgb(255 255 255 / 3%));
+		background: linear-gradient(90deg, rgb(242 220 145 / 10%), rgb(255 255 255 / 3%));
 		padding: 0.55rem 0.8rem;
 	}
 	.payments .arrow {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.82rem;
 	}
 	.payments .amount {
 		margin-left: auto;
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.05rem;
 		font-weight: 850;
 		font-variant-numeric: tabular-nums;
@@ -3346,15 +3379,15 @@
 		font-size: 0.9rem;
 	}
 	.standings li.me {
-		border-color: rgb(240 209 140 / 22%);
-		background: rgb(240 209 140 / 7%);
+		border-color: rgb(242 220 145 / 22%);
+		background: rgb(242 220 145 / 7%);
 	}
 	.standings li.leader {
-		border-color: rgb(240 209 140 / 45%);
-		background: linear-gradient(100deg, rgb(240 200 110 / 18%), rgb(240 200 110 / 4%));
+		border-color: rgb(242 220 145 / 45%);
+		background: linear-gradient(100deg, rgb(242 220 145 / 18%), rgb(242 220 145 / 4%));
 	}
 	.standings li.leader .place {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.initials {
 		display: grid;
@@ -3363,13 +3396,13 @@
 		place-items: center;
 		border-radius: 999px;
 		background: rgb(255 255 255 / 8%);
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.72rem;
 		font-weight: 750;
 	}
 	.leader .initials {
-		background: linear-gradient(150deg, #f7df9d, #c08a34);
-		color: #24180a;
+		background: linear-gradient(150deg, #f2dc91, #e1ca89);
+		color: #211c2e;
 	}
 	.standings .who {
 		flex-direction: row;
@@ -3378,9 +3411,9 @@
 	}
 	.standings .who small {
 		border-radius: 999px;
-		background: rgb(240 209 140 / 14%);
+		background: rgb(242 220 145 / 14%);
 		padding: 0 0.4rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.65rem;
 		font-weight: 650;
 	}
@@ -3395,7 +3428,7 @@
 		font-size: 0.75rem;
 	}
 	.place {
-		color: rgb(241 235 220 / 45%);
+		color: rgb(248 242 229 / 45%);
 		font-weight: 700;
 	}
 	.who {
@@ -3407,18 +3440,18 @@
 		text-overflow: ellipsis;
 	}
 	.who small {
-		color: rgb(241 235 220 / 50%);
+		color: rgb(248 242 229 / 50%);
 		font-size: 0.72rem;
 		font-weight: 500;
 	}
 	.amt {
-		color: #f0d18c;
+		color: #f2dc91;
 		font-variant-numeric: tabular-nums;
 		font-weight: 700;
 	}
 	.delta {
 		min-width: 4.5rem;
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.8rem;
 		font-variant-numeric: tabular-nums;
 		text-align: right;
@@ -3455,10 +3488,10 @@
 		color: #8fd6a5;
 	}
 	.hand-win {
-		color: #f7dc95;
+		color: #f2dc91;
 	}
 	.hand-card header small {
-		color: rgb(241 235 220 / 45%);
+		color: rgb(248 242 229 / 45%);
 		font-size: 0.72rem;
 	}
 	.log {
@@ -3468,7 +3501,7 @@
 		border-left: 1px solid rgb(255 255 255 / 10%);
 		margin-left: 0.25rem;
 		padding-left: 0.75rem;
-		color: rgb(241 235 220 / 80%);
+		color: rgb(248 242 229 / 80%);
 		font-size: 0.82rem;
 	}
 	.log li {
@@ -3482,11 +3515,11 @@
 		width: 6px;
 		height: 6px;
 		border-radius: 999px;
-		background: rgb(241 235 220 / 35%);
+		background: rgb(248 242 229 / 35%);
 		content: '';
 	}
 	.log li.k-raise::before {
-		background: #f4d68c;
+		background: #f2dc91;
 	}
 	.log li.k-pack::before {
 		background: #ee9a8c;
@@ -3495,7 +3528,7 @@
 		background: #b5dcff;
 	}
 	.log li.k-show::before {
-		background: #f7dc95;
+		background: #f2dc91;
 	}
 	/* Hand rankings: each kind with its strongest and weakest hand, as real cards. */
 	.ranks {
@@ -3516,11 +3549,11 @@
 		font-weight: 700;
 	}
 	.rank-title span {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.rank-title small {
 		margin-left: 0.3rem;
-		color: rgb(241 235 220 / 50%);
+		color: rgb(248 242 229 / 50%);
 		font-size: 0.75rem;
 		font-weight: 500;
 	}
@@ -3531,7 +3564,7 @@
 	}
 	.rank-gap {
 		flex: 1;
-		border-top: 2px dashed rgb(241 235 220 / 25%);
+		border-top: 2px dashed rgb(248 242 229 / 25%);
 	}
 	.fan {
 		display: flex;
@@ -3552,7 +3585,7 @@
 		flex-direction: column;
 		gap: 0.45rem;
 		padding-left: 1rem;
-		color: rgb(241 235 220 / 80%);
+		color: rgb(248 242 229 / 80%);
 		font-size: 0.85rem;
 		list-style: disc;
 	}
@@ -3567,20 +3600,20 @@
 	.levels {
 		display: inline-flex;
 		overflow: hidden;
-		border: 1px solid rgb(241 235 220 / 16%);
+		border: 1px solid rgb(248 242 229 / 16%);
 		border-radius: 999px;
 	}
 	.levels button {
 		padding: 0.25rem 0.6rem;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.72rem;
 		font-weight: 650;
 		text-transform: capitalize;
 		cursor: pointer;
 	}
 	.levels button.on {
-		background: rgb(240 200 110 / 22%);
-		color: #f4d68c;
+		background: rgb(242 220 145 / 22%);
+		color: #f2dc91;
 	}
 	.levels.wide {
 		align-self: flex-start;
@@ -3602,7 +3635,7 @@
 		font-weight: 650;
 	}
 	.setting-title small {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-weight: 500;
 	}
 	.limit {
@@ -3610,7 +3643,7 @@
 		align-items: center;
 		gap: 0.4rem;
 		margin-top: 0.25rem;
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.68rem;
 		font-variant-numeric: tabular-nums;
 	}
@@ -3625,7 +3658,7 @@
 		display: block;
 		height: 100%;
 		transform-origin: left;
-		background: #e9bf62;
+		background: #f2dc91;
 		transition: transform 300ms ease;
 	}
 	.mini.add-bot {
@@ -3643,7 +3676,7 @@
 		min-width: 0;
 		flex: 1;
 		overflow: hidden;
-		color: rgb(241 235 220 / 80%);
+		color: rgb(248 242 229 / 80%);
 		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 		font-size: 0.75rem;
 		text-overflow: ellipsis;
@@ -3688,7 +3721,7 @@
 		font-size: 0.85rem;
 	}
 	.invited small {
-		color: rgb(241 235 220 / 50%);
+		color: rgb(248 242 229 / 50%);
 	}
 	.setting {
 		display: flex;
@@ -3703,7 +3736,7 @@
 		font-weight: 650;
 	}
 	.setting small {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-weight: 500;
 	}
 	@media (max-width: 959px) {
@@ -3774,5 +3807,87 @@
 		.flying-chip {
 			display: none;
 		}
+	}
+
+	.tp-shell {
+		background: radial-gradient(ellipse at 50% 38%, #382f46 0%, #211c2e 65%, #191522 100%);
+		--tp-gold: var(--butter);
+	}
+	.room-code {
+		border-color: var(--line);
+		border-radius: 10px;
+	}
+	.tool {
+		border-radius: 8px;
+		transition:
+			translate 0.2s,
+			background 0.2s;
+	}
+	.tool:hover {
+		translate: 0 -2px;
+	}
+	.felt {
+		background: linear-gradient(180deg, #493b54, #30263c);
+		box-shadow:
+			0 0.45rem 0 #17121e,
+			0 0.8rem 0 #100d16,
+			0 2rem 4rem #0008,
+			inset 0 1px 1px #ffffff25;
+	}
+	.felt-inner {
+		box-shadow:
+			0 0 0 2px #b7a0c0,
+			0 0 0 4px #493b54,
+			inset 0 0.8rem 1.5rem #0005;
+	}
+	.game-name {
+		font-family: var(--font-display);
+		letter-spacing: -0.035em;
+	}
+
+	.arena.phone-mat .center.with-mat {
+		translate: -50% -50%;
+		gap: 6px;
+	}
+	.arena.phone-mat .pot {
+		flex-direction: row;
+		gap: 8px;
+		padding: 4px 8px;
+	}
+	.arena.phone-mat .pot .stakes {
+		font-size: 10px;
+	}
+	.arena.phone-mat .center :global(.table-cards) {
+		max-width: 100%;
+	}
+
+	/* Measure the reserved arena before revealing seats, avoiding a wide-layout flash on phones. */
+	.tp-shell:not(.layout-ready) .arena {
+		visibility: hidden;
+	}
+	.arena.phone-mat :global(.plate) {
+		top: 24px;
+		left: 4px;
+		right: 4px;
+		max-width: none;
+		padding: 3px 4px;
+		gap: 3px;
+		justify-content: space-between;
+	}
+	.arena.phone-mat :global(.plate .name) {
+		font-size: 10px;
+	}
+	.arena.phone-mat :global(.plate .balance) {
+		font-size: 10px;
+	}
+
+	.arena.phone-mat :global(.plate) {
+		top: 4px;
+	}
+	.arena.phone-mat :global(.seat-status) {
+		top: 24px;
+		font-size: 7px;
+		letter-spacing: 0.02em;
+		padding: 1px 3px;
 	}
 </style>

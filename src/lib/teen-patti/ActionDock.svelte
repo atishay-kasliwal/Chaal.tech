@@ -155,7 +155,11 @@
 
 	<div class="cards-zone">
 		{#if inHand && me.cardsInHand.length}
-			<div class="my-cards" class:blind={!revealed && playing}>
+			<div
+				class="my-cards"
+				class:large-hand={me.cardsInHand.length > 3}
+				class:blind={!revealed && playing}
+			>
 				{#key dealKey}
 					{#each me.cardsInHand as card, index (index)}
 						{#if pairing}
@@ -378,7 +382,7 @@
 		grid-template-columns: clamp(8rem, 11vw, 11rem) minmax(0, 1fr) minmax(18rem, 25rem);
 		align-items: center;
 		gap: clamp(0.75rem, 2vw, 2rem);
-		border: 1px solid rgb(240 209 140 / 14%);
+		border: 1px solid rgb(242 220 145 / 14%);
 		border-radius: 1.4rem;
 		background:
 			linear-gradient(180deg, rgb(255 255 255 / 4%), transparent 40%), rgb(14 22 19 / 92%);
@@ -389,7 +393,7 @@
 			box-shadow 300ms ease;
 	}
 	.tp-dock.my-turn {
-		border-color: rgb(240 200 110 / 55%);
+		border-color: rgb(242 220 145 / 55%);
 		box-shadow:
 			0 -0.5rem 2.5rem rgb(0 0 0 / 35%),
 			0 0 2.5rem rgb(233 191 98 / 18%);
@@ -422,7 +426,7 @@
 			width: min(100%, calc(var(--hand-h) * 0.8 * 1.6));
 			margin-top: calc(var(--hand-h) * -0.34);
 			box-shadow:
-				0 0 0 1px rgb(240 209 140 / 22%),
+				0 0 0 1px rgb(242 220 145 / 22%),
 				0 0.8rem 1.4rem rgb(0 0 0 / 50%);
 		}
 	}
@@ -438,7 +442,7 @@
 	}
 	.me-name {
 		overflow: hidden;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.9rem;
 		font-weight: 650;
 		text-overflow: ellipsis;
@@ -448,7 +452,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
-		color: #f0d18c;
+		color: #f2dc91;
 		font-size: 1.05rem;
 		font-variant-numeric: tabular-nums;
 		font-weight: 800;
@@ -461,19 +465,19 @@
 		width: 1.3rem;
 		height: 1.3rem;
 		border-radius: 999px;
-		color: rgb(240 209 140 / 60%);
+		color: rgb(242 220 145 / 60%);
 		cursor: pointer;
 	}
 	.privacy:hover:not(:disabled) {
-		background: rgb(240 209 140 / 12%);
-		color: #f0d18c;
+		background: rgb(242 220 145 / 12%);
+		color: #f2dc91;
 	}
 	.privacy.on {
 		color: #9fc9b0;
 	}
 	.me-net {
 		grid-column: 1 / -1;
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.72rem;
 		font-variant-numeric: tabular-nums;
 	}
@@ -538,7 +542,7 @@
 		height: 2.6em;
 		translate: -50% -50%;
 		border-radius: 999px;
-		background: rgb(6 12 10 / 78%);
+		background: rgb(24 20 34 / 78%);
 		box-shadow:
 			0 0.4rem 1.2rem rgb(0 0 0 / 45%),
 			inset 0 0 0 1px rgb(247 220 149 / 30%);
@@ -546,7 +550,7 @@
 		transition: background 200ms ease;
 	}
 	.see-overlay:hover:not(:disabled)::before {
-		background: rgb(6 12 10 / 90%);
+		background: rgb(24 20 34 / 90%);
 	}
 	.see-overlay {
 		isolation: isolate;
@@ -590,14 +594,14 @@
 	/* Before throwing away: the best three you could keep, under the prompt. */
 	.best-keep {
 		display: block;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.8rem;
 		font-weight: 700;
 	}
 	/* Kiss-Miss-Bliss: turning two cards into a joker is a gain, so it reads gold, not red. */
 	.throw.make {
-		background: linear-gradient(180deg, #f7dc95, #d9ac4c);
-		color: #2d1f05;
+		background: linear-gradient(180deg, #f2dc91, #e1ca89);
+		color: #211c2e;
 	}
 	/* After packing or after the hand: look at your cards, or show them to everyone. */
 	.after-hand {
@@ -611,18 +615,18 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
-		border: 1px solid rgb(240 209 140 / 35%);
+		border: 1px solid rgb(242 220 145 / 35%);
 		border-radius: 999px;
 		padding: 0.25rem 0.8rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.82rem;
 		font-weight: 650;
 		cursor: pointer;
 	}
 	.after-btn.gold {
 		border-color: transparent;
-		background: #f4d68c;
-		color: #24180a;
+		background: #f2dc91;
+		color: #211c2e;
 	}
 	.after-btn:disabled {
 		opacity: 0.5;
@@ -641,9 +645,9 @@
 		left: 50%;
 		translate: -50% 0;
 		border-radius: 999px;
-		background: linear-gradient(150deg, #f7df9d, #c08a34);
+		background: linear-gradient(150deg, #f2dc91, #e1ca89);
 		padding: 0.05rem 0.5rem;
-		color: #24180a;
+		color: #211c2e;
 		font-size: 0.7rem;
 		font-weight: 800;
 		box-shadow: 0 2px 6px rgb(0 0 0 / 45%);
@@ -659,7 +663,7 @@
 		display: grid;
 		min-height: calc(var(--card-h) * 0.8);
 		place-items: center;
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.95rem;
 	}
 	.actions {
@@ -705,11 +709,11 @@
 		color: #ff8f7e;
 	}
 	.wait-text {
-		color: rgb(241 235 220 / 65%);
+		color: rgb(248 242 229 / 65%);
 		font-size: 0.92rem;
 	}
 	.wait-text strong {
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.bar {
 		height: 0.3rem;
@@ -739,11 +743,11 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.15rem;
-		border: 1px solid rgb(241 235 220 / 16%);
+		border: 1px solid rgb(248 242 229 / 16%);
 		border-radius: 0.9rem;
 		background: rgb(255 255 255 / 5%);
 		padding: 0.4rem 0.3rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.92rem;
 		font-weight: 750;
 		line-height: 1.1;
@@ -776,16 +780,16 @@
 	}
 	.act.chaal {
 		border-color: transparent;
-		background: linear-gradient(160deg, #f4d68c, #c99236);
-		color: #24180a;
+		background: linear-gradient(160deg, #f2dc91, #f2dc91);
+		color: #211c2e;
 		box-shadow: 0 0.35rem 1rem rgb(201 146 54 / 30%);
 	}
 	.act.chaal:hover:not(:disabled) {
 		background: linear-gradient(160deg, #f8df9f, #d39d40);
 	}
 	.act.raise {
-		border-color: rgb(240 200 110 / 55%);
-		color: #f4d68c;
+		border-color: rgb(242 220 145 / 55%);
+		color: #f2dc91;
 	}
 	.act.show {
 		border-color: rgb(127 200 255 / 45%);
@@ -818,7 +822,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: rgb(241 235 220 / 75%);
+		color: rgb(248 242 229 / 75%);
 		font-size: 0.85rem;
 		cursor: pointer;
 	}
@@ -891,6 +895,24 @@
 	@media (prefers-reduced-motion: reduce) {
 		.fill {
 			transition: none;
+		}
+	}
+
+	@media (max-width: 639px) {
+		.my-cards.large-hand {
+			--card-h: clamp(58px, 18vw, 82px);
+			margin-top: calc(var(--card-h) * -0.3);
+		}
+		.my-cards.large-hand > :global(.tp-card + .tp-card),
+		.my-cards.large-hand > .pick + .pick {
+			margin-left: calc(var(--card-h) * -0.26);
+		}
+	}
+
+	@media (max-width: 639px) {
+		.my-cards {
+			--card-h: min(var(--hand-h), calc((100vw - 160px) * 0.48));
+			margin-top: calc(var(--card-h) * -0.3);
 		}
 	}
 </style>

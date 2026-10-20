@@ -207,8 +207,8 @@
 		padding: 0.35rem 0.8rem;
 	}
 	button.primary {
-		border-color: #f0d18c;
-		background: #f0d18c;
+		border-color: #f2dc91;
+		background: #f2dc91;
 		color: #14281f;
 		cursor: pointer;
 	}
@@ -221,7 +221,7 @@
 		margin: 0.75rem 0 0;
 		font-size: 1.1rem;
 		font-weight: 700;
-		color: #f0d18c;
+		color: #f2dc91;
 	}
 	.table {
 		display: block;
@@ -236,7 +236,7 @@
 		border-radius: 999px;
 		background: rgb(0 0 0 / 35%);
 		padding: 0.5rem 1.2rem;
-		color: #f0d18c;
+		color: #f2dc91;
 		font-weight: 700;
 	}
 	.seats {
@@ -252,7 +252,7 @@
 		transition: box-shadow 200ms;
 	}
 	.ring.on {
-		box-shadow: 0 0 0 2px #f0d18c;
+		box-shadow: 0 0 0 2px #f2dc91;
 	}
 	.frame {
 		position: relative;
@@ -268,7 +268,7 @@
 		top: 0.4rem;
 		right: 0.5rem;
 		border-radius: 999px;
-		background: rgb(8 14 12 / 78%);
+		background: rgb(33 28 46 / 78%);
 		padding: 0.1rem 0.5rem;
 		font-size: 0.75rem;
 	}

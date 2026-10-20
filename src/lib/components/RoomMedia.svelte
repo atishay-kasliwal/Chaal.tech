@@ -192,10 +192,10 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.35rem;
-		border: 1px solid rgb(241 235 220 / 14%);
+		border: 1px solid rgb(248 242 229 / 14%);
 		border-radius: 999px;
 		background: rgb(255 255 255 / 5%);
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.8rem;
 		font-weight: 650;
 		cursor: pointer;
@@ -206,8 +206,8 @@
 	}
 	.mc-join {
 		padding-inline: 0.8rem;
-		border-color: rgb(240 200 110 / 45%);
-		color: #f4d68c;
+		border-color: rgb(242 220 145 / 45%);
+		color: #f2dc91;
 	}
 	.mc-btn:hover:not(:disabled),
 	.mc-join:hover:not(:disabled) {

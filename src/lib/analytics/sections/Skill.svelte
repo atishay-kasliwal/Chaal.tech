@@ -218,7 +218,7 @@
 		font-size: 0.85rem;
 	}
 	.dims li.dim {
-		opacity: 0.55;
+		opacity: 1;
 	}
 	.dims small {
 		display: block;

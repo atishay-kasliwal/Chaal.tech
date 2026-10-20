@@ -87,7 +87,7 @@
 				transparent 70%,
 				rgb(0 0 0 / 5%) 100%
 			),
-			radial-gradient(circle at 50% 50%, rgb(0 0 0 / 5%) 0 0.5px, transparent 0.8px) 0 0 / 3px 3px;
+			radial-gradient(circle at 50% 50%, rgb(0 0 0 / 3%) 0 0.5px, transparent 0.8px) 0 0 / 3px 3px;
 		box-shadow: inset 0 0 0 1px rgb(0 0 0 / 6%);
 		content: '';
 		pointer-events: none;
@@ -96,8 +96,8 @@
 	   corner indexes so everyone can still read the card. */
 	.tp-card.wild {
 		box-shadow:
-			0 0 0 2px #e2b862,
-			0 0 calc(var(--h) * 0.18) rgb(226 184 98 / 45%),
+			0 0 0 2px #f2dc91,
+			0 0 calc(var(--h) * 0.18) rgb(242 220 145 / 45%),
 			0 calc(var(--h) * 0.04) calc(var(--h) * 0.12) rgb(0 0 0 / 45%);
 	}
 	.joker {
@@ -113,9 +113,9 @@
 		translate: -50% 0;
 		place-items: center;
 		border-radius: 999px;
-		background: linear-gradient(150deg, #f7df9d, #c08a34);
+		background: linear-gradient(150deg, #f2dc91, #e1ca89);
 		box-shadow: 0 1px 4px rgb(0 0 0 / 50%);
-		color: #24180a;
+		color: #211c2e;
 		font-size: max(0.55rem, calc(var(--h) * 0.09));
 		line-height: 1;
 	}
@@ -124,8 +124,8 @@
 	}
 	.tp-card.highlight {
 		box-shadow:
-			0 0 0 2px var(--tp-gold, #e2b862),
-			0 0 calc(var(--h) * 0.25) rgb(226 184 98 / 55%);
+			0 0 0 2px var(--tp-gold, #f2dc91),
+			0 0 calc(var(--h) * 0.25) rgb(242 220 145 / 55%);
 	}
 	/* Classic navy back, drawn in static/cards/back-navy.svg; the same either way up. */
 	.back {
@@ -165,5 +165,13 @@
 		.deal {
 			animation: none;
 		}
+	}
+
+	.tp-card {
+		box-shadow:
+			0 1px 0 #ffffff60 inset,
+			0 0 0 1px #211c2e35,
+			0 2px 0 #bcb5a666,
+			0 calc(var(--h) * 0.045) calc(var(--h) * 0.11) #0006;
 	}
 </style>

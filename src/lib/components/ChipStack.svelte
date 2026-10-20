@@ -144,12 +144,12 @@
 		width: auto;
 		height: auto;
 		border-radius: 999px;
-		background: rgb(8 14 12 / 88%);
+		background: rgb(33 28 46 / 88%);
 		padding: 0.05rem 0.35rem;
 		box-shadow:
 			0 1px 3px rgb(0 0 0 / 55%),
 			inset 0 0 0 1px rgb(247 220 149 / 25%);
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: max(0.6rem, calc(var(--chip) * 0.22));
 		font-variant-numeric: tabular-nums;
 		font-weight: 800;

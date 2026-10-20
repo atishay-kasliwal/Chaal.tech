@@ -796,7 +796,7 @@
 		padding-top: 0.9rem;
 	}
 	.tp-settings-title {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.72rem;
 		font-weight: 700;
 		letter-spacing: 0.14em;
@@ -817,12 +817,12 @@
 		cursor: pointer;
 	}
 	.tp-variant.on {
-		border-color: rgb(240 200 110 / 60%);
-		background: rgb(240 200 110 / 8%);
+		border-color: rgb(242 220 145 / 60%);
+		background: rgb(242 220 145 / 8%);
 	}
 	.tp-variant input {
 		margin-top: 0.25rem;
-		accent-color: #e2b862;
+		accent-color: #f2dc91;
 	}
 	.tp-variant span {
 		display: flex;
@@ -831,7 +831,7 @@
 	}
 	.tp-variant small,
 	.tp-note {
-		color: rgb(241 235 220 / 55%);
+		color: rgb(248 242 229 / 55%);
 		font-size: 0.75rem;
 	}
 	.room-header {

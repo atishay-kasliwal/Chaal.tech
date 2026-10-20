@@ -29,16 +29,16 @@
 		border: 1px solid transparent;
 		border-radius: 0.9rem;
 		padding: 0.5rem 0.25rem;
-		color: rgb(241 235 220 / 80%);
+		color: rgb(248 242 229 / 80%);
 		font-size: 0.8rem;
 		cursor: pointer;
 	}
 	label.on {
-		border-color: #e2b862;
-		background: rgb(226 184 98 / 10%);
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 10%);
 	}
 	label:has(input:focus-visible) {
-		outline: 2px solid #e2b862;
+		outline: 2px solid #f2dc91;
 	}
 	input {
 		position: absolute;

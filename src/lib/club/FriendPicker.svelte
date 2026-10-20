@@ -106,29 +106,29 @@
 		overflow-y: auto;
 	}
 	.note {
-		color: #b6c6b8;
+		color: #beb5c9;
 		font-size: 0.75rem;
 	}
 	.friend {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		border: 1px solid rgb(226 184 98 / 22%);
+		border: 1px solid rgb(242 220 145 / 22%);
 		border-radius: 999px;
-		background: rgb(6 12 10 / 35%);
+		background: rgb(24 20 34 / 35%);
 		padding: 0.25rem 0.8rem 0.25rem 0.25rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		cursor: pointer;
 		transition:
 			border-color 150ms ease,
 			background 150ms ease;
 	}
 	.friend:hover {
-		border-color: rgb(226 184 98 / 50%);
+		border-color: rgb(242 220 145 / 50%);
 	}
 	.friend.on {
-		border-color: #f4d68c;
-		background: rgb(244 214 140 / 16%);
+		border-color: #f2dc91;
+		background: rgb(242 220 145 / 16%);
 	}
 	.avatar {
 		position: relative;
@@ -150,8 +150,8 @@
 		display: grid;
 		place-items: center;
 		border-radius: 999px;
-		background: rgb(244 214 140 / 85%);
-		color: #24180a;
+		background: rgb(242 220 145 / 85%);
+		color: #211c2e;
 	}
 	.who {
 		display: flex;

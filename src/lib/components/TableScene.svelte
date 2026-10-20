@@ -75,7 +75,7 @@
 	}
 	.table-center :global(h2) {
 		margin-bottom: 0.1rem;
-		color: rgb(240 209 140 / 78%);
+		color: rgb(242 220 145 / 78%);
 		font-size: 0.95rem;
 		line-height: 1.2;
 	}
@@ -99,7 +99,7 @@
 	.table-center :global(.bg-base-200) {
 		background: transparent;
 		box-shadow: none;
-		color: rgb(240 209 140 / 92%);
+		color: rgb(242 220 145 / 92%);
 	}
 	.table-center :global([data-testid='community-cards']) {
 		margin-block: 0.4rem;

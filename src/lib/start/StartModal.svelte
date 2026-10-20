@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dialogFocus } from '#lib/components/dialog-focus.js';
 	import { fade, fly } from 'svelte/transition';
 	import { X } from '@lucide/svelte';
 	import StartPanel from './StartPanel.svelte';
@@ -18,13 +19,14 @@
 	<div
 		class="sheet"
 		role="dialog"
+		use:dialogFocus
 		aria-modal="true"
 		aria-label="Start or join a table"
 		tabindex="-1"
 		transition:fly={{ y: 24, duration: 220 }}
 	>
 		<button class="close" onclick={closeStart} aria-label="Close"><X class="h-4 w-4" /></button>
-		<ClubGate><StartPanel onclose={closeStart} /></ClubGate>
+		<ClubGate heading="h2"><StartPanel onclose={closeStart} /></ClubGate>
 	</div>
 {/if}
 
@@ -49,9 +51,10 @@
 		scrollbar-width: thin;
 		scrollbar-color: rgb(226 184 98 / 50%) transparent;
 		translate: -50% -50%;
-		border: 1px solid rgb(240 209 140 / 18%);
+		border: 1px solid rgb(242 220 145 / 18%);
 		border-radius: 1.5rem;
-		background: radial-gradient(ellipse at 50% 0%, rgb(226 184 98 / 12%), transparent 60%), #101a16;
+		background:
+			radial-gradient(ellipse at 50% 0%, rgb(242 220 145 / 12%), transparent 60%), #2c263b;
 		padding: 1.6rem 1.4rem 1.3rem;
 		box-shadow: 0 2rem 5rem rgb(0 0 0 / 60%);
 	}
@@ -65,7 +68,7 @@
 		place-items: center;
 		border-radius: 999px;
 		background: rgb(255 255 255 / 6%);
-		color: #f1ebdc;
+		color: #f8f2e5;
 		cursor: pointer;
 	}
 	@media (max-width: 639px) {
@@ -78,5 +81,26 @@
 			border-radius: 1.5rem 1.5rem 0 0;
 			padding-bottom: calc(1.3rem + env(safe-area-inset-bottom));
 		}
+	}
+
+	.sheet {
+		background: var(--surface);
+		border-color: var(--line);
+		box-shadow: 0 28px 100px #0006;
+	}
+	.sheet :global(.gate) {
+		margin: 0;
+		min-height: 280px;
+		border: 0;
+		padding: 26px 6px;
+		background: transparent;
+	}
+	.close {
+		width: 36px;
+		height: 36px;
+		transition: rotate 0.2s;
+	}
+	.close:hover {
+		rotate: 90deg;
 	}
 </style>

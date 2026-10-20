@@ -221,7 +221,7 @@
 	<div class="club-room">
 		<header class="welcome">
 			<div>
-				<p class="eyebrow">Chaal · The private clubhouse</p>
+				<p class="eyebrow">Your private clubhouse</p>
 				<h1>Your people. <em>Your adda.</em></h1>
 				<p class="welcome-note">
 					Good to have you here, {properName(club.member?.nickname)}. Pull up a chair.
@@ -264,7 +264,7 @@
 				</div>
 				{#if !loaded}<p class="muted">Seeing who’s around…</p>
 				{:else if error}<p class="muted">Your friends will appear when the club reconnects.</p>
-				{:else if roster.length}<ul class="people">
+				{:else if roster.length}<ul class="people" aria-label="Club friends">
 						{#each roster as friend (friend.memberId)}
 							<li class:around={online.includes(friend.memberId) || atTable.has(friend.memberId)}>
 								<CharacterAvatar
@@ -654,7 +654,7 @@
 	.settle-card {
 		margin-bottom: 1.2rem;
 		border-radius: 1rem;
-		background: rgb(244 214 140 / 8%);
+		background: rgb(242 220 145 / 8%);
 		padding: 0.9rem 1rem;
 	}
 	.settle-card ul {
@@ -686,14 +686,14 @@
 		gap: 1.8rem;
 		min-height: calc(100dvh - 72px);
 		padding: clamp(1.25rem, 4vw, 3.5rem) max(1.25rem, calc((100vw - 1320px) / 2));
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.club-room::before {
 		content: '';
 		position: absolute;
 		z-index: -1;
 		inset: -72px 0 0;
-		background: radial-gradient(ellipse at 80% 0%, #243c2b66, transparent 45%), #0b1510;
+		background: radial-gradient(ellipse at 80% 0%, #243c2b66, transparent 45%), #211c2e;
 	}
 	.welcome,
 	.panel-heading,
@@ -704,7 +704,7 @@
 		gap: 1rem;
 	}
 	h1 {
-		font-family: Georgia, serif;
+		font-family: var(--font-display);
 		font-size: clamp(2.5rem, 5vw, 4.5rem);
 		font-weight: 400;
 		line-height: 1.12;
@@ -720,18 +720,18 @@
 		font-weight: 600;
 	}
 	.eyebrow {
-		color: #d5b67a;
+		color: #d5c39b;
 		font-size: 0.64rem;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
 		margin-bottom: 0.35rem;
 	}
 	.score {
-		color: #e7c784;
+		color: #f2dc91;
 	}
 	.muted,
 	.table-meta {
-		color: #b1b9ae;
+		color: #beb5c9;
 	}
 	.tiny {
 		font-size: 0.72rem;
@@ -745,7 +745,7 @@
 	}
 	button:focus-visible,
 	select:focus-visible {
-		outline: 2px solid #e7c784;
+		outline: 2px solid #f2dc91;
 		outline-offset: 4px;
 	}
 	.online-pill {
@@ -770,7 +770,7 @@
 		display: grid;
 		grid-template-columns: 1.4fr 1fr 1fr 1fr;
 		gap: 1rem;
-		border-block: 1px solid #e7c78424;
+		border-block: 1px solid #f2dc9124;
 		padding: 0.85rem 0;
 	}
 	.personal-record > div {
@@ -781,25 +781,25 @@
 	.personal-record span,
 	.record-period label {
 		font-size: 0.68rem;
-		color: #b1b9ae;
+		color: #beb5c9;
 	}
 	.personal-record strong {
 		font-size: clamp(1.25rem, 2vw, 1.8rem);
 		font-weight: 500;
-		color: #e7c784;
+		color: #f2dc91;
 	}
 	.personal-record small {
 		font-size: 0.68rem;
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-weight: 400;
 	}
 	.record-period {
 		justify-self: end;
 	}
 	select {
-		background: #10221a;
+		background: #30293e;
 		border: 1px solid #ffffff24;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		border-radius: 0.5rem;
 		padding: 0.35rem 0.6rem;
 		font-size: 0.8rem;
@@ -814,9 +814,9 @@
 		gap: 1.25rem;
 	}
 	.panel {
-		border: 1px solid #e7c78424;
+		border: 1px solid #f2dc9124;
 		border-radius: 1rem;
-		background: #122019;
+		background: #2c263b;
 		padding: clamp(1rem, 2vw, 1.7rem);
 		min-height: 0;
 	}
@@ -829,7 +829,7 @@
 	}
 	.text-button {
 		font-size: 0.75rem;
-		color: #e7c784;
+		color: #f2dc91;
 		white-space: nowrap;
 	}
 	.table-scene {
@@ -859,7 +859,7 @@
 		text-align: center;
 	}
 	.table-suits {
-		color: #e7c78488;
+		color: #f2dc9188;
 		letter-spacing: 0.7em;
 		font-size: 0.8rem;
 	}
@@ -884,7 +884,7 @@
 		border-radius: 999px;
 		padding: 0.7rem 1.6rem;
 		background: linear-gradient(120deg, #efdbab, #cda75e);
-		color: #211a0d;
+		color: #211c2e;
 		font-size: 0.85rem;
 		font-weight: 650;
 		box-shadow: 0 6px 20px #0003;
@@ -901,7 +901,7 @@
 	}
 	.empty-state p,
 	.empty-record p {
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.85rem;
 		line-height: 1.6;
 		max-width: 25rem;
@@ -913,7 +913,7 @@
 	}
 	.trophy {
 		font-size: 2rem;
-		color: #d5b67a;
+		color: #d5c39b;
 	}
 	.standings {
 		display: grid;
@@ -928,13 +928,13 @@
 		border-bottom: 1px solid #ffffff0d;
 	}
 	.standings li.you {
-		background: #e7c7840a;
+		background: #f2dc910a;
 		border-radius: 0.65rem;
 	}
 	.place {
 		width: 1.4rem;
 		text-align: center;
-		color: #d5b67a;
+		color: #d5c39b;
 		font-size: 0.9rem;
 	}
 	.standing-name {
@@ -951,7 +951,7 @@
 	}
 	.standing-name small {
 		font-size: 0.65rem;
-		color: #b1b9ae;
+		color: #beb5c9;
 	}
 	.score {
 		font-size: 0.9rem;
@@ -971,7 +971,7 @@
 	}
 	.empty-record > span {
 		font-size: 2.5rem;
-		color: #d5b67a;
+		color: #d5c39b;
 	}
 	.view-record {
 		border-top: 1px solid #ffffff12;
@@ -980,7 +980,7 @@
 		justify-content: space-between;
 	}
 	.record-count {
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.72rem;
 		white-space: nowrap;
 	}
@@ -990,7 +990,7 @@
 		margin-inline: auto;
 	}
 	.record-note {
-		color: #9aa998;
+		color: #b2a7be;
 		font-size: 0.65rem;
 		line-height: 1.5;
 	}
@@ -1000,12 +1000,12 @@
 		justify-content: space-between;
 		gap: 1rem;
 		margin-top: auto;
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.72rem;
 	}
 	.pager button {
 		padding: 0.35rem 0.5rem;
-		color: #e7c784;
+		color: #f2dc91;
 	}
 	.history-list {
 		display: grid;
@@ -1020,12 +1020,12 @@
 		font-size: 0.85rem;
 	}
 	.hand-heading time {
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.65rem;
 		white-space: nowrap;
 	}
 	.hand-game {
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.68rem;
 		margin-block: 0.25rem;
 	}
@@ -1034,14 +1034,14 @@
 		flex-wrap: wrap;
 		gap: 0.3rem 0.8rem;
 		font-size: 0.68rem;
-		color: #b1b9ae;
+		color: #beb5c9;
 	}
 	.hand-results b {
-		color: #e7c784;
+		color: #f2dc91;
 		font-weight: 500;
 	}
 	.my-result {
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.friend-list {
 		display: grid;
@@ -1060,7 +1060,7 @@
 	.friend-status {
 		margin-left: auto;
 		font-size: 0.75rem;
-		color: #b1b9ae;
+		color: #beb5c9;
 	}
 	.club-footer {
 		display: flex;
@@ -1074,7 +1074,7 @@
 		padding: 0.3rem;
 		border: 1px solid #ffffff14;
 		border-radius: 999px;
-		background: #07160dde;
+		background: #211c2ede;
 	}
 	.club-footer nav button {
 		display: flex;
@@ -1082,16 +1082,16 @@
 		gap: 0.5rem;
 		padding: 0.6rem 0.9rem;
 		border-radius: 999px;
-		color: #b1b9ae;
+		color: #beb5c9;
 		font-size: 0.75rem;
 	}
 	.club-footer nav button[aria-current='page'] {
 		background: #d6b779;
-		color: #172016;
+		color: #211c2e;
 	}
 	.club-footer p {
 		font-size: 0.75rem;
-		color: #9aa998;
+		color: #b2a7be;
 	}
 	.notice {
 		color: #ffd9cf;
@@ -1115,7 +1115,7 @@
 			display: none;
 		}
 		.club-room::before {
-			background: #0b1510;
+			background: #211c2e;
 		}
 	}
 	@media (max-width: 480px) {
@@ -1187,12 +1187,12 @@
 	}
 
 	h1 em {
-		color: #d8b77b;
+		color: #d5c39b;
 		font-weight: 400;
 	}
 	.welcome-note {
 		margin-top: 0.9rem;
-		color: #aebaae;
+		color: #beb5c9;
 		font-size: 0.9rem;
 	}
 	.welcome {
@@ -1264,9 +1264,7 @@
 		gap: 0.7rem;
 	}
 	.table-panel .empty-state h2 {
-		font:
-			400 clamp(2rem, 3.4vw, 3rem)/1.08 Georgia,
-			serif;
+		font: 400 clamp(2rem, 3.4vw, 3rem)/1.08 var(--font-display);
 		letter-spacing: -0.04em;
 	}
 	.table-panel .empty-state p {
@@ -1352,9 +1350,7 @@
 		margin-block: 1.5rem;
 	}
 	.hall-of-fame h2 {
-		font:
-			400 2rem/1.15 Georgia,
-			serif;
+		font: 400 2rem/1.15 var(--font-display);
 	}
 	.hall-of-fame .view-record {
 		margin-top: auto;
@@ -1378,14 +1374,12 @@
 		padding-top: 1.5rem;
 	}
 	.club-notebook h2 {
-		font:
-			400 1.8rem/1.15 Georgia,
-			serif;
+		font: 400 1.8rem/1.15 var(--font-display);
 		margin-top: 0.7rem;
 	}
 	.notebook-copy {
 		margin-top: 0.8rem;
-		color: #aebaae;
+		color: #beb5c9;
 		font-size: 0.83rem;
 		line-height: 1.7;
 		max-width: 32rem;
@@ -1460,11 +1454,11 @@
 		font-size: 0.8rem;
 	}
 	.club-footer nav button[aria-current='page'] {
-		background: #d8b77b;
+		background: #d5c39b;
 	}
 	.club-footer nav button:hover:not([aria-current='page']) {
 		background: #ffffff08;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.record-panel {
 		max-width: 100%;
@@ -1475,7 +1469,7 @@
 		-webkit-tap-highlight-color: transparent;
 	}
 	a:focus-visible {
-		outline: 2px solid #e7c784;
+		outline: 2px solid #f2dc91;
 		outline-offset: 4px;
 	}
 	@media (max-width: 800px) {
@@ -1562,5 +1556,214 @@
 	}
 	:global([data-reduced-motion]) .art-card {
 		transition: none;
+	}
+
+	/* The clubhouse shares the invitation's type and quiet surfaces. */
+	.club-room {
+		padding-top: 48px;
+		gap: 28px;
+	}
+	.club-room::before {
+		background: var(--night);
+	}
+	h1 {
+		font-weight: 700;
+		font-size: clamp(42px, 5.5vw, 76px);
+		line-height: 0.98;
+	}
+	h1 em {
+		font-style: normal;
+		color: var(--butter);
+	}
+	.welcome {
+		padding-bottom: 12px;
+	}
+	.eyebrow {
+		font-size: 11px;
+		letter-spacing: 0.06em;
+		text-transform: none;
+		margin-bottom: 16px;
+		color: var(--muted);
+	}
+	.welcome-note {
+		margin-top: 18px;
+		font-size: 15px;
+	}
+	.online-pill {
+		border-color: var(--line);
+		border-radius: 100px;
+		padding: 12px 18px;
+	}
+	.club-footer {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		padding: 8px 12px;
+	}
+	.club-footer nav button {
+		border-radius: 8px;
+		min-height: 44px;
+		transition:
+			translate 0.2s,
+			background 0.2s;
+	}
+	.club-footer nav button:hover {
+		translate: 0 -2px;
+		background: #ffffff0c;
+	}
+	.club-footer nav button.active {
+		background: var(--butter);
+		color: var(--night);
+	}
+	.panel {
+		border-color: var(--line);
+		border-radius: 16px;
+		box-shadow: none;
+	}
+	@media (max-width: 600px) {
+		.club-room {
+			padding-top: 32px;
+			gap: 24px;
+		}
+		h1 {
+			font-size: 43px;
+		}
+		.welcome {
+			align-items: flex-start;
+		}
+		.welcome-note {
+			font-size: 14px;
+		}
+		.eyebrow {
+			font-size: 11px;
+		}
+		.online-pill {
+			padding: 9px 12px;
+			font-size: 11px;
+		}
+		.club-footer {
+			padding: 6px;
+		}
+		.club-footer nav button {
+			font-size: 12px;
+			padding: 10px 12px;
+		}
+	}
+
+	.table-panel,
+	.hall-of-fame {
+		background: var(--surface);
+	}
+	.table-panel::before {
+		display: none;
+	}
+	.table-panel .empty-state h2,
+	.hall-of-fame h2,
+	.club-notebook h2 {
+		font-family: var(--font-display);
+		font-weight: 600;
+		letter-spacing: -0.045em;
+	}
+	.primary {
+		background: var(--butter);
+		color: var(--night);
+		box-shadow: none;
+		transition: translate 0.2s;
+	}
+	.primary:hover:not(:disabled) {
+		translate: 0 -2px;
+	}
+	.people li span {
+		color: var(--muted);
+	}
+
+	@media (max-width: 600px) {
+		.people {
+			flex-wrap: wrap;
+			overflow: visible;
+			gap: 18px 24px;
+		}
+		.people li {
+			min-width: 135px;
+		}
+	}
+
+	.table-panel {
+		border-top: 3px solid #c5bddb;
+		background: linear-gradient(145deg, #3b304755, transparent 60%), var(--surface);
+	}
+	.hall-of-fame {
+		border-top: 3px solid var(--butter);
+	}
+	.panel-heading {
+		padding-bottom: 12px;
+		border-bottom: 1px solid var(--line);
+	}
+	.lounge-art {
+		margin-top: 16px;
+		margin-bottom: 14px;
+	}
+	.art-card {
+		filter: drop-shadow(0 12px 9px #0005);
+	}
+	.art-ring {
+		border-color: #c5bddb45;
+	}
+	.art-ring::after {
+		border-color: #c5bddb20;
+	}
+	.table-panel .empty-state h2 {
+		font-size: clamp(30px, 3vw, 44px);
+		max-width: 520px;
+		line-height: 1.03;
+	}
+	.table-panel .empty-state .scene-kicker {
+		color: #c5bddb;
+		font-size: 11px;
+		letter-spacing: 0;
+	}
+	.standings li {
+		padding-block: 17px;
+	}
+	.standings .place {
+		font-family: var(--font-display);
+		font-size: 19px;
+	}
+	.standings li.you {
+		border-radius: 10px;
+		background: #f2dc910b;
+	}
+	.hall-of-fame .trophy {
+		display: grid;
+		place-items: center;
+		width: 42px;
+		height: 42px;
+		border: 1px solid #f2dc9140;
+		border-radius: 50%;
+		font-size: 23px;
+	}
+	.club-notebook h2 {
+		font-size: 30px;
+		line-height: 1.07;
+	}
+	.club-notebook section {
+		padding-block: 24px;
+	}
+	.view-record {
+		min-height: 40px;
+	}
+	@media (max-width: 600px) {
+		.panel-heading {
+			gap: 12px;
+		}
+		.table-panel .empty-state h2 {
+			font-size: 32px;
+		}
+		.lounge-art {
+			margin-top: 10px;
+		}
+		.club-notebook h2 {
+			font-size: 27px;
+		}
 	}
 </style>

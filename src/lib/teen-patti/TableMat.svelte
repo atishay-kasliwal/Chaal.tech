@@ -103,7 +103,9 @@
 	 * inside a prompt are always shown as text and never read as markup.
 	 */
 	const segments = (text: string) =>
-		text.split(/<b>(.*?)<\/b>/).map((part, index) => ({ text: part, bold: index % 2 === 1 }));
+		text
+			.split(/<b(?:\s[^>]*)?>(.*?)<\/b>/)
+			.map((part, index) => ({ text: part, bold: index % 2 === 1 }));
 	// The tall grid leaves no room above it, so its prompt sits in the side column.
 	const sidePrompt = $derived(layout === 'grid' || layout === 'none');
 </script>
@@ -113,7 +115,7 @@
 			>{:else}{part.text}{/if}{/each}
 {/snippet}
 
-<div class="table-cards">
+<div class="table-cards" data-layout={layout}>
 	{#if prompt && !sidePrompt}
 		<p class="prompt" class:danger={promptTone === 'danger'}>{@render rich(prompt)}</p>
 	{/if}
@@ -303,7 +305,7 @@
 		display: grid;
 		justify-items: center;
 		gap: 0.2rem;
-		border: 1px solid rgb(244 214 140 / 22%);
+		border: 1px solid rgb(242 220 145 / 22%);
 		border-radius: 0.8rem;
 		background: rgb(255 255 255 / 4%);
 		padding: 0.6rem 0.5rem;
@@ -314,11 +316,11 @@
 		line-height: 1;
 	}
 	.rule strong {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.05rem;
 	}
 	.rule small {
-		color: rgb(241 235 220 / 75%);
+		color: rgb(248 242 229 / 75%);
 		font-size: 0.8rem;
 		line-height: 1.3;
 	}
@@ -388,9 +390,9 @@
 	}
 	.lift.picked {
 		transform: translateY(-4px) scale(1.05);
-		outline: 3px solid #f4d68c;
+		outline: 3px solid #f2dc91;
 		outline-offset: 1px;
-		filter: drop-shadow(0 0 10px rgb(244 214 140 / 75%));
+		filter: drop-shadow(0 0 10px rgb(242 220 145 / 75%));
 	}
 	/* Closed cards you may open: a dark ring then a bright pulsing one, so they stand out on the mat. */
 	.lift.tappable {
@@ -416,7 +418,7 @@
 		border-radius: 999px;
 		background: rgb(0 0 0 / 55%);
 		padding: 0.1rem 0.55rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.82rem;
 		font-weight: 800;
 		white-space: nowrap;
@@ -434,7 +436,7 @@
 		border-radius: 0.5rem;
 		background: rgb(0 0 0 / 50%);
 		padding: 0.3rem 0.6rem 0.4rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.85rem;
 		font-weight: 800;
 	}
@@ -449,7 +451,7 @@
 		display: block;
 		height: 100%;
 		transform-origin: left;
-		background: linear-gradient(90deg, #f7dc95, #d9ac4c);
+		background: linear-gradient(90deg, #f2dc91, #e1ca89);
 	}
 	.piles {
 		display: flex;
@@ -493,34 +495,34 @@
 		display: block;
 	}
 	.pile.live .pile-stack {
-		filter: drop-shadow(0 0 12px rgb(244 214 140 / 70%));
+		filter: drop-shadow(0 0 12px rgb(242 220 145 / 70%));
 	}
 	.pile-tag {
 		border-radius: 999px;
 		background: rgb(0 0 0 / 55%);
 		padding: 0.15rem 0.6rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.82rem;
 		font-weight: 800;
 		white-space: nowrap;
 	}
 	.pile.live .pile-tag {
-		background: #f4d68c;
-		color: #2d1f05;
+		background: #f2dc91;
+		color: #211c2e;
 	}
 	.tray {
 		--card-h: clamp(3.2rem, 7.5vh, 5rem);
 		display: grid;
 		justify-items: center;
 		gap: 0.4rem;
-		border: 1px solid rgb(244 214 140 / 30%);
+		border: 1px solid rgb(242 220 145 / 30%);
 		border-radius: 0.9rem;
 		background: rgb(0 0 0 / 35%);
 		padding: 0.6rem 0.8rem;
 		min-width: 7rem;
 	}
 	.tray-title {
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.75rem;
 		font-weight: 800;
 		letter-spacing: 0.16em;
@@ -531,7 +533,7 @@
 		gap: 0.35rem;
 	}
 	.ranks {
-		color: #f7dc95;
+		color: #f2dc91;
 		font-size: 1.5rem;
 		font-weight: 850;
 	}
@@ -541,11 +543,11 @@
 		align-items: center;
 		gap: 0.2rem;
 		opacity: 0.55;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.75rem;
 	}
 	.note {
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.88rem;
 		line-height: 1.45;
 		text-align: center;
@@ -558,11 +560,11 @@
 	}
 	.prompt,
 	.caption {
-		border: 1px solid rgb(244 214 140 / 50%);
+		border: 1px solid rgb(242 220 145 / 50%);
 		border-radius: 1rem;
 		background: rgb(8 14 11 / 85%);
 		padding: 0.3rem 0.9rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 0.92rem;
 		font-weight: 700;
 	}
@@ -572,7 +574,7 @@
 	}
 	.prompt :global(b),
 	.caption :global(b) {
-		color: #f4d68c;
+		color: #f2dc91;
 	}
 	.prompt.danger {
 		border-color: #e0455a;
@@ -588,16 +590,154 @@
 		gap: 0.5rem;
 	}
 	.mat-actions button {
-		border: 1px solid rgb(244 214 140 / 50%);
+		border: 1px solid rgb(242 220 145 / 50%);
 		border-radius: 999px;
 		padding: 0.45rem 0.95rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 0.92rem;
 		font-weight: 800;
 	}
 	.mat-actions button.primary {
 		border: none;
-		background: linear-gradient(180deg, #f7dc95, #d9ac4c);
-		color: #2d1f05;
+		background: linear-gradient(180deg, #f2dc91, #e1ca89);
+		color: #211c2e;
+	}
+
+	@media (max-width: 639px) {
+		.table-cards {
+			width: 100%;
+			gap: 6px;
+		}
+		.spread {
+			gap: 10px;
+			max-width: 100%;
+			align-items: center;
+		}
+		.mat,
+		.mat.grid-mat {
+			--card-h: clamp(34px, 6dvh, 48px);
+			padding: 8px;
+			border-radius: 8px;
+		}
+		.side {
+			gap: 8px;
+			max-width: 160px;
+			min-width: 0;
+		}
+		.prompt,
+		.caption {
+			font-size: 11px;
+			line-height: 1.4;
+			padding: 6px 8px;
+			border-radius: 8px;
+			white-space: normal;
+		}
+		.tray {
+			padding: 9px;
+			gap: 6px;
+			max-width: 100%;
+		}
+		.tray-title {
+			font-size: 10px;
+		}
+		.ranks {
+			font-size: 22px;
+			line-height: 1.2;
+			letter-spacing: 0;
+			white-space: normal;
+		}
+		.note,
+		.danger-note {
+			font-size: 11px;
+			line-height: 1.4;
+		}
+		.side.hero .prompt {
+			font-size: 12px;
+			white-space: normal;
+			padding: 8px 12px;
+		}
+		.side.hero .tray {
+			--card-h: 48px;
+			padding: 12px;
+		}
+		.side.hero .tray-cards {
+			gap: 6px;
+		}
+		.side.hero .tray-title {
+			font-size: 11px;
+		}
+		.mat-actions button,
+		.side.hero .mat-actions button {
+			font-size: 12px;
+			padding: 8px 12px;
+		}
+		.rules {
+			gap: 6px;
+		}
+		.rule {
+			padding: 8px;
+		}
+		.rule strong {
+			font-size: 14px;
+		}
+		.rule small {
+			font-size: 10px;
+		}
+	}
+
+	@media (max-width: 639px) {
+		.table-cards[data-layout='piles'] .spread {
+			flex-direction: column;
+			width: 100%;
+			gap: 10px;
+		}
+		.table-cards[data-layout='piles'] .mat {
+			width: 100%;
+		}
+		.table-cards[data-layout='piles'] .piles {
+			justify-content: center;
+			gap: 20px;
+			padding: 4px;
+		}
+		.table-cards[data-layout='piles'] .pile {
+			min-width: 0;
+			flex: 1;
+		}
+		.table-cards[data-layout='piles'] .pile-tag {
+			white-space: normal;
+			font-size: 11px;
+			text-align: center;
+			line-height: 1.35;
+		}
+		.table-cards[data-layout='piles'] .side {
+			width: 100%;
+			max-width: none;
+		}
+		.table-cards[data-layout='piles'] .mat-actions {
+			width: 100%;
+			gap: 6px;
+		}
+		.table-cards[data-layout='piles'] .mat-actions button {
+			padding: 7px 10px;
+			min-height: 30px;
+		}
+	}
+
+	@media (max-width: 639px) {
+		.table-cards[data-layout='row'] .spread {
+			flex-direction: column;
+			max-width: 100%;
+			gap: 8px;
+		}
+		.table-cards[data-layout='row'] .side {
+			max-width: 100%;
+		}
+		.table-cards[data-layout='row'] .tray {
+			--card-h: 36px;
+			padding: 8px 12px;
+		}
+		.table-cards[data-layout='row'] .before {
+			--card-h: 25px;
+		}
 	}
 </style>

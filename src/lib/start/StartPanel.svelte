@@ -426,11 +426,11 @@
 
 <style>
 	.invite-card {
-		border: 1px solid rgb(226 184 98 / 28%);
+		border: 1px solid rgb(242 220 145 / 28%);
 		border-radius: 1rem;
-		background: linear-gradient(120deg, #203c2e, #14271f);
+		background: var(--night);
 		padding: 1rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.invite-trigger,
 	.invite-heading {
@@ -447,8 +447,8 @@
 			background 160ms ease;
 	}
 	.invite-trigger:hover:not(:disabled) {
-		border-color: #e2b862;
-		background: #254633;
+		border-color: #f2dc91;
+		background: var(--surface);
 	}
 	.invite-trigger:disabled {
 		opacity: 0.6;
@@ -461,7 +461,7 @@
 		width: 2.6rem;
 		height: 2.6rem;
 		border-radius: 0.8rem;
-		background: rgb(226 184 98 / 10%);
+		background: rgb(242 220 145 / 10%);
 		color: #edca80;
 	}
 	.invite-copy {
@@ -471,7 +471,7 @@
 	.invite-copy strong,
 	.invite-heading h3 {
 		display: block;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: 1rem;
 		font-weight: 750;
 	}
@@ -479,7 +479,7 @@
 	.invite-heading p {
 		display: block;
 		margin-top: 0.15rem;
-		color: #b6c6b8;
+		color: #beb5c9;
 		font-size: 0.75rem;
 	}
 	.invite-trigger :global(.invite-arrow) {
@@ -493,7 +493,7 @@
 	.invite-link > span {
 		display: block;
 		margin-bottom: 0.4rem;
-		color: #b6c6b8;
+		color: #beb5c9;
 		font-size: 0.75rem;
 	}
 	.invite-link input {
@@ -521,30 +521,30 @@
 	}
 	.invite-tools button {
 		flex: 1;
-		border: 1px solid rgb(226 184 98 / 25%);
-		color: #f4d68c;
+		border: 1px solid rgb(242 220 145 / 25%);
+		color: #f2dc91;
 	}
 	.invite-tools button:hover {
-		background: rgb(226 184 98 / 10%);
+		background: rgb(242 220 145 / 10%);
 	}
 	.invite-note {
 		display: block;
 		margin-top: 0.65rem;
-		color: #b6c6b8;
+		color: #beb5c9;
 		font-size: 0.7rem;
 	}
 	.enter-table {
 		width: 100%;
 		margin-top: 0.8rem;
-		background: #f4d68c;
-		color: #24180a;
+		background: #f2dc91;
+		color: #211c2e;
 	}
 	.enter-table:disabled {
 		opacity: 0.6;
 		cursor: wait;
 	}
 	button:focus-visible {
-		outline: 2px solid #f4d68c;
+		outline: 2px solid #f2dc91;
 		outline-offset: 3px;
 	}
 
@@ -552,51 +552,51 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 	}
 	.head {
 		text-align: center;
 	}
 	.suits {
-		color: #e2b862;
+		color: #f2dc91;
 		font-size: 0.95rem;
 		letter-spacing: 0.4em;
 	}
 	.head h2 {
 		margin-top: 0.3rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		font-size: clamp(1.6rem, 5vw, 2rem);
 		font-weight: 850;
 		letter-spacing: -0.01em;
 	}
 	.head p {
-		color: rgb(241 235 220 / 65%);
+		color: rgb(248 242 229 / 65%);
 		font-size: 0.95rem;
 	}
 	input,
 	select {
 		width: 100%;
-		border: 1px solid rgb(241 235 220 / 16%);
+		border: 1px solid rgb(248 242 229 / 16%);
 		border-radius: 0.9rem;
 		background: rgb(0 0 0 / 28%);
 		padding: 0.8rem 1rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 1.05rem;
 	}
 	input:focus,
 	select:focus {
-		border-color: rgb(240 200 110 / 70%);
+		border-color: rgb(242 220 145 / 70%);
 		outline: none;
 	}
 	.playing-as {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		border: 1px solid rgb(241 235 220 / 12%);
+		border: 1px solid rgb(248 242 229 / 12%);
 		border-radius: 1rem;
 		background: rgb(0 0 0 / 22%);
 		padding: 0.6rem 0.9rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		text-align: left;
 	}
 	.playing-as span:not(.edit) {
@@ -604,13 +604,13 @@
 		flex: 1;
 	}
 	.playing-as small {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.72rem;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
 	}
 	.playing-as .edit {
-		color: #e2b862;
+		color: #f2dc91;
 		font-size: 0.85rem;
 	}
 	.actions {
@@ -621,11 +621,11 @@
 		display: flex;
 		align-items: center;
 		gap: 0.9rem;
-		border: 1px solid rgb(241 235 220 / 16%);
+		border: 1px solid rgb(248 242 229 / 16%);
 		border-radius: 1rem;
 		background: rgb(255 255 255 / 5%);
 		padding: 0.9rem 1.1rem;
-		color: #f1ebdc;
+		color: #f8f2e5;
 		font-size: 1.1rem;
 		font-weight: 800;
 		text-align: left;
@@ -655,8 +655,8 @@
 	}
 	.big.gold {
 		border-color: transparent;
-		background: linear-gradient(160deg, #f4d68c, #c99236);
-		color: #24180a;
+		background: linear-gradient(160deg, #f2dc91, #f2dc91);
+		color: #211c2e;
 		box-shadow: 0 0.5rem 1.5rem rgb(201 146 54 / 30%);
 	}
 	.big:hover:not(:disabled) {
@@ -671,7 +671,7 @@
 	}
 	/* Not ".status": the UI library styles that class as a square indicator dot. */
 	.connect-status {
-		color: rgb(241 235 220 / 60%);
+		color: rgb(248 242 229 / 60%);
 		font-size: 0.82rem;
 		text-align: center;
 	}
@@ -681,7 +681,7 @@
 	}
 	.text-btn {
 		margin-left: 0.3rem;
-		color: #f4d68c;
+		color: #f2dc91;
 		text-decoration: underline;
 		cursor: pointer;
 	}
@@ -689,7 +689,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.6rem;
-		color: rgb(241 235 220 / 45%);
+		color: var(--muted);
 		font-size: 0.75rem;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -705,7 +705,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		border: 1px solid rgb(241 235 220 / 16%);
+		border: 1px solid rgb(248 242 229 / 16%);
 		border-radius: 0.9rem;
 		background: rgb(0 0 0 / 28%);
 		padding: 0.25rem 0.3rem 0.25rem 0.9rem;
@@ -723,8 +723,8 @@
 		flex-shrink: 0;
 		place-items: center;
 		border-radius: 0.7rem;
-		background: #2c5b3d;
-		color: #f4d68c;
+		background: var(--butter);
+		color: #f2dc91;
 		cursor: pointer;
 	}
 	.join button:disabled {
@@ -735,7 +735,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-size: 0.85rem;
 		text-align: left;
 		cursor: pointer;
@@ -746,7 +746,7 @@
 		flex-direction: column;
 	}
 	.settings-toggle small {
-		color: rgb(241 235 220 / 45%);
+		color: var(--muted);
 		font-size: 0.72rem;
 	}
 	.settings-toggle :global(.chev) {
@@ -769,7 +769,7 @@
 		font-size: 0.82rem;
 	}
 	.row > span {
-		color: rgb(241 235 220 / 70%);
+		color: rgb(248 242 229 / 70%);
 		font-weight: 650;
 	}
 	.row input,
@@ -779,7 +779,7 @@
 	}
 	.hint {
 		margin-top: -0.4rem;
-		color: rgb(241 235 220 / 45%);
+		color: var(--muted);
 		font-size: 0.75rem;
 	}
 	.pills {
@@ -788,10 +788,10 @@
 		gap: 0.3rem;
 	}
 	.pills button {
-		border: 1px solid rgb(241 235 220 / 16%);
+		border: 1px solid rgb(248 242 229 / 16%);
 		border-radius: 999px;
 		padding: 0.3rem 0.75rem;
-		color: rgb(241 235 220 / 80%);
+		color: rgb(248 242 229 / 80%);
 		font-size: 0.8rem;
 		font-weight: 650;
 		text-transform: capitalize;
@@ -799,8 +799,8 @@
 	}
 	.pills button.on {
 		border-color: transparent;
-		background: rgb(240 200 110 / 25%);
-		color: #f4d68c;
+		background: rgb(242 220 145 / 25%);
+		color: #f2dc91;
 	}
 	.pills button:disabled {
 		cursor: not-allowed;

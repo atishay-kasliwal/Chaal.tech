@@ -106,11 +106,23 @@
 			<article class="game-guide" id={selected.id} aria-labelledby="game-title">
 				<div class="stage" style:--poster={gameColor(selected.id)}>
 					<div class="stage-top">
-						<span>{selected.category}</span><span
+						<span class="category-tag"><span aria-hidden="true">♠</span> {selected.category}</span
+						><span class="guide-index"
 							>{String(GAME_GUIDES.indexOf(selected) + 1).padStart(2, '0')} / {GAME_GUIDES.length}</span
 						>
 					</div>
-					<h2 id="game-title">{selected.name}</h2>
+					<div class="stage-title">
+						<h2 id="game-title">{selected.name}</h2>
+						<span class="deal-tag"
+							>{selected.id === 'rummy'
+								? '13 cards per player'
+								: selected.id === 'blackjack'
+									? 'Play to 21'
+									: selected.id === 'texas-holdem'
+										? '2 hole cards'
+										: `${selected.cards.length}-card hand`}</span
+						>
+					</div>
 					{#key `${selected.id}-${replay}`}<GameDemo game={selected} />{/key}
 					<button
 						class="replay"
@@ -154,11 +166,11 @@
 
 <style>
 	.games-page {
-		background: #0b1812;
-		color: #f3eddf;
+		background: #211c2e;
+		color: #f8f2e5;
 		color-scheme: dark;
 		margin: 0 0 32px;
-		font-family: system-ui, sans-serif;
+		font-family: Arial, Helvetica, sans-serif;
 	}
 	.page-header {
 		padding: 32px clamp(20px, 5vw, 64px) 36px;
@@ -182,7 +194,7 @@
 		word-spacing: 0.08em;
 	}
 	h1 span {
-		color: #e5bb56;
+		color: #f2dc91;
 	}
 	.header-note {
 		display: grid;
@@ -206,7 +218,7 @@
 		align-items: center;
 		gap: 20px;
 		padding: 0 clamp(20px, 5vw, 64px);
-		border-block: 1px solid #f3eddf30;
+		border-block: 1px solid #f8f2e530;
 	}
 	.filters {
 		display: flex;
@@ -219,11 +231,11 @@
 		font-weight: 650;
 		border-bottom: 3px solid transparent;
 		cursor: pointer;
-		color: #a4afa1;
+		color: #beb5c9;
 	}
 	.filters button.active {
-		border-color: #e5bb56;
-		color: #f3eddf;
+		border-color: #f2dc91;
+		color: #f8f2e5;
 	}
 	.search {
 		min-width: 150px;
@@ -232,10 +244,10 @@
 	}
 	input {
 		width: 100%;
-		border-bottom: 1px solid #f3eddf30;
+		border-bottom: 1px solid #f8f2e530;
 		background: transparent;
 		padding: 10px 0;
-		color: #f3eddf;
+		color: #f8f2e5;
 		font-size: 14px;
 	}
 	input::placeholder {
@@ -264,7 +276,7 @@
 			10px ui-monospace,
 			monospace;
 		letter-spacing: 0.1em;
-		color: #a4afa1;
+		color: #beb5c9;
 		padding: 0 12px 16px;
 	}
 	.game-list a {
@@ -274,15 +286,15 @@
 		align-items: baseline;
 		padding: 13px 12px;
 		font-size: 13px;
-		border-top: 1px solid #f3eddf18;
+		border-top: 1px solid #f8f2e518;
 		transition: background 150ms;
 	}
 	.game-list a:hover {
-		background: #f3eddf09;
+		background: #f8f2e509;
 	}
 	.game-list a.chosen {
-		background: #e5bb56;
-		color: #19271e;
+		background: #f2dc91;
+		color: #211c2e;
 	}
 	.list-number {
 		font:
@@ -347,7 +359,7 @@
 		display: grid;
 		grid-template-columns: 100px 1fr;
 		gap: 20px;
-		border-top: 2px solid #f3eddf70;
+		border-top: 2px solid #f8f2e570;
 		padding-top: 20px;
 	}
 	h3 {
@@ -375,10 +387,10 @@
 	li p {
 		font-size: 14px;
 		line-height: 1.75;
-		color: #bdc7b8;
+		color: #beb5c9;
 	}
 	details {
-		border-top: 1px solid #f3eddf25;
+		border-top: 1px solid #f8f2e525;
 		margin-top: 12px;
 		padding-top: 18px;
 	}
@@ -396,7 +408,7 @@
 	details p {
 		font-size: 13px;
 		line-height: 1.8;
-		color: #bdc7b8;
+		color: #beb5c9;
 		margin-top: 14px;
 	}
 	.empty {
@@ -407,7 +419,7 @@
 		font-weight: 750;
 	}
 	.empty button {
-		color: #e5bb56;
+		color: #f2dc91;
 		margin-top: 20px;
 		cursor: pointer;
 	}
@@ -415,7 +427,7 @@
 		display: flex;
 		justify-content: space-between;
 		padding: 24px clamp(20px, 5vw, 64px);
-		border-top: 1px solid #f3eddf25;
+		border-top: 1px solid #f8f2e525;
 		font-size: 12px;
 		font-weight: 650;
 	}
@@ -423,7 +435,7 @@
 	button:focus-visible,
 	input:focus-visible,
 	summary:focus-visible {
-		outline: 2px solid #e5bb56;
+		outline: 2px solid #f2dc91;
 		outline-offset: 4px;
 	}
 	@media (max-width: 850px) {
@@ -462,9 +474,9 @@
 		.mobile-picker select {
 			width: 100%;
 			padding: 12px;
-			border: 1px solid #f3eddf30;
+			border: 1px solid #f8f2e530;
 			background: #14271c;
-			color: #f3eddf;
+			color: #f8f2e5;
 			font-size: 16px;
 		}
 		.game-list {
@@ -490,7 +502,7 @@
 		.game-list {
 			position: static;
 			max-height: 185px;
-			border-bottom: 1px solid #f3eddf30;
+			border-bottom: 1px solid #f8f2e530;
 		}
 		.game-list a {
 			padding-block: 11px;
@@ -514,6 +526,187 @@
 	@media (prefers-reduced-motion: reduce) {
 		.game-list a {
 			transition: none;
+		}
+	}
+
+	.games-page {
+		background: transparent;
+	}
+	.page-header {
+		padding: 38px 0 44px;
+	}
+	.back {
+		color: var(--muted);
+		font-size: 12px;
+	}
+	.headline {
+		margin-top: 24px;
+	}
+	h1 {
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: clamp(70px, 9.5vw, 132px);
+		line-height: 0.9;
+	}
+	.browse {
+		padding-inline: 0;
+	}
+	.workspace {
+		padding-inline: 0;
+	}
+	.game-list a {
+		border-radius: 8px;
+		transition:
+			background 0.2s,
+			translate 0.2s;
+	}
+	.game-list a:hover {
+		translate: 4px 0;
+		background: #ffffff08;
+	}
+	.game-list a.chosen {
+		background: var(--butter);
+		color: var(--night);
+	}
+	.game-list a.chosen .list-number {
+		color: var(--night);
+		opacity: 0.65;
+	}
+	.stage {
+		border-radius: 16px;
+	}
+	.stage h2 {
+		font-family: var(--font-display);
+		font-weight: 700;
+		letter-spacing: -0.04em;
+	}
+	footer {
+		padding-inline: 0;
+	}
+	@media (max-width: 600px) {
+		.page-header {
+			padding: 30px 0;
+		}
+		.headline {
+			margin-top: 20px;
+		}
+		h1 {
+			font-size: 72px;
+		}
+		.browse {
+			padding-inline: 0;
+		}
+		.workspace {
+			padding-inline: 0;
+		}
+		.mobile-picker {
+			margin-inline: 0;
+		}
+		.header-note p {
+			font-size: 11px;
+		}
+		.header-note .suit-mark {
+			font-size: 50px;
+		}
+	}
+
+	.stage {
+		border: 1px solid #ffffff22;
+		border-radius: 20px;
+		background: linear-gradient(140deg, #ffffff09, transparent 55%), var(--poster);
+		padding: 26px 30px 22px;
+		box-shadow: 0 6px 0 #0002;
+	}
+	.stage-top {
+		align-items: center;
+		text-transform: none;
+		font-family: Arial, Helvetica, sans-serif;
+		letter-spacing: 0;
+		font-size: 11px;
+		color: var(--paper);
+	}
+	.category-tag {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		border: 1px solid #ffffff35;
+		border-radius: 100px;
+		padding: 7px 12px;
+		background: #ffffff08;
+	}
+	.category-tag > span {
+		color: var(--butter);
+		font-size: 15px;
+	}
+	.guide-index {
+		font-variant-numeric: tabular-nums;
+		color: #ffffffb3;
+		font-size: 11px;
+		letter-spacing: 0.05em;
+	}
+	.stage-title {
+		margin-top: 28px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+	.stage-title h2 {
+		margin: 0;
+		font-size: clamp(38px, 5vw, 64px);
+		line-height: 0.98;
+		max-width: 100%;
+	}
+	.deal-tag {
+		font-size: 10px;
+		white-space: nowrap;
+		color: var(--butter);
+		border: 1px solid #f2dc9140;
+		border-radius: 6px;
+		padding: 6px 9px;
+	}
+	.replay {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid #ffffff30;
+		border-radius: 100px;
+		min-height: 38px;
+		padding: 9px 17px;
+		font-size: 11px;
+		margin: 8px auto 0;
+		transition:
+			translate 0.2s,
+			background 0.2s;
+	}
+	.replay:hover {
+		translate: 0 -2px;
+		background: #ffffff10;
+	}
+	@media (max-width: 600px) {
+		.stage {
+			padding: 20px 18px;
+			border-radius: 16px;
+		}
+		.stage-title {
+			margin-top: 24px;
+			gap: 12px;
+		}
+		.stage-title h2 {
+			font-size: 42px;
+		}
+		.stage-top {
+			font-size: 10px;
+		}
+		.category-tag {
+			padding: 6px 10px;
+		}
+		.deal-tag {
+			font-size: 9px;
+		}
+		.guide-index {
+			font-size: 10px;
 		}
 	}
 </style>
