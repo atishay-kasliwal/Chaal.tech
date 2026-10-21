@@ -31,6 +31,8 @@
 		['club', 'Club', '👥']
 	] as const;
 	type Section = (typeof SECTIONS)[number][0];
+	/** Sections redrawn as one-screen visuals; the rest still scroll inside the stage. */
+	const FITTED: string[] = ['overview', 'skill'];
 	const WINDOWS = [
 		['all', 'All time', 'All'],
 		['30d', 'Last 30 days', '30d'],
@@ -184,7 +186,7 @@
 				>
 			{/each}
 		</nav>
-		<div class="stage" class:dash={section === 'overview'}>
+		<div class="stage" class:dash={FITTED.includes(section)}>
 			{#if section === 'overview'}<Overview
 					{filter}
 					onOpenHand={showHand}
