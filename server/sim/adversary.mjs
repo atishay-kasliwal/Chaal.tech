@@ -307,7 +307,7 @@ export function randomGenome(random) {
 	return {
 		a: side(),
 		b: side(),
-		switchAt: mode < 0.5 ? 200 : Math.round(20 + random() * 120),
+		switchAt: mode < 0.5 ? 200 : Math.round(20 + random() * 60),
 		period: mode > 0.8 ? Math.round(5 + random() * 30) : 0,
 		afterWeak: random() < 0.4 ? r2(random()) : 0,
 		afterLoss: random() < 0.4 ? r2(random()) : 0,

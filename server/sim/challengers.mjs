@@ -1,6 +1,7 @@
 import { CANONICAL_STYLES } from '../bots/dna-styles.mjs';
 import { styleConfigHash } from '../bots/identity.mjs';
 import { CHARACTER_POLICY_V6 } from '../bots/character-v6.mjs';
+import { CHARACTER_POLICY_V7 } from '../bots/character-v7.mjs';
 
 /**
  * Phase 4 challengers (brief §12): a champion plus the smallest stated change, never a broad
@@ -91,7 +92,17 @@ export const SAMAY_CHALLENGERS = Object.freeze(
 	)
 );
 
+/** Dhoni's challenger (Phase 4 exploit search): only the cost of staying blind is new. */
+export const DHONI_CHALLENGERS = Object.freeze([
+	challenger('ms-dhoni', 'ms-dhoni@7-blindcost', {
+		policy: CHARACTER_POLICY_V7,
+		change: 'tp-dna@3 plus a base factor: looking gets more attractive as the blind stake climbs',
+		target: { kind: 'exploit', x: 'always-raise' }
+	})
+]);
+
 /** Challenger sets by name (scripts/sim/phase4.mjs gates --set <name>). */
 export const CHALLENGER_SETS = {
-	samay: SAMAY_CHALLENGERS
+	samay: SAMAY_CHALLENGERS,
+	dhoni: DHONI_CHALLENGERS
 };

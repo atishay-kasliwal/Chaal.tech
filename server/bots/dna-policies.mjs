@@ -16,6 +16,8 @@ export const DNA_POLICY_V4 = 'tp-dna@4';
 export const DNA_POLICY_V5 = 'tp-dna@5';
 /** Phase 4: tp-dna@3 plus event memory (mind@4) and event quirks. Challengers only until approved. */
 export const DNA_POLICY_V6 = 'tp-dna@6';
+/** Phase 4: tp-dna@3 plus the cost of staying blind as a base-brain factor. Challengers only. */
+export const DNA_POLICY_V7 = 'tp-dna@7';
 export const DNA_POLICIES = Object.freeze(
 	new Set([
 		DNA_POLICY_V1,

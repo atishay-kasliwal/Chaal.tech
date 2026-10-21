@@ -42,7 +42,8 @@ export function eventMeasures(e) {
 }
 
 export async function samay({ SEED, SCALE, run, save, opt }) {
-	const T = Math.round(Number(opt('tables', 240)) * SCALE);
+	const T = Math.round(Number(opt('tables', 400)) * SCALE);
+	const H = Number(opt('hands', 100));
 	const variants = [
 		{ key: CHAMPIONS[C], member: CHAMPIONS[C], change: 'champion' },
 		...SAMAY_CHALLENGERS.map((x) => ({
@@ -64,7 +65,7 @@ export async function samay({ SEED, SCALE, run, save, opt }) {
 			specs.push({
 				seed: SEED,
 				table: 100 + t,
-				hands: 200,
+				hands: H,
 				seats: pop.seats,
 				matched: true,
 				summary: { seats: [pop.heroSeat], events: !v.reference },
@@ -73,7 +74,7 @@ export async function samay({ SEED, SCALE, run, save, opt }) {
 			specs.push({
 				seed: SEED,
 				table: 6000 + t,
-				hands: 200,
+				hands: H,
 				seats: [v.member, ...BLUFFY],
 				matched: true,
 				summary: { seats: [0], events: !v.reference },
@@ -86,7 +87,7 @@ export async function samay({ SEED, SCALE, run, save, opt }) {
 		res.filter((r) => r.key === key && r.kind === kind).sort((a, b) => a.table - b.table);
 	const ref = measure(combine(of(`${C}@2`, 'pop').map((r) => r.seats[0])));
 	const champ = { pop: of(CHAMPIONS[C], 'pop'), bluffy: of(CHAMPIONS[C], 'bluffy') };
-	const out = { seed: SEED, tables: T, variants: {} };
+	const out = { seed: SEED, tables: T, hands: H, variants: {} };
 	for (const v of variants.filter((x) => !x.reference)) {
 		const pop = of(v.key, 'pop');
 		const bluffy = of(v.key, 'bluffy');

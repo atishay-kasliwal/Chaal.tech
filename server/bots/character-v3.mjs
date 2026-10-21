@@ -302,6 +302,8 @@ const nodes = [
 			c.cands = candidates(sit);
 			c.strength = sit.seen ? strength(sit, c.random) : null;
 			c.base = baseFactorsV3(sit, c.cands, c.strength);
+			// A policy may add base-brain factors (tp-dna@7: the cost of staying blind).
+			if (c.rules.base) c.base.push(...c.rules.base(sit, c.cands));
 			c.extra = [];
 			if (c.cands.length === 1) {
 				c.result = { ...move(sit, c.cands[0]), reason: 'only-move' };
