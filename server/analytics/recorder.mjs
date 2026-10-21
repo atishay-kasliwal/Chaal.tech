@@ -20,6 +20,8 @@ import { nextBotMove } from '../bots/runner.mjs';
 import { identityForSeat, STYLES, LEGACY_POLICY } from '../bots/identity.mjs';
 import { ADAPTIVE_POLICY } from '../bots/memory/adaptive.mjs';
 import { CHARACTER_POLICY, configErrors } from '../bots/config.mjs';
+import { updateMinds } from '../bots/runner.mjs';
+import { DNA_POLICIES } from '../bots/policies.mjs';
 import { getVariant } from '../variants/index.mjs';
 import { canonicalJson, fingerprint64 } from './hash.mjs';
 import { handVersions, replayUnavailable } from '../games/versions.mjs';
@@ -241,7 +243,8 @@ export function recordCommit(state, { before, after, afterJson, step, now, engin
 	if (step.action === 'addBot' && after.players.some((p) => p.id === step.payload?.botId))
 		next.bots[step.payload.botId] = identityForSeat(after.players.find(p => p.id === step.payload.botId)?.bot) ?? {
 			unresolved: true,
-			level: step.payload.level ?? null
+			level: step.payload.level ?? null,
+			character: step.payload.character ?? null
 		};
 
 	const entry = {
@@ -429,10 +432,12 @@ function betweenHands(state, { before, after, step, now }) {
 export function replayHand(preDeal, steps, { bots = {}, botChecks = [], match = {} } = {}) {
 	const states = [clone(preDeal)];
 	match.mode = 'exact';
+	// Bot minds as they were at the deal, folded forward exactly as the room did (BOT_BRAIN §6.4).
+	let minds = clone(steps[0]?.minds ?? {});
 	steps.forEach((step, index) => {
 		const before = states[index];
 		if (step.kind === 'bot' && step.bot)
-			botChecks.push({ i: index, verified: verifyBotDecision(before, step, index, bots) });
+			botChecks.push({ i: index, verified: verifyBotDecision(before, step, index, bots, minds) });
 		let after;
 		try {
 			after = applyStep(before, step);
@@ -447,6 +452,7 @@ export function replayHand(preDeal, steps, { bots = {}, botChecks = [], match = 
 			match.mode = 'compatible';
 		}
 		states.push(after);
+		minds = updateMinds(minds, before, after);
 	});
 	return states;
 }
@@ -456,15 +462,20 @@ export function replayHand(preDeal, steps, { bots = {}, botChecks = [], match = 
  * longer interpret is reported as unavailable, never re-interpreted with today's behaviour.
  */
 function styleProfile(identity, bot) {
-	const style = bot?.style ?? (identity?.styleId ? STYLES[identity.styleId] : null);
-	if (!style || style.configHash !== identity?.configHash || style.botId !== identity.botId || style._id !== identity.styleId || style.version !== identity.styleVersion) return null;
-	if ([CHARACTER_POLICY, ADAPTIVE_POLICY].includes(style.policy) ? configErrors(style).length > 0 : style.policy !== LEGACY_POLICY) return null;
-	return style.tendencies;
+	const style = replayStyle(identity, bot);
+	return style && !DNA_POLICIES.has(style.policy) && style.policy !== ADAPTIVE_POLICY ? style.tendencies : null;
 }
 
-function verifyBotDecision(state, step, index, bots) {
-	const profile = styleProfile(bots[step.actor], state.players.find(p => p.id === step.actor)?.bot);
-	if (!profile) return 'policy-unavailable';
+/** The exact style a recorded bot played, or null when the running code cannot interpret it. */
+function replayStyle(identity, bot) {
+	const style = bot?.style ?? (identity?.styleId ? STYLES[identity.styleId] : null);
+	if (!style || style.configHash !== identity?.configHash || style.botId !== identity.botId || style._id !== identity.styleId || style.version !== identity.styleVersion) return null;
+	if ([CHARACTER_POLICY, ADAPTIVE_POLICY].includes(style.policy) || DNA_POLICIES.has(style.policy) ? configErrors(style).length > 0 : style.policy !== LEGACY_POLICY) return null;
+	return style;
+}
+
+function verifyBotDecision(state, step, index, bots, minds = {}) {
+	if (!replayStyle(bots[step.actor], state.players.find(p => p.id === step.actor)?.bot)) return 'policy-unavailable';
 	if (!Array.isArray(step.bot.seed)) throw new ReplayError('Bot decision has no recorded seed', index);
 	const next = sfc32(step.bot.seed);
 	let used = 0;
@@ -475,14 +486,19 @@ function verifyBotDecision(state, step, index, bots) {
 	const connected = new Set(step.ctx?.connected ?? []);
 	const adaptive = state.players.find(p => p.id === step.actor)?.bot?.style?.policy === ADAPTIVE_POLICY;
 	if (adaptive && (!step.bot.memory || step.bot.memory.asOf > step.t)) throw new ReplayError('Missing/future frozen memory', index);
-	const move = nextBotMove(state, connected, random, (id) => styleProfile(bots[id], state.players.find(p => p.id === id)?.bot) ?? undefined, id => id === step.actor ? step.bot.memory : undefined);
+	const move = nextBotMove(state, connected, random, {
+		profileFor: (id) => styleProfile(bots[id], state.players.find(p => p.id === id)?.bot) ?? undefined,
+		memoryFor: id => id === step.actor ? step.bot.memory : undefined,
+		minds
+	});
 	if (adaptive && canonicalJson(move?.adaptive) !== canonicalJson(step.bot.adaptive)) throw new ReplayError('Adaptive trace is not reproducible', index);
 	if (
 		!move ||
 		move.botId !== step.actor ||
 		move.action !== step.action ||
 		canonicalJson(move.payload ?? {}) !== canonicalJson(step.payload ?? {}) ||
-		used !== step.bot.draws
+		used !== step.bot.draws ||
+		(step.bot.trace !== undefined && canonicalJson(move.trace ?? null) !== canonicalJson(step.bot.trace))
 	)
 		throw new ReplayError(`Bot decision at step ${index} is not reproducible`, index);
 	return 'reproduced';
@@ -766,8 +782,9 @@ export function buildHandRecords(hand, { engine = null, room } = {}) {
 				...(hand.bots?.[step.actor] ?? {}),
 				chosen: step.action,
 				params: clone(step.payload ?? {}),
-				probs: {},
+				probs: step.bot?.trace?.probs ?? {},
 				reason: step.bot?.reason ?? null,
+				...(step.bot?.trace ? { trace: clone(step.bot.trace) } : {}),
 				confidence: null,
 				memoryRefs: step.bot?.memory ? [step.bot.memory.id] : [],
 				...(step.bot?.adaptive ? { adaptive: clone(step.bot.adaptive) } : {}),

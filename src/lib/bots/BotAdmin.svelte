@@ -9,7 +9,7 @@
 		memory?: Record<string, string | number>;
 		supportedGames: string[];
 		supportedVariants: string[];
-		tendencies: Record<string, number>;
+		tendencies: Record<string, unknown>;
 		difficulty: { declared: string };
 		source?: string;
 		notes?: string;
@@ -68,13 +68,23 @@
 	const versions = $derived(styles.filter((style) => style.botId === selected));
 	const chosenStyle = $derived(styles.find((style) => style._id === styleId));
 	const previous = $derived(styles.find((style) => style._id === chosenStyle?.parent));
-	const changes = $derived(
-		chosenStyle && previous
-			? Object.entries(chosenStyle.tendencies)
-					.filter(([key, value]) => previous.tendencies[key] !== value)
-					.map(([key, value]) => `${key}: ${previous.tendencies[key]} → ${value}`)
-			: []
-	);
+	/** Tendencies as flat `path: value` pairs: numbers for heuristic styles, genes and quirks for DNA. */
+	const flat = (t: unknown, prefix = ''): [string, string][] =>
+		Object.entries((t ?? {}) as Record<string, unknown>).flatMap(([key, value]) =>
+			value && typeof value === 'object' && !Array.isArray(value)
+				? flat(value, `${prefix}${key}.`)
+				: [[`${prefix}${key}`, JSON.stringify(value)] as [string, string]]
+		);
+	const changes = $derived.by(() => {
+		if (!chosenStyle || !previous) return [];
+		const before = new Map(flat(previous.tendencies));
+		const lines = flat(chosenStyle.tendencies)
+			.filter(([key, value]) => before.get(key) !== value)
+			.map(([key, value]) => `${key}: ${before.get(key) ?? '·'} → ${value}`);
+		return chosenStyle.policy !== previous.policy
+			? [`policy: ${previous.policy} → ${chosenStyle.policy}`, ...lines]
+			: lines;
+	});
 	function accept(body: {
 		bots: Bot[];
 		styles: Style[];
@@ -209,12 +219,19 @@
 		>
 	</header>
 	<BotMemoryAdmin />
-	{#if bot?.currentStyle && bot.status !== 'retired'}<button disabled={busy} onclick={async () => {
-		if (await request({ action: 'adaptive-draft', botId: selected })) {
-			const draft = styles.find(s => s.botId === selected && s.status === 'draft');
-			if (draft) inspect(draft);
-		}
-	}}>Create adaptive style draft</button><p class="fine">A new version with bounded memory settings. Validate and publish when ready; current tables keep their style.</p>{/if}
+	{#if bot?.currentStyle && bot.status !== 'retired'}<button
+			disabled={busy}
+			onclick={async () => {
+				if (await request({ action: 'adaptive-draft', botId: selected })) {
+					const draft = styles.find((s) => s.botId === selected && s.status === 'draft');
+					if (draft) inspect(draft);
+				}
+			}}>Create adaptive style draft</button
+		>
+		<p class="fine">
+			A new version with bounded memory settings. Validate and publish when ready; current tables
+			keep their style.
+		</p>{/if}
 	{#if error}<p role="alert" class="error">{error}</p>{/if}{#if notice}<p
 			role="status"
 			class="notice"

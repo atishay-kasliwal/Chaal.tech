@@ -5,8 +5,13 @@
  */
 import { newRoom, transition, playing, projection } from '../../../server/engine.mjs';
 import { createGameRoom } from '../../../server/games/index.mjs';
-import { nextBotMove } from '../../../server/bots/runner.mjs';
-import { recordCommitSafely, stepRecorder, botRandom, finishCapture } from '../../../server/analytics/recorder.mjs';
+import { nextBotMove, updateMinds } from '../../../server/bots/runner.mjs';
+import {
+	recordCommitSafely,
+	stepRecorder,
+	botRandom,
+	finishCapture
+} from '../../../server/analytics/recorder.mjs';
 
 /** Small seeded PRNG (mulberry32) so every test hand is reproducible. */
 export function seeded(seed) {
@@ -61,11 +66,16 @@ export class TableSim {
 
 	commit(after, step) {
 		const afterJson = JSON.stringify(after);
+		// Bot minds exactly as the room keeps them: recorded at the deal, updated every commit.
+		const parsed = JSON.parse(afterJson);
+		const startsHand = !!parsed.handId && parsed.handId !== this.room?.handId;
+		const minds = this.minds ?? {};
+		const recordedStep = startsHand && Object.keys(minds).length ? { ...step, minds } : step;
 		const out = recordCommitSafely(this.state, {
 			before: this.room,
 			after,
 			afterJson,
-			step,
+			step: recordedStep,
 			now: this.now,
 			engine: this.engine
 		});
@@ -78,17 +88,30 @@ export class TableSim {
 			if (old && p.balance !== old.balance) chips[p.id] = p.balance - old.balance;
 		}
 		this.log.push({ rev: after.revision, action: step.action, handId: after.handId, chips });
+		this.minds = updateMinds(minds, this.room, parsed);
 		this.room = JSON.parse(afterJson);
 		return this.room;
 	}
 
-	create({ gameType = 'teen-patti', table = 1000, rulesVersion = 'classic-1', options, host = 'a' } = {}) {
+	create({
+		gameType = 'teen-patti',
+		table = 1000,
+		rulesVersion = 'classic-1',
+		options,
+		host = 'a'
+	} = {}) {
 		const room =
 			gameType === 'teen-patti'
 				? newRoom('sim-room', table, host, rulesVersion, options)
 				: createGameRoom(gameType, 'sim-room', table, host);
 		room.revision = 1;
-		return this.commit(room, { actor: host, action: 'create', payload: {}, ctx: {}, kind: 'player' });
+		return this.commit(room, {
+			actor: host,
+			action: 'create',
+			payload: {},
+			ctx: {},
+			kind: 'player'
+		});
 	}
 
 	ctx(extra = {}) {
@@ -125,11 +148,11 @@ export class TableSim {
 	/** The bot runner's move, with its random draws logged, as the room's alarm does. */
 	botMove() {
 		const rng = botRandom(() => Math.floor(this.random() * 0x1_0000_0000));
-		const move = nextBotMove(this.room, this.connected, rng.random, undefined, this.memoryFor);
+		const move = nextBotMove(this.room, this.connected, rng.random, { memoryFor: this.memoryFor, minds: this.minds });
 		if (!move) return null;
 		this.act(move.botId, move.action, move.payload, {
 			kind: 'bot',
-			bot: { seed: rng.seed, draws: rng.draws, reason: move.reason, ...(move.adaptive ? { memory: move.memory, adaptive: move.adaptive } : {}) }
+			bot: { seed: rng.seed, draws: rng.draws, reason: move.reason, ...(move.adaptive ? { memory: move.memory, adaptive: move.adaptive } : {}), ...(move.trace ? { trace: move.trace } : {}) }
 		});
 		return move;
 	}

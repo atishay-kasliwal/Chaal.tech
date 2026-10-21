@@ -15,7 +15,7 @@ import {
 	nextHandChoice,
 	GameError
 } from './engine.mjs';
-import { nextBotMove, botDue, pickBotName, botDelay, humansPresent } from './bots/runner.mjs';
+import { nextBotMove, botDue, pickBotName, botDelay, humansPresent, updateMinds } from './bots/runner.mjs';
 import { CHARACTER_SEEDS } from './bots/characters.mjs';
 import { runtimeStyle } from './bots/config.mjs';
 import { shuffledDeck } from './classic.mjs';
@@ -71,6 +71,21 @@ export function createGameServer({
 	)
 		throw new Error('Configure explicit allowed origins');
 	const store = new Store(database, { clock });
+	// Bot minds (server/bots/mind.mjs), per room, in memory: every commit is observed by the bots
+	// at that table, as the Cloudflare room does with durable storage. Local play only, so minds
+	// lost on a restart simply start again.
+	const minds = new Map();
+	const commitRoom = store.commit.bind(store);
+	store.commit = (room, ...rest) => {
+		const before = store.room(room.name);
+		const out = commitRoom(room, ...rest);
+		try {
+			minds.set(room.name, updateMinds(minds.get(room.name), before, room));
+		} catch (error) {
+			console.error('Bot mind update failed:', error?.message ?? 'Error');
+		}
+		return out;
+	};
 	let closePromise;
 	let closing = false;
 	const connections = new Map();
@@ -719,7 +734,7 @@ export function createGameServer({
 			return;
 		}
 		if (plan.at > clock()) return;
-		const move = nextBotMove(before, live, Math.random);
+		const move = nextBotMove(before, live, Math.random, { minds: minds.get(before.name) });
 		if (!move) return;
 		const room = transition(before, move.botId, move.action, move.payload, {
 			now: clock(),

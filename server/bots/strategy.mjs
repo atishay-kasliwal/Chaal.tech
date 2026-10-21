@@ -78,7 +78,7 @@ export function bestDiscard(cards, variant, handState) {
 }
 
 /** Pick a table move: a random mat card, the line or joker pair that scores best. */
-function tableMove(view, me, variant, random) {
+export function tableMove(view, me, variant, random) {
 	const options = view.legalActions.table;
 	const seen = me.cardsInHand.every((card) => card.rank > 0);
 	const scored = (payload) => {
@@ -119,7 +119,7 @@ function tableMove(view, me, variant, random) {
 	return choice;
 }
 
-function compare(left, right) {
+export function compare(left, right) {
 	for (let i = 0; i < Math.min(left.length, right.length); i++)
 		if (left[i] !== right[i]) return Math.sign(left[i] - right[i]);
 	return Math.sign(left.length - right.length);

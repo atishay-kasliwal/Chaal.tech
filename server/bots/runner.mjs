@@ -1,6 +1,11 @@
 import { projection, playing } from '../engine.mjs';
 import { decide } from './strategy.mjs';
 import { ADAPTIVE_POLICY, adaptiveDecision } from './memory/adaptive.mjs';
+import { deciderFor, MIND_POLICIES, MIND_RULES } from './policies.mjs';
+import { observe } from './observe.mjs';
+import { emptyMind, updateMind } from './mind.mjs';
+import { styleForSeat, CHARACTER_STYLES, STYLES as REFERENCE_STYLES } from './dna-styles.mjs';
+import { castMember } from '../../src/lib/bots/cast.js';
 
 /** Friendly table names; a room never seats two bots with the same name. */
 export const BOT_NAMES = Object.freeze([
@@ -25,6 +30,23 @@ export function pickBotName(room, random) {
 	return pool[Math.floor(random() * pool.length)];
 }
 
+/**
+ * An addBot payload for the simulator and tests: a character id seats that character's DNA reference
+ * style (Phase 2 unless `styleId` names another reference version), embedded in the seat exactly as
+ * the engine seats a published style; anything else is a practice level with a friendly name. Live
+ * rooms never use this: they seat what the bot directory has published.
+ */
+export function botSeatPayload(room, pick, botId, random, styleId = null) {
+	const character = castMember(pick);
+	if (character) {
+		const style = REFERENCE_STYLES[styleId ?? CHARACTER_STYLES[character.id]._id];
+		if (!style || style.botId !== character.id)
+			throw new Error(`Unknown reference style ${styleId}`);
+		return { botId, name: character.name, level: 'normal', style };
+	}
+	return { botId, name: pickBotName(room, random), level: pick };
+}
+
 /** Human-feeling pause before a bot acts. Looking or discarding is quicker than betting. */
 /**
  * How long a bot "thinks". The table should feel unhurried: at least 2 seconds before the turn
@@ -41,14 +63,21 @@ export function botDelay(random, quick = false, feel = {}) {
 }
 
 /** How quickly each character plays: Virat is decisive, Dhoni takes his time, Samay is quick but erratic. */
-export const TEMPO = Object.freeze({ 'rohit-sharma': 1, 'virat-kohli': 0.8, 'ms-dhoni': 1.35, gg: 1.15, 'samay-raina': 0.9 });
+export const TEMPO = Object.freeze({
+	'rohit-sharma': 1,
+	'virat-kohli': 0.8,
+	'ms-dhoni': 1.35,
+	gg: 1.15,
+	'samay-raina': 0.9
+});
 
 /** What about the table should slow a bot down, from the room (no cards involved). */
 export function thinkingContext(room, botPlayerId) {
 	const bot = room.players.find((p) => p.id === botPlayerId);
 	const boot = room.boot ?? 1;
 	return {
-		botId: bot?.bot?.botId ?? bot?.bot?.style?.botId ?? String(bot?.bot?.styleId ?? '').split('@')[0],
+		botId:
+			bot?.bot?.botId ?? bot?.bot?.style?.botId ?? String(bot?.bot?.styleId ?? '').split('@')[0],
 		facingRaise: (room.maxStake ?? 0) > boot * 2,
 		bigPot: (room.pot ?? 0) >= boot * 20
 	};
@@ -81,13 +110,45 @@ export function botDue(room, connected) {
 }
 
 /**
+ * The decider for a seated bot, by the policy of the style it sat down with:
+ * - `tp-adaptive@1` reads the cross-session memory loaded for it (`memoryFor`);
+ * - `tp-dna@*` (server/bots/policies.mjs) reads its per-session mind (`minds`);
+ * - `tp-character@1`, `tp-heuristic@1` and seats without a style play the heuristic with the
+ *   style's tendencies, or a replayed profile (`profileFor`, the recorder's replay of older hands).
+ */
+export function seatDecider(
+	player,
+	{ minds = null, memoryFor = () => undefined, profileFor = () => undefined } = {}
+) {
+	const style = player.bot?.style ?? null;
+	return (view, botId, random, mind = minds?.[botId] ?? null) => {
+		if (style?.policy === ADAPTIVE_POLICY)
+			return adaptiveDecision(view, botId, random, style, memoryFor(botId));
+		const dna = style?.policy?.startsWith('tp-dna@') ? deciderFor(style) : null;
+		if (dna) return dna(view, botId, random, mind);
+		return decide(view, botId, random, profileFor(botId) ?? style?.tendencies);
+	};
+}
+
+/**
  * The next bot move for this room, or null when no bot needs to act.
  * Discards come first (any bot holding too many seen cards), then the bot on turn.
+ * Options: `minds` (per-session minds by bot id), `memoryFor` (adaptive memory loader),
+ * `profileFor` (replayed profiles), or `deciderOf` (the simulator's own decider per seat).
  */
-export function nextBotMove(room, connected, random, profileFor = () => undefined, memoryFor = () => undefined) {
-	const choose = (view, bot) => bot.bot.style?.policy === ADAPTIVE_POLICY
-		? adaptiveDecision(view, bot.id, random, bot.bot.style, memoryFor(bot.id))
-		: decide(view, bot.id, random, profileFor(bot.id) ?? bot.bot.style?.tendencies);
+export function nextBotMove(
+	room,
+	connected,
+	random,
+	{ deciderOf = null, minds = null, memoryFor, profileFor } = {}
+) {
+	const choose = (view, bot) =>
+		(deciderOf ? deciderOf(bot) : seatDecider(bot, { minds, memoryFor, profileFor }))(
+			view,
+			bot.id,
+			random,
+			minds?.[bot.id] ?? null
+		);
 	if (!playing(room) || (room.gameType && room.gameType !== 'teen-patti')) return null;
 	for (const bot of room.players.filter(
 		(p) => p.bot && !p.departed && !p.isPacked && p.cards.length
@@ -108,4 +169,46 @@ export function nextBotMove(room, connected, random, profileFor = () => undefine
 export function botMoveText(room, move) {
 	const name = room.players.find((p) => p.id === move.botId)?.username ?? 'Bot';
 	return move.action === 'pack' ? `${name} packed` : null;
+}
+
+/* ------------------------------------------- minds ------------------------------------------- */
+
+const NOBODY = new Set();
+const seatedBot = (room, id) =>
+	room?.players.find((p) => p.id === id && p.bot && !p.departed && p.seatNumber !== null);
+
+/**
+ * Bring every mind-keeping bot's mind up to date after one commit (before -> after). Pure and
+ * deterministic: the live room, the recorder's replay and the simulator all call this, so a mind
+ * is the same wherever it is rebuilt. Each bot observes only its own two projections
+ * (server/bots/observe.mjs). Minds of bots that left are dropped; a bot that sits down starts empty.
+ * Options are for the offline simulator: the style of a seat under test, a memoized projection,
+ * and updating minds in place. A live room and a replay use the defaults.
+ */
+export function updateMinds(
+	minds,
+	before,
+	after,
+	{ styleOf = (p) => styleForSeat(p.bot), project = projection, mutate = false } = {}
+) {
+	if (!after || (after.gameType && after.gameType !== 'teen-patti')) return minds ?? {};
+	const next = {};
+	for (const p of after.players) {
+		if (!seatedBot(after, p.id)) continue;
+		const style = styleOf(p);
+		if (!style || !MIND_POLICIES.has(style.policy)) continue;
+		const rules = MIND_RULES[style.policy] ?? 1;
+		const prior = minds?.[p.id] ?? emptyMind(rules);
+		const nextView = project(after, p.id, NOBODY);
+		const prevView = seatedBot(before, p.id) ? project(before, p.id, NOBODY) : null;
+		next[p.id] = updateMind(prior, observe(prevView, nextView), {
+			self: p.id,
+			view: nextView,
+			dna: style.tendencies.dna,
+			kindOf: (id) => (after.players.find((x) => x.id === id)?.bot ? 'bot' : 'human'),
+			mutate,
+			rules
+		});
+	}
+	return next;
 }

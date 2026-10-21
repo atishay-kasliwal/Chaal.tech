@@ -7,7 +7,7 @@ import globals from 'globals';
 import { fileURLToPath } from 'node:url';
 
 export default [
-	{ ignores: ['static/vendor/**', 'visual-baselines/**'] },
+	{ ignores: ['static/vendor/**', 'visual-baselines/**', '.claude/**'] },
 	includeIgnoreFile(fileURLToPath(new URL('./.gitignore', import.meta.url))),
 	js.configs.recommended,
 	...ts.configs.recommended.map((config) => ({ ...config, files: ['**/*.ts', '**/*.svelte'] })),
