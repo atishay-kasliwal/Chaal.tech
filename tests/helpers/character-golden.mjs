@@ -37,7 +37,7 @@ export function characterGolden(version, { hands = 30, seeds = 3 } = {}) {
 			const random = rng(seed * 7919 + rulesVersion.length * version);
 			let room = newRoom('golden-room', 1000, 'host', 'classic-1', { boot: 10, autoReady: true });
 			room = transition(room, 'host', 'join', { username: 'Host' }, ctx);
-			CAST.forEach(({ id, name }, i) => {
+			CAST.forEach(({ id }, i) => {
 				room = transition(
 					room,
 					'host',
