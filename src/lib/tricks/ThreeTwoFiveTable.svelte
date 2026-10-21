@@ -748,8 +748,15 @@
 			width: 44px;
 			height: 44px;
 		}
+		/* Phones: two rows of five, no overlap, so every card is easy to tap. */
+		.hand {
+			flex-wrap: wrap;
+			height: auto;
+			gap: 6px;
+		}
 		.card {
-			margin-left: -34px;
+			height: 96px;
+			margin-left: 0;
 		}
 		.trick {
 			width: 220px;

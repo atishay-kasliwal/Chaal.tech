@@ -257,14 +257,20 @@ export function opponentModels(obs, memory, dna, adaptive) {
 
 /* ------------------------------------------ decide ------------------------------------------ */
 
-export function decide325(view, random, { dna = NEUTRAL, memory = {}, adaptive = true } = {}) {
+export function decide325(
+	view,
+	random,
+	{ dna = NEUTRAL, memory = {}, adaptive = true, personaScale = 1 } = {}
+) {
 	const obs = observation325(view);
 	const models = opponentModels(obs, memory, dna, adaptive);
 	const b = brain(obs, random, models);
-	const persona = personality(obs, b, dna);
+	// personaScale (evaluation only) turns personality up or down, cap included.
+	const persona = personality(obs, b, dna).map((d) => d * personaScale);
+	const cap = PERSONA_CAP * personaScale;
 	// Cap personality, then bound it by how clear the brain's choice is.
 	const worst = Math.max(...persona.map(Math.abs), 1e-9);
-	const capped = worst > PERSONA_CAP ? persona.map((d) => (d * PERSONA_CAP) / worst) : persona;
+	const capped = worst > cap ? persona.map((d) => (d * cap) / worst) : persona;
 	const sorted = b.base.slice().sort((a, c) => c - a);
 	const clarity = sorted.length > 1 ? sorted[0] - sorted[1] : 1;
 	const discipline = dna.discipline ?? 0.5;
@@ -321,11 +327,14 @@ export function decide325(view, random, { dna = NEUTRAL, memory = {}, adaptive =
  * A seat decider for the table runner and the room: a character (canonical DNA) or the neutral
  * baseline, with or without personality and adaptation (for evaluation).
  */
-export function bot325(characterId, { personality: persona = true, adaptive = true } = {}) {
+export function bot325(
+	characterId,
+	{ personality: persona = true, adaptive = true, personaScale = 1 } = {}
+) {
 	const dna =
 		characterId && persona ? (CANONICAL_STYLES[characterId]?.tendencies.dna ?? NEUTRAL) : NEUTRAL;
 	const decide = (view, selfId, random, memory) =>
-		decide325(view, random, { dna, memory, adaptive });
+		decide325(view, random, { dna, memory, adaptive, personaScale });
 	decide.observe = (view, selfId, memory) => observe325(view, selfId, memory);
 	decide.characterId = characterId ?? null;
 	return decide;
