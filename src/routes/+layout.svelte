@@ -177,6 +177,7 @@
 	class="site-main"
 	class:home-main={isHome}
 	class:club-main={page.route.id === '/club'}
+	class:stats-main={page.route.id === '/stats'}
 	class:room-main={isRoom}
 >
 	{@render children?.()}
@@ -199,9 +200,11 @@
 <ProfilePanel />
 
 <style>
-	/* Header height, shared with pages that fill the viewport under it. */
+	/* Header height, shared with pages that fill the viewport under it; and one page width for
+	   every page, so header, content and footer line up on wide screens. */
 	:global(:root) {
 		--header-h: 64px;
+		--page-max: 1680px;
 	}
 	@media (max-width: 720px) {
 		:global(:root) {
@@ -245,7 +248,7 @@
 		grid-template-columns: 1fr auto 1fr;
 		align-items: center;
 		gap: 20px;
-		max-width: 1440px;
+		max-width: var(--page-max);
 		margin: auto;
 		padding: 0 var(--gutter);
 		height: var(--header-h);
@@ -420,12 +423,13 @@
 		width: 100%;
 		min-height: calc(100dvh - var(--header-h));
 		padding: 0 var(--gutter);
-		max-width: 1440px;
+		max-width: var(--page-max);
 		margin: auto;
 		outline: none;
 	}
 	.site-main.home-main,
-	.site-main.club-main {
+	.site-main.club-main,
+	.site-main.stats-main {
 		padding: 0;
 		max-width: none;
 	}
@@ -436,7 +440,7 @@
 
 	/* Footer: one quiet line. */
 	.site-footer {
-		max-width: 1440px;
+		max-width: var(--page-max);
 		margin: auto;
 		padding: 28px var(--gutter);
 		display: flex;
