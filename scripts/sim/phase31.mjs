@@ -64,14 +64,14 @@ const STAGES = {
 		hands: 200,
 		adapt: ADAPT_TYPES,
 		adaptTables: Math.max(2, Math.round(8 * SCALE)),
-		nights: Math.max(4, Math.round(8 * SCALE))
+		nights: Math.max(4, Math.round(12 * SCALE))
 	},
 	final: {
 		tables: Math.round(500 * SCALE),
 		hands: 200,
 		adapt: ADAPT_TYPES,
 		adaptTables: Math.max(4, Math.round(24 * SCALE)),
-		nights: Math.max(6, Math.round(16 * SCALE))
+		nights: Math.max(6, Math.round(24 * SCALE))
 	}
 };
 /** Tolerances for selection. */
