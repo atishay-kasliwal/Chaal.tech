@@ -24,8 +24,9 @@ export const MIND_VERSION = 'mind@1';
  * Appraisal rules by version. mind@1 (tp-dna@3) is frozen. mind@2 (tp-dna@4, Phase 3):
  * - opponent models forget faster for adaptable styles, so they follow a player who changes gear;
  * - being bluffed off a pot makes a suspicious style more suspicious (a calling station's trigger).
+ * mind@3 (tp-dna@5, Phase 3.1): mind@2, plus each cue records the hand number it happened in.
  */
-export const MIND_VERSIONS = Object.freeze({ 1: 'mind@1', 2: 'mind@2' });
+export const MIND_VERSIONS = Object.freeze({ 1: 'mind@1', 2: 'mind@2', 3: 'mind@3' });
 const MAX_OTHERS = 8;
 /** A result is big when it moves at least this many boots and this share of the starting stack. */
 export const BIG_POT = 6;
@@ -276,7 +277,13 @@ function appraiseResult(mind, e, { self, view, trait, push, kindOf, rules }) {
 	const cue = (name, who = null) =>
 		(mind.cues = [
 			...(mind.cues ?? []),
-			{ hand: hand?.id ?? null, cue: name, ...(who ? { who } : {}) }
+			// mind@3 (tp-dna@5): the hand number too, so a policy can tell how recent an event is.
+			{
+				hand: hand?.id ?? null,
+				cue: name,
+				...(who ? { who } : {}),
+				...(rules >= 3 ? { n: mind.hands } : {})
+			}
 		].slice(-5));
 	const boot = Math.max(view.boot ?? 1, 1);
 	const me = view.usersList.find((u) => u.id === self);

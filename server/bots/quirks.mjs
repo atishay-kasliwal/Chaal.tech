@@ -113,3 +113,30 @@ export const QUIRKS_V3 = Object.freeze({
 	/** Reads the table: opponent observations count double (applied in the beliefs node). */
 	readsTable: { reason: 'model-exploit', modelWeight: true }
 });
+
+/**
+ * Quirks for policy tp-dna@5 (Phase 3.1): event-triggered moments that last a few hands. `m.events`
+ * (character-v5.mjs) gives how recent each of the bot's own events is, 1 just after it and fading to
+ * 0 over four hands. A quirk still acts only in its moment: under pressure after the event.
+ */
+export const QUIRKS_V5 = Object.freeze({
+	...QUIRKS_V3,
+	/** A painful loss (or a losing run) makes a stubborn style dig in: it will not be pushed off. */
+	stubbornStreak: {
+		reason: 'stubborn',
+		apply(sit, k, s, m) {
+			const hurt = m.events?.bigLoss ?? 0;
+			if (!sit.seen || hurt <= 0 || !(m.facing || m.pressure > 0)) return null;
+			return { chaal: k * 0.45 * hurt, show: k * 0.15 * hurt, pack: -k * 0.35 * hurt };
+		}
+	},
+	/** Having just caught someone bluffing, every raise looks like another bluff: call it down. */
+	onToYou: {
+		reason: 'on-to-you',
+		apply(sit, k, s, m) {
+			const caught = m.events?.caughtBluff ?? 0;
+			if (!sit.seen || caught <= 0 || !m.facing) return null;
+			return { chaal: k * 0.4 * caught, show: k * 0.25 * caught, pack: -k * 0.25 * caught };
+		}
+	}
+});

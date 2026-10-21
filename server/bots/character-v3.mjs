@@ -1,6 +1,9 @@
 import { situation, candidates, move, strength, forcedMove } from './brain.mjs';
 import { baseFactorsV2, EVIDENCE, CONVENTION } from './character-v2.mjs';
-import { QUIRKS_V3 } from './quirks.mjs';
+import { QUIRKS_V3, QUIRKS_V5 } from './quirks.mjs';
+
+/** Every quirk by name, for reasons and grouping (names are unique); a policy applies only its own set. */
+const QUIRK_NAMES = Object.freeze({ ...QUIRKS_V3, ...QUIRKS_V5 });
 import { defineGraph, runGraph } from './graph.mjs';
 import { MOOD_BASELINE, beliefs, confidence, PRIORS } from './mind.mjs';
 import { DNA_POLICY_V3 } from './dna-policies.mjs';
@@ -195,7 +198,7 @@ function baseReason(factor, action, seen) {
 
 function reasonFor(factor, action, c, sign) {
 	const [kind, name] = factor.split('.');
-	if (kind === 'quirk') return QUIRKS_V3[name].reason;
+	if (kind === 'quirk') return QUIRK_NAMES[name].reason;
 	if (kind === 'dna') {
 		const [high, low] = TRAIT_REASONS[name];
 		return c.style.tendencies.dna[name] >= 0.5 ? high : low;
@@ -225,7 +228,7 @@ const GROUPS = ['persona', 'state', 'social', 'model', 'quirk'];
 // A quirk that amplifies opponent reads (readsTable) is part of the reads, so it is a model factor.
 const group = (f) => {
 	const [kind, name] = f.split('.');
-	if (kind === 'quirk' && QUIRKS_V3[name]?.modelWeight) return 'model';
+	if (kind === 'quirk' && QUIRK_NAMES[name]?.modelWeight) return 'model';
 	return { dna: 'persona', state: 'state', social: 'social', model: 'model', quirk: 'quirk' }[kind];
 };
 
@@ -282,6 +285,8 @@ const nodes = [
 				facing: facingId ? about(facingId) : null,
 				tableAggr: mind?.table.aggr ?? 0.25
 			};
+			// A policy may remember more (tp-dna@5: its own recent events).
+			if (c.rules.recall) Object.assign(c.m, c.rules.recall(c, mind));
 			c.moodDev = Object.fromEntries(
 				Object.keys(MOOD_BASELINE).map((k) => [k, c.m.mood[k] - MOOD_BASELINE[k]])
 			);
@@ -447,7 +452,7 @@ const nodes = [
 		label: 'conditional quirks',
 		run(c) {
 			for (const { id, strength: k } of c.style.tendencies.quirks ?? []) {
-				const quirk = QUIRKS_V3[id];
+				const quirk = (c.rules.quirks ?? QUIRKS_V3)[id];
 				if (!quirk?.apply) continue;
 				const d = quirk.apply(c.sit, k, c.strength, c.m);
 				if (d) push(c, `quirk.${id}`, d);
