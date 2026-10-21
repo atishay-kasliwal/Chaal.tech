@@ -50,9 +50,10 @@ export function runTable325(spec, hooks = {}) {
 			if (hooks.onDecision) hooks.onDecision({ round: r, seat, view, move, room });
 			room = transition(room, pid, move.action, move.payload, ctx());
 			// Every seat sees each change (for session memory), as a client receives every update.
-			for (const [s, other] of ids.entries())
+			// Each seat observes only its own view.
+			for (const [s, own] of ids.entries())
 				if (seats[s].observe)
-					seats[s].observe(projection(room, other, ctx().connected), other, memory[s]);
+					seats[s].observe(projection(room, own, ctx().connected), own, memory[s]);
 		}
 		results.push(structuredClone(room.result));
 		if (hooks.onRound) hooks.onRound({ round: r, room });

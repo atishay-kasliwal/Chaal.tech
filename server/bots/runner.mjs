@@ -1,3 +1,4 @@
+import { bot325, observe325 } from './tricks/bot-325.mjs';
 import { projection, playing } from '../engine.mjs';
 import { decide } from './strategy.mjs';
 import { ADAPTIVE_POLICY, adaptiveDecision } from './memory/adaptive.mjs';
@@ -95,6 +96,10 @@ const needsMove = (legal) => !!legal.discard || !!legal.table?.length;
 
 /** Which bot (if any) needs to act now, without working out its move. Cheap to call. */
 export function botDue(room, connected) {
+	if (TRICK_GAMES.has(room.gameType))
+		return playing(room) && room.players.find((p) => p.id === room.currentPlayerId)?.bot
+			? room.currentPlayerId
+			: null;
 	if (!playing(room) || (room.gameType && room.gameType !== 'teen-patti')) return null;
 	const current = room.players.find((p) => p.id === room.currentPlayerId);
 	if (current?.bot) return current.id;
@@ -149,6 +154,14 @@ export function nextBotMove(
 			random,
 			minds?.[bot.id] ?? null
 		);
+	if (TRICK_GAMES.has(room.gameType)) {
+		const current = room.players.find((p) => p.id === room.currentPlayerId);
+		if (!playing(room) || !current?.bot) return null;
+		const view = projection(room, current.id, connected);
+		const decide = deciderOf ? deciderOf(current) : bot325(current.bot.characterId);
+		const move = decide(view, current.id, random, minds?.[current.id] ?? {});
+		return move ? { botId: current.id, ...move } : null;
+	}
 	if (!playing(room) || (room.gameType && room.gameType !== 'teen-patti')) return null;
 	for (const bot of room.players.filter(
 		(p) => p.bot && !p.departed && !p.isPacked && p.cards.length
@@ -191,6 +204,7 @@ export function updateMinds(
 	after,
 	{ styleOf = (p) => styleForSeat(p.bot), project = projection, mutate = false } = {}
 ) {
+	if (after && TRICK_GAMES.has(after.gameType)) return updateTrickMinds(minds, after);
 	if (!after || (after.gameType && after.gameType !== 'teen-patti')) return minds ?? {};
 	const next = {};
 	for (const p of after.players) {
@@ -209,6 +223,22 @@ export function updateMinds(
 			mutate,
 			rules
 		});
+	}
+	return next;
+}
+
+/**
+ * Trick-game session memory (3 2 5): each seated bot folds its own projection after every commit,
+ * so what it learns about the table is exactly what a person in its seat could have seen.
+ */
+const TRICK_GAMES = new Set(['three-two-five']);
+function updateTrickMinds(minds, after) {
+	const next = {};
+	for (const p of after.players) {
+		if (!p.bot || p.departed || p.seatNumber === null) continue;
+		const mind = structuredClone(minds?.[p.id] ?? {});
+		observe325(projection(after, p.id, NOBODY), p.id, mind);
+		next[p.id] = mind;
 	}
 	return next;
 }
