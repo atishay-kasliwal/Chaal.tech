@@ -4,86 +4,196 @@
 	import { day } from '../format.js';
 	import type { Names, RecordsView } from '../types.js';
 
-	let { filter, onOpenHand, onRecap }: { filter: Filter; onOpenHand: (id: string) => void; onRecap: (nightId: string) => void } = $props();
+	let {
+		filter,
+		onOpenHand,
+		onRecap
+	}: { filter: Filter; onOpenHand: (id: string) => void; onRecap: (nightId: string) => void } =
+		$props();
 	let data = $state<(RecordsView & { names: Names }) | null>(null);
 	let error = $state('');
 	$effect(() => {
 		const params = { game: filter.game };
 		data = null;
 		error = '';
-		fetchAnalytics<RecordsView & { names: Names }>('records', params).then((b) => (data = b)).catch((e) => (error = e.message));
+		fetchAnalytics<RecordsView & { names: Names }>('records', params)
+			.then((b) => (data = b))
+			.catch((e) => (error = e.message));
 	});
 	const shown = (v: number | string) => (typeof v === 'number' ? v.toLocaleString('en-IN') : v);
+	const ICON: Record<string, string> = {
+		'best-night': '☾',
+		'best-night-per-hand': '⚡',
+		'most-hands-night': '🂠',
+		'biggest-comeback': '↺',
+		'biggest-pot': '💰',
+		'longest-streak': '🔥',
+		'best-hand': '♛'
+	};
 </script>
 
 {#if error}<p class="notice" role="alert">{error}</p>
-{:else if !data}<p class="muted">Looking through your history…</p>
-{:else if data.empty}
-	<section class="panel empty"><h2>Your records start here</h2><p class="muted">Play a few hands and your best nights, biggest pots and streaks are kept for you.</p></section>
+{:else if !data}<div class="rc" aria-busy="true"></div>
+{:else if data.empty}<div class="v-zero">
+		<span aria-hidden="true">♛</span><strong>0 records</strong>
+	</div>
 {:else}
-	<section class="panel">
-		<h2>Your records</h2>
-		<ul class="records-grid">
-			{#each data.records as r (r.id)}
-				<li>
-					<h3>{r.label}</h3>
-					<p class="big">{shown(r.value)} <span class="muted small">{r.unit}</span></p>
-					{#if r.detail}<p class="muted tiny">{r.detail}</p>{/if}
-					{#if r.at}<p class="muted tiny">{day(r.at)}</p>{/if}
+	<div class="rc">
+		<ul class="recs">
+			{#each data.records.slice(0, 8) as r (r.id)}
+				<li
+					class="vt rec"
+					title="{r.label}{r.detail ? ` · ${r.detail}` : ''}{r.at ? ` · ${day(r.at)}` : ''}"
+				>
+					<span class="r-ic" aria-hidden="true">{ICON[r.id] ?? '♛'}</span>
+					<strong class="v-big val">{shown(r.value)}</strong>
+					<span class="unit">{r.unit}</span>
+					<span class="lbl">{r.label}</span>
 					<span class="links">
-						{#if r.handId}<button class="link" onclick={() => onOpenHand(r.handId ?? '')}>The hand</button>{/if}
-						{#if r.nightId}<button class="link" onclick={() => onRecap(r.nightId ?? '')}>The night</button>{/if}
+						{#if r.at}<span class="when">{day(r.at)}</span>{/if}
+						{#if r.handId}<button
+								class="v-chip v-press"
+								onclick={() => onOpenHand(r.handId ?? '')}
+								aria-label="The hand: {r.label}">🂠</button
+							>{/if}
+						{#if r.nightId}<button
+								class="v-chip v-press"
+								onclick={() => onRecap(r.nightId ?? '')}
+								aria-label="The night: {r.label}">☾</button
+							>{/if}
 					</span>
 				</li>
 			{/each}
 		</ul>
-	</section>
-
-	<section class="panel">
-		<h2>Moments</h2>
-		{#if data.achievements.earned.length}
-			<ul class="plain">
-				{#each data.achievements.earned as a (a.id)}
-					<li><span><strong>{a.title}</strong><small class="muted"> {a.description}</small></span><span class="muted">{a.earnedAt ? day(a.earnedAt) : ''}</span></li>
+		<section class="vt moments" aria-labelledby="mo-title">
+			<h2 id="mo-title"><span class="ic" aria-hidden="true">✦</span> Moments</h2>
+			<div class="badges">
+				{#each data.achievements.earned.slice(0, 6) as a (a.id)}
+					<span
+						class="badge earned"
+						title="{a.title}: {a.description}{a.earnedAt ? ` · ${day(a.earnedAt)}` : ''}"
+						><span aria-hidden="true">★</span>{a.title}</span
+					>
 				{/each}
-			</ul>
-		{:else}<p class="muted">Nothing earned yet. These come from real moments at the table, not from playing more or betting bigger.</p>{/if}
-		{#if data.achievements.next.length}
-			<h3>Getting close</h3>
-			<ul class="plain">
-				{#each data.achievements.next as a (a.id)}
-					<li><span>{a.title}</span><span class="muted">{a.progress ? `${a.progress.value} of ${a.progress.target}` : ''}</span><progress max={a.progress?.target ?? 1} value={a.progress?.value ?? 0}></progress></li>
+				{#each data.achievements.next.slice(0, 4) as a (a.id)}
+					{@const pr = a.progress ? a.progress.value / a.progress.target : 0}
+					<span class="badge next" title="{a.title}: {a.description}" style:--p={pr}
+						><span class="ring" aria-hidden="true"></span>{a.title}{#if a.progress}<small
+								>{a.progress.value}/{a.progress.target}</small
+							>{/if}</span
+					>
 				{/each}
-			</ul>
-		{/if}
-	</section>
+				{#if !data.achievements.earned.length && !data.achievements.next.length}<span class="v-zero"
+						><span aria-hidden="true">★</span><span>0 yet</span></span
+					>{/if}
+			</div>
+		</section>
+	</div>
 {/if}
 
 <style>
-	.records-grid {
+	.rc {
+		height: 100%;
+		min-height: 0;
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-		gap: 0.7rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
+		gap: 12px;
+		grid-template-rows: minmax(0, 1fr) auto;
 	}
-	.records-grid li {
+	.recs {
 		display: grid;
-		gap: 0.15rem;
-		border-radius: 0.9rem;
-		background: rgb(255 255 255 / 3%);
-		padding: 0.8rem 0.9rem;
+		grid-template-columns: repeat(4, 1fr);
+		grid-auto-rows: minmax(0, 1fr);
+		gap: 12px;
+		min-height: 0;
+	}
+	.rec {
+		justify-content: center;
+		gap: 4px;
+	}
+	.r-ic {
+		position: absolute;
+		top: 12px;
+		right: 14px;
+		font-size: 22px;
+		color: var(--butter);
+	}
+	.val {
+		font-size: clamp(28px, 3.4vw, 48px);
+	}
+	.unit {
+		font-size: 12px;
+		color: var(--muted);
+	}
+	.lbl {
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 1.3;
+		display: -webkit-box;
+		line-clamp: 2;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 	.links {
 		display: flex;
-		gap: 0.8rem;
-		margin-top: 0.2rem;
+		align-items: center;
+		gap: 6px;
+		margin-top: 4px;
 	}
-	progress {
-		grid-column: 1 / -1;
-		width: 100%;
-		height: 0.35rem;
-		accent-color: #e7c784;
+	.when {
+		font-size: 11px;
+		color: var(--muted);
+		margin-right: auto;
+	}
+	.badges {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		padding: 7px 12px;
+		border-radius: 100px;
+		background: #ffffff0d;
+		font-size: 12px;
+		font-weight: 700;
+	}
+	.badge.earned {
+		background: #f2dc9124;
+		color: var(--butter);
+	}
+	.badge small {
+		color: var(--muted);
+		font-weight: 600;
+	}
+	.ring {
+		--p: 0;
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		background:
+			radial-gradient(closest-side, #2c263b 60%, transparent 62%),
+			conic-gradient(var(--butter) calc(var(--p) * 1turn), #ffffff22 0);
+	}
+	@media (max-width: 1000px) {
+		.recs {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	@media (max-width: 720px) {
+		.rc {
+			gap: 8px;
+		}
+		.recs {
+			gap: 8px;
+		}
+		.recs li:nth-child(n + 7) {
+			display: none;
+		}
+		.badges .badge:nth-child(n + 5) {
+			display: none;
+		}
 	}
 </style>

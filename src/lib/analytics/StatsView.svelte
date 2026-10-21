@@ -20,34 +20,36 @@
 	import { onMount } from 'svelte';
 
 	const SECTIONS = [
-		['overview', 'Overview'],
-		['skill', 'Skill & luck'],
-		['games', 'Games'],
-		['cards', 'Cards'],
-		['style', 'Style'],
-		['rivals', 'Rivals'],
-		['records', 'Records'],
-		['history', 'Nights'],
-		['club', 'Club']
+		['overview', 'Overview', '◎'],
+		['skill', 'Skill', '⚖'],
+		['games', 'Games', '♠'],
+		['cards', 'Cards', '🂡'],
+		['style', 'Style', '✦'],
+		['rivals', 'Rivals', '⚔'],
+		['records', 'Records', '♛'],
+		['history', 'Nights', '☾'],
+		['club', 'Club', '👥']
 	] as const;
 	type Section = (typeof SECTIONS)[number][0];
+	/** Sections redrawn as one-screen visuals; the rest still scroll inside the stage. */
+	const FITTED: string[] = ['overview', 'skill', 'games', 'cards', 'style', 'rivals', 'records', 'history', 'club'];
 	const WINDOWS = [
-		['all', 'All time'],
-		['30d', 'Last 30 days'],
-		['recent-nights', 'Last 5 nights'],
-		['recent-hands', 'Last 50 hands']
+		['all', 'All time', 'All'],
+		['30d', 'Last 30 days', '30d'],
+		['recent-nights', 'Last 5 nights', '5 ☾'],
+		['recent-hands', 'Last 50 hands', '50 🂠']
 	] as const;
 	const GAMES = [
-		['', 'All games'],
-		['teen-patti', 'Teen Patti'],
-		['texas-holdem', 'Hold’em'],
-		['blackjack', 'Blackjack'],
-		['rummy', 'Rummy']
+		['', 'All games', 'All'],
+		['teen-patti', 'Teen Patti', '♠'],
+		['texas-holdem', 'Hold’em', '♦'],
+		['blackjack', 'Blackjack', '♣'],
+		['rummy', 'Rummy', '♥']
 	] as const;
 	const COMPANY = [
-		['all', 'Everyone'],
-		['friends', 'Friends only'],
-		['bots', 'With bots']
+		['all', 'Everyone', 'All'],
+		['friends', 'Friends only', '👥'],
+		['bots', 'With bots', '🤖']
 	] as const;
 
 	let {
@@ -63,6 +65,16 @@
 	// svelte-ignore state_referenced_locally
 	let recap = $state<string | null>(initialRecap);
 	let moreFilters = $state(false);
+	/** Phones fold the filters behind one button. */
+	let filtersOpen = $state(false);
+	const activeFilters = $derived(
+		[
+			filter.window !== 'all',
+			!!filter.game,
+			filter.company !== 'all',
+			!!(filter.from || filter.until)
+		].filter(Boolean).length
+	);
 
 	onMount(() => track('analytics_opened'));
 	function go(next: string) {
@@ -90,88 +102,107 @@
 </script>
 
 <div class="stats-view">
-	<header>
-		<div>
-			<p class="eyebrow">Your game</p>
-			<h1>Your track record.</h1>
-		</div>
-		<div class="filters" aria-label="Filters">
-			<select
-				aria-label="Time"
-				value={filter.window}
-				onchange={(e) => setFilter('window', e.currentTarget.value)}
-			>
-				{#each WINDOWS as [id, label] (id)}<option value={id}>{label}</option>{/each}
-			</select>
+	<header class="bar">
+		<h1>Your record</h1>
+		<button
+			class="filter-toggle"
+			aria-expanded={filtersOpen}
+			aria-controls="stats-filters"
+			onclick={() => (filtersOpen = !filtersOpen)}
+			><span aria-hidden="true">⚙</span> Filters{#if activeFilters}<b>{activeFilters}</b
+				>{/if}</button
+		>
+		<div class="filters" id="stats-filters" class:open={filtersOpen} aria-label="Filters">
+			<div class="seg" role="group" aria-label="Time">
+				{#each WINDOWS as [id, label, short] (id)}<button
+						aria-pressed={filter.window === id}
+						title={label}
+						onclick={() => setFilter('window', id)}>{short}</button
+					>{/each}
+			</div>
 			{#if section !== 'games'}
-				<select
-					aria-label="Game"
-					value={filter.game ?? ''}
-					onchange={(e) => setFilter('game', e.currentTarget.value)}
-				>
-					{#each GAMES as [id, label] (id)}<option value={id}>{label}</option>{/each}
-				</select>
+				<div class="seg" role="group" aria-label="Game">
+					{#each GAMES as [id, label, icon] (id)}<button
+							aria-pressed={(filter.game ?? '') === id}
+							aria-label={label}
+							title={label}
+							class:red={icon === '♦' || icon === '♥'}
+							onclick={() => setFilter('game', id)}>{icon}</button
+						>{/each}
+				</div>
 			{/if}
-			<select
-				aria-label="Company"
-				value={filter.company}
-				onchange={(e) => setFilter('company', e.currentTarget.value)}
-			>
-				{#each COMPANY as [id, label] (id)}<option value={id}>{label}</option>{/each}
-			</select>
-			<button class="more" aria-expanded={moreFilters} onclick={() => (moreFilters = !moreFilters)}
-				>Dates</button
-			>
-		</div>
-	</header>
-	{#if moreFilters}
-		<div class="dates">
-			<label
-				>From <input
-					type="date"
-					value={filter.from ?? ''}
-					onchange={(e) => setDate('from', e.currentTarget.value)}
-				/></label
-			>
-			<label
-				>To <input
-					type="date"
-					value={filter.until ?? ''}
-					onchange={(e) => setDate('until', e.currentTarget.value)}
-				/></label
-			>
-		</div>
-	{/if}
-
-	<nav class="sections" aria-label="Stats sections">
-		{#each SECTIONS as [id, label] (id)}
+			<div class="seg" role="group" aria-label="Company">
+				{#each COMPANY as [id, label, icon] (id)}<button
+						aria-pressed={filter.company === id}
+						aria-label={label}
+						title={label}
+						onclick={() => setFilter('company', id)}>{icon}</button
+					>{/each}
+			</div>
 			<button
-				class:on={section === id}
-				aria-current={section === id ? 'page' : undefined}
-				onclick={() => go(id)}>{label}</button
+				class="seg-button"
+				aria-expanded={moreFilters}
+				aria-label="Dates"
+				title="Dates"
+				class:on={!!(filter.from || filter.until)}
+				onclick={() => (moreFilters = !moreFilters)}>📅</button
 			>
-		{/each}
-	</nav>
+			{#if moreFilters}
+				<div class="dates">
+					<label
+						><span aria-hidden="true">⟶</span><span class="sr">From</span><input
+							type="date"
+							value={filter.from ?? ''}
+							onchange={(e) => setDate('from', e.currentTarget.value)}
+						/></label
+					>
+					<label
+						><span aria-hidden="true">⟵</span><span class="sr">To</span><input
+							type="date"
+							value={filter.until ?? ''}
+							onchange={(e) => setDate('until', e.currentTarget.value)}
+						/></label
+					>
+				</div>
+			{/if}
+		</div>
+		<button
+			class="info"
+			title="Hands recorded since analytics began. No one’s hidden cards or private numbers are shown."
+			aria-label="About these stats: hands recorded since analytics began. No one’s hidden cards or private numbers are shown."
+			>ⓘ</button
+		>
+	</header>
 
-	{#if section === 'overview'}<Overview
-			{filter}
-			onOpenHand={showHand}
-			onSection={go}
-			onRecap={showRecap}
-		/>
-	{:else if section === 'skill'}<Skill {filter} onRecap={showRecap} />
-	{:else if section === 'games'}<Games {filter} />
-	{:else if section === 'cards'}<Cards {filter} />
-	{:else if section === 'style'}<StyleSection {filter} />
-	{:else if section === 'rivals'}<Rivals {filter} onOpenHand={showHand} />
-	{:else if section === 'records'}<Records {filter} onOpenHand={showHand} onRecap={showRecap} />
-	{:else if section === 'club'}<Club onOpenHand={showHand} onRecap={showRecap} />
-	{:else}<History {filter} onOpenHand={showHand} onRecap={showRecap} />{/if}
-
-	<p class="footnote">
-		Stats cover hands recorded since analytics began. They are for after the game: nothing here
-		shows anyone’s hidden cards or another player’s private numbers.
-	</p>
+	<div class="body">
+		<nav class="rail" aria-label="Stats sections">
+			{#each SECTIONS as [id, label, icon] (id)}
+				<button
+					class:on={section === id}
+					aria-current={section === id ? 'page' : undefined}
+					onclick={() => go(id)}
+					><span class="icon" aria-hidden="true">{icon}</span><span class="label">{label}</span
+					></button
+				>
+			{/each}
+		</nav>
+		<div class="stage" class:dash={FITTED.includes(section)}>
+			{#if section === 'overview'}<Overview
+					{filter}
+					onOpenHand={showHand}
+					onSection={go}
+					onRecap={showRecap}
+				/>
+			{:else if section === 'skill'}<Skill {filter} onRecap={showRecap} />
+			{:else if section === 'games'}<Games {filter} />
+			{:else if section === 'cards'}<Cards {filter} />
+			{:else if section === 'style'}<StyleSection {filter} />
+			{:else if section === 'rivals'}<Rivals {filter} onOpenHand={showHand} />
+			{:else if section === 'records'}<Records {filter} onOpenHand={showHand} onRecap={showRecap} />
+			{:else if section === 'club'}<Club onOpenHand={showHand} onRecap={showRecap} />
+			{:else}<History {filter} onOpenHand={showHand} onRecap={showRecap} />{/if}
+		</div>
+	</div>
 </div>
 {#if openHand}<HandDetail handId={openHand} onClose={() => (openHand = null)} />{/if}
 {#if recap}<NightRecap
@@ -181,88 +212,398 @@
 	/>{/if}
 
 <style>
+	/* One screen: a bar, a rail of sections and a stage that fills the rest. */
 	.stats-view {
-		display: grid;
-		gap: 1.1rem;
-		margin: 0 auto;
-		max-width: 64rem;
-		padding: clamp(1.2rem, 3vw, 2.5rem) 0.5rem 3rem;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		height: calc(100dvh - var(--header-h, 64px));
+		overflow: hidden;
+		padding: 14px max(16px, calc((100vw - 1320px) / 2)) 16px;
 		color: #f8f2e5;
 	}
-	header {
+	.bar {
+		position: relative;
 		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 1rem;
+		align-items: center;
+		gap: 14px;
+		flex: none;
 	}
 	h1 {
 		font-family: var(--font-display);
-		font-size: clamp(2.2rem, 5vw, 3.6rem);
-		font-weight: 400;
-		letter-spacing: -0.05em;
-		line-height: 1.05;
+		font-size: 24px;
+		font-weight: 800;
+		letter-spacing: -0.04em;
+		margin-right: auto;
 	}
 	.filters {
 		display: flex;
+		align-items: center;
+		gap: 8px;
 		flex-wrap: wrap;
-		gap: 0.4rem;
+		justify-content: flex-end;
+		position: relative;
 	}
-	select {
-		border: 1px solid rgb(242 220 145 / 22%);
-		border-radius: 999px;
-		background: #2c263b;
-		padding: 0.45rem 0.8rem;
-		color: #f8f2e5;
-		font-size: 0.82rem;
+	.seg {
+		display: flex;
+		padding: 3px;
+		border-radius: 100px;
+		background: #ffffff10;
 	}
-	.more {
-		border: 1px solid rgb(240 209 140 / 22%);
-		border-radius: 999px;
-		padding: 0.45rem 0.8rem;
-		color: #e7c784;
-		font-size: 0.82rem;
+	.seg button,
+	.seg-button {
+		min-width: 34px;
+		height: 32px;
+		padding: 0 11px;
+		border-radius: 100px;
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--muted);
+		cursor: pointer;
+		transition:
+			background 0.2s,
+			color 0.2s;
+	}
+	.seg button.red {
+		color: #f39788;
+	}
+	.seg button:hover,
+	.seg-button:hover {
+		color: var(--paper);
+		background: #ffffff12;
+	}
+	.seg button[aria-pressed='true'],
+	.seg-button.on {
+		background: var(--butter);
+		color: var(--night);
+	}
+	.seg-button {
+		background: #ffffff10;
 	}
 	.dates {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 8px);
+		z-index: 5;
 		display: flex;
-		flex-wrap: wrap;
-		gap: 0.8rem;
-		color: #b1b9ae;
-		font-size: 0.82rem;
+		gap: 10px;
+		padding: 10px;
+		border-radius: 14px;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		box-shadow: 0 14px 30px #0006;
+	}
+	.dates label {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--butter);
 	}
 	.dates input {
-		border: 1px solid rgb(240 209 140 / 22%);
-		border-radius: 0.6rem;
-		background: #0f1a16;
-		padding: 0.3rem 0.5rem;
-		color: #f1ebdc;
+		border: 1px solid #f2dc9138;
+		border-radius: 8px;
+		background: var(--night);
+		padding: 5px 8px;
+		color: var(--paper);
+		color-scheme: dark;
 	}
-	.stats-view :global(.nav) {
+	.sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+	.info {
+		display: grid;
+		place-items: center;
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		color: var(--muted);
+		cursor: help;
+	}
+	.filter-toggle {
+		display: none;
+	}
+	.body {
+		flex: 1;
+		min-height: 0;
+		display: grid;
+		grid-template-columns: 92px 1fr;
+		gap: 14px;
+	}
+	.rail {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 1rem;
+		flex-direction: column;
+		gap: 4px;
+		min-height: 0;
 	}
-	.sections {
+	.rail button {
+		flex: 1;
+		max-height: 72px;
 		display: flex;
-		gap: 0.35rem;
-		overflow-x: auto;
-		border-bottom: 1px solid rgb(242 220 145 / 12%);
-		padding-bottom: 0.6rem;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 3px;
+		border-radius: 14px;
+		color: var(--muted);
+		cursor: pointer;
+		transition:
+			background 0.2s,
+			color 0.2s;
 	}
-	.sections button {
-		flex-shrink: 0;
-		border-radius: 999px;
-		padding: 0.45rem 0.95rem;
-		color: rgb(248 242 229 / 70%);
-		font-size: 0.88rem;
+	.rail .icon {
+		font-size: 20px;
+		line-height: 1;
+		transition: scale 0.2s;
 	}
-	.sections button.on {
-		background: rgb(242 220 145 / 14%);
-		color: #f2dc91;
+	.rail .label {
+		font-size: 11px;
+		font-weight: 600;
 	}
-	.footnote {
-		color: #beb5c9;
-		font-size: 0.72rem;
+	.rail button:hover {
+		background: #ffffff0d;
+		color: var(--paper);
+	}
+	.rail button:hover .icon {
+		scale: 1.12;
+	}
+	.rail button.on,
+	.rail button.on .label,
+	.rail button.on .icon {
+		background: var(--butter);
+		color: var(--night);
+	}
+	.rail .label {
+		color: inherit;
+	}
+	.stage {
+		min-height: 0;
+		min-width: 0;
+		overflow: auto;
+		display: grid;
+		align-content: start;
+		gap: 12px;
+		scrollbar-width: thin;
+	}
+	.stage.dash {
+		overflow: hidden;
+		align-content: stretch;
+	}
+	@media (max-width: 720px) {
+		.stats-view {
+			padding: 10px 12px 0;
+			gap: 10px;
+		}
+		h1 {
+			font-size: 20px;
+		}
+		.filter-toggle {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			height: 34px;
+			padding: 0 14px;
+			border-radius: 100px;
+			background: #ffffff10;
+			font-size: 13px;
+			font-weight: 600;
+			cursor: pointer;
+		}
+		.filter-toggle b {
+			display: grid;
+			place-items: center;
+			min-width: 18px;
+			height: 18px;
+			border-radius: 9px;
+			background: var(--butter);
+			color: var(--night);
+			font-size: 11px;
+		}
+		.filters {
+			display: none;
+			position: absolute;
+			right: 0;
+			top: calc(100% + 8px);
+			z-index: 6;
+			flex-direction: column;
+			align-items: stretch;
+			padding: 10px;
+			border-radius: 16px;
+			background: var(--surface);
+			border: 1px solid var(--line);
+			box-shadow: 0 16px 34px #0007;
+		}
+		.filters.open {
+			display: flex;
+		}
+		.seg {
+			justify-content: space-between;
+		}
+		.dates {
+			position: static;
+			box-shadow: none;
+		}
+		.body {
+			grid-template-columns: 1fr;
+			grid-template-rows: 1fr auto;
+			gap: 8px;
+		}
+		.rail {
+			order: 2;
+			flex-direction: row;
+			gap: 2px;
+			margin: 0 -12px;
+			padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+			background: var(--surface);
+			border-top: 1px solid var(--line);
+		}
+		.rail button {
+			min-height: 48px;
+			border-radius: 12px;
+		}
+		.rail .icon {
+			font-size: 18px;
+		}
+		.rail .label {
+			font-size: 9px;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.rail .icon,
+		.seg button,
+		.rail button {
+			transition: none;
+		}
+	}
+	/* Visual tiles shared by the one-screen sections. */
+	.stats-view :global(.vt) {
+		min-height: 0;
+		min-width: 0;
+		overflow: hidden;
+		position: relative;
+		border-radius: 18px;
+		background: #2c263b;
+		border: 1px solid #ffffff1a;
+		padding: 14px 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.stats-view :global(.vt h2) {
+		font-family: var(--font-display);
+		font-size: 14px;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		display: flex;
+		align-items: center;
+		gap: 7px;
+	}
+	.stats-view :global(.vt h2 > .ic) {
+		color: var(--butter);
+	}
+	.stats-view :global(.v-pos) {
+		color: #a9cfb5;
+	}
+	.stats-view :global(.v-neg) {
+		color: #f39788;
+	}
+	.stats-view :global(.v-dim),
+	.stats-view :global(.v-dim :is(strong, b, span)) {
+		color: var(--muted) !important;
+	}
+	.stats-view :global(.v-big) {
+		font-family: var(--font-display);
+		font-weight: 800;
+		letter-spacing: -0.04em;
+		line-height: 1;
+	}
+	.stats-view :global(.v-zero) {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		color: var(--muted);
+		height: 100%;
+	}
+	.stats-view :global(.v-zero > :first-child) {
+		font-size: 30px;
+		color: var(--butter);
+	}
+	.stats-view :global(.v-meter) {
+		position: relative;
+		height: 10px;
+		border-radius: 5px;
+		background: #ffffff10;
+	}
+	.stats-view :global(.v-meter > .z) {
+		position: absolute;
+		left: 50%;
+		top: -3px;
+		bottom: -3px;
+		width: 2px;
+		background: #ffffff55;
+	}
+	.stats-view :global(.v-meter > .band) {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		border-radius: 5px;
+		background: #f2dc9147;
+	}
+	.stats-view :global(.v-meter > .dot) {
+		position: absolute;
+		top: 50%;
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		translate: -50% -50%;
+		background: #a9cfb5;
+		box-shadow: 0 0 0 3px #2c263b;
+	}
+	.stats-view :global(.v-meter > .dot.neg) {
+		background: #ee715b;
+	}
+	.stats-view :global(.v-chip) {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 4px 10px;
+		border-radius: 100px;
+		background: #ffffff0f;
+		font-size: 12px;
+		font-weight: 700;
+	}
+	.stats-view :global(.v-red) {
+		color: #f39788;
+	}
+	.stats-view :global(.v-press) {
+		cursor: pointer;
+		transition:
+			background 0.2s,
+			translate 0.2s;
+	}
+	.stats-view :global(.v-press:hover),
+	.stats-view :global(.v-press:focus-visible) {
+		background: #f2dc911f;
+		translate: 0 -2px;
+	}
+	@media (max-width: 720px) {
+		.stats-view :global(.vt) {
+			padding: 10px 12px;
+			border-radius: 14px;
+			gap: 6px;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.stats-view :global(.v-press) {
+			transition: none;
+			translate: none;
+		}
 	}
 	/* Shared by every section. */
 	.stats-view :global(.panel) {
@@ -592,55 +933,6 @@
 		color: #f0a090;
 	}
 
-	.stats-view {
-		max-width: 1200px;
-		padding: 48px 0 56px;
-		gap: 24px;
-	}
-	header {
-		padding-bottom: 12px;
-	}
-	h1 {
-		font-family: var(--font-display);
-		font-size: clamp(48px, 6vw, 80px);
-		font-weight: 700;
-		line-height: 0.95;
-	}
-	.eyebrow {
-		color: var(--muted);
-		font-size: 12px;
-		letter-spacing: 0;
-		text-transform: none;
-		margin-bottom: 12px;
-	}
-	.sections {
-		padding: 6px;
-		border: 1px solid var(--line);
-		border-radius: 12px;
-		background: var(--surface);
-		gap: 4px;
-	}
-	.sections button {
-		min-height: 42px;
-		border-radius: 8px;
-		font-size: 13px;
-		transition:
-			translate 0.2s,
-			background 0.2s;
-	}
-	.sections button:hover {
-		translate: 0 -2px;
-		background: #ffffff0a;
-	}
-	.sections button.on {
-		background: var(--butter);
-		color: var(--night);
-	}
-	select {
-		border-radius: 8px;
-		min-height: 40px;
-		border-color: var(--line);
-	}
 	.stats-view :global(.panel) {
 		background: var(--surface);
 		border-color: var(--line);
@@ -654,38 +946,8 @@
 		letter-spacing: -0.035em;
 	}
 	@media (max-width: 600px) {
-		.stats-view {
-			padding-top: 32px;
-			gap: 20px;
-		}
-		h1 {
-			font-size: 50px;
-		}
-		.filters {
-			width: 100%;
-		}
-		.filters select {
-			flex: 1;
-			min-width: 0;
-			font-size: 12px;
-			padding-inline: 9px;
-		}
-		.sections button {
-			padding-inline: 13px;
-		}
 		.stats-view :global(.panel h2) {
 			font-size: 21px;
-		}
-	}
-
-	@media (max-width: 600px) {
-		.sections {
-			flex-wrap: wrap;
-			overflow: visible;
-		}
-		.sections button {
-			flex: 1 0 28%;
-			min-height: 40px;
 		}
 	}
 </style>

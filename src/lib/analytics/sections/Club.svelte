@@ -4,92 +4,212 @@
 	import { day } from '../format.js';
 	import type { ClubRecordsView, TimelineView } from '../types.js';
 
-	let { onOpenHand, onRecap }: { onOpenHand: (id: string) => void; onRecap: (nightId: string) => void } = $props();
+	let {
+		onOpenHand,
+		onRecap
+	}: { onOpenHand: (id: string) => void; onRecap: (nightId: string) => void } = $props();
 	let records = $state<ClubRecordsView | null>(null);
 	let timeline = $state<TimelineView | null>(null);
 	let error = $state('');
 	$effect(() => {
-		fetchAnalytics<ClubRecordsView>('club', {}).then((b) => (records = b)).catch((e) => (error = e.message));
-		fetchAnalytics<TimelineView>('timeline', {}).then((b) => (timeline = b)).catch(() => (timeline = { empty: true, events: [] }));
+		fetchAnalytics<ClubRecordsView>('club', {})
+			.then((b) => (records = b))
+			.catch((e) => (error = e.message));
+		fetchAnalytics<TimelineView>('timeline', {})
+			.then((b) => (timeline = b))
+			.catch(() => (timeline = { empty: true, events: [] }));
 	});
+	let tPage = $state(0);
+	const T_PAGE = 6;
+	const TYPE_ICON: Record<string, string> = {
+		record: '♛',
+		milestone: '★',
+		night: '☾',
+		first: '✦',
+		hand: '🂠'
+	};
 </script>
 
 {#if error}<p class="notice" role="alert">{error}</p>
-{:else if !records}<p class="muted">Gathering the club’s story…</p>
-{:else if records.empty}
-	<section class="panel empty"><h2>The club’s history starts tonight</h2><p class="muted">Records and milestones appear after the first night of recorded hands.</p></section>
+{:else if !records}<div class="cl" aria-busy="true"></div>
+{:else if records.empty}<div class="v-zero">
+		<span aria-hidden="true">👥</span><strong>Starts tonight</strong>
+	</div>
 {:else}
-	<section class="panel">
-		<h2>Club records</h2>
-		<ul class="records-grid">
-			{#each records.records as r (r.id)}
-				<li>
-					<h3>{r.label}</h3>
-					<p class="big">{typeof r.value === 'number' ? r.value.toLocaleString('en-IN') : r.value}</p>
-					<p class="muted tiny">{r.unit}{r.holder ? ` · ${r.holder}` : ''}{r.at ? ` · ${day(r.at)}` : ''}</p>
+	<div class="cl">
+		<ul class="recs">
+			{#each records.records.slice(0, 8) as r (r.id)}
+				<li
+					class="vt rec"
+					title="{r.label}{r.holder ? ` · ${r.holder}` : ''}{r.at ? ` · ${day(r.at)}` : ''}"
+				>
+					<strong class="v-big val"
+						>{typeof r.value === 'number' ? r.value.toLocaleString('en-IN') : r.value}</strong
+					>
+					<span class="unit">{r.unit}</span>
+					<span class="lbl">{r.label}</span>
 					<span class="links">
-						{#if r.handId}<button class="link" onclick={() => onOpenHand(r.handId ?? '')}>The hand</button>{/if}
-						{#if r.nightId}<button class="link" onclick={() => onRecap(r.nightId ?? '')}>The night</button>{/if}
+						{#if r.holder}<span class="holder">♛ {r.holder}</span>{/if}
+						{#if r.handId}<button
+								class="v-chip v-press"
+								onclick={() => onOpenHand(r.handId ?? '')}
+								aria-label="The hand: {r.label}">🂠</button
+							>{/if}
+						{#if r.nightId}<button
+								class="v-chip v-press"
+								onclick={() => onRecap(r.nightId ?? '')}
+								aria-label="The night: {r.label}">☾</button
+							>{/if}
 					</span>
 				</li>
 			{/each}
 		</ul>
-	</section>
-	{#if timeline && !timeline.empty}
-		<section class="panel">
-			<h2>Timeline</h2>
-			<ol class="timeline">
-				{#each timeline.events as e (e.id)}
-					<li><time>{day(e.at)}</time><span>{e.text}</span>{#if e.handId}<button class="link" onclick={() => onOpenHand(e.handId ?? '')}>See</button>{/if}</li>
-				{/each}
-			</ol>
-		</section>
-	{/if}
+		{#if timeline && !timeline.empty}
+			{@const pages = Math.ceil(timeline.events.length / T_PAGE)}
+			<section class="vt line" aria-labelledby="tl-title">
+				<h2 id="tl-title">
+					<span class="ic" aria-hidden="true">◷</span> Timeline
+					{#if pages > 1}<span class="tp"
+							><button disabled={tPage === 0} onclick={() => tPage--} aria-label="Newer">←</button
+							><button disabled={tPage + 1 >= pages} onclick={() => tPage++} aria-label="Older"
+								>→</button
+							></span
+						>{/if}
+				</h2>
+				<ol class="events">
+					{#each timeline.events.slice(tPage * T_PAGE, (tPage + 1) * T_PAGE) as e (e.id)}
+						<li>
+							<span class="e-ic" aria-hidden="true">{TYPE_ICON[e.type] ?? '•'}</span>
+							<time>{day(e.at)}</time>
+							<span class="e-text">{e.text}</span>
+							{#if e.handId}<button
+									class="v-chip v-press"
+									onclick={() => onOpenHand(e.handId ?? '')}
+									aria-label="See the hand">🂠</button
+								>{/if}
+						</li>
+					{/each}
+				</ol>
+			</section>
+		{/if}
+	</div>
 {/if}
 
 <style>
-	.records-grid {
+	.cl {
+		height: 100%;
+		min-height: 0;
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-		gap: 0.7rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
+		gap: 12px;
+		grid-template-rows: minmax(0, 1fr) minmax(0, 0.9fr);
 	}
-	.records-grid li {
+	.recs {
 		display: grid;
-		gap: 0.15rem;
-		border-radius: 0.9rem;
-		background: rgb(255 255 255 / 3%);
-		padding: 0.8rem 0.9rem;
+		grid-template-columns: repeat(4, 1fr);
+		grid-auto-rows: minmax(0, 1fr);
+		gap: 12px;
+		min-height: 0;
+	}
+	.rec {
+		justify-content: center;
+		gap: 4px;
+	}
+	.val {
+		font-size: clamp(26px, 3vw, 42px);
+	}
+	.unit {
+		font-size: 12px;
+		color: var(--muted);
+	}
+	.lbl {
+		font-size: 12px;
+		font-weight: 700;
 	}
 	.links {
 		display: flex;
-		gap: 0.8rem;
+		align-items: center;
+		gap: 6px;
 	}
-	.timeline {
+	.holder {
+		font-size: 12px;
+		color: var(--butter);
+		margin-right: auto;
+	}
+	.tp {
+		margin-left: auto;
+		display: flex;
+		gap: 6px;
+	}
+	.tp button {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		background: #ffffff10;
+		cursor: pointer;
+	}
+	.tp button:disabled {
+		opacity: 0.3;
+	}
+	.events {
 		display: grid;
-		gap: 0.45rem;
-		margin: 0;
-		padding: 0 0 0 0.2rem;
-		list-style: none;
-		border-left: 2px solid rgb(231 199 132 / 25%);
+		grid-template-columns: repeat(3, 1fr);
+		gap: 8px;
+		min-height: 0;
 	}
-	.timeline li {
+	.events li {
 		display: grid;
-		grid-template-columns: 6.5rem 1fr auto;
-		gap: 0.6rem;
-		padding-left: 0.8rem;
-		font-size: 0.88rem;
+		grid-template-columns: auto 1fr auto;
+		grid-template-rows: auto auto;
+		column-gap: 8px;
+		align-items: center;
+		padding: 8px 10px;
+		border-radius: 12px;
+		background: #ffffff07;
 	}
-	.timeline time {
-		color: #d5b67a;
-		font-size: 0.75rem;
+	.e-ic {
+		grid-row: span 2;
+		font-size: 18px;
+		color: var(--butter);
 	}
-	@media (max-width: 36rem) {
-		.timeline li {
+	.events time {
+		font-size: 11px;
+		color: var(--muted);
+	}
+	.e-text {
+		grid-column: 2;
+		font-size: 12px;
+		line-height: 1.3;
+		display: -webkit-box;
+		line-clamp: 2;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.events li > button {
+		grid-row: 1 / span 2;
+		grid-column: 3;
+	}
+	@media (max-width: 1000px) {
+		.recs {
+			grid-template-columns: repeat(2, 1fr);
+		}
+		.events {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	@media (max-width: 720px) {
+		.cl,
+		.recs {
+			gap: 8px;
+		}
+		.recs li:nth-child(n + 5) {
+			display: none;
+		}
+		.events {
 			grid-template-columns: 1fr;
-			gap: 0.1rem;
+		}
+		.events li:nth-child(n + 4) {
+			display: none;
 		}
 	}
 </style>

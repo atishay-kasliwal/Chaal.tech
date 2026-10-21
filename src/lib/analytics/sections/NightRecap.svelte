@@ -9,16 +9,33 @@
 	import { track } from '#lib/analytics.js';
 	import type { Names, Recap } from '../types.js';
 
-	let { nightId = null, onClose, onOpenHand }: { nightId?: string | null; onClose: () => void; onOpenHand: (id: string) => void } = $props();
+	let {
+		nightId = null,
+		onClose,
+		onOpenHand
+	}: { nightId?: string | null; onClose: () => void; onOpenHand: (id: string) => void } = $props();
 	let data = $state<{ recap: Recap; names: Names; empty?: boolean } | null>(null);
 	let error = $state('');
 	$effect(() => {
 		data = null;
 		error = '';
-		fetchAnalytics<{ recap: Recap; names: Names; empty?: boolean }>('recap', { night: nightId }).then((b) => (data = b)).catch((e) => (error = e.message));
+		fetchAnalytics<{ recap: Recap; names: Names; empty?: boolean }>('recap', { night: nightId })
+			.then((b) => (data = b))
+			.catch((e) => (error = e.message));
 	});
-	const who = (subject: string, you = false) => (you ? 'You' : data?.names[subject] ? properName(data.names[subject].name) : subject.startsWith('bot:') ? 'A bot' : 'A friend');
-	const LUCK: Record<string, string> = { hot: 'Your cards ran warm.', cold: 'Your cards ran cold.', average: 'Your cards were about average.' };
+	const who = (subject: string, you = false) =>
+		you
+			? 'You'
+			: data?.names[subject]
+				? properName(data.names[subject].name)
+				: subject.startsWith('bot:')
+					? 'A bot'
+					: 'A friend';
+	const LUCK: Record<string, string> = {
+		hot: 'Your cards ran warm.',
+		cold: 'Your cards ran cold.',
+		average: 'Your cards were about average.'
+	};
 </script>
 
 <div class="overlay" role="dialog" aria-modal="true" aria-label="Night recap">
@@ -26,29 +43,50 @@
 		<button class="close" onclick={onClose} aria-label="Close">×</button>
 		{#if error}<p class="notice" role="alert">{error}</p>
 		{:else if !data}<p class="muted">Putting the night together…</p>
-		{:else if data.empty || !data.recap}<p class="muted">Play a night and its recap appears here.</p>
+		{:else if data.empty || !data.recap}<p class="muted">
+				Play a night and its recap appears here.
+			</p>
 		{:else}
 			{@const r = data.recap}
-			<p class="eyebrow">{day(r.startedAt)} · {time(r.startedAt)} to {time(r.endedAt)} · {plural(r.hands, 'hand')} · {r.minutes} min</p>
+			<p class="eyebrow">
+				{day(r.startedAt)} · {time(r.startedAt)} to {time(r.endedAt)} · {plural(r.hands, 'hand')} · {r.minutes}
+				min
+			</p>
 			<h2>The night in a few lines</h2>
 			{#if r.empty}<p class="muted">{r.empty}</p>{/if}
 			<ul class="highlights">
 				{#each r.highlights as h (h.id)}
 					<li class={h.scope}>
 						<span>{h.text}</span>
-						{#if h.evidence.hands?.length}<button class="link" onclick={() => onOpenHand(h.evidence.hands?.[0] ?? '')}>See the hand</button>{/if}
+						{#if h.evidence.hands?.length}<button
+								class="link"
+								onclick={() => onOpenHand(h.evidence.hands?.[0] ?? '')}>See the hand</button
+							>{/if}
 					</li>
 				{/each}
 			</ul>
 			<h3>Your night</h3>
-			<p>{boots(r.you.units)} over {plural(r.you.hands, 'hand')}. {r.you.luck ? LUCK[r.you.luck] ?? '' : ''}</p>
+			<p>
+				{boots(r.you.units)} over {plural(r.you.hands, 'hand')}. {r.you.luck
+					? (LUCK[r.you.luck] ?? '')
+					: ''}
+			</p>
 			<h3>The table</h3>
 			<ul class="plain">
 				{#each r.results.humans as p (p.subject)}
-					<li><span>{who(p.subject, p.you)}</span><span class="muted">{p.hands} hands</span><strong class:up={p.units > 0} class:down={p.units < 0}>{boots(p.units)}</strong></li>
+					<li>
+						<span>{who(p.subject, p.you)}</span><span class="muted">{p.hands} hands</span><strong
+							class:up={p.units > 0}
+							class:down={p.units < 0}>{boots(p.units)}</strong
+						>
+					</li>
 				{/each}
 				{#each r.results.bots as p (p.subject)}
-					<li><span>{who(p.subject)} <small class="muted">bot</small></span><span class="muted">{p.hands} hands</span><strong>{boots(p.units)}</strong></li>
+					<li>
+						<span>{who(p.subject)} <small class="muted">bot</small></span><span class="muted"
+							>{p.hands} hands</span
+						><strong>{boots(p.units)}</strong>
+					</li>
 				{/each}
 			</ul>
 			<button class="primary" onclick={() => (track('recap_closed'), onClose())}>Done</button>
