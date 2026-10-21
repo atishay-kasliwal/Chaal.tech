@@ -31,6 +31,8 @@
 	}
 	const isRoom = $derived(page.route.id === '/[roomName]' || page.route.id === '/test-table');
 	const isHome = $derived(page.route.id === '/');
+	/** One-screen app pages: no footer under them, so they never scroll. */
+	const isApp = $derived(['/club', '/stats'].includes(page.route.id ?? ''));
 	onMount(() => club.start());
 	$effect(() => {
 		if (club.status !== 'loading') identify(club.member?.memberId ?? null, club.member?.role);
@@ -180,7 +182,7 @@
 	{@render children?.()}
 	<Toasts />
 </main>
-{#if !isRoom}
+{#if !isRoom && !isApp}
 	<footer class="site-footer">
 		<a class="footer-wordmark" href="/" aria-label="Chaal home"
 			>chaal<span aria-hidden="true">♠</span></a
