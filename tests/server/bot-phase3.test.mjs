@@ -95,9 +95,14 @@ const subject = (model) => ({
 	recent: { beatMe: 99, caughtBluffing: 0, bluffedMe: 0, wonOf5: [] }
 });
 
-test('candidates are offline only: no reference style uses tp-dna@4, the Phase 2 references stay on tp-dna@3', () => {
+test('candidates are offline only: the one approved tp-dna@4 reference is GG c034, the Phase 2 references stay on tp-dna@3', () => {
 	assert.ok(POLICIES[CHARACTER_POLICY_V4]);
-	assert.ok(!Object.values(STYLES).some((s) => s.policy === CHARACTER_POLICY_V4));
+	assert.deepEqual(
+		Object.values(STYLES)
+			.filter((s) => s.policy === CHARACTER_POLICY_V4)
+			.map((s) => [s._id, s.phase3?.candidate]),
+		[['gg@4', 'gg@4-c034']]
+	);
 	for (const s of Object.values(CHARACTER_STYLES)) assert.equal(s.policy, 'tp-dna@3');
 	const style = candidate('gg');
 	assert.equal(style.status, 'candidate');
