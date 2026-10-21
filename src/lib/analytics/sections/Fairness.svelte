@@ -20,11 +20,6 @@
 			.catch((e) => (error = e.message));
 	});
 	const RANKS: Record<number, string> = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
-		hearts: '♥ Hearts',
-		diamonds: '♦ Diamonds',
-		clubs: '♣ Clubs',
-		spades: '♠ Spades'
-	};
 	const RANK_TOP = $derived(
 		Math.max(1, ...(data?.you.ranks ?? []).map((r) => Math.max(r.count, r.high)))
 	);
