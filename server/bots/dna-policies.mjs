@@ -6,7 +6,7 @@
  * These were built as `tp-character@1` to `@4` on the private-club line. They were renamed when the
  * line became canonical on main (docs/bots/CANONICAL.md), because main had already published a
  * different policy as `tp-character@1`. Only the names changed: decisions, traces and minds are
- * byte-identical (tests/server/bot-dna-rename.test.mjs).
+ * byte-identical (tests/server/bot-baseline.test.mjs, and the golden digests).
  */
 export const DNA_POLICY_V1 = 'tp-dna@1';
 export const DNA_POLICY_V2 = 'tp-dna@2';
