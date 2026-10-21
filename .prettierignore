@@ -15,3 +15,7 @@ yarn.lock
 static/vendor
 visual-baselines
 data
+
+# Generated simulation reports and measured Phase 3 artifacts: kept byte-exact.
+docs/bots/PHASE*_REPORT.md
+docs/bots/phase3/*.json

@@ -65,7 +65,12 @@ export function member(id) {
 			id,
 			styleId,
 			// Seated exactly as the engine seats a published style: the whole style travels with the seat.
-			seat: (room, botId) => ({ botId, name: castMember(characterId).name, level: 'normal', style: STYLES[styleId] }),
+			seat: (room, botId) => ({
+				botId,
+				name: castMember(characterId).name,
+				level: 'normal',
+				style: STYLES[styleId]
+			}),
 			decide: null
 		};
 	}
