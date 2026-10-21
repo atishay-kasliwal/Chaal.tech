@@ -5,6 +5,7 @@ import { newRoom, transition, projection, playing } from '../engine.mjs';
 import { freshDeck } from '../classic.mjs';
 import { decide, PROFILES } from './strategy.mjs';
 import { canonicalJson } from '../analytics/hash.mjs';
+import { deciderFor, DNA_POLICIES } from './policies.mjs';
 
 function randomFor(seed) {
 	let value = seed >>> 0;
@@ -68,8 +69,15 @@ export function validateStyle(style, { hands = 24 } = {}) {
 				const view = projection(room, actor, new Set(['human']));
 				const moveSeed = Math.floor(random() * 4294967296);
 				const profile = actor === 'bot-validation' ? style.tendencies : PROFILES.normal;
-				const choose = (view, rng) => actor === 'bot-validation' && style.policy === ADAPTIVE_POLICY
-					? adaptiveDecision(view, actor, rng, style) : decide(view, actor, rng, profile);
+				// DNA styles are judged on their own decider (no session mind: a fresh seat's first hands).
+				const dna =
+					actor === 'bot-validation' && DNA_POLICIES.has(style.policy) ? deciderFor(style) : null;
+				const choose = (view, rng) =>
+					dna
+						? dna(view, actor, rng, null)
+						: actor === 'bot-validation' && style.policy === ADAPTIVE_POLICY
+							? adaptiveDecision(view, actor, rng, style)
+							: decide(view, actor, rng, profile);
 				const move = choose(view, randomFor(moveSeed));
 				if (!move) throw new Error('Policy did not return a legal move');
 				if (actor === 'bot-validation') {

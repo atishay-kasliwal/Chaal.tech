@@ -12,7 +12,9 @@ export const DNA_POLICY_V1 = 'tp-dna@1';
 export const DNA_POLICY_V2 = 'tp-dna@2';
 export const DNA_POLICY_V3 = 'tp-dna@3';
 export const DNA_POLICY_V4 = 'tp-dna@4';
-export const DNA_POLICIES = Object.freeze(new Set([DNA_POLICY_V1, DNA_POLICY_V2, DNA_POLICY_V3, DNA_POLICY_V4]));
+export const DNA_POLICIES = Object.freeze(
+	new Set([DNA_POLICY_V1, DNA_POLICY_V2, DNA_POLICY_V3, DNA_POLICY_V4])
+);
 /** The names these policies had before the rename, for reading older reports and league files. */
 export const FORMER_NAMES = Object.freeze({
 	[DNA_POLICY_V1]: 'tp-character@1',

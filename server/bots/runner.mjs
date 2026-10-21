@@ -40,7 +40,8 @@ export function botSeatPayload(room, pick, botId, random, styleId = null) {
 	const character = castMember(pick);
 	if (character) {
 		const style = REFERENCE_STYLES[styleId ?? CHARACTER_STYLES[character.id]._id];
-		if (!style || style.botId !== character.id) throw new Error(`Unknown reference style ${styleId}`);
+		if (!style || style.botId !== character.id)
+			throw new Error(`Unknown reference style ${styleId}`);
 		return { botId, name: character.name, level: 'normal', style };
 	}
 	return { botId, name: pickBotName(room, random), level: pick };
@@ -62,14 +63,21 @@ export function botDelay(random, quick = false, feel = {}) {
 }
 
 /** How quickly each character plays: Virat is decisive, Dhoni takes his time, Samay is quick but erratic. */
-export const TEMPO = Object.freeze({ 'rohit-sharma': 1, 'virat-kohli': 0.8, 'ms-dhoni': 1.35, gg: 1.15, 'samay-raina': 0.9 });
+export const TEMPO = Object.freeze({
+	'rohit-sharma': 1,
+	'virat-kohli': 0.8,
+	'ms-dhoni': 1.35,
+	gg: 1.15,
+	'samay-raina': 0.9
+});
 
 /** What about the table should slow a bot down, from the room (no cards involved). */
 export function thinkingContext(room, botPlayerId) {
 	const bot = room.players.find((p) => p.id === botPlayerId);
 	const boot = room.boot ?? 1;
 	return {
-		botId: bot?.bot?.botId ?? bot?.bot?.style?.botId ?? String(bot?.bot?.styleId ?? '').split('@')[0],
+		botId:
+			bot?.bot?.botId ?? bot?.bot?.style?.botId ?? String(bot?.bot?.styleId ?? '').split('@')[0],
 		facingRaise: (room.maxStake ?? 0) > boot * 2,
 		bigPot: (room.pot ?? 0) >= boot * 20
 	};
@@ -108,7 +116,10 @@ export function botDue(room, connected) {
  * - `tp-character@1`, `tp-heuristic@1` and seats without a style play the heuristic with the
  *   style's tendencies, or a replayed profile (`profileFor`, the recorder's replay of older hands).
  */
-export function seatDecider(player, { minds = null, memoryFor = () => undefined, profileFor = () => undefined } = {}) {
+export function seatDecider(
+	player,
+	{ minds = null, memoryFor = () => undefined, profileFor = () => undefined } = {}
+) {
 	const style = player.bot?.style ?? null;
 	return (view, botId, random, mind = minds?.[botId] ?? null) => {
 		if (style?.policy === ADAPTIVE_POLICY)
@@ -125,9 +136,19 @@ export function seatDecider(player, { minds = null, memoryFor = () => undefined,
  * Options: `minds` (per-session minds by bot id), `memoryFor` (adaptive memory loader),
  * `profileFor` (replayed profiles), or `deciderOf` (the simulator's own decider per seat).
  */
-export function nextBotMove(room, connected, random, { deciderOf = null, minds = null, memoryFor, profileFor } = {}) {
+export function nextBotMove(
+	room,
+	connected,
+	random,
+	{ deciderOf = null, minds = null, memoryFor, profileFor } = {}
+) {
 	const choose = (view, bot) =>
-		(deciderOf ? deciderOf(bot) : seatDecider(bot, { minds, memoryFor, profileFor }))(view, bot.id, random, minds?.[bot.id] ?? null);
+		(deciderOf ? deciderOf(bot) : seatDecider(bot, { minds, memoryFor, profileFor }))(
+			view,
+			bot.id,
+			random,
+			minds?.[bot.id] ?? null
+		);
 	if (!playing(room) || (room.gameType && room.gameType !== 'teen-patti')) return null;
 	for (const bot of room.players.filter(
 		(p) => p.bot && !p.departed && !p.isPacked && p.cards.length

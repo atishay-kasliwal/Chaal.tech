@@ -16,6 +16,7 @@ import { CHARACTER_DNA_V1, CHARACTER_DNA_V2, CHARACTER_DNA_V3 } from './dna-char
 import { CHARACTER_POLICY } from './character.mjs';
 import { CHARACTER_POLICY_V2 } from './character-v2.mjs';
 import { CHARACTER_POLICY_V3 } from './character-v3.mjs';
+import { CHARACTER_POLICY_V4 } from './character-v4.mjs';
 import { CAST } from '../../src/lib/bots/cast.js';
 import { styleConfigHash, LEGACY_STYLES, STYLES as LEGACY_STYLE_IDS } from './identity.mjs';
 export { LEGACY_STYLES };
@@ -58,13 +59,89 @@ export const CHARACTER_STYLES_V3 = family(3);
 /** Phase 2 (tp-dna@3): the approved reference for Rohit, Virat, Samay and Dhoni. */
 export const CHARACTER_STYLES = CHARACTER_STYLES_V3;
 
+/**
+ * GG, Phase 3 candidate `gg@4-c034` (docs/bots/PHASE3_REPORT.md): the approved GG on tp-dna@4.
+ * A crossover of two generation-0 mutants of the Phase 2 GG (c007: curiosity, riskTolerance,
+ * pressureResistance; c008: showPreference, ego) with one further mutation (moodRecovery), chosen by
+ * the league as "more faithful and not weaker" and validated over 2.1M hands. Copied exactly from
+ * the league record (docs/bots/phase3/league-41.json); tests/server/bot-canonical.test.mjs checks
+ * it against that file and against the configuration hash it was measured under (`formerHash`, with
+ * the policy's former name tp-character@4).
+ */
+const GG_C034_CONFIG = {
+	policy: CHARACTER_POLICY_V4,
+	tendencies: {
+		dna: {
+			aggression: 0.42,
+			blindAggression: 0.3,
+			bluffAffinity: 0.2,
+			blindPreference: 0.42,
+			showPreference: 0.411,
+			curiosity: 0.177,
+			patience: 0.85,
+			riskTolerance: 0.34,
+			discipline: 0.78,
+			lossSensitivity: 0.7,
+			winElation: 0.3,
+			pressureResistance: 0.35,
+			ego: 0.302,
+			moodRecovery: 0.591,
+			revenge: 0.1,
+			suspicion: 0.5,
+			sociality: 0.4,
+			adaptability: 0.3,
+			memoryWeight: 0.5
+		},
+		quirks: [{ id: 'survivalMode', strength: 0.6 }],
+		tempo: { thinkMs: [2400, 4200] }
+	},
+	supportedGames: ['teen-patti']
+};
+export const GG_C034 = Object.freeze({
+	_id: 'gg@4',
+	botId: 'gg',
+	version: 4,
+	parent: 'gg@3',
+	status: 'published',
+	reference: 'dna',
+	...GG_C034_CONFIG,
+	supportedVariants: ['*'],
+	difficulty: { declared: null },
+	configHash: styleConfigHash(GG_C034_CONFIG),
+	source: 'phase3',
+	phase3: Object.freeze({
+		candidate: 'gg@4-c034',
+		league: 'docs/bots/phase3/league-41.json',
+		searchSeed: 41,
+		validationSeed: 51,
+		generation: 2,
+		lineage: ['gg@3', 'gg@4-c007 × gg@4-c008', 'gg@4-c034 (moodRecovery)'],
+		formerPolicy: 'tp-character@4',
+		formerHash: 'af244057d0c062cc'
+	})
+});
+
+/**
+ * The canonical characters (approved 2026-10-21): Rohit, Virat, Samay and Dhoni on their Phase 2
+ * reference (tp-dna@3), GG on Phase 3 candidate c034 (tp-dna@4). The DNA publish script
+ * (scripts/bots-publish-dna.mjs) publishes exactly these as each bot's next directory version.
+ */
+export const CANONICAL_STYLES = Object.freeze({
+	'rohit-sharma': CHARACTER_STYLES_V3['rohit-sharma'],
+	'virat-kohli': CHARACTER_STYLES_V3['virat-kohli'],
+	gg: GG_C034,
+	'samay-raina': CHARACTER_STYLES_V3['samay-raina'],
+	'ms-dhoni': CHARACTER_STYLES_V3['ms-dhoni']
+});
+
 /** Legacy styles and every DNA reference, by style id (the simulator's and reports' catalogue). */
 export const STYLES = Object.freeze({
 	...LEGACY_STYLE_IDS,
 	...Object.fromEntries(
 		[CHARACTER_STYLES_V1, CHARACTER_STYLES_V2, CHARACTER_STYLES_V3].flatMap((f) =>
 			Object.values(f).map((s) => [s._id, s])
-		)
+		),
+		[GG_C034._id, GG_C034]
 	)
 });
 

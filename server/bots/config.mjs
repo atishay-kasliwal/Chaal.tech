@@ -40,24 +40,45 @@ export function characterHash(style) {
 const DNA_GENES = /^[a-z][A-Za-z]{1,31}$/;
 function dnaConfigErrors(style) {
 	const errors = [];
-	if (JSON.stringify(style?.supportedGames) !== '["teen-patti"]') errors.push('This policy supports Teen Patti only');
-	if (JSON.stringify(style?.supportedVariants) !== '["*"]') errors.push('This policy requires all Teen Patti variants');
-	if (style?.memory !== undefined) errors.push('DNA styles keep a per-session mind, not stored memory');
+	if (JSON.stringify(style?.supportedGames) !== '["teen-patti"]')
+		errors.push('This policy supports Teen Patti only');
+	if (JSON.stringify(style?.supportedVariants) !== '["*"]')
+		errors.push('This policy requires all Teen Patti variants');
+	if (style?.memory !== undefined)
+		errors.push('DNA styles keep a per-session mind, not stored memory');
 	const t = style?.tendencies;
 	if (!t || typeof t !== 'object' || Array.isArray(t)) return [...errors, 'Missing tendencies'];
-	for (const key of Object.keys(t)) if (!['dna', 'quirks', 'tempo'].includes(key)) errors.push(`Unknown tendency: ${key}`);
+	for (const key of Object.keys(t))
+		if (!['dna', 'quirks', 'tempo'].includes(key)) errors.push(`Unknown tendency: ${key}`);
 	const genes = Object.entries(t.dna ?? {});
 	if (genes.length < 10) errors.push('DNA needs its personality genes');
 	for (const [gene, value] of genes)
-		if (!DNA_GENES.test(gene) || typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1)
+		if (
+			!DNA_GENES.test(gene) ||
+			typeof value !== 'number' ||
+			!Number.isFinite(value) ||
+			value < 0 ||
+			value > 1
+		)
 			errors.push(`DNA ${gene} must be 0–1`);
 	if (!Array.isArray(t.quirks) || t.quirks.length > 8) errors.push('Quirks must be a short list');
 	else
 		for (const q of t.quirks)
-			if (typeof q?.id !== 'string' || !DNA_GENES.test(q.id) || typeof q.strength !== 'number' || q.strength < 0 || q.strength > 1)
+			if (
+				typeof q?.id !== 'string' ||
+				!DNA_GENES.test(q.id) ||
+				typeof q.strength !== 'number' ||
+				q.strength < 0 ||
+				q.strength > 1
+			)
 				errors.push('Each quirk needs an id and a strength 0–1');
 	const think = t.tempo?.thinkMs;
-	if (!Array.isArray(think) || think.length !== 2 || !think.every((ms) => Number.isInteger(ms) && ms >= 500 && ms <= 10000) || think[0] > think[1])
+	if (
+		!Array.isArray(think) ||
+		think.length !== 2 ||
+		!think.every((ms) => Number.isInteger(ms) && ms >= 500 && ms <= 10000) ||
+		think[0] > think[1]
+	)
 		errors.push('Think time must be a range of 500–10000 ms');
 	return errors;
 }
@@ -65,7 +86,8 @@ function dnaConfigErrors(style) {
 export function configErrors(style) {
 	if (DNA_POLICIES.has(style?.policy)) return dnaConfigErrors(style);
 	const errors = [];
-	if (![CHARACTER_POLICY, ADAPTIVE_POLICY].includes(style?.policy)) errors.push('Unsupported policy');
+	if (![CHARACTER_POLICY, ADAPTIVE_POLICY].includes(style?.policy))
+		errors.push('Unsupported policy');
 	if (
 		!Array.isArray(style?.supportedGames) ||
 		style.supportedGames.length !== 1 ||
@@ -79,14 +101,32 @@ export function configErrors(style) {
 	if (style?.policy === ADAPTIVE_POLICY) {
 		if (style.memory?.schema !== MEMORY_VERSION) errors.push('Unsupported memory schema');
 		for (const [key, [min, max]] of Object.entries(MEMORY_RANGES))
-			if (typeof style.memory?.[key] !== 'number' || !Number.isFinite(style.memory[key]) || style.memory[key] < min || style.memory[key] > max)
+			if (
+				typeof style.memory?.[key] !== 'number' ||
+				!Number.isFinite(style.memory[key]) ||
+				style.memory[key] < min ||
+				style.memory[key] > max
+			)
 				errors.push(`Memory ${key} must be ${min}–${max}`);
 		for (const [key, [min, max]] of Object.entries(MEMORY_OPTIONAL))
-			if (style.memory?.[key] !== undefined && (typeof style.memory[key] !== 'number' || !Number.isFinite(style.memory[key]) || style.memory[key] < min || style.memory[key] > max))
+			if (
+				style.memory?.[key] !== undefined &&
+				(typeof style.memory[key] !== 'number' ||
+					!Number.isFinite(style.memory[key]) ||
+					style.memory[key] < min ||
+					style.memory[key] > max)
+			)
 				errors.push(`Memory ${key} must be ${min}–${max}`);
-		if (style.memory?.focus !== undefined && !FOCUS.includes(style.memory.focus)) errors.push('Unknown memory focus');
+		if (style.memory?.focus !== undefined && !FOCUS.includes(style.memory.focus))
+			errors.push('Unknown memory focus');
 		for (const key of Object.keys(style.memory ?? {}))
-			if (key !== 'schema' && key !== 'focus' && !Object.hasOwn(MEMORY_RANGES, key) && !Object.hasOwn(MEMORY_OPTIONAL, key)) errors.push(`Unknown memory setting: ${key}`);
+			if (
+				key !== 'schema' &&
+				key !== 'focus' &&
+				!Object.hasOwn(MEMORY_RANGES, key) &&
+				!Object.hasOwn(MEMORY_OPTIONAL, key)
+			)
+				errors.push(`Unknown memory setting: ${key}`);
 	} else if (style?.memory !== undefined) errors.push('Memory requires a new adaptive policy');
 	const profile = style?.tendencies;
 	if (!profile || typeof profile !== 'object' || Array.isArray(profile))
@@ -101,10 +141,17 @@ export function configErrors(style) {
 			errors.push(`${key} must be ${min}–${max}`);
 	}
 	for (const [key, [min, max]] of Object.entries(OPTIONAL_RANGES))
-		if (profile[key] !== undefined && (typeof profile[key] !== 'number' || !Number.isFinite(profile[key]) || profile[key] < min || profile[key] > max))
+		if (
+			profile[key] !== undefined &&
+			(typeof profile[key] !== 'number' ||
+				!Number.isFinite(profile[key]) ||
+				profile[key] < min ||
+				profile[key] > max)
+		)
 			errors.push(`${key} must be ${min}–${max}`);
 	for (const key of Object.keys(profile))
-		if (!Object.hasOwn(RANGES, key) && !Object.hasOwn(OPTIONAL_RANGES, key)) errors.push(`Unknown tendency: ${key}`);
+		if (!Object.hasOwn(RANGES, key) && !Object.hasOwn(OPTIONAL_RANGES, key))
+			errors.push(`Unknown tendency: ${key}`);
 	if (profile.raise < profile.call)
 		errors.push('Raise threshold must be at least the call threshold');
 	if (!['relaxed', 'balanced', 'challenging'].includes(style?.difficulty?.declared))

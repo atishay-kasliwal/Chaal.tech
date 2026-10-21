@@ -48,7 +48,8 @@
 		"sim:graph": "node scripts/sim/graph.mjs",
 		"sim:phase3": "node --max-old-space-size=8192 scripts/sim/phase3.mjs --seed 41",
 		"sim:phase3:report": "node --max-old-space-size=8192 scripts/sim/phase3-report.mjs --league .sim/phase3/league-41.json --seed 51",
-		"sim:phase3:all": "caffeinate -ims sh -c 'npm run sim:phase3 && npm run sim:phase3:report'"
+		"sim:phase3:all": "caffeinate -ims sh -c 'npm run sim:phase3 && npm run sim:phase3:report'",
+		"bots:publish-dna": "node --env-file-if-exists=.env scripts/bots-publish-dna.mjs"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.1.1",
