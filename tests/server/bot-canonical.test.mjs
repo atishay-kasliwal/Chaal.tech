@@ -10,7 +10,13 @@ import { publishDna, CANONICAL_COPY } from '../../server/bots/publish-dna.mjs';
 import { configErrors, characterHash } from '../../server/bots/config.mjs';
 import { validateStyle } from '../../server/bots/validation.mjs';
 import { styleConfigHash } from '../../server/bots/identity.mjs';
-import { CANONICAL_STYLES, GG_C034, CHARACTER_STYLES_V3 } from '../../server/bots/dna-styles.mjs';
+import {
+	CANONICAL_STYLES,
+	GG_C034,
+	CHARACTER_STYLES_V3,
+	STYLES
+} from '../../server/bots/dna-styles.mjs';
+import { member } from '../../server/sim/population.mjs';
 import { DNA_POLICIES, FORMER_NAMES } from '../../server/bots/dna-policies.mjs';
 import { canonicalJson } from '../../server/analytics/hash.mjs';
 
@@ -75,6 +81,14 @@ test('the canonical lineup: Rohit, Virat, Samay and Dhoni on Phase 2, GG on c034
 		assert.deepEqual(configErrors(style), []);
 		const report = validateStyle(style, { hands: 6 });
 		assert.ok(report.passed && report.invariance, `${style._id}: ${report.errors.join('; ')}`);
+	}
+});
+
+test('every canonical reference is in the catalogue and seats in the simulator', () => {
+	for (const ref of Object.values(CANONICAL_STYLES)) {
+		assert.equal(STYLES[ref._id], ref, ref._id);
+		const m = member(ref._id);
+		assert.deepEqual(m.seat({}, 'bot-x').style, ref);
 	}
 });
 

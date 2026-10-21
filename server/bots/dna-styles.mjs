@@ -137,12 +137,12 @@ export const CANONICAL_STYLES = Object.freeze({
 /** Legacy styles and every DNA reference, by style id (the simulator's and reports' catalogue). */
 export const STYLES = Object.freeze({
 	...LEGACY_STYLE_IDS,
-	...Object.fromEntries(
-		[CHARACTER_STYLES_V1, CHARACTER_STYLES_V2, CHARACTER_STYLES_V3].flatMap((f) =>
+	...Object.fromEntries([
+		...[CHARACTER_STYLES_V1, CHARACTER_STYLES_V2, CHARACTER_STYLES_V3].flatMap((f) =>
 			Object.values(f).map((s) => [s._id, s])
 		),
 		[GG_C034._id, GG_C034]
-	)
+	])
 });
 
 /** The style a seated bot plays: the style it sat down with, or its legacy level's. */
