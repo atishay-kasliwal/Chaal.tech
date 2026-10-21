@@ -645,7 +645,7 @@
 		gap: 14px;
 		height: calc(100dvh - var(--header-h, 64px));
 		overflow: hidden;
-		padding: 16px max(16px, calc((100vw - 1320px) / 2)) 18px;
+		padding: 16px max(var(--gutter), calc((100vw - var(--page-max)) / 2 + var(--gutter))) 18px;
 		color: var(--paper);
 		background: radial-gradient(ellipse at 82% 0%, #243c2b55, transparent 45%), var(--night);
 	}

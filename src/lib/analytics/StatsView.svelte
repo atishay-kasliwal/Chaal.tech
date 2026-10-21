@@ -32,7 +32,17 @@
 	] as const;
 	type Section = (typeof SECTIONS)[number][0];
 	/** Sections redrawn as one-screen visuals; the rest still scroll inside the stage. */
-	const FITTED: string[] = ['overview', 'skill', 'games', 'cards', 'style', 'rivals', 'records', 'history', 'club'];
+	const FITTED: string[] = [
+		'overview',
+		'skill',
+		'games',
+		'cards',
+		'style',
+		'rivals',
+		'records',
+		'history',
+		'club'
+	];
 	const WINDOWS = [
 		['all', 'All time', 'All'],
 		['30d', 'Last 30 days', '30d'],
@@ -219,7 +229,7 @@
 		gap: 12px;
 		height: calc(100dvh - var(--header-h, 64px));
 		overflow: hidden;
-		padding: 14px max(16px, calc((100vw - 1320px) / 2)) 16px;
+		padding: 14px max(var(--gutter), calc((100vw - var(--page-max)) / 2 + var(--gutter))) 16px;
 		color: #f8f2e5;
 	}
 	.bar {
