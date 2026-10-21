@@ -9,6 +9,7 @@ import {
 	SUITS
 } from './cards.mjs';
 import { castMember } from '../../src/lib/bots/cast.js';
+import { GameError } from '../engine.mjs';
 
 /**
  * 3 2 5 (Teen Do Paanch), Chaal V1 rules (docs/games/325_RULES.md): three players, 30 cards, quotas
@@ -33,12 +34,9 @@ export function fresh325Deck(sevens = ['hearts', 'spades']) {
 }
 const DECK_KEYS = new Set(fresh325Deck().map(cardKey));
 
+// Rule errors are GameErrors, so the room server shows players the reason, not a service failure.
 const fail = (condition, message, code = 'INVALID_ACTION') => {
-	if (!condition) {
-		const error = new Error(message);
-		error.code = code;
-		throw error;
-	}
+	if (!condition) throw new GameError(message, code);
 };
 const seated = (room) =>
 	room.players.filter((p) => p.seatNumber !== null).sort((a, b) => a.seatNumber - b.seatNumber);

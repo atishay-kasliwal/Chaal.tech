@@ -98,6 +98,8 @@ try {
 	if (!ready) throw new Error(`Cloudflare Worker did not become ready.\n${workerOutput}\n${frontendOutput}`);
 	const files = (await readdir(path.join(root, 'tests/cloudflare')))
 		.filter((name) => name.endsWith('.test.mjs'))
+		// CF_TEST_ONLY=room.test.mjs runs one file against the same local Worker.
+		.filter((name) => !process.env.CF_TEST_ONLY || name === process.env.CF_TEST_ONLY)
 		.map((name) => path.join('tests/cloudflare', name));
 	const result = await run(process.execPath, ['--test', '--test-concurrency=1', ...files], {
 		env: {

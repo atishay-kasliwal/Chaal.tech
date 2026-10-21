@@ -345,9 +345,12 @@ export class RoomDurableObject {
 		);
 	}
 
-	connectedRoom(roomNameValue) {
+	/** Players with an open socket to this room. `closing`: a socket being closed right now, left out
+	 * (during its close handler it may still be listed). */
+	connectedRoom(roomNameValue, closing = null) {
 		return new Set(
 			this.ctx.getWebSockets()
+				.filter((socket) => socket !== closing)
 				.map((socket) => socket.deserializeAttachment())
 				.filter((attachment) => attachment?.roomName === roomNameValue)
 				.map((attachment) => attachment.playerId)
@@ -811,14 +814,15 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		}
 	}
 
-	publish(name, text) {
+	publish(name, text, closing = null) {
 		// Keep tonight's lineup fresh; the next update carries any change.
 		if (!this.lineupCache || Date.now() - this.lineupCache.at >= 15000) this.ctx.waitUntil(this.lineup());
 		if (!name) return;
 		const room = this.room()?.snapshot;
 		if (!room || room.name !== name) return;
-		const connected = this.connectedRoom(name);
+		const connected = this.connectedRoom(name, closing);
 		for (const socket of this.ctx.getWebSockets()) {
+			if (socket === closing) continue;
 			const attachment = socket.deserializeAttachment();
 			if (attachment?.roomName !== name || this.authExpired(socket, attachment)) continue;
 			this.sendEvent(socket, 'roomData', this.view(room, attachment.playerId, connected));
@@ -888,9 +892,10 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		const attachment = socket.deserializeAttachment();
 		if (!attachment?.roomName) return;
 		const room = this.room()?.snapshot;
-		if (room?.hostId === attachment.playerId && !this.connectedRoom(room.name).has(attachment.playerId))
+		if (room?.hostId === attachment.playerId && !this.connectedRoom(room.name, socket).has(attachment.playerId))
 			this.setMeta('hostRecovery', { hostId: attachment.playerId, at: Date.now() + this.hostGraceMs() });
-		this.publish(attachment.roomName);
+		// Everyone else sees this player away now, not at the next update.
+		this.publish(attachment.roomName, undefined, socket);
 		this.ctx.waitUntil(this.scheduleAlarm());
 	}
 
