@@ -20,7 +20,6 @@
 			.catch((e) => (error = e.message));
 	});
 	const RANKS: Record<number, string> = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
-	const SUITS: Record<string, string> = {
 		hearts: '♥ Hearts',
 		diamonds: '♦ Diamonds',
 		clubs: '♣ Clubs',
