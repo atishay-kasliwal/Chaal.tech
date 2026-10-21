@@ -6,6 +6,12 @@
 	let category = $state<string>('All');
 	let selectedId = $state('classic-1');
 	let replay = $state(0);
+	const SUIT: Record<string, string> = {
+		'Teen Patti': '♠',
+		Poker: '♦',
+		Blackjack: '♣',
+		Rummy: '♥'
+	};
 	const filtered = $derived(
 		GAME_GUIDES.filter(
 			(game) =>
@@ -16,6 +22,18 @@
 		)
 	);
 	const selected = $derived(filtered.find((game) => game.id === selectedId) ?? filtered[0]);
+	const count = (c: string) =>
+		c === 'All' ? GAME_GUIDES.length : GAME_GUIDES.filter((g) => g.category === c).length;
+	const dealt = (id: string, cards: number) =>
+		id === 'rummy'
+			? '13 cards'
+			: id === 'blackjack'
+				? 'to 21'
+				: id === 'texas-holdem'
+					? '2 + 5'
+					: `${cards} cards`;
+	const playHref = (id: string, c: string) =>
+		`/create-room${c === 'Teen Patti' ? '' : `?game=${id === 'rummy' ? 'rummy' : id}`}`;
 	async function syncHash() {
 		const id = window.location.hash.slice(1);
 		if (GAME_GUIDES.some((game) => game.id === id)) {
@@ -25,7 +43,7 @@
 				query = '';
 			}
 			await tick();
-			document.getElementById(id)?.scrollIntoView({ block: 'start' });
+			document.getElementById(`tile-${id}`)?.scrollIntoView({ block: 'nearest' });
 		}
 	}
 	onMount(() => {
@@ -34,6 +52,7 @@
 	function choose(id: string) {
 		selectedId = id;
 		replay = 0;
+		history.replaceState(history.state, '', `#${id}`);
 	}
 	function clear() {
 		query = '';
@@ -50,663 +69,506 @@
 	/>
 </svelte:head>
 
-<div class="games-page">
-	<header class="page-header">
-		<a class="back" href="/">← Chaal</a>
-		<div class="headline">
-			<h1>The game<br />is <span>on.</span></h1>
-			<div class="header-note">
-				<span class="suit-mark" aria-hidden="true">♠</span>
-				<p>{GAME_GUIDES.length} ways to play.<br />Find your next favourite.</p>
-			</div>
-		</div>
-	</header>
-	<section class="browse" aria-label="Find a game">
-		<div class="filters" role="group" aria-label="Game category">
+<div class="games-room">
+	<div class="bar">
+		<h1>Games <span>{GAME_GUIDES.length}</span></h1>
+		<div class="pills" role="group" aria-label="Game category">
 			{#each GAME_CATEGORIES as option (option)}<button
 					class:active={category === option}
 					aria-pressed={category === option}
-					onclick={() => (category = option)}>{option === 'All' ? 'All games' : option}</button
+					onclick={() => (category = option)}
+					><span aria-hidden="true">{option === 'All' ? '✦' : SUIT[option]}</span>
+					{option === 'All' ? 'All' : option}<small>{count(option)}</small></button
 				>{/each}
 		</div>
 		<label class="search"
-			><span class="sr-only">Search games</span><input
+			><span aria-hidden="true">⌕</span><span class="sr-only">Search games</span><input
 				type="search"
 				bind:value={query}
-				placeholder="Find a game…"
+				placeholder="Find a game"
 			/></label
 		>
-	</section>
-	<label class="mobile-picker"
-		>Choose a game<select
-			aria-label="Choose a game"
-			value={selected?.id ?? ''}
-			onchange={(event) => choose(event.currentTarget.value)}
-			disabled={!filtered.length}
-			>{#each filtered as game (game.id)}<option value={game.id}>{game.name}</option>{/each}</select
-		></label
-	>
-	<div class="workspace">
-		<nav class="game-list" aria-label="Choose a game">
-			<p class="list-count" role="status">
-				{String(filtered.length).padStart(2, '0')} GAMES & VARIANTS
-			</p>
-			{#each filtered as game (game.id)}
-				<a
-					href="#{game.id}"
-					class:chosen={selected?.id === game.id}
-					aria-current={selected?.id === game.id ? 'true' : undefined}
-					onclick={() => choose(game.id)}
-					><span class="list-number">{String(GAME_GUIDES.indexOf(game) + 1).padStart(2, '0')}</span
-					><span>{game.name}</span><span class="list-arrow" aria-hidden="true">↗</span></a
-				>
-			{/each}
-		</nav>
-		{#if selected}
-			<article class="game-guide" id={selected.id} aria-labelledby="game-title">
-				<div class="stage" style:--poster={gameColor(selected.id)}>
-					<div class="stage-top">
-						<span class="category-tag"><span aria-hidden="true">♠</span> {selected.category}</span
-						><span class="guide-index"
-							>{String(GAME_GUIDES.indexOf(selected) + 1).padStart(2, '0')} / {GAME_GUIDES.length}</span
-						>
-					</div>
-					<div class="stage-title">
-						<h2 id="game-title">{selected.name}</h2>
-						<span class="deal-tag"
-							>{selected.id === 'rummy'
-								? '13 cards per player'
-								: selected.id === 'blackjack'
-									? 'Play to 21'
-									: selected.id === 'texas-holdem'
-										? '2 hole cards'
-										: `${selected.cards.length}-card hand`}</span
-						>
-					</div>
-					{#key `${selected.id}-${replay}`}<GameDemo game={selected} />{/key}
-					<button
-						class="replay"
-						onclick={() => replay++}
-						aria-label="Replay {selected.name} example">↻ Deal again</button
-					>
-				</div>
-				<div class="guide-copy">
-					<p class="win">{selected.win}</p>
-					<div class="rules">
-						<h3>The rules</h3>
-						<ol>
-							{#each selected.rules as rule, index (rule)}<li>
-									<span class="rule-number">{String(index + 1).padStart(2, '0')}</span>
-									<p>{rule}</p>
-								</li>{/each}
-						</ol>
-					</div>
-					{#if selected.category === 'Teen Patti'}<details>
-							<summary>First time playing Teen Patti? <span aria-hidden="true">+</span></summary>
-							<p>
-								Each hand starts with a boot contribution. Play blind, or look at your cards and
-								play seen. Blind players pay half the equivalent seen stake. Chaal to stay in, raise
-								the stake, or pack to fold. With two players left, a Show compares their hands. The
-								variant decides which hand wins.
-							</p>
-							<p>
-								Four-card variants explain whether the game chooses your best three or you discard
-								one.
-							</p>
-						</details>{/if}
-				</div>
-			</article>
-		{:else}<div class="empty">
-				<h2>No games found.</h2>
-				<button onclick={clear}>Show all games →</button>
-			</div>{/if}
 	</div>
-	<footer><span>Cards out. Friends in.</span><a href="/">Back to Chaal ↗</a></footer>
+
+	<div class="body">
+		<nav class="tile shelf" aria-label="Choose a game">
+			{#if filtered.length}
+				<div class="grid">
+					{#each filtered as game (game.id)}
+						<a
+							id="tile-{game.id}"
+							href="#{game.id}"
+							class="game"
+							class:chosen={selected?.id === game.id}
+							aria-current={selected?.id === game.id ? 'true' : undefined}
+							style:--poster={gameColor(game.id)}
+							onclick={(event) => {
+								event.preventDefault();
+								choose(game.id);
+							}}
+						>
+							<span class="swatch" aria-hidden="true">{SUIT[game.category] ?? '♠'}</span>
+							<strong>{game.name}</strong>
+							<small>{dealt(game.id, game.cards.length)}</small>
+						</a>
+					{/each}
+				</div>
+			{:else}
+				<div class="empty">
+					<p>No games match.</p>
+					<button onclick={clear}>Show all</button>
+				</div>
+			{/if}
+		</nav>
+
+		{#if selected}
+			<article class="tile stage" id={selected.id} style:--poster={gameColor(selected.id)}>
+				<header>
+					<span class="tag"
+						><span aria-hidden="true">{SUIT[selected.category] ?? '♠'}</span>
+						{selected.category}</span
+					>
+					<span class="index"
+						>{String(GAME_GUIDES.indexOf(selected) + 1).padStart(2, '0')} / {GAME_GUIDES.length}</span
+					>
+				</header>
+				<h2>{selected.name}</h2>
+				<div class="demo">
+					{#key `${selected.id}-${replay}`}<GameDemo game={selected} />{/key}
+				</div>
+				<footer>
+					<button
+						class="ghost"
+						onclick={() => replay++}
+						aria-label="Deal another {selected.name} example">↻ Deal again</button
+					>
+					<a class="play" href={playHref(selected.id, selected.category)}
+						><span aria-hidden="true">♠</span> Play {selected.name}</a
+					>
+				</footer>
+			</article>
+
+			<aside class="tile rules" aria-labelledby="rules-title">
+				<p class="win"><span aria-hidden="true">🏆</span>{selected.win}</p>
+				<h3 id="rules-title">How it goes</h3>
+				<ol>
+					{#each selected.rules as rule, index (rule)}<li>
+							<span>{index + 1}</span>
+							<p>{rule}</p>
+						</li>{/each}
+				</ol>
+				{#if selected.category === 'Teen Patti'}<details>
+						<summary>New to Teen Patti?</summary>
+						<p>
+							Everyone puts in the boot. Play blind for half price, or look and play seen. Chaal to
+							stay in, raise to push, pack to fold. With two left, a Show decides it.
+						</p>
+					</details>{/if}
+			</aside>
+		{/if}
+	</div>
 </div>
 
 <style>
-	.games-page {
-		background: #211c2e;
-		color: #f8f2e5;
-		color-scheme: dark;
-		margin: 0 0 32px;
-		font-family: Arial, Helvetica, sans-serif;
-	}
-	.page-header {
-		padding: 32px clamp(20px, 5vw, 64px) 36px;
-	}
-	.back {
-		font-size: 13px;
-		font-weight: 700;
-	}
-	.headline {
+	/* One screen, like Club and Stats: the bar, then three panels that fill the rest. */
+	.games-room {
+		--tile: var(--surface);
+		--tile-line: #ffffff1a;
 		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 24px;
-		margin-top: 38px;
-	}
-	h1 {
-		font-size: clamp(72px, 11vw, 145px);
-		line-height: 0.85;
-		font-weight: 900;
-		letter-spacing: -0.065em;
-		word-spacing: 0.08em;
-	}
-	h1 span {
-		color: #f2dc91;
-	}
-	.header-note {
-		display: grid;
-		justify-items: end;
-		gap: 16px;
-		padding-bottom: 6px;
-	}
-	.header-note p {
-		font-size: 13px;
-		line-height: 1.6;
-		text-align: right;
-	}
-	.suit-mark {
-		font-size: 72px;
-		line-height: 1;
-		transform: rotate(14deg);
-	}
-	.browse {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 20px;
-		padding: 0 clamp(20px, 5vw, 64px);
-		border-block: 1px solid #f8f2e530;
-	}
-	.filters {
-		display: flex;
-		gap: 24px;
-		flex-wrap: wrap;
-	}
-	.filters button {
-		padding: 20px 0 17px;
-		font-size: 12px;
-		font-weight: 650;
-		border-bottom: 3px solid transparent;
-		cursor: pointer;
-		color: #beb5c9;
-	}
-	.filters button.active {
-		border-color: #f2dc91;
-		color: #f8f2e5;
-	}
-	.search {
-		min-width: 150px;
-		max-width: 240px;
-		width: 25%;
-	}
-	input {
-		width: 100%;
-		border-bottom: 1px solid #f8f2e530;
-		background: transparent;
-		padding: 10px 0;
-		color: #f8f2e5;
-		font-size: 14px;
-	}
-	input::placeholder {
-		color: #94a08f;
-		opacity: 1;
-	}
-	.mobile-picker {
-		display: none;
-	}
-	.workspace {
-		display: grid;
-		grid-template-columns: 260px minmax(0, 1fr);
-		gap: 40px;
-		padding: 36px clamp(20px, 5vw, 64px) 56px;
-		align-items: start;
-	}
-	.game-list {
-		position: sticky;
-		top: 20px;
-		max-height: 780px;
-		overflow-y: auto;
-		scrollbar-width: thin;
-	}
-	.list-count {
-		font:
-			10px ui-monospace,
-			monospace;
-		letter-spacing: 0.1em;
-		color: #beb5c9;
-		padding: 0 12px 16px;
-	}
-	.game-list a {
-		display: grid;
-		grid-template-columns: 24px 1fr 14px;
-		gap: 10px;
-		align-items: baseline;
-		padding: 13px 12px;
-		font-size: 13px;
-		border-top: 1px solid #f8f2e518;
-		transition: background 150ms;
-	}
-	.game-list a:hover {
-		background: #f8f2e509;
-	}
-	.game-list a.chosen {
-		background: #f2dc91;
-		color: #211c2e;
-	}
-	.list-number {
-		font:
-			9px ui-monospace,
-			monospace;
-		opacity: 0.55;
-	}
-	.list-arrow {
-		opacity: 0;
-	}
-	.chosen .list-arrow {
-		opacity: 1;
-	}
-	.game-guide {
-		min-width: 0;
-		scroll-margin-top: 24px;
-	}
-	.stage {
-		position: relative;
+		flex-direction: column;
+		gap: 14px;
+		height: calc(100dvh - var(--header-h, 64px));
 		overflow: hidden;
-		background: var(--poster);
-		padding: 22px 28px 16px;
-		color: #efe6d3;
+		padding: 16px max(var(--gutter), calc((100vw - var(--page-max)) / 2 + var(--gutter))) 18px;
+		color: var(--paper);
+		background: radial-gradient(ellipse at 18% 0%, #4a3d2455, transparent 45%), var(--night);
+		color-scheme: dark;
 	}
-	.stage-top {
+	.bar {
 		display: flex;
-		justify-content: space-between;
-		gap: 15px;
-		text-transform: uppercase;
-		font:
-			10px ui-monospace,
-			monospace;
-		letter-spacing: 0.08em;
-	}
-	.stage h2 {
-		font-size: clamp(32px, 5vw, 65px);
-		line-height: 1;
-		font-weight: 850;
-		letter-spacing: -0.055em;
-		max-width: 95%;
-		margin-top: 30px;
-	}
-	.replay {
-		display: block;
-		margin-left: auto;
-		font-size: 11px;
-		font-weight: 650;
-		padding: 10px 0;
-		cursor: pointer;
-	}
-	.guide-copy {
-		padding: 28px 0 0;
-	}
-	.win {
-		font-size: 21px;
-		line-height: 1.5;
-		font-weight: 600;
-		letter-spacing: -0.025em;
-		margin-bottom: 28px;
-	}
-	.rules {
-		display: grid;
-		grid-template-columns: 100px 1fr;
-		gap: 20px;
-		border-top: 2px solid #f8f2e570;
-		padding-top: 20px;
-	}
-	h3 {
-		font-size: 12px;
-		font-weight: 750;
-	}
-	ol {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-	li {
-		display: grid;
-		grid-template-columns: 22px 1fr;
-		gap: 16px;
-		margin-bottom: 22px;
-	}
-	.rule-number {
-		font:
-			10px ui-monospace,
-			monospace;
-		color: #d8b977;
-		padding-top: 4px;
-	}
-	li p {
-		font-size: 14px;
-		line-height: 1.75;
-		color: #beb5c9;
-	}
-	details {
-		border-top: 1px solid #f8f2e525;
-		margin-top: 12px;
-		padding-top: 18px;
-	}
-	summary {
-		display: flex;
-		justify-content: space-between;
-		cursor: pointer;
-		font-size: 12px;
-		font-weight: 650;
-		list-style: none;
-	}
-	summary::-webkit-details-marker {
-		display: none;
-	}
-	details p {
-		font-size: 13px;
-		line-height: 1.8;
-		color: #beb5c9;
-		margin-top: 14px;
-	}
-	.empty {
-		padding: 60px 0;
-	}
-	.empty h2 {
-		font-size: 28px;
-		font-weight: 750;
-	}
-	.empty button {
-		color: #f2dc91;
-		margin-top: 20px;
-		cursor: pointer;
-	}
-	footer {
-		display: flex;
-		justify-content: space-between;
-		padding: 24px clamp(20px, 5vw, 64px);
-		border-top: 1px solid #f8f2e525;
-		font-size: 12px;
-		font-weight: 650;
-	}
-	a:focus-visible,
-	button:focus-visible,
-	input:focus-visible,
-	summary:focus-visible {
-		outline: 2px solid #f2dc91;
-		outline-offset: 4px;
-	}
-	@media (max-width: 850px) {
-		.workspace {
-			grid-template-columns: 190px minmax(0, 1fr);
-			gap: 24px;
-		}
-		.filters {
-			gap: 16px;
-		}
-		.browse {
-			flex-wrap: wrap;
-			padding-block: 16px;
-			gap: 8px;
-		}
-		.filters button {
-			padding: 8px 0;
-		}
-		.search {
-			width: 100%;
-			max-width: none;
-		}
-		.rules {
-			grid-template-columns: 1fr;
-			gap: 14px;
-		}
-	}
-	@media (max-width: 600px) {
-		.mobile-picker {
-			display: grid;
-			gap: 8px;
-			margin: 20px 20px 0;
-			font-size: 11px;
-			font-weight: 700;
-		}
-		.mobile-picker select {
-			width: 100%;
-			padding: 12px;
-			border: 1px solid #f8f2e530;
-			background: #14271c;
-			color: #f8f2e5;
-			font-size: 16px;
-		}
-		.game-list {
-			display: none;
-		}
-		.headline {
-			gap: 10px;
-		}
-		.header-note {
-			max-width: 110px;
-		}
-		.header-note p {
-			font-size: 10px;
-		}
-		.suit-mark {
-			font-size: 45px;
-		}
-		.workspace {
-			grid-template-columns: minmax(0, 1fr);
-			gap: 24px;
-			padding-top: 20px;
-		}
-		.game-list {
-			position: static;
-			max-height: 185px;
-			border-bottom: 1px solid #f8f2e530;
-		}
-		.game-list a {
-			padding-block: 11px;
-		}
-		.list-count {
-			padding-bottom: 10px;
-		}
-		.stage {
-			padding: 18px;
-		}
-		.win {
-			font-size: 19px;
-		}
-		.filters {
-			gap: 17px;
-		}
-		.filters button {
-			font-size: 11px;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.game-list a {
-			transition: none;
-		}
-	}
-
-	.games-page {
-		background: transparent;
-	}
-	.page-header {
-		padding: 38px 0 44px;
-	}
-	.back {
-		color: var(--muted);
-		font-size: 12px;
-	}
-	.headline {
-		margin-top: 24px;
+		align-items: center;
+		gap: 14px;
+		flex: none;
 	}
 	h1 {
 		font-family: var(--font-display);
+		font-size: 24px;
 		font-weight: 800;
-		font-size: clamp(70px, 9.5vw, 132px);
-		line-height: 0.9;
+		letter-spacing: -0.04em;
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		margin-right: auto;
 	}
-	.browse {
-		padding-inline: 0;
+	h1 span {
+		font-size: 14px;
+		color: var(--butter);
 	}
-	.workspace {
-		padding-inline: 0;
+	.pills {
+		display: flex;
+		gap: 4px;
+		padding: 4px;
+		border-radius: 100px;
+		background: #ffffff10;
 	}
-	.game-list a {
-		border-radius: 8px;
+	.pills button {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 8px 14px;
+		border-radius: 100px;
+		font-size: 13px;
+		font-weight: 700;
+		color: var(--muted);
+		cursor: pointer;
 		transition:
 			background 0.2s,
-			translate 0.2s;
+			color 0.2s;
 	}
-	.game-list a:hover {
-		translate: 4px 0;
-		background: #ffffff08;
+	.pills button:hover {
+		color: var(--paper);
 	}
-	.game-list a.chosen {
+	.pills button.active {
 		background: var(--butter);
 		color: var(--night);
 	}
-	.game-list a.chosen .list-number {
-		color: var(--night);
-		opacity: 0.65;
+	.pills small {
+		font-size: 11px;
+		opacity: 0.6;
 	}
+	.search {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 0 14px;
+		height: 42px;
+		border-radius: 100px;
+		background: #ffffff10;
+		color: var(--muted);
+		width: 220px;
+	}
+	.search input {
+		width: 100%;
+		background: transparent;
+		color: var(--paper);
+		font-size: 14px;
+	}
+	.search input::placeholder {
+		color: var(--muted);
+		opacity: 1;
+	}
+	.body {
+		flex: 1;
+		min-height: 0;
+		display: grid;
+		grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr) minmax(250px, 0.8fr);
+		gap: 14px;
+	}
+	.tile {
+		min-height: 0;
+		min-width: 0;
+		overflow: hidden;
+		border-radius: 18px;
+		background: var(--tile);
+		border: 1px solid var(--tile-line);
+		padding: 14px 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	/* The shelf: every game as a small poster, scrolling inside its panel only. */
+	.shelf {
+		padding: 10px;
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+		gap: 8px;
+		overflow-y: auto;
+		scrollbar-width: thin;
+		padding: 2px;
+	}
+	.game {
+		position: relative;
+		display: grid;
+		align-content: end;
+		gap: 2px;
+		min-height: 92px;
+		padding: 10px 12px;
+		border-radius: 14px;
+		background: linear-gradient(
+			160deg,
+			var(--poster) 0%,
+			color-mix(in srgb, var(--poster) 55%, #000) 100%
+		);
+		border: 1px solid #ffffff14;
+		overflow: hidden;
+		transition:
+			translate 0.2s,
+			box-shadow 0.2s,
+			outline-color 0.2s;
+		outline: 2px solid transparent;
+		outline-offset: 1px;
+	}
+	.game:hover,
+	.game:focus-visible {
+		translate: 0 -2px;
+		box-shadow: 0 8px 18px #0006;
+	}
+	.game.chosen {
+		outline-color: var(--butter);
+	}
+	.swatch {
+		position: absolute;
+		top: 6px;
+		right: 10px;
+		font-size: 34px;
+		opacity: 0.22;
+		line-height: 1;
+	}
+	.game strong {
+		font-family: var(--font-display);
+		font-size: 15px;
+		line-height: 1.1;
+		letter-spacing: -0.01em;
+	}
+	.game small {
+		font-size: 11px;
+		color: #ffffffa8;
+	}
+	.empty {
+		display: grid;
+		place-items: center;
+		align-content: center;
+		gap: 10px;
+		height: 100%;
+		color: var(--muted);
+	}
+	.empty button {
+		padding: 8px 16px;
+		border-radius: 100px;
+		background: var(--butter);
+		color: var(--night);
+		font-weight: 700;
+	}
+
+	/* The stage: the selected game, dealt. */
 	.stage {
-		border-radius: 16px;
+		background: radial-gradient(ellipse at 50% 60%, #ffffff12, transparent 60%), var(--poster);
+		padding: 18px 22px;
+	}
+	.stage header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.tag {
+		display: inline-flex;
+		gap: 6px;
+		padding: 6px 12px;
+		border-radius: 100px;
+		background: #00000030;
+		font-size: 12px;
+		font-weight: 700;
+	}
+	.index {
+		font-size: 12px;
+		color: #ffffffa0;
+		font-variant-numeric: tabular-nums;
 	}
 	.stage h2 {
 		font-family: var(--font-display);
-		font-weight: 700;
-		letter-spacing: -0.04em;
+		font-size: clamp(34px, 4.2vw, 64px);
+		font-weight: 800;
+		letter-spacing: -0.045em;
+		line-height: 0.95;
 	}
-	footer {
-		padding-inline: 0;
+	.demo {
+		flex: 1;
+		min-height: 0;
+		display: grid;
+		place-items: center;
+		overflow: hidden;
 	}
-	@media (max-width: 600px) {
-		.page-header {
-			padding: 30px 0;
-		}
-		.headline {
-			margin-top: 20px;
-		}
-		h1 {
-			font-size: 72px;
-		}
-		.browse {
-			padding-inline: 0;
-		}
-		.workspace {
-			padding-inline: 0;
-		}
-		.mobile-picker {
-			margin-inline: 0;
-		}
-		.header-note p {
-			font-size: 11px;
-		}
-		.header-note .suit-mark {
-			font-size: 50px;
-		}
-	}
-
-	.stage {
-		border: 1px solid #ffffff22;
-		border-radius: 20px;
-		background: linear-gradient(140deg, #ffffff09, transparent 55%), var(--poster);
-		padding: 26px 30px 22px;
-		box-shadow: 0 6px 0 #0002;
-	}
-	.stage-top {
+	.stage footer {
+		display: flex;
+		justify-content: space-between;
 		align-items: center;
-		text-transform: none;
-		font-family: Arial, Helvetica, sans-serif;
-		letter-spacing: 0;
-		font-size: 11px;
-		color: var(--paper);
+		gap: 10px;
 	}
-	.category-tag {
+	.ghost {
+		padding: 10px 16px;
+		border-radius: 100px;
+		background: #00000030;
+		font-size: 13px;
+		font-weight: 700;
+		cursor: pointer;
+		transition: background 0.2s;
+	}
+	.ghost:hover {
+		background: #00000055;
+	}
+	.play {
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
-		border: 1px solid #ffffff35;
+		padding: 12px 20px;
 		border-radius: 100px;
-		padding: 7px 12px;
-		background: #ffffff08;
-	}
-	.category-tag > span {
-		color: var(--butter);
-		font-size: 15px;
-	}
-	.guide-index {
-		font-variant-numeric: tabular-nums;
-		color: #ffffffb3;
-		font-size: 11px;
-		letter-spacing: 0.05em;
-	}
-	.stage-title {
-		margin-top: 28px;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 16px;
-		flex-wrap: wrap;
-	}
-	.stage-title h2 {
-		margin: 0;
-		font-size: clamp(38px, 5vw, 64px);
-		line-height: 0.98;
-		max-width: 100%;
-	}
-	.deal-tag {
-		font-size: 10px;
-		white-space: nowrap;
-		color: var(--butter);
-		border: 1px solid #f2dc9140;
-		border-radius: 6px;
-		padding: 6px 9px;
-	}
-	.replay {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border: 1px solid #ffffff30;
-		border-radius: 100px;
-		min-height: 38px;
-		padding: 9px 17px;
-		font-size: 11px;
-		margin: 8px auto 0;
+		background: var(--butter);
+		color: var(--night);
+		font-weight: 800;
+		font-size: 14px;
 		transition:
 			translate 0.2s,
-			background 0.2s;
+			box-shadow 0.2s;
 	}
-	.replay:hover {
+	.play span {
+		color: var(--red);
+	}
+	.play:hover,
+	.play:focus-visible {
 		translate: 0 -2px;
-		background: #ffffff10;
+		box-shadow: 0 8px 18px #0006;
 	}
-	@media (max-width: 600px) {
+
+	/* How to win, then the steps. */
+	.rules {
+		overflow-y: auto;
+		scrollbar-width: thin;
+	}
+	.win {
+		display: flex;
+		gap: 10px;
+		align-items: flex-start;
+		font-family: var(--font-display);
+		font-size: 19px;
+		font-weight: 700;
+		line-height: 1.25;
+		letter-spacing: -0.015em;
+		padding: 14px;
+		border-radius: 14px;
+		background: #f2dc9114;
+		color: var(--butter);
+	}
+	h3 {
+		font-family: var(--font-display);
+		font-size: 15px;
+		font-weight: 700;
+		margin-top: 4px;
+	}
+	ol {
+		display: grid;
+		gap: 8px;
+	}
+	li {
+		display: grid;
+		grid-template-columns: 26px 1fr;
+		gap: 10px;
+		align-items: start;
+	}
+	li span {
+		display: grid;
+		place-items: center;
+		width: 26px;
+		height: 26px;
+		border-radius: 50%;
+		background: #ffffff12;
+		font-size: 12px;
+		font-weight: 800;
+		color: var(--butter);
+	}
+	li p {
+		font-size: 13px;
+		line-height: 1.45;
+		color: #e8e0f0;
+	}
+	details {
+		margin-top: auto;
+		padding: 12px 14px;
+		border-radius: 14px;
+		background: #ffffff0a;
+		font-size: 13px;
+		line-height: 1.5;
+		color: var(--muted);
+	}
+	summary {
+		cursor: pointer;
+		font-weight: 700;
+		color: var(--paper);
+	}
+	details p {
+		margin-top: 8px;
+	}
+
+	/* Narrower screens: the same panels, stacked, and the page scrolls. */
+	@media (max-width: 1100px) {
+		.body {
+			grid-template-columns: minmax(250px, 1fr) minmax(0, 1.6fr);
+		}
+		.rules {
+			grid-column: 1 / -1;
+		}
+		.games-room {
+			height: auto;
+			overflow: visible;
+		}
 		.stage {
-			padding: 20px 18px;
-			border-radius: 16px;
+			min-height: 520px;
 		}
-		.stage-title {
-			margin-top: 24px;
-			gap: 12px;
+		.shelf {
+			max-height: 520px;
 		}
-		.stage-title h2 {
-			font-size: 42px;
+	}
+	@media (max-width: 720px) {
+		.bar {
+			flex-wrap: wrap;
 		}
-		.stage-top {
-			font-size: 10px;
+		.pills {
+			order: 3;
+			width: 100%;
+			overflow-x: auto;
+			scrollbar-width: none;
 		}
-		.category-tag {
-			padding: 6px 10px;
+		.pills button {
+			flex: none;
 		}
-		.deal-tag {
-			font-size: 9px;
+		.search {
+			width: auto;
+			flex: 1;
+			min-width: 0;
 		}
-		.guide-index {
-			font-size: 10px;
+		h1 {
+			margin-right: 0;
+		}
+		.body {
+			display: flex;
+			flex-direction: column;
+		}
+		.shelf {
+			order: 2;
+			max-height: none;
+			padding: 8px;
+		}
+		.grid {
+			display: flex;
+			overflow-x: auto;
+			overflow-y: hidden;
+			scroll-snap-type: x mandatory;
+		}
+		.game {
+			flex: none;
+			width: 128px;
+			min-height: 84px;
+			scroll-snap-align: start;
+		}
+		.stage {
+			order: 1;
+			min-height: 440px;
+		}
+		.rules {
+			order: 3;
+			overflow: visible;
 		}
 	}
 </style>

@@ -10,6 +10,8 @@
 	import ProfilePanel from '#lib/club/ProfilePanel.svelte';
 	import { profileModal } from '#lib/club/profile-modal.svelte.js';
 	import { afterNavigate, onNavigate } from '$app/navigation';
+	/** One-screen pages that lay out their own width (content lines up with the header). */
+	const FULL_BLEED = new Set(['/stats', '/games', '/bots', '/bots/[botId]']);
 	import { identify, trackPage } from '#lib/analytics.js';
 	import { openStart } from '#lib/start/start-modal.svelte.js';
 	let { children } = $props();
@@ -177,7 +179,7 @@
 	class="site-main"
 	class:home-main={isHome}
 	class:club-main={page.route.id === '/club'}
-	class:stats-main={page.route.id === '/stats'}
+	class:stats-main={FULL_BLEED.has(page.route.id ?? '')}
 	class:room-main={isRoom}
 >
 	{@render children?.()}
