@@ -32,7 +32,7 @@
 	] as const;
 	type Section = (typeof SECTIONS)[number][0];
 	/** Sections redrawn as one-screen visuals; the rest still scroll inside the stage. */
-	const FITTED: string[] = ['overview', 'skill', 'games', 'cards'];
+	const FITTED: string[] = ['overview', 'skill', 'games', 'cards', 'style'];
 	const WINDOWS = [
 		['all', 'All time', 'All'],
 		['30d', 'Last 30 days', '30d'],
