@@ -20,13 +20,44 @@
 			.catch((e) => (error = e.message));
 	});
 	const RANKS: Record<number, string> = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
-	const RANK_TOP = $derived(
-		Math.max(1, ...(data?.you.ranks ?? []).map((r) => Math.max(r.count, r.high)))
-	);
-	const SUIT_TOP = $derived(
-		Math.max(1, ...(data?.you.suits ?? []).map((r) => Math.max(r.count, r.high)))
-	);
 	const GLYPH: Record<string, string> = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' };
+	let scope = $state<'you' | 'club'>('you');
+	let explain = $state(false);
+	/** Ranks and suits for the chosen scope; the club has no per-player bands, only a fair-deck tick. */
+	const shown = $derived.by(() => {
+		if (!data) return null;
+		const club = scope === 'club' && data.club;
+		const src = club ? data.club! : data.you;
+		const ranks = src.ranks.map((r) => ({
+			key: String(r.rank),
+			label: RANKS[r.rank] ?? String(r.rank),
+			count: r.count,
+			expected: r.expected,
+			low: 'low' in r ? (r.low as number) : null,
+			high: 'high' in r ? (r.high as number) : null,
+			within: 'within' in r ? (r.within as boolean) : true,
+			red: false
+		}));
+		const suits = src.suits.map((x) => ({
+			key: x.suit,
+			label: GLYPH[x.suit],
+			count: x.count,
+			expected: x.expected,
+			low: 'low' in x ? (x.low as number) : null,
+			high: 'high' in x ? (x.high as number) : null,
+			within: 'within' in x ? (x.within as boolean) : true,
+			red: x.suit === 'hearts' || x.suit === 'diamonds'
+		}));
+		const top = (xs: { count: number; expected: number; high: number | null }[]) =>
+			Math.max(1, ...xs.map((x) => Math.max(x.count, x.expected, x.high ?? 0)));
+		return {
+			ranks,
+			suits,
+			rankTop: top(ranks),
+			suitTop: top(suits),
+			cards: club ? data.club!.cards : data.you.sample.cards
+		};
+	});
 	const verdictText = $derived(
 		!data
 			? ''
@@ -52,35 +83,72 @@
 				aria-label={verdictText}
 				>{data.you.verdict === 'fair' ? '✓' : data.you.verdict === 'unusual' ? '⚠' : '?'}</span
 			>
-			<span class="sample">🂠 {data.you.sample.cards}</span>
+			{#if data.club}<span class="scope" role="group" aria-label="Whose cards"
+					><button aria-pressed={scope === 'you'} onclick={() => (scope = 'you')}>You</button
+					><button aria-pressed={scope === 'club'} onclick={() => (scope = 'club')}>Club</button
+					></span
+				>{/if}
+			<span class="sample">🂠 {shown?.cards}</span>
+			<button
+				class="why"
+				aria-expanded={explain}
+				onclick={() => (explain = !explain)}
+				aria-label="What this can and cannot show">ⓘ</button
+			>
 		</h2>
-		{#if data.you.verdict !== 'insufficient'}
-			<div class="hist" role="img" aria-label="Cards dealt to you by rank, against a fair deck">
-				{#each data.you.ranks as r (r.rank)}
-					<div class="col" title="{RANKS[r.rank] ?? r.rank}: {r.count} (fair {r.expected})">
+		{#if explain}
+			<!-- A scrollable region must take keyboard focus (WCAG scrollable-region-focusable). -->
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<div class="explain" role="region" aria-label="What this can and cannot show" tabindex="0">
+				<ul>
+					{#each data.explain.what as t (t)}<li>✓ {t}</li>{/each}
+				</ul>
+				<ul>
+					{#each data.explain.cannot as t (t)}<li>✕ {t}</li>{/each}
+				</ul>
+				<p>{data.explain.howToRead}</p>
+				{#if scope === 'club' && data.club}<p>{data.club.note}</p>{/if}
+			</div>
+		{/if}
+		{#if shown && (scope === 'club' || data.you.verdict !== 'insufficient')}
+			<div
+				class="hist"
+				role="img"
+				aria-label="Cards dealt {scope === 'club'
+					? 'across the club'
+					: 'to you'} by rank and suit, against a fair deck"
+			>
+				{#each shown.ranks as r (r.key)}
+					<div class="col" class:suit={false} title="{r.label}: {r.count} (fair {r.expected})">
+						{#if r.low !== null && r.high !== null}<span
+								class="band"
+								style:bottom="{(r.low / shown.rankTop) * 100}%"
+								style:height="{((r.high - r.low) / shown.rankTop) * 100}%"
+							></span>{/if}
 						<span
-							class="band"
-							style:bottom="{(r.low / RANK_TOP) * 100}%"
-							style:height="{((r.high - r.low) / RANK_TOP) * 100}%"
+							class="bar"
+							class:out={!r.within}
+							style:height="{(r.count / shown.rankTop) * 100}%"
 						></span>
-						<span class="bar" class:out={!r.within} style:height="{(r.count / RANK_TOP) * 100}%"
-						></span>
-						<span class="r">{RANKS[r.rank] ?? r.rank}</span>
+						<span class="tickline" style:bottom="{(r.expected / shown.rankTop) * 100}%"></span>
+						<span class="r" class:v-red={r.red}>{r.label}</span>
 					</div>
 				{/each}
 				<span class="gap" aria-hidden="true"></span>
-				{#each data.you.suits as x (x.suit)}
-					<div class="col suit" title="{GLYPH[x.suit]}: {x.count} (fair {x.expected})">
+				{#each shown.suits as r (r.key)}
+					<div class="col" class:suit={true} title="{r.label}: {r.count} (fair {r.expected})">
+						{#if r.low !== null && r.high !== null}<span
+								class="band"
+								style:bottom="{(r.low / shown.suitTop) * 100}%"
+								style:height="{((r.high - r.low) / shown.suitTop) * 100}%"
+							></span>{/if}
 						<span
-							class="band"
-							style:bottom="{(x.low / SUIT_TOP) * 100}%"
-							style:height="{((x.high - x.low) / SUIT_TOP) * 100}%"
+							class="bar"
+							class:out={!r.within}
+							style:height="{(r.count / shown.suitTop) * 100}%"
 						></span>
-						<span class="bar" class:out={!x.within} style:height="{(x.count / SUIT_TOP) * 100}%"
-						></span>
-						<span class="r" class:v-red={x.suit === 'hearts' || x.suit === 'diamonds'}
-							>{GLYPH[x.suit]}</span
-						>
+						<span class="tickline" style:bottom="{(r.expected / shown.suitTop) * 100}%"></span>
+						<span class="r" class:v-red={r.red}>{r.label}</span>
 					</div>
 				{/each}
 			</div>
@@ -180,6 +248,66 @@
 	}
 	.gap {
 		width: 8px;
+	}
+	.tickline {
+		position: absolute;
+		left: 12%;
+		right: 12%;
+		height: 2px;
+		background: var(--paper);
+		opacity: 0.7;
+	}
+	.scope {
+		display: inline-flex;
+		margin-left: 8px;
+		padding: 2px;
+		border-radius: 100px;
+		background: #ffffff10;
+		font-family: system-ui, sans-serif;
+	}
+	.scope button {
+		padding: 2px 9px;
+		border-radius: 100px;
+		font-size: 11px;
+		font-weight: 600;
+		color: var(--muted);
+		cursor: pointer;
+	}
+	.scope button[aria-pressed='true'] {
+		background: var(--butter);
+		color: var(--night);
+	}
+	.why {
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		color: var(--muted);
+		cursor: pointer;
+	}
+	.why[aria-expanded='true'],
+	.why:hover {
+		background: #ffffff14;
+		color: var(--butter);
+	}
+	.explain {
+		position: absolute;
+		inset: 44px 10px 10px;
+		z-index: 2;
+		overflow: auto;
+		padding: 12px 14px;
+		border-radius: 12px;
+		background: #211c2ef2;
+		border: 1px solid var(--line);
+		font-size: 12px;
+		line-height: 1.45;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	.explain ul {
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
 	}
 	.seal {
 		display: flex;

@@ -141,6 +141,9 @@
 							>{SUIT[g] ?? '•'}</span
 						>{n}<span class="sr">{gameName(g)}</span>
 					</li>{/each}
+				{#if data.rummy}<li title="Rummy points">
+						<span class="red" aria-hidden="true">♥</span>{signed(data.rummy.units, 0)} pts
+					</li>{/if}
 				<li title="Nights">
 					<span aria-hidden="true">☾</span>{data.nights}<span class="sr">nights</span>
 				</li>
@@ -149,7 +152,31 @@
 
 		<!-- Running total -->
 		<section class="tile trend" aria-labelledby="trend-title">
-			<h2 id="trend-title"><span aria-hidden="true">↗</span> Running total</h2>
+			<h2 id="trend-title">
+				<span aria-hidden="true">↗</span> Running total
+				{#if data.trend.verdict !== 'insufficient' && data.trend.verdict !== 'not-enough'}<span
+						class="trend-tag"
+						class:up={data.trend.verdict === 'improving'}
+						class:down={data.trend.verdict === 'slipping'}
+						title="Last 30 days: {signed(data.trend.recent, 2)} a hand, before that {signed(
+							data.trend.earlier,
+							2
+						)}"
+						aria-label="Last 30 days: {signed(data.trend.recent, 2)} a hand, before that {signed(
+							data.trend.earlier,
+							2
+						)}. {data.trend.verdict === 'improving'
+							? 'Playing better lately'
+							: data.trend.verdict === 'slipping'
+								? 'A rougher patch lately'
+								: 'No real change'}"
+						>30d {data.trend.verdict === 'improving'
+							? '▲'
+							: data.trend.verdict === 'slipping'
+								? '▼'
+								: '≈'}</span
+					>{/if}
+			</h2>
 			{#if chart}
 				<svg
 					viewBox="0 0 {W} {H}"
@@ -421,6 +448,22 @@
 	}
 	.trend {
 		grid-area: trend;
+	}
+	.trend-tag {
+		margin-left: 8px;
+		padding: 2px 8px;
+		border-radius: 100px;
+		background: #ffffff12;
+		color: var(--muted) !important;
+		font-size: 11px;
+	}
+	.trend-tag.up {
+		background: #a9cfb52e;
+		color: #a9cfb5 !important;
+	}
+	.trend-tag.down {
+		background: #ee715b2e;
+		color: #f39788 !important;
 	}
 	.trend svg {
 		flex: 1;

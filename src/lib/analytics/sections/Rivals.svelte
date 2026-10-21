@@ -97,6 +97,11 @@
 						></span></i
 					><span>L <b>{r.contests.lost}</b></span>
 				</div>
+				{#if pg.memory}<span
+						class="memo"
+						title="{pg.memory.familiarity}{pg.memory.moment ? `. ${pg.memory.moment}` : ''}"
+						>🧠 {pg.memory.familiarity}</span
+					>{/if}
 				<span class="facts"
 					><span class="v-chip">🂠 {r.hands}</span><span class="v-chip">☾ {r.nights}</span
 					>{#if pg.firstMet}<span class="v-chip" title="First met">⟲ {day(pg.firstMet)}</span
@@ -156,6 +161,14 @@
 						</li>
 					{/each}
 				</ul>
+				{#if pg.largestPots.length}<span class="moments"
+						>{#each pg.largestPots.slice(0, 3) as p (p.handId)}<button
+								class="v-chip v-press"
+								onclick={() => onOpenHand(p.handId)}
+								title="Largest pot together, {day(p.at)}: {p.potUnits} boots"
+								>💰 {p.potUnits}</button
+							>{/each}</span
+					>{/if}
 				{#if pg.moments.length}<span class="moments"
 						>{#each pg.moments.slice(0, 4) as m (m.handId + m.at)}<button
 								class="v-chip v-press"
@@ -391,6 +404,14 @@
 		display: block;
 		height: 100%;
 		background: #a9cfb5;
+	}
+	.memo {
+		max-width: 100%;
+		font-size: 11px;
+		color: var(--muted);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	.facts {
 		display: flex;
