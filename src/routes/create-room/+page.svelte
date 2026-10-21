@@ -30,7 +30,7 @@
 		max-width: 1160px;
 		margin: auto;
 		padding: 60px 0 80px;
-		min-height: calc(100dvh - 88px);
+		min-height: calc(100dvh - var(--header-h, 64px));
 	}
 	.setup-intro > a {
 		font-size: 12px;
