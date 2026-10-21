@@ -38,6 +38,8 @@ export default defineConfig(({ command, mode }) => {
 			tailwindcss(),
 			sveltekit({
 				preprocess: vitePreprocess(),
+				// Open tabs check every two minutes for a newer deploy (see the root layout).
+				version: { pollInterval: 120_000 },
 				adapter: adapter({
 					// Group deck assets below Pages' rule limit; keep prototype pages on the Worker.
 					routes: {
