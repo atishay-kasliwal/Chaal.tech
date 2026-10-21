@@ -2,14 +2,14 @@
 	import { properName } from '#lib/names.js';
 	import '../app.css';
 	import { Toasts } from '#lib/components/Toasts/index.js';
-	import { page } from '$app/state';
+	import { page, updated } from '$app/state';
 	import StartModal from '#lib/start/StartModal.svelte';
 	import { onMount } from 'svelte';
 	import { club } from '#lib/club/club.svelte.js';
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
 	import ProfilePanel from '#lib/club/ProfilePanel.svelte';
 	import { profileModal } from '#lib/club/profile-modal.svelte.js';
-	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation';
 	/** One-screen pages that lay out their own width (content lines up with the header). */
 	const FULL_BLEED = new Set(['/stats', '/games', '/bots', '/bots/[botId]']);
 	import { identify, trackPage } from '#lib/analytics.js';
@@ -51,6 +51,10 @@
 				await navigation.complete;
 			});
 		});
+	});
+	// A newer deploy is live: load the next page fresh instead of from this tab's old code.
+	beforeNavigate(({ willUnload, to }) => {
+		if (updated.current && !willUnload && to?.url) location.href = to.url.href;
 	});
 	afterNavigate(({ to }) => {
 		menuOpen = meOpen = false;
