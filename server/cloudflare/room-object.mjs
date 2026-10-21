@@ -27,7 +27,7 @@ import { ADAPTIVE_POLICY } from '../bots/memory/adaptive.mjs';
 import { decisionScope, loadMemory, timedMemory } from '../bots/memory/provider.mjs';
 import { clubSettings } from '../club/admin.mjs';
 import { useMomentBackend } from '../bots/memory/moments.mjs';
-import { nextBotMove, botDue, botDelay, thinkingContext, humansPresent, botMoveText } from '../bots/runner.mjs';
+import { nextBotMove, botDue, botDelay, thinkingContext, humansPresent, botMoveText, updateMinds } from '../bots/runner.mjs';
 import { recordCommitSafely, stepRecorder, botRandom, abandonOpenHand } from '../analytics/recorder.mjs';
 import { archiveRecorderRow, isRecorderRow, writeRoomStatus } from '../analytics/store.mjs';
 import { engineBuild } from './build.mjs';
@@ -186,16 +186,31 @@ export class RoomDurableObject {
 			if (tracked.progress) this.setMeta('clubHand', tracked.progress);
 			else this.deleteMeta('clubHand');
 			if (tracked.completed) this.sql.exec('INSERT OR IGNORE INTO history_outbox(id,payload) VALUES (?,?)', tracked.completed._id, JSON.stringify(tracked.completed));
+			// Bot minds (server/bots/mind.mjs): a deal records them as they were, so the hand replays
+			// on its own; then every bot observes this commit through its own projection.
+			const after = JSON.parse(snapshot);
+			const minds = this.getMeta('botMinds') ?? {};
+			const startsHand = !!after.handId && after.handId !== current?.snapshot?.handId;
+			let recordedStep = step ?? { actor: playerId, action: 'unknown', payload: {}, ctx: {}, kind: 'system', cause: 'unrecorded' };
+			if (startsHand && Object.keys(minds).length) recordedStep = { ...recordedStep, minds };
 			const recorded = recordCommitSafely(this.getMeta('recorder'), {
 				before: current?.snapshot ?? null,
-				after: JSON.parse(snapshot),
+				after,
 				afterJson: snapshot,
-				step: step ?? { actor: playerId, action: 'unknown', payload: {}, ctx: {}, kind: 'system', cause: 'unrecorded' },
+				step: recordedStep,
 				now,
 				// Null (and so an explicit failure at flush) if this isolate has no valid build id.
 				engine: engineBuild(this.env)
 			});
 			if (recorded.error) console.error('Hand recorder error:', recorded.error?.message ?? 'Error');
+			try {
+				const nextMinds = updateMinds(minds, current?.snapshot ?? null, after);
+				if (Object.keys(nextMinds).length) this.setMeta('botMinds', nextMinds);
+				else if (Object.keys(minds).length) this.deleteMeta('botMinds');
+			} catch (error) {
+				// A mind must never fail a commit: the bot keeps its last mind.
+				console.error('Bot mind update failed:', error?.message ?? 'Error');
+			}
 			this.setMeta('recorder', recorded.state);
 			for (const row of recorded.rows)
 				this.sql.exec('INSERT OR IGNORE INTO history_outbox(id,payload) VALUES (?,?)', row.id, JSON.stringify(row.payload));
@@ -1090,7 +1105,7 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		}
 		// The room may have advanced while Mongo was in flight. Never apply an old decision.
 		if (this.room()?.snapshot.revision !== before.revision) return false;
-		const move = nextBotMove(before, connected, draws.random, undefined, id => snapshots.get(id));
+		const move = nextBotMove(before, connected, draws.random, { memoryFor: id => snapshots.get(id), minds: this.getMeta('botMinds') });
 		const timings = { lookupMs, episodeMs: memoryMetrics.episodeMs, decisionMs: performance.now() - decisionStarted };
 		if (!move) return false;
 		try {
@@ -1107,7 +1122,8 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 				recorder.step(move.botId, move.action, move.payload, {
 					kind: 'bot',
 					bot: { seed: draws.seed, draws: draws.draws, reason: move.reason ?? null,
-						...(move.adaptive ? { memory: move.memory, adaptive: move.adaptive, timings } : {}) },
+						...(move.adaptive ? { memory: move.memory, adaptive: move.adaptive, timings } : {}),
+						...(move.trace ? { trace: move.trace } : {}) },
 					...(seal ? { seal } : {})
 				}));
 			if (room.ended && !before.ended) await this.afterNight(room);

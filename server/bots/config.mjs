@@ -2,6 +2,7 @@
 import { ADAPTIVE_POLICY, FOCUS, MEMORY_OPTIONAL, MEMORY_RANGES } from './memory/adaptive.mjs';
 import { MEMORY_VERSION } from './memory/observations.mjs';
 import { canonicalJson, fingerprint64 } from '../analytics/hash.mjs';
+import { DNA_POLICIES } from './dna-policies.mjs';
 
 export const CHARACTER_POLICY = 'tp-character@1';
 export const RANGES = Object.freeze({
@@ -35,7 +36,34 @@ export function characterHash(style) {
 	);
 }
 
+/** DNA styles (tp-dna@*): personality genes in [0, 1], named quirks with a strength, a think range. */
+const DNA_GENES = /^[a-z][A-Za-z]{1,31}$/;
+function dnaConfigErrors(style) {
+	const errors = [];
+	if (JSON.stringify(style?.supportedGames) !== '["teen-patti"]') errors.push('This policy supports Teen Patti only');
+	if (JSON.stringify(style?.supportedVariants) !== '["*"]') errors.push('This policy requires all Teen Patti variants');
+	if (style?.memory !== undefined) errors.push('DNA styles keep a per-session mind, not stored memory');
+	const t = style?.tendencies;
+	if (!t || typeof t !== 'object' || Array.isArray(t)) return [...errors, 'Missing tendencies'];
+	for (const key of Object.keys(t)) if (!['dna', 'quirks', 'tempo'].includes(key)) errors.push(`Unknown tendency: ${key}`);
+	const genes = Object.entries(t.dna ?? {});
+	if (genes.length < 10) errors.push('DNA needs its personality genes');
+	for (const [gene, value] of genes)
+		if (!DNA_GENES.test(gene) || typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1)
+			errors.push(`DNA ${gene} must be 0–1`);
+	if (!Array.isArray(t.quirks) || t.quirks.length > 8) errors.push('Quirks must be a short list');
+	else
+		for (const q of t.quirks)
+			if (typeof q?.id !== 'string' || !DNA_GENES.test(q.id) || typeof q.strength !== 'number' || q.strength < 0 || q.strength > 1)
+				errors.push('Each quirk needs an id and a strength 0–1');
+	const think = t.tempo?.thinkMs;
+	if (!Array.isArray(think) || think.length !== 2 || !think.every((ms) => Number.isInteger(ms) && ms >= 500 && ms <= 10000) || think[0] > think[1])
+		errors.push('Think time must be a range of 500–10000 ms');
+	return errors;
+}
+
 export function configErrors(style) {
+	if (DNA_POLICIES.has(style?.policy)) return dnaConfigErrors(style);
 	const errors = [];
 	if (![CHARACTER_POLICY, ADAPTIVE_POLICY].includes(style?.policy)) errors.push('Unsupported policy');
 	if (

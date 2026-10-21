@@ -38,7 +38,17 @@
 		"bots:memory:health": "node --env-file-if-exists=.env scripts/bot-memory.mjs health",
 		"bots:moments:index": "node --env-file-if-exists=.env scripts/bot-moments.mjs",
 		"bots:publish-v3": "node --env-file-if-exists=.env scripts/bots-publish-v3.mjs",
-		"bots:simulate": "node scripts/bot-memory-simulate.mjs"
+		"bots:simulate": "node scripts/bot-memory-simulate.mjs",
+		"sim:phase1": "node scripts/sim/phase1-report.mjs --seed 1 --hands 200",
+		"sim:phase11": "node scripts/sim/phase11-report.mjs --seed 11 --hands 200",
+		"sim:phase2": "node --max-old-space-size=8192 scripts/sim/phase2-report.mjs --seed 21 --hands 200",
+		"sim:tune": "node --max-old-space-size=8192 scripts/sim/tune.mjs",
+		"bots:explain": "node --env-file-if-exists=.env scripts/bots-explain.mjs",
+		"sim:explain": "node scripts/sim/explain.mjs",
+		"sim:graph": "node scripts/sim/graph.mjs",
+		"sim:phase3": "node --max-old-space-size=8192 scripts/sim/phase3.mjs --seed 41",
+		"sim:phase3:report": "node --max-old-space-size=8192 scripts/sim/phase3-report.mjs --league .sim/phase3/league-41.json --seed 51",
+		"sim:phase3:all": "caffeinate -ims sh -c 'npm run sim:phase3 && npm run sim:phase3:report'"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.1.1",

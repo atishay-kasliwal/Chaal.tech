@@ -72,8 +72,9 @@ test('migration creates every collection with validators that keep tiers apart',
 		'sealed inputs are stored compressed'
 	);
 	await migrateAnalytics(db); // idempotent
-	assert.equal(await db.collection(COLLECTIONS.styles).countDocuments(), 3);
-	assert.equal(await db.collection(COLLECTIONS.bots).countDocuments(), 3);
+	// Three legacy practice bots (style @1) and five character bots (styles @1, @2 and @3).
+	assert.equal(await db.collection(COLLECTIONS.styles).countDocuments(), 18);
+	assert.equal(await db.collection(COLLECTIONS.bots).countDocuments(), 8);
 });
 
 test('the runtime never administers schema: before migration it refuses, creating nothing', async () => {
