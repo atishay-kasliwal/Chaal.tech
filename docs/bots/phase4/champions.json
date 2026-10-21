@@ -1,0 +1,487 @@
+{
+	"frozen": "2026-10-21",
+	"baselineTag": "phase3.1-baseline",
+	"baselineCommit": "a090679aa7eb2d4aebf665e179faac8214022d13",
+	"versions": {
+		"sim": "sim@1",
+		"fingerprint": "fp@4",
+		"targets": "targets@1",
+		"judge": "judge@2",
+		"summary": "sum@1",
+		"adversary": "adv@1"
+	},
+	"champions": {
+		"rohit-sharma": {
+			"style": "rohit-sharma@3",
+			"version": 3,
+			"policy": "tp-dna@3",
+			"configHash": "f2015fc5daf490a9",
+			"mind": "mind@1",
+			"dna": {
+				"aggression": 0.6,
+				"blindAggression": 0.8,
+				"bluffAffinity": 0.45,
+				"blindPreference": 0.9,
+				"showPreference": 0.35,
+				"curiosity": 0.45,
+				"patience": 0.5,
+				"riskTolerance": 0.65,
+				"discipline": 0.5,
+				"lossSensitivity": 0.5,
+				"winElation": 0.75,
+				"pressureResistance": 0.7,
+				"ego": 0.8,
+				"moodRecovery": 0.5,
+				"revenge": 0.4,
+				"suspicion": 0.4,
+				"sociality": 0.6,
+				"adaptability": 0.2,
+				"memoryWeight": 0.4
+			},
+			"quirks": [
+				{
+					"id": "blindPride",
+					"strength": 0.8
+				}
+			],
+			"bands": [
+				{
+					"key": "blindRounds",
+					"min": 1.4,
+					"max": 2.2,
+					"core": true
+				},
+				{
+					"key": "blindRaiseRate",
+					"min": 0.25,
+					"max": 0.45,
+					"core": true
+				},
+				{
+					"key": "neverLooked",
+					"min": 0.03,
+					"max": 0.15,
+					"core": false
+				},
+				{
+					"key": "blindWinBlindRaiseDeltaX",
+					"min": 0.03,
+					"max": 0.4,
+					"core": false
+				},
+				{
+					"key": "seenRaiseRate",
+					"min": 0.15,
+					"max": 0.3,
+					"core": false
+				},
+				{
+					"key": "badActionRate",
+					"min": 0,
+					"max": 0.03,
+					"core": false
+				},
+				{
+					"key": "bigOverrideRate",
+					"min": 0,
+					"max": 0.05,
+					"core": false
+				},
+				{
+					"key": "entropy",
+					"min": 0.55,
+					"max": 1.5,
+					"core": false
+				}
+			]
+		},
+		"virat-kohli": {
+			"style": "virat-kohli@3",
+			"version": 3,
+			"policy": "tp-dna@3",
+			"configHash": "ecd01fe38fca321d",
+			"mind": "mind@1",
+			"dna": {
+				"aggression": 0.92,
+				"blindAggression": 0.6,
+				"bluffAffinity": 0.75,
+				"blindPreference": 0.5,
+				"showPreference": 0.55,
+				"curiosity": 0.5,
+				"patience": 0.2,
+				"riskTolerance": 0.8,
+				"discipline": 0.25,
+				"lossSensitivity": 0.95,
+				"winElation": 0.8,
+				"pressureResistance": 0.8,
+				"ego": 0.85,
+				"moodRecovery": 0.3,
+				"revenge": 0.9,
+				"suspicion": 0.5,
+				"sociality": 0.8,
+				"adaptability": 0.2,
+				"memoryWeight": 0.5
+			},
+			"quirks": [
+				{
+					"id": "tiltSpiral",
+					"strength": 0.8
+				},
+				{
+					"id": "revengeRaise",
+					"strength": 0.8
+				}
+			],
+			"bands": [
+				{
+					"key": "seenRaiseRate",
+					"min": 0.35,
+					"max": 0.6,
+					"core": true
+				},
+				{
+					"key": "thinRaise",
+					"min": 0.15,
+					"max": 0.4,
+					"core": true
+				},
+				{
+					"key": "aggression",
+					"min": 1.2,
+					"max": 3,
+					"core": false
+				},
+				{
+					"key": "blindRaiseRate",
+					"min": 0.12,
+					"max": 0.35,
+					"core": false
+				},
+				{
+					"key": "lossAggressionDeltaX",
+					"min": 0.4,
+					"max": 3,
+					"core": false
+				},
+				{
+					"key": "weakCallRate",
+					"min": 0,
+					"max": 0.04,
+					"core": false
+				},
+				{
+					"key": "strongPackRate",
+					"min": 0,
+					"max": 0.01,
+					"core": false
+				},
+				{
+					"key": "bigOverrideRate",
+					"min": 0,
+					"max": 0.09,
+					"core": false
+				},
+				{
+					"key": "badActionRate",
+					"min": 0,
+					"max": 0.04,
+					"core": false
+				},
+				{
+					"key": "entropy",
+					"min": 0.55,
+					"max": 1.5,
+					"core": false
+				}
+			]
+		},
+		"gg": {
+			"style": "gg@4",
+			"version": 4,
+			"policy": "tp-dna@4",
+			"configHash": "862f1cd78b2c4597",
+			"mind": "mind@2",
+			"dna": {
+				"aggression": 0.42,
+				"blindAggression": 0.3,
+				"bluffAffinity": 0.2,
+				"blindPreference": 0.42,
+				"showPreference": 0.411,
+				"curiosity": 0.177,
+				"patience": 0.85,
+				"riskTolerance": 0.34,
+				"discipline": 0.78,
+				"lossSensitivity": 0.7,
+				"winElation": 0.3,
+				"pressureResistance": 0.35,
+				"ego": 0.302,
+				"moodRecovery": 0.591,
+				"revenge": 0.1,
+				"suspicion": 0.5,
+				"sociality": 0.4,
+				"adaptability": 0.3,
+				"memoryWeight": 0.5
+			},
+			"quirks": [
+				{
+					"id": "survivalMode",
+					"strength": 0.6
+				}
+			],
+			"bands": [
+				{
+					"key": "stayAfterSeeing",
+					"min": 0.2,
+					"max": 0.35,
+					"core": true
+				},
+				{
+					"key": "continueMid",
+					"min": 0,
+					"max": 0.08,
+					"core": true
+				},
+				{
+					"key": "thinRaise",
+					"min": 0,
+					"max": 0.03,
+					"core": false
+				},
+				{
+					"key": "valueRaise",
+					"min": 0.45,
+					"max": 1,
+					"core": false
+				},
+				{
+					"key": "monsterNoRaiseRate",
+					"min": 0,
+					"max": 0.04,
+					"core": false
+				},
+				{
+					"key": "strongPackRate",
+					"min": 0,
+					"max": 0.03,
+					"core": false
+				},
+				{
+					"key": "seenFoldToRaise",
+					"min": 0.12,
+					"max": 0.4,
+					"core": false
+				},
+				{
+					"key": "lossPackDeltaX",
+					"min": 0.015,
+					"max": 0.3,
+					"core": false
+				},
+				{
+					"key": "lookAtOnce",
+					"min": 0.35,
+					"max": 0.8,
+					"core": false
+				},
+				{
+					"key": "badActionRate",
+					"min": 0,
+					"max": 0.03,
+					"core": false
+				},
+				{
+					"key": "entropy",
+					"min": 0.3,
+					"max": 1.2,
+					"core": false
+				}
+			]
+		},
+		"samay-raina": {
+			"style": "samay-raina@3",
+			"version": 3,
+			"policy": "tp-dna@3",
+			"configHash": "7d7e81874eb7ddf7",
+			"mind": "mind@1",
+			"dna": {
+				"aggression": 0.42,
+				"blindAggression": 0.4,
+				"bluffAffinity": 0.25,
+				"blindPreference": 0.45,
+				"showPreference": 0.7,
+				"curiosity": 0.95,
+				"patience": 0.25,
+				"riskTolerance": 0.5,
+				"discipline": 0.4,
+				"lossSensitivity": 0.4,
+				"winElation": 0.6,
+				"pressureResistance": 0.6,
+				"ego": 0.4,
+				"moodRecovery": 0.6,
+				"revenge": 0.3,
+				"suspicion": 0.9,
+				"sociality": 0.7,
+				"adaptability": 0.4,
+				"memoryWeight": 0.6
+			},
+			"quirks": [
+				{
+					"id": "bluffCatcher",
+					"strength": 0.8
+				}
+			],
+			"bands": [
+				{
+					"key": "continueMid",
+					"min": 0.65,
+					"max": 1,
+					"core": true
+				},
+				{
+					"key": "seenFoldToRaise",
+					"min": 0,
+					"max": 0.05,
+					"core": true
+				},
+				{
+					"key": "showRate",
+					"min": 0.25,
+					"max": 0.7,
+					"core": false
+				},
+				{
+					"key": "seenRaiseRate",
+					"min": 0,
+					"max": 0.1,
+					"core": false
+				},
+				{
+					"key": "monsterNoRaiseRate",
+					"min": 0,
+					"max": 0.05,
+					"core": false
+				},
+				{
+					"key": "continueWeak",
+					"min": 0,
+					"max": 0.05,
+					"core": false
+				},
+				{
+					"key": "lossPackDeltaX",
+					"min": -0.3,
+					"max": -0.015,
+					"core": false
+				},
+				{
+					"key": "caughtBluffFoldDeltaX",
+					"min": -0.5,
+					"max": -0.01,
+					"core": false
+				},
+				{
+					"key": "badActionRate",
+					"min": 0,
+					"max": 0.03,
+					"core": false
+				}
+			]
+		},
+		"ms-dhoni": {
+			"style": "ms-dhoni@3",
+			"version": 3,
+			"policy": "tp-dna@3",
+			"configHash": "2db238f3b5d01784",
+			"mind": "mind@1",
+			"dna": {
+				"aggression": 0.62,
+				"blindAggression": 0.5,
+				"bluffAffinity": 0.55,
+				"blindPreference": 0.6,
+				"showPreference": 0.62,
+				"curiosity": 0.45,
+				"patience": 0.7,
+				"riskTolerance": 0.5,
+				"discipline": 0.72,
+				"lossSensitivity": 0.2,
+				"winElation": 0.3,
+				"pressureResistance": 0.9,
+				"ego": 0.3,
+				"moodRecovery": 0.9,
+				"revenge": 0.2,
+				"suspicion": 0.6,
+				"sociality": 0.5,
+				"adaptability": 0.95,
+				"memoryWeight": 0.8
+			},
+			"quirks": [
+				{
+					"id": "readsTable",
+					"strength": 1
+				}
+			],
+			"bands": [
+				{
+					"key": "bluffIndex",
+					"min": 0.1,
+					"max": 0.4,
+					"core": true
+				},
+				{
+					"key": "bluffGrowth",
+					"min": 0.05,
+					"max": 0.4,
+					"core": false
+				},
+				{
+					"key": "bluffVsCallerLate",
+					"min": 0,
+					"max": 0.02,
+					"core": false
+				},
+				{
+					"key": "valueGrowthVsCaller",
+					"min": 0,
+					"max": 0.5,
+					"core": false
+				},
+				{
+					"key": "callIndex",
+					"min": -0.03,
+					"max": 0.3,
+					"core": false
+				},
+				{
+					"key": "blindFoldVsManiacLate",
+					"min": 0,
+					"max": 0.05,
+					"core": false
+				},
+				{
+					"key": "aggression",
+					"min": 0.5,
+					"max": 1.2,
+					"core": false
+				},
+				{
+					"key": "blindRounds",
+					"min": 0.7,
+					"max": 1.2,
+					"core": false
+				},
+				{
+					"key": "showRate",
+					"min": 0.15,
+					"max": 0.5,
+					"core": false
+				},
+				{
+					"key": "badActionRate",
+					"min": 0,
+					"max": 0.02,
+					"core": false
+				}
+			]
+		}
+	}
+}

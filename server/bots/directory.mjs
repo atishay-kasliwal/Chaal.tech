@@ -127,9 +127,18 @@ export async function botDirectory(db, member, { id } = {}) {
 		if (!id && !style) continue;
 		list.push({
 			...publicBot(bot, style, enabled.has(bot._id)),
-			memory: await publicMemory(db, bot._id, member.playerId).catch(() => ({ status: 'unavailable', contexts: [], moment: null })),
+			memory: await publicMemory(db, bot._id, member.playerId).catch(() => ({
+				status: 'unavailable',
+				contexts: [],
+				moment: null
+			})),
 			// What this bot remembers of the viewer's moments with it, for table talk. Their own history only.
-			recall: member.playerId ? await recallRelationship(momentIndexFor(db), { botId: bot._id, playerId: member.playerId }).catch(() => ({ moments: 0, mood: 'new', lastAt: null })) : { moments: 0, mood: 'new', lastAt: null },
+			recall: member.playerId
+				? await recallRelationship(momentIndexFor(db), {
+						botId: bot._id,
+						playerId: member.playerId
+					}).catch(() => ({ moments: 0, mood: 'new', lastAt: null }))
+				: { moments: 0, mood: 'new', lastAt: null },
 			record: id
 				? rivalry(records, member.playerId, `bot:${bot._id}`)
 				: (history.get(`bot:${bot._id}`) ?? null)
@@ -240,12 +249,26 @@ export async function manageBot(db, owner, body, now = new Date()) {
 	const bot = await db.collection('bots').findOne({ _id: id });
 	if (!bot) throw fail('Unknown bot', 404);
 	if (body.action === 'adaptive-draft') {
-		const current = await db.collection('bot_styles').findOne({ _id: bot.currentStyle, status: 'published' });
+		const current = await db
+			.collection('bot_styles')
+			.findOne({ _id: bot.currentStyle, status: 'published' });
 		if (!current) throw fail('Publish a base character style first');
-		return manageBot(db, owner, { action: 'draft', botId: id, config: {
-			...current, policy: ADAPTIVE_POLICY, memory: current.memory ?? defaultMemory(current.tendencies),
-			notes: 'Persistent observer-scoped memory. Bounded adaptation; existing seats keep their frozen policy.'
-		} }, now);
+		return manageBot(
+			db,
+			owner,
+			{
+				action: 'draft',
+				botId: id,
+				config: {
+					...current,
+					policy: ADAPTIVE_POLICY,
+					memory: current.memory ?? defaultMemory(current.tendencies),
+					notes:
+						'Persistent observer-scoped memory. Bounded adaptation; existing seats keep their frozen policy.'
+				}
+			},
+			now
+		);
 	}
 	if (body.action === 'identity') {
 		if (bot.status !== 'draft') throw fail('Only draft identities can be edited');

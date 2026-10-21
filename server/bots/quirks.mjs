@@ -140,3 +140,35 @@ export const QUIRKS_V5 = Object.freeze({
 		}
 	}
 });
+
+/**
+ * Quirks for policy tp-dna@6 (Phase 4 challengers, offline): tp-dna@3's quirks, Phase 3.1's two
+ * event quirks, and opponent-specific memory of bluffs. `m.suspect[id]` (character-v6.mjs) is how
+ * fresh this bot's evidence is that player `id` bluffs: 1 right after catching them (0.7 after
+ * being bluffed off a pot by them), fading over eight hands, reinforced by repeat catches.
+ */
+const suspectOf = (m) => (m.facing ? (m.suspect?.[m.facing.id] ?? 0) : 0);
+export const QUIRKS_V6 = Object.freeze({
+	...QUIRKS_V3,
+	stubbornStreak: QUIRKS_V5.stubbornStreak,
+	onToYou: QUIRKS_V5.onToYou,
+	/** Facing a raise from someone it recently caught bluffing: will not let them off easily. */
+	remembersYou: {
+		reason: 'remembers-you',
+		apply(sit, k, s, m) {
+			const w = suspectOf(m);
+			if (!sit.seen || w <= 0) return null;
+			return { chaal: k * 0.5 * w, show: k * 0.25 * w, pack: -k * 0.35 * w };
+		}
+	},
+	/** The same memory as a read about that player: their raise is worth less (a model factor). */
+	remembersYouRead: {
+		reason: 'model-call-light',
+		modelWeight: true,
+		apply(sit, k, s, m) {
+			const w = suspectOf(m);
+			if (!sit.seen || w <= 0) return null;
+			return { chaal: k * 0.3 * w, show: k * 0.15 * w, pack: -k * 0.2 * w };
+		}
+	}
+});

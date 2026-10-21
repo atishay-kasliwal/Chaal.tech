@@ -14,8 +14,17 @@ export const DNA_POLICY_V3 = 'tp-dna@3';
 export const DNA_POLICY_V4 = 'tp-dna@4';
 /** Phase 3.1: tp-dna@4 plus recent-event recall and the event quirks (mind@3). Candidates only until approved. */
 export const DNA_POLICY_V5 = 'tp-dna@5';
+/** Phase 4: tp-dna@3 plus event memory (mind@4) and event quirks. Challengers only until approved. */
+export const DNA_POLICY_V6 = 'tp-dna@6';
 export const DNA_POLICIES = Object.freeze(
-	new Set([DNA_POLICY_V1, DNA_POLICY_V2, DNA_POLICY_V3, DNA_POLICY_V4, DNA_POLICY_V5])
+	new Set([
+		DNA_POLICY_V1,
+		DNA_POLICY_V2,
+		DNA_POLICY_V3,
+		DNA_POLICY_V4,
+		DNA_POLICY_V5,
+		DNA_POLICY_V6
+	])
 );
 /** The names these policies had before the rename, for reading older reports and league files. */
 export const FORMER_NAMES = Object.freeze({

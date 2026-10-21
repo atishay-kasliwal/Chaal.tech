@@ -1,9 +1,9 @@
 import { situation, candidates, move, strength, forcedMove } from './brain.mjs';
 import { baseFactorsV2, EVIDENCE, CONVENTION } from './character-v2.mjs';
-import { QUIRKS_V3, QUIRKS_V5 } from './quirks.mjs';
+import { QUIRKS_V3, QUIRKS_V5, QUIRKS_V6 } from './quirks.mjs';
 
 /** Every quirk by name, for reasons and grouping (names are unique); a policy applies only its own set. */
-const QUIRK_NAMES = Object.freeze({ ...QUIRKS_V3, ...QUIRKS_V5 });
+const QUIRK_NAMES = Object.freeze({ ...QUIRKS_V3, ...QUIRKS_V5, ...QUIRKS_V6 });
 import { defineGraph, runGraph } from './graph.mjs';
 import { MOOD_BASELINE, beliefs, confidence, PRIORS } from './mind.mjs';
 import { DNA_POLICY_V3 } from './dna-policies.mjs';
