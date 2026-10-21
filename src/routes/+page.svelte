@@ -2,11 +2,23 @@
 	import { openStart } from '#lib/start/start-modal.svelte.js';
 	import GameDemo from '#lib/games/GameDemo.svelte';
 	import { GAME_GUIDES } from '#lib/games/catalog.js';
-	import { onMount } from 'svelte';
-	import { gsap } from 'gsap';
-	let fan: HTMLButtonElement;
 	let spread = $state(false);
-	let animateFan: ((open: boolean) => void) | undefined;
+	/** A whole hand, 2 to ace, mixed suits: the fan opens wider on hover, focus or tap. */
+	const HAND = [
+		'clubs-2',
+		'hearts-3',
+		'spades-4',
+		'diamonds-5',
+		'clubs-6',
+		'hearts-7',
+		'spades-8',
+		'diamonds-9',
+		'clubs-10',
+		'hearts-j',
+		'diamonds-q',
+		'clubs-k',
+		'spades-a'
+	];
 	const games = [
 		{
 			name: 'Teen Patti',
@@ -45,37 +57,8 @@
 		['Pair', 'Two cards of the same rank', 'K♥ K♣ 7♦'],
 		['High card', 'Your highest card decides', 'A♦ J♣ 9♥']
 	];
-	onMount(() => {
-		const media = gsap.matchMedia();
-		media.add('(prefers-reduced-motion: no-preference)', () => {
-			const cards = fan.querySelectorAll('.fan-card');
-			animateFan = (open) =>
-				gsap.to(cards, {
-					rotation: (i: number) => (i - 1) * (open ? 23 : 13),
-					x: (i: number) =>
-						(i - 1) *
-						(open
-							? window.innerWidth < 600
-								? Math.min(78, window.innerWidth * 0.2)
-								: 100
-							: window.innerWidth < 600
-								? Math.min(66, window.innerWidth * 0.17)
-								: 66),
-					y: (i: number) => (i === 1 ? (open ? -25 : -8) : 16),
-					duration: 0.55,
-					ease: 'power3.out',
-					overwrite: true
-				});
-			animateFan(false);
-			return () => {
-				animateFan = undefined;
-			};
-		});
-		return () => media.revert();
-	});
 	function deal(open: boolean) {
 		spread = open;
-		animateFan?.(open);
 	}
 </script>
 
@@ -98,8 +81,8 @@
 					type="button"
 					class="card-fan"
 					aria-pressed={spread}
-					aria-label="Spread the cards: ace of spades, king of hearts and queen of diamonds, from the Diwali Taash deck"
-					bind:this={fan}
+					class:spread
+					aria-label="Spread the hand: thirteen cards from two to ace, from the Diwali Taash deck"
 					onpointerenter={(event) => {
 						if (event.pointerType === 'mouse') deal(true);
 					}}
@@ -112,15 +95,16 @@
 					onblur={() => deal(false)}
 					onclick={() => deal(!spread)}
 				>
-					{#each ['spades-a', 'hearts-k', 'diamonds-q'] as card, i (card)}
+					{#each HAND as card, i (card)}
 						<img
 							class="fan-card"
 							src="/cards/diwali-taash/{card}.svg"
 							alt=""
 							width="224"
 							height="314"
-							style:--card-index={i - 1}
-							fetchpriority={i === 1 ? 'high' : 'auto'}
+							style:--k={i - 6}
+							loading={Math.abs(i - 6) < 4 ? 'eager' : 'lazy'}
+							fetchpriority={i === 12 ? 'high' : 'auto'}
 						/>
 					{/each}
 				</button>
@@ -275,17 +259,20 @@
 		text-align: center;
 		max-width: 1320px;
 		margin: auto;
-		padding: 28px 0 64px;
-		min-height: calc(100dvh - var(--header-h, 64px) - 64px);
+		/* Fills the screen under the header, leaving room for the strip below. */
+		height: calc(100dvh - var(--header-h, 64px) - 82px);
+		min-height: 460px;
+		padding: clamp(8px, 2dvh, 24px) 0;
 		justify-content: center;
+		--cw: clamp(78px, min(10.5vw, 17dvh), 168px);
 	}
 	h1 {
 		font-family: var(--font-display);
-		font-size: clamp(60px, 7.2vw, 112px);
+		font-size: clamp(42px, min(7.2vw, 9.4dvh), 112px);
 		font-weight: 800;
 		line-height: 0.9;
 		letter-spacing: -0.065em;
-		margin: 40px 0 34px;
+		margin: clamp(12px, 3dvh, 36px) 0 clamp(14px, 3.2dvh, 34px);
 	}
 	h1 span {
 		color: var(--night);
@@ -328,33 +315,39 @@
 		position: relative;
 		display: flex;
 		justify-content: center;
-		width: min(100%, 560px);
+		width: min(100%, calc(var(--cw) * 5.4));
 	}
+	/* Thirteen cards around one pivot below the hand, like cards held in a hand. */
 	.card-fan {
+		--step: 6.2deg;
 		position: relative;
 		width: 100%;
-		height: 330px;
+		/* Room for the side cards, which dip below the hand as they swing around the pivot. */
+		height: calc(var(--cw) * 2.1);
 		cursor: pointer;
 		border-radius: 24px;
 		display: grid;
-		place-items: center;
+		place-items: end center;
 		isolation: isolate;
+	}
+	.card-fan.spread {
+		--step: 8deg;
 	}
 	.fan-card {
 		grid-area: 1/1;
-		width: clamp(150px, 15vw, 210px);
+		width: var(--cw);
 		height: auto;
 		max-width: none;
-		transform: translateX(calc(var(--card-index) * clamp(54px, 17vw, 66px)))
-			rotate(calc(var(--card-index) * 13deg));
-		filter: drop-shadow(0 14px 8px rgb(33 28 46 / 15%));
-		border-radius: 12px;
+		transform-origin: 50% 175%;
+		rotate: calc(var(--k) * var(--step));
+		translate: 0 calc(var(--cw) * -0.7);
+		filter: drop-shadow(0 10px 6px rgb(33 28 46 / 14%));
+		border-radius: calc(var(--cw) * 0.07);
+		transition: rotate 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+		transition-delay: calc(max(var(--k), -1 * var(--k)) * 18ms);
 	}
-	.fan-card:nth-child(2) {
-		z-index: 2;
-	}
-	.fan-card:last-child {
-		z-index: 3;
+	.card-fan.spread .fan-card:last-child {
+		translate: 0 calc(var(--cw) * -0.82);
 	}
 	.circle-label {
 		position: absolute;
@@ -672,12 +665,6 @@
 		.circle-label strong {
 			font-size: 30px;
 		}
-		.fan-card {
-			width: 165px;
-		}
-		.card-fan {
-			height: 290px;
-		}
 		.game-tiles {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
@@ -705,24 +692,21 @@
 			padding-top: 18px;
 		}
 		.hero {
-			min-height: 0;
-			padding: 8px 0 40px;
+			min-height: 420px;
+			height: calc(100dvh - var(--header-h, 56px) - 66px);
+			--cw: clamp(70px, min(21vw, 15dvh), 110px);
 		}
 		h1 {
-			font-size: clamp(48px, 14vw, 84px);
-			margin: 26px 0 26px;
+			font-size: clamp(40px, min(13vw, 8dvh), 84px);
 		}
 		.club-cta {
 			min-height: 50px;
 		}
-		.hero-art {
-			padding: 18px 0 10px;
-		}
 		.card-fan {
-			height: 252px;
+			--step: 4.4deg;
 		}
-		.fan-card {
-			width: clamp(122px, 38.7vw, 151px);
+		.card-fan.spread {
+			--step: 6.6deg;
 		}
 		.circle-label {
 			width: 76px;
@@ -852,6 +836,9 @@
 			transition: none !important;
 			translate: none !important;
 			rotate: none !important;
+		}
+		.fan-card {
+			transition: none;
 		}
 	}
 
