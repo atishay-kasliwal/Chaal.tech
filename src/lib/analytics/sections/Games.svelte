@@ -143,6 +143,7 @@
 		gap: 12px;
 	}
 	.badge {
+		width: 100%;
 		flex-direction: row;
 		align-items: center;
 		flex-wrap: wrap;

@@ -270,7 +270,8 @@
 		min-height: 0;
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
-		grid-template-rows: repeat(2, minmax(0, 1fr));
+		grid-auto-rows: minmax(0, 280px);
+		align-content: center;
 		gap: 12px;
 	}
 	.cards li {
@@ -483,7 +484,6 @@
 		}
 		.cards {
 			grid-template-columns: repeat(3, 1fr);
-			grid-template-rows: repeat(2, minmax(0, 1fr));
 		}
 	}
 	@media (max-width: 720px) {

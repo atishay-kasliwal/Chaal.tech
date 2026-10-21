@@ -228,8 +228,7 @@
 	.habits {
 		grid-area: habits;
 		flex-direction: row;
-		flex-wrap: wrap;
-		align-content: center;
+		align-items: stretch;
 		gap: 10px;
 	}
 	.situ {
@@ -305,18 +304,19 @@
 		color: var(--muted);
 	}
 	.h {
-		flex: 1 1 130px;
-		display: grid;
-		grid-template-columns: auto 1fr;
-		grid-template-rows: auto auto;
-		column-gap: 10px;
+		flex: 1 1 0;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
 		align-items: center;
-		padding: 10px 12px;
+		justify-content: center;
+		gap: 4px;
+		padding: 10px 8px;
 		border-radius: 14px;
 		background: #ffffff07;
+		text-align: center;
 	}
 	.h-ic {
-		grid-row: span 2;
 		font-size: 22px;
 	}
 	.h strong {
@@ -335,7 +335,7 @@
 	}
 	.list li {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
 		gap: 10px;
 		align-items: center;
 		font-size: 12px;
