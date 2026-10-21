@@ -4,7 +4,7 @@
 	import { GAME_GUIDES } from '#lib/games/catalog.js';
 	import { onMount } from 'svelte';
 	import { gsap } from 'gsap';
-	let fan: HTMLDivElement;
+	let fan: HTMLButtonElement;
 	let spread = $state(false);
 	let animateFan: ((open: boolean) => void) | undefined;
 	const games = [
@@ -89,53 +89,17 @@
 
 <div class="home">
 	<section class="invitation" aria-labelledby="home-title">
-		<div class="invitation-top">
-			<span>A little friendly competition.</span><span
-				>Your people. Your kind of night. <span aria-hidden="true">↙</span></span
-			>
-		</div>
-		<div class="hero-grid">
-			<div class="hero-copy">
-				<h1 id="home-title">Good cards.<br />Better<br /><span>company.</span></h1>
-				<p>The cards are just an excuse.<br />Get your people together for a proper game night.</p>
-				<button class="club-cta" onclick={openStart}
-					>Pull up a chair <span aria-hidden="true">↗</span></button
-				>
-				<span class="hero-small">Your browser. Your friends. Your adda.</span>
-			</div>
+		<div class="hero">
 			<div class="hero-art">
-				<div class="circle-label">
-					<span>GOOD TIMES</span><strong aria-hidden="true">✳</strong><span>ON THE CARDS</span>
-				</div>
-				<div
-					class="card-fan"
-					role="group"
-					aria-label="Illustrated ace cards"
-					bind:this={fan}
-					onpointerenter={(event) => {
-						if (event.pointerType === 'mouse') deal(true);
-					}}
-					onpointerleave={(event) => {
-						if (event.pointerType === 'mouse') deal(false);
-					}}
-				>
-					{#each ['spades-a', 'hearts-k', 'diamonds-q'] as card, i (card)}
-						<img
-							class="fan-card"
-							src="/cards/diwali-taash/{card}.svg"
-							alt="{['Ace of spades', 'King of hearts', 'Queen of diamonds'][
-								i
-							]}, from the Diwali Taash deck"
-							width="224"
-							height="314"
-							style:--card-index={i - 1}
-							fetchpriority={i === 1 ? 'high' : 'auto'}
-						/>
-					{/each}
+				<div class="circle-label" aria-hidden="true">
+					<span>GOOD TIMES</span><strong>✳</strong><span>ON THE CARDS</span>
 				</div>
 				<button
-					class="fan-toggle"
+					type="button"
+					class="card-fan"
 					aria-pressed={spread}
+					aria-label="Spread the cards: ace of spades, king of hearts and queen of diamonds, from the Diwali Taash deck"
+					bind:this={fan}
 					onpointerenter={(event) => {
 						if (event.pointerType === 'mouse') deal(true);
 					}}
@@ -147,11 +111,24 @@
 					}}
 					onblur={() => deal(false)}
 					onclick={() => deal(!spread)}
-					>{spread ? 'That’s a good hand.' : 'Go on, take a peek.'}
-					<span aria-hidden="true">↗</span></button
 				>
-				<p class="art-note">Made for the “one last hand” people.</p>
+					{#each ['spades-a', 'hearts-k', 'diamonds-q'] as card, i (card)}
+						<img
+							class="fan-card"
+							src="/cards/diwali-taash/{card}.svg"
+							alt=""
+							width="224"
+							height="314"
+							style:--card-index={i - 1}
+							fetchpriority={i === 1 ? 'high' : 'auto'}
+						/>
+					{/each}
+				</button>
 			</div>
+			<h1 id="home-title">Good cards.<br /><span>Better company.</span></h1>
+			<button class="club-cta" onclick={openStart}
+				>Pull up a chair <span aria-hidden="true">→</span></button
+			>
 		</div>
 		<div class="invitation-bottom">
 			<span>Teen Patti & friends</span><span>Video on. Cards out.</span><a href="#games"
@@ -283,7 +260,6 @@
 		color: var(--night);
 		padding: 24px var(--gutter) 0;
 	}
-	.invitation-top,
 	.invitation-bottom {
 		display: flex;
 		align-items: center;
@@ -291,53 +267,34 @@
 		font-size: 12px;
 		font-weight: 600;
 	}
-	.invitation-top > span:last-child {
+	/* One centred column: the dealt hand, the line, the way in. */
+	.hero {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		gap: 24px;
-	}
-	.invitation-top > span:last-child > span {
-		font-size: 28px;
-	}
-	.hero-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
+		text-align: center;
 		max-width: 1320px;
 		margin: auto;
-		min-height: 640px;
-		padding: 60px 0 52px;
-		align-items: center;
-	}
-	.hero-copy {
-		position: relative;
-		z-index: 1;
+		padding: 28px 0 64px;
+		min-height: calc(100dvh - var(--header-h, 64px) - 64px);
+		justify-content: center;
 	}
 	h1 {
 		font-family: var(--font-display);
-		font-size: clamp(70px, 7.8vw, 120px);
+		font-size: clamp(60px, 7.2vw, 112px);
 		font-weight: 800;
-		line-height: 0.89;
+		line-height: 0.9;
 		letter-spacing: -0.065em;
+		margin: 40px 0 34px;
 	}
 	h1 span {
 		color: var(--night);
-	}
-	.hero-copy > p {
-		font-size: 17px;
-		line-height: 1.65;
-		margin: 28px 0 24px;
-		max-width: 340px;
-	}
-	.hero-small {
-		display: block;
-		font-size: 11px;
-		margin-top: 14px;
 	}
 	.club-cta {
 		display: inline-flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 44px;
+		gap: 28px;
 		min-height: 56px;
 		padding: 16px 24px;
 		border-radius: 100px;
@@ -370,23 +327,22 @@
 	.hero-art {
 		position: relative;
 		display: flex;
-		flex-direction: column;
-		align-items: center;
 		justify-content: center;
-		align-self: stretch;
-		min-width: 0;
+		width: min(100%, 560px);
 	}
 	.card-fan {
 		position: relative;
 		width: 100%;
-		height: 360px;
+		height: 330px;
+		cursor: pointer;
+		border-radius: 24px;
 		display: grid;
 		place-items: center;
 		isolation: isolate;
 	}
 	.fan-card {
 		grid-area: 1/1;
-		width: clamp(155px, 17vw, 232px);
+		width: clamp(150px, 15vw, 210px);
 		height: auto;
 		max-width: none;
 		transform: translateX(calc(var(--card-index) * clamp(54px, 17vw, 66px)))
@@ -422,25 +378,6 @@
 		font-size: 42px;
 		line-height: 1.3;
 		font-weight: 400;
-	}
-	.fan-toggle {
-		border-bottom: 1px solid var(--night);
-		padding: 10px 0 6px;
-		font-size: 13px;
-		cursor: pointer;
-		display: flex;
-		gap: 40px;
-	}
-	.fan-toggle span {
-		transition: translate 0.25s;
-	}
-	.fan-toggle:hover span {
-		translate: 4px -3px;
-	}
-	.art-note {
-		font-size: 11px;
-		margin-top: 12px;
-		opacity: 0.75;
 	}
 	.invitation-bottom {
 		border-top: 1px solid #211c2e35;
@@ -725,13 +662,6 @@
 		}
 	}
 	@media (max-width: 900px) {
-		.hero-grid {
-			min-height: 560px;
-			padding: 45px 0;
-		}
-		.hero-copy h1 {
-			font-size: clamp(64px, 9vw, 90px);
-		}
 		.circle-label {
 			right: 0;
 			top: 0;
@@ -746,7 +676,7 @@
 			width: 165px;
 		}
 		.card-fan {
-			height: 310px;
+			height: 290px;
 		}
 		.game-tiles {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -774,31 +704,16 @@
 		.invitation {
 			padding-top: 18px;
 		}
-		.invitation-top {
-			font-size: 11px;
-		}
-		.invitation-top > span:last-child {
-			display: none;
-		}
-		.hero-grid {
-			grid-template-columns: 1fr;
-			padding: 32px 0 16px;
+		.hero {
 			min-height: 0;
-			gap: 16px;
+			padding: 8px 0 40px;
 		}
-		.hero-copy h1 {
-			font-size: clamp(64px, 17vw, 100px);
-			line-height: 0.9;
+		h1 {
+			font-size: clamp(48px, 14vw, 84px);
+			margin: 26px 0 26px;
 		}
-		.hero-copy > p {
-			font-size: 15px;
-			margin: 22px 0;
-		}
-		.hero-copy .club-cta {
+		.club-cta {
 			min-height: 50px;
-		}
-		.hero-small {
-			font-size: 10px;
 		}
 		.hero-art {
 			padding: 18px 0 10px;
@@ -818,13 +733,6 @@
 		}
 		.circle-label strong {
 			font-size: 27px;
-		}
-		.fan-toggle {
-			font-size: 12px;
-			padding-top: 4px;
-		}
-		.art-note {
-			font-size: 10px;
 		}
 		.invitation-bottom {
 			font-size: 10px;
@@ -940,8 +848,7 @@
 		.club-cta,
 		.club-cta > span,
 		.game-tile,
-		.text-link span,
-		.fan-toggle span {
+		.text-link span {
 			transition: none !important;
 			translate: none !important;
 			rotate: none !important;
@@ -1025,9 +932,7 @@
 		rotate: -12deg;
 		pointer-events: none;
 	}
-	.card-fan,
-	.fan-toggle,
-	.art-note {
+	.card-fan {
 		z-index: 1;
 	}
 	.fan-card {

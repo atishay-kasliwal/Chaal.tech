@@ -684,7 +684,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1.8rem;
-		min-height: calc(100dvh - 72px);
+		min-height: calc(100dvh - var(--header-h, 64px));
 		padding: clamp(1.25rem, 4vw, 3.5rem) max(1.25rem, calc((100vw - 1320px) / 2));
 		color: #f8f2e5;
 	}
@@ -692,7 +692,7 @@
 		content: '';
 		position: absolute;
 		z-index: -1;
-		inset: -72px 0 0;
+		inset: calc(-1 * var(--header-h, 64px)) 0 0;
 		background: radial-gradient(ellipse at 80% 0%, #243c2b66, transparent 45%), #211c2e;
 	}
 	.welcome,
@@ -1179,7 +1179,7 @@
 	@media (max-height: 700px) {
 		.club-room {
 			height: auto;
-			min-height: calc(100dvh - 72px);
+			min-height: calc(100dvh - var(--header-h, 64px));
 		}
 		.room-content {
 			min-height: 330px;
