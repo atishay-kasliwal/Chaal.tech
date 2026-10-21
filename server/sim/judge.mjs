@@ -56,7 +56,7 @@ const argmax = (obj) => Object.entries(obj).reduce((best, e) => (e[1] > best[1] 
  *   p: hand percentile, w: chance to beat every live opponent (p^opponents), strong / weak / monster,
  *   pressure (blind: a raise since its last move, or seen players betting over it),
  *   ov / ovAdv / qov: the policy's own best move differed from the base brain's, by how much of
- *   the base brain's evidence (cards and money; blind customs barely count, as in tp-character@2),
+ *   the base brain's evidence (cards and money; blind customs barely count, as in tp-dna@2),
  *   and whether a quirk did it (characters only; v1 traces cannot separate quirks).
  */
 export function judgeDecision({ room, view, actor, move, row }) {
@@ -85,7 +85,7 @@ export function judgeDecision({ room, view, actor, move, row }) {
 	const t = move.trace;
 	if (t?.clarity !== undefined) q.clarity = t.clarity;
 	if (t?.state) {
-		// tp-character@3: did mood or memory move this decision, or even change its best move?
+		// tp-dna@3: did mood or memory move this decision, or even change its best move?
 		const moved = (o) => Object.values(o ?? {}).some((v) => v !== 0);
 		q.stateOn = moved(t.state);
 		q.memOn = moved(t.social) || moved(t.model);
@@ -99,7 +99,7 @@ export function judgeDecision({ room, view, actor, move, row }) {
 		q.ovAdv = t.overriddenEvidence;
 		q.qov = t.quirkOverride;
 	} else if (t?.utility) {
-		// tp-character@1: rebuild its base utilities (same base brain) from the recorded strength.
+		// tp-dna@1: rebuild its base utilities (same base brain) from the recorded strength.
 		const sit = situation(view, actor.id);
 		const cands = candidates(sit);
 		const factors = baseFactors(sit, cands, t.s === undefined ? null : { multi: t.s });

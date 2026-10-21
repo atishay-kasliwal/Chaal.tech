@@ -1,6 +1,6 @@
 /**
  * Phase 3 baseline (BOT_BRAIN.md §29): the frozen Phase 2 characters (@3), the same DNA on policy
- * tp-character@4 (the policy fixes alone), and every human archetype, measured in the Phase 3
+ * tp-dna@4 (the policy fixes alone), and every human archetype, measured in the Phase 3
  * population with matched tables. Measurement only; grounds the target bands.
  *
  *   node scripts/sim/phase3-baseline.mjs [--seed 31] [--tables 60] [--adapt 8]

@@ -1,9 +1,9 @@
 /**
- * The character bots' personalities: version 1 (policy tp-character@1) and version 2 (policy
- * tp-character@2, docs/BOT_BRAIN.md §27). Data only: the shared policy
+ * The character bots' personalities: version 1 (policy tp-dna@1) and version 2 (policy
+ * tp-dna@2, docs/BOT_BRAIN.md §27). Data only: the shared policy
  * (server/bots/character.mjs) reads these numbers and never asks which character it is playing.
  *
- * DNA traits are in [0, 1], 0.5 = typical. Policy tp-character@1 uses aggression, bluffAffinity,
+ * DNA traits are in [0, 1], 0.5 = typical. Policy tp-dna@1 uses aggression, bluffAffinity,
  * blindPreference, patience, curiosity, showPreference, riskTolerance and discipline. The feeling
  * and social traits (lossSensitivity ... memoryWeight) are part of each personality now so the
  * character is fully described, and are read from BOT_BRAIN.md phase 2 on.
@@ -277,7 +277,7 @@ export const CHARACTER_DNA_V2 = Object.freeze({
 });
 
 /**
- * Version 3 (Phase 2): v2 personalities on policy tp-character@3, which adds a mind. Changes are
+ * Version 3 (Phase 2): v2 personalities on policy tp-dna@3, which adds a mind. Changes are
  * data only, aimed at the Phase 1.1 review: Virat's aggression moves from blind doubling toward
  * seen pressure, confrontation and tilt; GG is more patient and selective once he looks, but no
  * longer always looks at once; Samay is looser around close calls (curiosity, less discipline) while the evidence bound

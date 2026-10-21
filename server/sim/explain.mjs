@@ -29,7 +29,7 @@ export function explainDecision({ name, move, decision }) {
 				.join('  ')}   (temperature ${t.tau})`
 		);
 	if (t.base) {
-		// tp-character@2: the base brain, personality and quirks separately, and how bounded.
+		// tp-dna@2: the base brain, personality and quirks separately, and how bounded.
 		const row = (label, o) =>
 			`  ${label.padEnd(13)}${Object.entries(o)
 				.map(([a, v]) => `${a} ${signed(v)}`)
@@ -38,7 +38,7 @@ export function explainDecision({ name, move, decision }) {
 		lines.push(
 			`${row('Personality:', t.persona)}   (scaled by ${t.lambda}: base clarity ${t.clarity})`
 		);
-		// tp-character@3: mood, relationships and opponent memory, each bounded the same way.
+		// tp-dna@3: mood, relationships and opponent memory, each bounded the same way.
 		const moved = (o) => o && Object.values(o).some((v) => v !== 0);
 		if (moved(t.state)) lines.push(row('Mood:', t.state));
 		if (moved(t.social)) lines.push(row('Relations:', t.social));

@@ -4,7 +4,7 @@ import { defineGraph, runGraph } from './graph.mjs';
 import { DNA_POLICY_V1 } from './dna-policies.mjs';
 
 /**
- * Policy tp-character@1: character bots. Base Teen Patti skill (./brain.mjs) plus personality as
+ * Policy tp-dna@1: character bots. Base Teen Patti skill (./brain.mjs) plus personality as
  * data: a style's DNA traits and quirks add named deltas to each candidate move's utility; a
  * softmax turns utilities into probabilities and one recorded draw picks the move.
  *
@@ -247,7 +247,7 @@ export const CHARACTER_GRAPH = defineGraph(CHARACTER_POLICY, nodes);
 
 /**
  * @param view the bot's own projection
- * @param style a published style with policy tp-character@1
+ * @param style a published style with policy tp-dna@1
  * @returns {{ action, payload, reason, trace? } | null}
  */
 export function decideCharacter(view, botId, random, style) {

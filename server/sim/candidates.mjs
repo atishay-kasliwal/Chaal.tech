@@ -3,7 +3,7 @@ import { CHARACTER_POLICY_V4 } from '../bots/character-v4.mjs';
 import { styleConfigHash } from '../bots/identity.mjs';
 
 /**
- * Phase 3 candidates (BOT_BRAIN.md §29): unpublished styles on tp-character@4, each a descendant of
+ * Phase 3 candidates (BOT_BRAIN.md §29): unpublished styles on tp-dna@4, each a descendant of
  * a frozen Phase 2 style (@3) with its ancestry recorded. Offline only: nothing here is ever
  * seated in a room or added to the published registry (server/bots/identity.mjs). A reviewer
  * turns an approved candidate into a new immutable version by hand.

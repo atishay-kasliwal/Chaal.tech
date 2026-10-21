@@ -3,9 +3,9 @@ import { confidence, PRIORS } from './mind.mjs';
 import { DNA_POLICY_V4 } from './dna-policies.mjs';
 
 /**
- * Policy tp-character@4 (BOT_BRAIN.md §29, Phase 3 candidate): the tp-character@3 graph with three
+ * Policy tp-dna@4 (BOT_BRAIN.md §29, Phase 3 candidate): the tp-dna@3 graph with three
  * rule changes found by the Phase 3 investigations. No published style uses it until a reviewer
- * approves a Phase 3 candidate; tp-character@3 is unchanged.
+ * approves a Phase 3 candidate; tp-dna@3 is unchanged.
  *
  * 1. Blind preference never makes packing unseen cards more attractive than looking. In @3 it
  *    discouraged looking but not packing, so a blind-loving style facing an expensive blind raise

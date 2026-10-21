@@ -4,7 +4,7 @@
  *   node scripts/sim/phase3.mjs [--seed 41] [--generations 4] [--children 12] [--scale 1]
  *
  * For every character separately, each generation:
- *   1. children: generation 0 is the ancestor's DNA on tp-character@4 plus mutations of it; later
+ *   1. children: generation 0 is the ancestor's DNA on tp-dna@4 plus mutations of it; later
  *      generations mutate and cross the best two so far (ancestry kept);
  *   2. screening: a small matched run against the frozen ancestor (same tables, opponents, cards,
  *      opponent draws), fresh tables each generation;

@@ -4,10 +4,10 @@ import { defineGraph, runGraph } from './graph.mjs';
 import { DNA_POLICY_V2 } from './dna-policies.mjs';
 
 /**
- * Policy tp-character@2 (BOT_BRAIN.md §27, Phase 1.1): good Teen Patti fundamentals first, and
+ * Policy tp-dna@2 (BOT_BRAIN.md §27, Phase 1.1): good Teen Patti fundamentals first, and
  * personality bends them without breaking them.
  *
- * Changes from tp-character@1 (which stays, frozen, for the @1 styles):
+ * Changes from tp-dna@1 (which stays, frozen, for the @1 styles):
  *  - bound: personality and quirk deltas are scaled down by how clear the base brain's preference
  *    is. Ambiguous spots are personality's to decide; obvious ones rarely flip. How hard the bound
  *    bites depends on the style's discipline.
@@ -65,7 +65,7 @@ export function evidenceOf(cands, base) {
 
 /**
  * Base utilities for this policy. Seen play is the shared base brain unchanged. Blind play differs
- * from tp-character@1 in three ways: a blind double is closer to a blind chaal (both are cheap and
+ * from tp-dna@1 in three ways: a blind double is closer to a blind chaal (both are cheap and
  * both pressure seen players); the urge to look grows with the log of what is committed, so stakes
  * doubling (anyone's blind raise) does not rush everyone into looking; and seen players betting
  * over a blind player make looking attractive.

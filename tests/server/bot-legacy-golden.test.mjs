@@ -15,14 +15,14 @@ test('legacy bots (tp-heuristic@1) decide exactly as before the character policy
 	assert.deepEqual(legacyGolden(), RECORDED);
 });
 
-// Recorded on 2026-10-19 before tp-character@2 existed. The @1 character styles and their policy
+// Recorded on 2026-10-19 before tp-dna@2 existed. The @1 character styles and their policy
 // are published: v2 is a new policy and new styles, never an edit to these.
 const CHARACTER_V1 = {
 	decisions: 10168,
 	digest: '5b7c78a1278a61ebc91460d6618bd4d5ebd3fb1948194c201c7dc25266b24f8a'
 };
 
-test('character styles @1 (tp-character@1) decide exactly as when first measured', () => {
+test('character styles @1 (tp-dna@1) decide exactly as when first measured', () => {
 	assert.deepEqual(characterV1Golden(), CHARACTER_V1);
 });
 

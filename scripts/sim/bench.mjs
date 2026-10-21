@@ -23,7 +23,7 @@ const stats = (xs) => ({
 	max: Math.max(...xs)
 });
 
-// v4: Phase 3 candidates (--candidates <json of { character: genome }>), else the v3 DNA on tp-character@4.
+// v4: Phase 3 candidates (--candidates <json of { character: genome }>), else the v3 DNA on tp-dna@4.
 const ci = process.argv.indexOf('--candidates');
 const chosen =
 	ci > 0 && existsSync(process.argv[ci + 1])

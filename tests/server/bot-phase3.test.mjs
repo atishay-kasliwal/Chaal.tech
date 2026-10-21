@@ -16,7 +16,7 @@ import { ancestorGenome, candidateStyle, mutate, REGIONS } from '../../server/si
 import { opponents } from '../../server/sim/evaluate.mjs';
 import { seeded, shuffled } from './helpers/table-sim.mjs';
 
-/* Phase 3 (docs/BOT_BRAIN.md §29): policy tp-character@4, mind@2, and the offline machinery. */
+/* Phase 3 (docs/BOT_BRAIN.md §29): policy tp-dna@4, mind@2, and the offline machinery. */
 
 const humans = new Set(['host']);
 const ctx = { now: 1000, turnMs: 60000, connected: humans };
@@ -95,10 +95,10 @@ const subject = (model) => ({
 	recent: { beatMe: 99, caughtBluffing: 0, bluffedMe: 0, wonOf5: [] }
 });
 
-test('candidates are offline only: no published style uses tp-character@4, published characters stay @3', () => {
+test('candidates are offline only: no reference style uses tp-dna@4, the Phase 2 references stay on tp-dna@3', () => {
 	assert.ok(POLICIES[CHARACTER_POLICY_V4]);
 	assert.ok(!Object.values(STYLES).some((s) => s.policy === CHARACTER_POLICY_V4));
-	for (const s of Object.values(CHARACTER_STYLES)) assert.equal(s.policy, 'tp-character@3');
+	for (const s of Object.values(CHARACTER_STYLES)) assert.equal(s.policy, 'tp-dna@3');
 	const style = candidate('gg');
 	assert.equal(style.status, 'candidate');
 	assert.equal(STYLES[style._id], undefined);
@@ -118,7 +118,7 @@ test('mutations stay inside each character identity region', () => {
 	}
 });
 
-test('blind preference never makes packing unseen cards more attractive than looking (tp-character@4)', () => {
+test('blind preference never makes packing unseen cards more attractive than looking (tp-dna@4)', () => {
 	const s = spot({ blind: true, raiser: true });
 	const style = withDna(candidate('ms-dhoni'), { blindPreference: 0.95 });
 	const v4 = decideCharacterV4(s.view, 'bot-hero', seeded(2), style, s.mind);
@@ -128,13 +128,13 @@ test('blind preference never makes packing unseen cards more attractive than loo
 		s.view,
 		'bot-hero',
 		seeded(2),
-		{ ...style, policy: 'tp-character@3' },
+		{ ...style, policy: 'tp-dna@3' },
 		{ ...s.mind, v: 'mind@1' }
 	);
 	assert.ok((v4.trace.probs.pack ?? 0) <= (v3.trace.probs.pack ?? 0) + 1e-12);
 });
 
-test('a maniac betting after looking counts as less pressure, by adaptability (tp-character@4)', () => {
+test('a maniac betting after looking counts as less pressure, by adaptability (tp-dna@4)', () => {
 	const s = spot({ cards: [c(12, 'hearts'), c(9, 'spades'), c(4, 'clubs')], raiser: true });
 	s.mind.others['bot-opp-a'] = subject(maniacModel);
 	const adaptive = decideCharacterV4(
@@ -170,7 +170,7 @@ test('frustration makes a character more like itself: the curious lean to callin
 	assert.ok(t.factors.some(([f]) => f === 'state.frustration'));
 });
 
-test('bounded on tp-character@4: no mind state turns a monster into a fold or junk into a raise', () => {
+test('bounded on tp-dna@4: no mind state turns a monster into a fold or junk into a raise', () => {
 	for (const cards of [
 		[c(14, 'hearts'), c(14, 'spades'), c(14, 'clubs')],
 		[c(2, 'hearts'), c(3, 'spades'), c(5, 'clubs')]

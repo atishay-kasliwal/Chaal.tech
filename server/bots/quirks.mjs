@@ -32,7 +32,7 @@ export const QUIRKS = Object.freeze({
 });
 
 /**
- * Quirks for policy tp-character@2. A quirk is a conditional character moment, never a permanent
+ * Quirks for policy tp-dna@2. A quirk is a conditional character moment, never a permanent
  * copy of a DNA trait: each one acts only in a specific situation, and adds what the traits do not.
  * `apply(sit, k, strength)` returns deltas or null when its moment has not come.
  */
@@ -64,7 +64,7 @@ export const QUIRKS_V2 = Object.freeze({
 });
 
 /**
- * Quirks for policy tp-character@3. Same rule: a quirk acts only in its moment. The mind-based
+ * Quirks for policy tp-dna@3. Same rule: a quirk acts only in its moment. The mind-based
  * quirks are live from this policy on. `apply(sit, k, strength, m)` where `m` is what the bot
  * remembers about this hand and table (server/bots/character-v3.mjs `recall`).
  */

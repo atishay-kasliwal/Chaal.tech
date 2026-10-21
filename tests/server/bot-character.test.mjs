@@ -17,9 +17,10 @@ import {
 	CHARACTER_STYLES,
 	CHARACTER_STYLES_V1,
 	CHARACTER_STYLES_V2,
-	STYLES,
-	identityForSeat
+	STYLES
 } from '../../server/bots/dna-styles.mjs';
+import { identityForSeat } from '../../server/bots/identity.mjs';
+import { configErrors } from '../../server/bots/config.mjs';
 import {
 	CHARACTER_DNA_V1,
 	CHARACTER_DNA_V2,
@@ -28,7 +29,7 @@ import {
 import {
 	botSeatPayload,
 	botDelay,
-	tempoFor,
+	thinkingContext,
 	nextBotMove,
 	BOT_NAMES
 } from '../../server/bots/runner.mjs';
@@ -93,7 +94,7 @@ test('decision graph: named nodes run in order, can stop early, and draw as Merm
 
 /* -------------------------------------- identities -------------------------------------- */
 
-test('the five character bots are the cast; @1 and @2 stay published and new seats sit on @3', () => {
+test('the five DNA characters: reference versions v1 to v3 stay frozen on tp-dna@1 to @3', () => {
 	assert.deepEqual(CHARACTER_IDS, ['rohit-sharma', 'virat-kohli', 'gg', 'samay-raina', 'ms-dhoni']);
 	for (const id of CHARACTER_IDS) {
 		const v1 = CHARACTER_STYLES_V1[id];
@@ -101,15 +102,15 @@ test('the five character bots are the cast; @1 and @2 stay published and new sea
 		const v3 = CHARACTER_STYLES[id];
 		assert.equal(v3._id, `${id}@3`);
 		assert.equal(v3.parent, `${id}@2`);
-		assert.equal(v3.policy, 'tp-character@3');
+		assert.equal(v3.policy, 'tp-dna@3');
 		assert.deepEqual(v3.tendencies.dna, CHARACTER_DNA_V3[id].dna);
 		assert.ok(Object.isFrozen(v3) && STYLES[v3._id] === v3);
 		assert.equal(v1._id, `${id}@1`);
-		assert.equal(v1.policy, 'tp-character@1');
+		assert.equal(v1.policy, 'tp-dna@1');
 		assert.deepEqual(v1.tendencies.dna, CHARACTER_DNA_V1[id].dna);
 		assert.equal(v2._id, `${id}@2`);
 		assert.equal(v2.parent, `${id}@1`);
-		assert.equal(v2.policy, 'tp-character@2');
+		assert.equal(v2.policy, 'tp-dna@2');
 		assert.deepEqual(v2.tendencies.dna, CHARACTER_DNA_V2[id].dna);
 		assert.notEqual(v1.configHash, v2.configHash);
 		for (const style of [v1, v2]) {
@@ -132,8 +133,7 @@ test('personality is data: the shared policy never mentions a character', () => 
 		'brain.mjs',
 		'quirks.mjs',
 		'graph.mjs',
-		'policies.mjs',
-		'runner.mjs'
+		'policies.mjs'
 	])
 		for (const { id, name } of CAST) {
 			const source = readFileSync(new URL(`../../server/bots/${file}`, import.meta.url), 'utf8');
@@ -147,21 +147,17 @@ test('personality is data: the shared policy never mentions a character', () => 
 
 /* ----------------------------------------- seats ----------------------------------------- */
 
-test('a host seats characters by id, one of each per table, under their own names and styles', () => {
+test('a DNA style sits down like any published style: embedded, validated, one per character', () => {
 	let room = characterTable(['rohit-sharma', 'gg']);
-	const rohit = room.players.find((p) => p.bot?.character === 'rohit-sharma');
-	assert.deepEqual(rohit.bot, { character: 'rohit-sharma', styleId: 'rohit-sharma@3', rebuys: 0 });
-	assert.equal(rohit.username, 'rohit');
-	assert.equal(
-		projection(room, 'host', humans).usersList.find((u) => u.id === rohit.id).bot,
-		'rohit-sharma'
-	);
+	const rohit = room.players.find((p) => p.bot?.style?.botId === 'rohit-sharma');
+	assert.deepEqual(rohit.bot.style, CHARACTER_STYLES['rohit-sharma']);
+	assert.equal(rohit.username, 'Rohit');
 	assert.deepEqual(identityForSeat(rohit.bot), {
 		botId: 'rohit-sharma',
 		styleId: 'rohit-sharma@3',
 		styleVersion: 3,
 		configHash: CHARACTER_STYLES['rohit-sharma'].configHash,
-		policy: 'tp-character@3'
+		policy: 'tp-dna@3'
 	});
 	assert.throws(
 		() =>
@@ -174,19 +170,25 @@ test('a host seats characters by id, one of each per table, under their own name
 			),
 		/already at the table/
 	);
-	for (const bad of [
-		{ botId: 'bot-char-x1', name: 'Rohit', character: 'nobody', styleId: 'nobody@1' },
-		{ botId: 'bot-char-x2', name: 'Imposter', character: 'virat-kohli', styleId: 'virat-kohli@1' },
-		{ botId: 'bot-char-x3', name: 'Virat', character: 'virat-kohli', styleId: 'gg@1' },
-		{
-			botId: 'bot-char-x4',
-			name: 'Virat',
-			character: 'virat-kohli',
-			styleId: 'virat-kohli@1',
-			level: 'easy'
-		}
+	// Only a published, valid style can sit: a draft, a changed gene or an unknown tendency is refused.
+	const ref = CHARACTER_STYLES['virat-kohli'];
+	for (const style of [
+		{ ...ref, status: 'draft' },
+		{ ...ref, tendencies: { ...ref.tendencies, dna: { ...ref.tendencies.dna, aggression: 1.4 } } },
+		{ ...ref, tendencies: { ...ref.tendencies, extra: 1 } },
+		{ ...ref, _id: 'virat-kohli@x' }
 	])
-		assert.throws(() => transition(room, 'host', 'addBot', bad, ctx));
+		assert.throws(() =>
+			transition(
+				room,
+				'host',
+				'addBot',
+				{ botId: 'bot-char-x1', name: 'Virat', level: 'normal', style },
+				ctx
+			)
+		);
+	for (const s of Object.values(STYLES))
+		if (s.policy.startsWith('tp-dna@')) assert.deepEqual(configErrors(s), [], s._id);
 	// A removed character can come back; practice levels still work alongside.
 	room = transition(room, 'host', 'removeBot', { botId: rohit.id }, ctx);
 	room = transition(
@@ -207,22 +209,17 @@ test('a host seats characters by id, one of each per table, under their own name
 	invariant(room);
 });
 
-test('think time comes from the character tempo and never from its cards', () => {
+test('think time never reads cards: the room context has none, the delay takes no view or move', () => {
 	const room = characterTable(['virat-kohli', 'gg']);
-	const virat = room.players.find((p) => p.bot?.character === 'virat-kohli');
-	const tempo = tempoFor(room, virat.id);
-	assert.deepEqual(tempo, CHARACTER_STYLES['virat-kohli'].tendencies.tempo);
+	const virat = room.players.find((p) => p.bot?.style?.botId === 'virat-kohli');
+	const feel = thinkingContext(room, virat.id);
+	assert.deepEqual(Object.keys(feel).sort(), ['bigPot', 'botId', 'facingRaise']);
+	assert.equal(feel.botId, 'virat-kohli');
 	for (const r of [0, 0.5, 0.999]) {
-		const ms = botDelay(() => r, false, tempo);
-		assert.ok(ms >= tempo.thinkMs[0] && ms < tempo.thinkMs[1]);
+		const ms = botDelay(() => r, false, feel);
+		assert.ok(ms >= 1000 && ms <= 7000);
 	}
-	// The signature takes no view and no move: there is nothing card-dependent to read.
 	assert.equal(botDelay.length, 1);
-	assert.equal(
-		botDelay(() => 0.5),
-		3000,
-		'legacy bots keep their old range'
-	);
 });
 
 /* ---------------------------------------- policy ---------------------------------------- */
@@ -291,10 +288,10 @@ test('characters decide from their own view only: hidden cards never change a de
 		for (const bot of a.players.filter((p) => p.bot)) {
 			assert.deepEqual(bot.cards, b.players.find((p) => p.id === bot.id).cards, version);
 			const versions = [
-				[decideCharacter, CHARACTER_STYLES_V1[bot.bot.character]],
-				[decideCharacterV2, CHARACTER_STYLES_V2[bot.bot.character]],
+				[decideCharacter, CHARACTER_STYLES_V1[bot.bot.style.botId]],
+				[decideCharacterV2, CHARACTER_STYLES_V2[bot.bot.style.botId]],
 				// No mind: hidden-card safety of the v3 decision itself (minds have their own tests).
-				[decideCharacterV3, CHARACTER_STYLES[bot.bot.character]]
+				[decideCharacterV3, CHARACTER_STYLES[bot.bot.style.botId]]
 			];
 			// Look first so the decision uses the bot's own (seen) cards and hand strength.
 			const seenA = {
@@ -375,7 +372,7 @@ test('character decisions are recorded with their trace and replay exactly from 
 		for (const t of finished.records.sealed.botTrace) {
 			assert.equal(t.verified, 'reproduced');
 			assert.ok(['virat-kohli@3', 'ms-dhoni@3'].includes(t.styleId));
-			assert.equal(t.policy, 'tp-character@3');
+			assert.equal(t.policy, 'tp-dna@3');
 			if (t.trace?.factors) {
 				traced++;
 				assert.deepEqual(t.probs, t.trace.probs);

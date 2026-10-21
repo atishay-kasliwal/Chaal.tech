@@ -1,7 +1,7 @@
 /**
- * Character policy tp-character@1 and the five @1 styles must never change once published: this
+ * Character policy tp-dna@1 and the five @1 styles must never change once published: this
  * hashes every decision (action, payload, reason, trace, random draws) of seeded tables of @1
- * character bots. Recorded before tp-character@2 existed; compared in
+ * character bots. Recorded before tp-dna@2 existed; compared in
  * tests/server/bot-legacy-golden.test.mjs.
  *
  *   node tests/helpers/character-v1-golden.mjs   prints the current digest

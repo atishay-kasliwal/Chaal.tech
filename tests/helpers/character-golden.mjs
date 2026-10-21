@@ -1,6 +1,6 @@
 /**
- * Frozen character versions (Phase 3, BOT_BRAIN.md §29): styles @2 (tp-character@2) and @3
- * (tp-character@3, with minds) must decide exactly as when Phase 2 was approved. This hashes every
+ * Frozen character versions (Phase 3, BOT_BRAIN.md §29): styles @2 (tp-dna@2) and @3
+ * (tp-dna@3, with minds) must decide exactly as when Phase 2 was approved. This hashes every
  * decision (action, payload, reason, trace, random draws) and, for mind-keeping styles, every mind
  * after every hand, at seeded tables of all five characters across the variants. Compared in
  * tests/server/bot-legacy-golden.test.mjs.

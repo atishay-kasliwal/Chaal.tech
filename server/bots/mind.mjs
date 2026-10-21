@@ -21,7 +21,7 @@ import { OBSERVATION_VERSION } from './observe.mjs';
  */
 export const MIND_VERSION = 'mind@1';
 /**
- * Appraisal rules by version. mind@1 (tp-character@3) is frozen. mind@2 (tp-character@4, Phase 3):
+ * Appraisal rules by version. mind@1 (tp-dna@3) is frozen. mind@2 (tp-dna@4, Phase 3):
  * - opponent models forget faster for adaptable styles, so they follow a player who changes gear;
  * - being bluffed off a pot makes a suspicious style more suspicious (a calling station's trigger).
  */
@@ -420,7 +420,7 @@ export const confidence = (n) => n / (n + 12);
 const shrunk = (hits, n, prior, k = 6) => (hits + prior * k) / (n + k);
 
 /**
- * Population priors for policy tp-character@3, from simulated play (Phase 2 mixed tables: players
+ * Population priors for policy tp-dna@3, from simulated play (Phase 2 mixed tables: players
  * fold to a raise 10 to 18% of the time, pack about a quarter of their decisions). From live
  * aggregate data later.
  */

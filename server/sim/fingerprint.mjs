@@ -36,7 +36,7 @@ const QUALITY = [
 	'ovBig',
 	'qovN',
 	'qov',
-	// tp-character@3 influence (per decision with a trace): mood / memory moved it, or changed its best move.
+	// tp-dna@3 influence (per decision with a trace): mood / memory moved it, or changed its best move.
 	'infN',
 	'stateOn',
 	'memOn',

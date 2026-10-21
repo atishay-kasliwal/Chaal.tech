@@ -6,7 +6,7 @@ import { MOOD_BASELINE, beliefs, confidence, PRIORS } from './mind.mjs';
 import { DNA_POLICY_V3 } from './dna-policies.mjs';
 
 /**
- * Policy tp-character@3 (BOT_BRAIN.md §28, Phase 2): the tp-character@2 foundation (base brain,
+ * Policy tp-dna@3 (BOT_BRAIN.md §28, Phase 2): the tp-dna@2 foundation (base brain,
  * DNA traits, conditional quirks, the evidence bound, conflict explanations) plus a mind.
  *
  * New named steps, each producing named factors that are bounded exactly like personality:
@@ -37,11 +37,11 @@ const PULL_LINE = 0.05;
 /**
  * Most one source of influence can move any move's utility, before the evidence bound. Many
  * small pushes (a mood, a rivalry, a quirk) cannot add up to overrule the cards: each group is
- * scaled down to its cap if it would exceed it. Personality traits keep their tp-character@2 range.
+ * scaled down to its cap if it would exceed it. Personality traits keep their tp-dna@2 range.
  */
 export const CAPS = Object.freeze({ state: 0.25, social: 0.15, model: 0.4, quirk: 0.25 });
 
-/** Evidence weights: tp-character@2's plus the future cost of continuing with a weak hand. */
+/** Evidence weights: tp-dna@2's plus the future cost of continuing with a weak hand. */
 const EVIDENCE_V3 = { ...EVIDENCE, 'base.future-cost': 1 };
 function evidenceOf(cands, base) {
 	return sumFactors(
@@ -56,7 +56,7 @@ function evidenceOf(cands, base) {
 }
 
 /**
- * Base utilities for this policy: tp-character@2's, plus the future cost of continuing a seen hand
+ * Base utilities for this policy: tp-dna@2's, plus the future cost of continuing a seen hand
  * well below a fair share. A chaal only buys the next round: a hand that rarely wins will pay
  * again and again, which pot odds on this one bet do not see. Borderline hands (near a fair share)
  * are untouched, so how loosely to play them stays a matter of personality. And a monster is
@@ -93,7 +93,7 @@ export const TRAITS = {
 	blindPreference: (sit, x) => (sit.seen ? null : { see: -1.4 * x, chaal: 0.15 * x }),
 	patience: (sit, x, s) =>
 		sit.seen ? { chaal: -0.5 * x * (1 - s.multi), raise: -0.3 * x * (1 - s.multi) } : null,
-	// Wider than tp-character@2: the bound now protects very weak hands, so curiosity can speak up
+	// Wider than tp-dna@2: the bound now protects very weak hands, so curiosity can speak up
 	// in the borderline spots where it belongs.
 	curiosity: (sit, x) => (sit.seen ? { chaal: 0.6 * x, show: 0.25 * x } : null),
 	showPreference: (sit, x) => ({ show: 0.6 * x }),
@@ -637,7 +637,7 @@ const nodes = [
 
 /**
  * A character policy from this graph and a set of rules: which traits and moods exist, how
- * pressure is counted, and how a mood may amplify the personality. tp-character@3 is these nodes
+ * pressure is counted, and how a mood may amplify the personality. tp-dna@3 is these nodes
  * with V3_RULES and stays exactly as published (golden digest); a later policy supplies its own
  * rules (server/bots/character-v4.mjs) without copying the graph.
  */
@@ -652,7 +652,7 @@ export function characterPolicy(id, rules) {
 	return { graph, decide };
 }
 
-/** Pressure in tp-character@3: seen players still in who have bet after looking this hand. */
+/** Pressure in tp-dna@3: seen players still in who have bet after looking this hand. */
 export const countPressure = (c, hand, alive) =>
 	hand.seenBettors.filter((id) => id !== c.botId && alive.has(id)).length;
 
