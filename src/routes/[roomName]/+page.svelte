@@ -17,6 +17,8 @@
 	import RoomMedia from '#lib/components/RoomMedia.svelte';
 	import { hasChips } from '#lib/teen-patti/format.js';
 	import TeenPattiTable from '#lib/teen-patti/TeenPattiTable.svelte';
+	import ThreeTwoFiveTable from '#lib/tricks/ThreeTwoFiveTable.svelte';
+	import type { TrickRoom } from '#lib/tricks/types.js';
 	import { clearPendingJoinName, takeInviteFriends } from '#lib/start/player-name.js';
 	import ClubGate from '#lib/club/ClubGate.svelte';
 	import { club } from '#lib/club/club.svelte.js';
@@ -242,7 +244,9 @@
 		const params = new URLSearchParams(window.location.search);
 		const value = params.get('bots') ?? '';
 		// Numeric links from the previous UI still seat characters, never relabel legacy history.
-		const ids = /^\d+$/.test(value) ? Array(Math.min(5, Number(value))).fill('') as string[] : [...new Set(value.split(',').filter(Boolean))].slice(0, 5);
+		const ids = /^\d+$/.test(value)
+			? (Array(Math.min(5, Number(value))).fill('') as string[])
+			: [...new Set(value.split(',').filter(Boolean))].slice(0, 5);
 		const wanted = ids.length;
 		if (!wanted) return;
 		practiceDone = true;
@@ -374,6 +378,16 @@
 				</div>
 			{/snippet}
 		</TeenPattiTable>
+	{:else if roomData?.gameType === 'three-two-five'}
+		<ThreeTwoFiveTable
+			room={roomData as unknown as TrickRoom}
+			selfId={socket.playerId}
+			connected={socket.connected}
+			seated={usernameCreated}
+			send={sendAction}
+			onLeave={leaveRoomHandler}
+			onInvite={copyInviteLink}
+		/>
 	{:else}
 		<div
 			class="room-header bg-base-100/95 border-primary/20 rounded-b-box sticky top-0 z-50 flex flex-col items-center justify-between gap-4 border-b px-4 py-3 shadow-md backdrop-blur-md md:flex-row md:gap-0"

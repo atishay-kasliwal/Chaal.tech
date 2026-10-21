@@ -77,12 +77,12 @@
 	const LIMITS = [0, 64, 128, 256, 512];
 	// Every Teen Patti room opens with Classic. Variant choice belongs between hands.
 	let rulesVersion: RulesVersion = 'classic-1';
-	let gameType = $state<'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy'>('teen-patti');
+	let gameType = $state<'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy' | 'three-two-five'>('teen-patti');
 	const minimumBuyIn = $derived(gameType === 'teen-patti' ? 1000 : 50);
 	const summary = $derived(
 		gameType === 'teen-patti'
 			? `₹${table.toLocaleString('en-IN')} chips · boot ₹${boot} · ${potLimit ? `limit ₹${(potLimit * boot).toLocaleString('en-IN')}` : 'no limit'}`
-			: { 'texas-holdem': 'Texas Hold’em', blackjack: 'Blackjack', rummy: 'Indian Rummy' }[gameType]
+			: { 'texas-holdem': 'Texas Hold’em', blackjack: 'Blackjack', rummy: 'Indian Rummy', 'three-two-five': '3 2 5' }[gameType]
 	);
 
 	onMount(() => {
@@ -91,7 +91,7 @@
 		if (code) joinCode = code;
 		// From the Games page: open with that game chosen (Teen Patti variants start on Classic).
 		const game = query.get('game');
-		if (game === 'texas-holdem' || game === 'blackjack' || game === 'rummy') gameType = game;
+		if (game === 'texas-holdem' || game === 'blackjack' || game === 'rummy' || game === 'three-two-five') gameType = game;
 		// Connect early so tapping Start is instant. The room page owns the socket afterwards.
 		socket.connect();
 	});
@@ -368,6 +368,7 @@
 						<option value="texas-holdem">Texas Hold’em Poker</option>
 						<option value="blackjack">Blackjack</option>
 						<option value="rummy">13-card Indian Rummy</option>
+						<option value="three-two-five">3 2 5 (three players)</option>
 					</select>
 				</label>
 				<p class="hint">
@@ -377,7 +378,9 @@
 							? 'Dealer stands on soft 17. Natural blackjack pays 3:2.'
 							: gameType === 'rummy'
 								? '13-card Points Rummy: two sequences, one of them pure.'
-								: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
+								: gameType === 'three-two-five'
+									? 'Three players, tricks to make: 5, 3 and 2. Chaal characters fill empty seats.'
+									: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
 				</p>
 				<label class="row">
 					<span>Starting chips per player</span>
