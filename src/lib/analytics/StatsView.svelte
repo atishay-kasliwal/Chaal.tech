@@ -32,7 +32,7 @@
 	] as const;
 	type Section = (typeof SECTIONS)[number][0];
 	/** Sections redrawn as one-screen visuals; the rest still scroll inside the stage. */
-	const FITTED: string[] = ['overview', 'skill'];
+	const FITTED: string[] = ['overview', 'skill', 'games', 'cards'];
 	const WINDOWS = [
 		['all', 'All time', 'All'],
 		['30d', 'Last 30 days', '30d'],
@@ -476,6 +476,133 @@
 		.seg button,
 		.rail button {
 			transition: none;
+		}
+	}
+	/* Visual tiles shared by the one-screen sections. */
+	.stats-view :global(.vt) {
+		min-height: 0;
+		min-width: 0;
+		overflow: hidden;
+		position: relative;
+		border-radius: 18px;
+		background: #2c263b;
+		border: 1px solid #ffffff1a;
+		padding: 14px 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.stats-view :global(.vt h2) {
+		font-family: var(--font-display);
+		font-size: 14px;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		display: flex;
+		align-items: center;
+		gap: 7px;
+	}
+	.stats-view :global(.vt h2 > .ic) {
+		color: var(--butter);
+	}
+	.stats-view :global(.v-pos) {
+		color: #a9cfb5;
+	}
+	.stats-view :global(.v-neg) {
+		color: #f39788;
+	}
+	.stats-view :global(.v-dim),
+	.stats-view :global(.v-dim :is(strong, b, span)) {
+		color: var(--muted) !important;
+	}
+	.stats-view :global(.v-big) {
+		font-family: var(--font-display);
+		font-weight: 800;
+		letter-spacing: -0.04em;
+		line-height: 1;
+	}
+	.stats-view :global(.v-zero) {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		color: var(--muted);
+		height: 100%;
+	}
+	.stats-view :global(.v-zero > :first-child) {
+		font-size: 30px;
+		color: var(--butter);
+	}
+	.stats-view :global(.v-meter) {
+		position: relative;
+		height: 10px;
+		border-radius: 5px;
+		background: #ffffff10;
+	}
+	.stats-view :global(.v-meter > .z) {
+		position: absolute;
+		left: 50%;
+		top: -3px;
+		bottom: -3px;
+		width: 2px;
+		background: #ffffff55;
+	}
+	.stats-view :global(.v-meter > .band) {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		border-radius: 5px;
+		background: #f2dc9147;
+	}
+	.stats-view :global(.v-meter > .dot) {
+		position: absolute;
+		top: 50%;
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		translate: -50% -50%;
+		background: #a9cfb5;
+		box-shadow: 0 0 0 3px #2c263b;
+	}
+	.stats-view :global(.v-meter > .dot.neg) {
+		background: #ee715b;
+	}
+	.stats-view :global(.v-chip) {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 4px 10px;
+		border-radius: 100px;
+		background: #ffffff0f;
+		font-size: 12px;
+		font-weight: 700;
+	}
+	.stats-view :global(.v-red) {
+		color: #f39788;
+	}
+	.stats-view :global(.v-press) {
+		cursor: pointer;
+		transition:
+			background 0.2s,
+			translate 0.2s;
+	}
+	.stats-view :global(.v-press:hover),
+	.stats-view :global(.v-press:focus-visible) {
+		background: #f2dc911f;
+		translate: 0 -2px;
+	}
+	@media (max-width: 720px) {
+		.stats-view :global(.vt) {
+			padding: 10px 12px;
+			border-radius: 14px;
+			gap: 6px;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.stats-view :global(.v-press) {
+			transition: none;
+			translate: none;
 		}
 	}
 	/* Shared by every section. */
