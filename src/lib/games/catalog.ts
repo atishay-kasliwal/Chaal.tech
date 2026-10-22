@@ -171,12 +171,23 @@ export const GAME_CATEGORIES = [
 	'Tricks'
 ] as const;
 
-const POSTER_COLORS = ['#293b21', '#34283f', '#4b3023', '#203b48', '#452a33', '#203e33'];
+/** Poster colours by family, so a family reads at a glance; Teen Patti variants cycle their own set. */
+const FAMILY_COLORS: Record<string, string> = {
+	'texas-holdem': '#463a78',
+	blackjack: '#24604f',
+	rummy: '#7a3a33',
+	'three-two-five': '#255677',
+	'ten-pakad': '#64355a',
+	'twenty-nine': '#6a5527'
+};
+const PATTI_COLORS = ['#2c5c3d', '#33507e', '#6b3549', '#5e4a24', '#255e62', '#4b3a70'];
 export function gameColor(id: string) {
-	return POSTER_COLORS[
+	if (FAMILY_COLORS[id]) return FAMILY_COLORS[id];
+	const patti = GAME_GUIDES.filter((game) => game.category === 'Teen Patti');
+	return PATTI_COLORS[
 		Math.max(
 			0,
-			GAME_GUIDES.findIndex((game) => game.id === id)
-		) % POSTER_COLORS.length
+			patti.findIndex((game) => game.id === id)
+		) % PATTI_COLORS.length
 	];
 }

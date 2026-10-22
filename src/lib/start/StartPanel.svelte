@@ -129,6 +129,15 @@
 		return !name;
 	}
 
+	/** Trick games need a full table: how many characters join one person. */
+	const BOT_SEATS: Record<string, number> = {
+		'three-two-five': 2,
+		'ten-pakad': 3,
+		'twenty-nine': 3
+	};
+	const botGame = $derived(gameType === 'teen-patti' || gameType in BOT_SEATS);
+	const trickBots = $derived(BOT_SEATS[gameType] ?? 0);
+
 	async function create(withBots: boolean, forInvite = false) {
 		if (busy || needName()) return;
 		if (!Number.isSafeInteger(table) || table < minimumBuyIn) {
@@ -166,7 +175,9 @@
 			return;
 		}
 		onclose?.();
-		const practice = withBots && gameType === 'teen-patti' ? `?bots=${pickedBots.join(',')}` : '';
+		// Trick games: the picked characters (at most the free seats), the rest filled at the table.
+		const picks = trickBots ? pickedBots.slice(0, trickBots) : pickedBots;
+		const practice = withBots && botGame ? `?bots=${picks.join(',') || 'auto'}` : '';
 		await goto(`/${result.roomName}${practice}`);
 	}
 
@@ -326,12 +337,12 @@
 					<ArrowRight size={18} class="invite-arrow" />
 				</button>
 			{/if}
-			{#if gameType === 'teen-patti'}
+			{#if botGame}
 				<button
 					class="big"
 					data-testid="play-bots"
 					onclick={() => create(true)}
-					disabled={!socket.connected || !!busy || !pickedBots.length}
+					disabled={!socket.connected || !!busy || (!trickBots && !pickedBots.length)}
 				>
 					<span class="emoji" aria-hidden="true">🤖</span>
 					<span>
@@ -342,7 +353,9 @@
 										.filter((bot) => pickedBots.includes(bot.botId))
 										.map((bot) => bot.name)
 										.join(', ')
-								: 'Pick your company'}</small
+								: trickBots
+									? `Chaal characters fill ${trickBots} seats`
+									: 'Pick your company'}</small
 						>
 					</span>
 				</button>

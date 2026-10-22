@@ -217,7 +217,7 @@ test('think time never reads cards: the room context has none, the delay takes n
 	assert.equal(feel.botId, 'virat-kohli');
 	for (const r of [0, 0.5, 0.999]) {
 		const ms = botDelay(() => r, false, feel);
-		assert.ok(ms >= 1000 && ms <= 7000);
+		assert.ok(ms >= 1000 && ms <= 6300);
 	}
 	assert.equal(botDelay.length, 1);
 });

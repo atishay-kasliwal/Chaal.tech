@@ -17,6 +17,7 @@
 	import RoomMedia from '#lib/components/RoomMedia.svelte';
 	import { hasChips } from '#lib/teen-patti/format.js';
 	import TeenPattiTable from '#lib/teen-patti/TeenPattiTable.svelte';
+	import { CAST } from '#lib/bots/cast.js';
 	import ThreeTwoFiveTable from '#lib/tricks/ThreeTwoFiveTable.svelte';
 	import TenPakadTable from '#lib/tricks/TenPakadTable.svelte';
 	import TwentyNineTable from '#lib/tricks/TwentyNineTable.svelte';
@@ -242,19 +243,34 @@
 	$effect(() => {
 		const room = roomData;
 		if (practiceDone || !room || !usernameCreated || room.isStarted) return;
-		if ((room.gameType ?? 'teen-patti') !== 'teen-patti' || room.hostId !== socket.playerId) return;
+		const game = room.gameType ?? 'teen-patti';
+		// Trick games need a full table: one person and this many characters.
+		const trickSeats = (
+			{ 'three-two-five': 2, 'ten-pakad': 3, 'twenty-nine': 3 } as Record<string, number>
+		)[game];
+		if ((game !== 'teen-patti' && !trickSeats) || room.hostId !== socket.playerId) return;
 		const params = new URLSearchParams(window.location.search);
+		if (!params.has('bots')) return;
 		const value = params.get('bots') ?? '';
 		// Numeric links from the previous UI still seat characters, never relabel legacy history.
-		const ids = /^\d+$/.test(value)
+		let ids = /^\d+$/.test(value)
 			? (Array(Math.min(5, Number(value))).fill('') as string[])
-			: [...new Set(value.split(',').filter(Boolean))].slice(0, 5);
+			: [...new Set(value.split(',').filter((id) => id && id !== 'auto'))].slice(0, 5);
+		if (trickSeats) {
+			// The picked characters first, then others until the table is full.
+			const picked = ids.filter((id) => CAST.some((c) => c.id === id)).slice(0, trickSeats);
+			ids = [...picked, ...CAST.map((c) => c.id).filter((id) => !picked.includes(id))].slice(
+				0,
+				trickSeats
+			);
+		}
 		const wanted = ids.length;
 		if (!wanted) return;
 		practiceDone = true;
 		replaceState(window.location.pathname, page.state);
 		void (async () => {
-			for (let i = room.usersList.filter((u) => u.bot).length; i < wanted; i++) {
+			const seated = room.usersList.filter((u) => u.bot || (u as { isBot?: boolean }).isBot).length;
+			for (let i = seated; i < wanted; i++) {
 				const revision = socket.roomData?.revision;
 				if (!(await sendAction('addBot', [ids[i]]))) return;
 				// Wait for the new seat to arrive before the next command (revision-checked).

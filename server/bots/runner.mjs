@@ -62,8 +62,13 @@ export function botDelay(random, quick = false, feel = {}) {
 	const weight = 1 + (feel.facingRaise ? 0.3 : 0) + (feel.bigPot ? 0.25 : 0);
 	// Now and then a long think, the way a person sometimes stalls on a hard one.
 	const stall = !quick && random() < 0.08 ? 1500 + Math.floor(random() * 2000) : 0;
-	return Math.min(7000, Math.round(base * tempo * weight + stall));
+	return Math.min(MAX_THINK_MS, Math.round(PACE * (base * tempo * weight + stall)));
 }
+
+/** Overall table pace (0.9: every pause 10% shorter than the original timing, 2026-10-22). */
+export const PACE = 0.9;
+/** The longest any bot ever thinks. */
+export const MAX_THINK_MS = 6300;
 
 /** How quickly each character plays: Virat is decisive, Dhoni takes his time, Samay is quick but erratic. */
 export const TEMPO = Object.freeze({
