@@ -9,13 +9,13 @@ character evaluation → Phase 5 (long-term memory).
 
 ## Production
 
-| Part                | State                                                                         | How verified                                                      |
-| ------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| main                | `304b78ea` (PRs #23, #25, #26 merged 2026-10-22), plus this status page (#24) | GitHub                                                            |
-| Worker (chaal-game) | `ENGINE_BUILD 304b78eaf992` (deployed 2026-10-22)                             | `/health`                                                         |
-| Pages (chaal.tech)  | build `1792675886163`, from `304b78ea` (deployed 2026-10-22)                  | page source; `/`, `/club`, `/stats`, `/bots`, `/games` return 200 |
-| Sign-in             | Google client configured in the build                                         | sign-in page source                                               |
-| 3 2 5               | live: create-room option and `/games` guide                                   | production page source; `/test-325` returns the 404 page          |
+| Part                | State                                                                                                                           | How verified                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| main                | deployed from `304b78ea` (PRs #23, #25, #26); later merges change nothing deployed: #27 (validation script) and #24 (this page) | GitHub                                                            |
+| Worker (chaal-game) | `ENGINE_BUILD 304b78eaf992` (deployed 2026-10-22)                                                                               | `/health`                                                         |
+| Pages (chaal.tech)  | build `1792675886163`, from `304b78ea` (deployed 2026-10-22)                                                                    | page source; `/`, `/club`, `/stats`, `/bots`, `/games` return 200 |
+| Sign-in             | Google client configured in the build                                                                                           | sign-in page source                                               |
+| 3 2 5               | live: create-room option and `/games` guide                                                                                     | production page source; `/test-325` returns the 404 page          |
 
 Deploys are manual from the owner's Mac: Worker (`npm run deploy:backend`, which stamps and checks
 `ENGINE_BUILD`), then Pages. Deploy only `origin/main`.
