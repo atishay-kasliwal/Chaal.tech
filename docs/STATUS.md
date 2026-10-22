@@ -90,12 +90,12 @@ same eight gates. Name clash: [ANALYTICS_PHASE5.md](ANALYTICS_PHASE5.md) is the 
 
 ## Games
 
-| Game                                                | State                                                                                                                |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Teen Patti (26 variants), Hold'em, Blackjack, Rummy | live; rule errors reach players as messages and a dropped player shows Away at once (PR #23)                         |
-| 3 2 5                                               | **Phase 2 approved and live**; rules locked in [games/325_RULE_LOCK.md](games/325_RULE_LOCK.md) (canonical)          |
-| 10 Pakad                                            | **planned, not implemented**: [games/10PAKAD_PLAN.md](games/10PAKAD_PLAN.md); six rule decisions for the owner (§15) |
-| 29                                                  | not started; after 10 Pakad is implemented and reviewed                                                              |
+| Game                                                | State                                                                                                                         |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Teen Patti (26 variants), Hold'em, Blackjack, Rummy | live; rule errors reach players as messages and a dropped player shows Away at once (PR #23)                                  |
+| 3 2 5                                               | **Phase 2 approved and live**; rules locked in [games/325_RULE_LOCK.md](games/325_RULE_LOCK.md) (canonical)                   |
+| 10 Pakad                                            | **planned, not implemented**: [games/10PAKAD_PLAN.md](games/10PAKAD_PLAN.md); ruleset locked 2026-10-22 (trump by first void) |
+| 29                                                  | not started; after 10 Pakad is implemented and reviewed                                                                       |
 
 3 2 5 known limits, for the cross-game character evaluation (not blockers): faint Rohit and Dhoni
 identities and weak adaptation.
