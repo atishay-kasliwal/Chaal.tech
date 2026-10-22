@@ -63,9 +63,24 @@
 	const seed = $derived([...name].reduce((sum, char) => sum + char.charCodeAt(0), 0));
 	const face = $derived(faces[seed % faces.length]);
 	const palette = $derived(palettes[seed % palettes.length]);
+	const backgrounds: Record<string, string> = {
+		'bot-samay-raina': '/mascots/bot-samay-raina/backgrounds/stage.webp',
+		'bot-ms-dhoni': '/mascots/bot-ms-dhoni/backgrounds/farm.webp',
+		'bot-virat-kohli': '/mascots/bot-virat-kohli/backgrounds/stadium.webp',
+		'bot-rohit-sharma': '/mascots/bot-rohit-sharma/backgrounds/trophies.webp',
+		'bot-gg': '/mascots/bot-gg/backgrounds/press.webp'
+	};
+	const background = $derived(mascotId ? backgrounds[mascotId] : undefined);
 </script>
 
-<div class="bot-avatar" style:--from={palette[0]} style:--to={palette[1]} data-testid="bot-avatar">
+<div
+	class="bot-avatar"
+	class:themed={!!background}
+	style:--bot-background={background ? `url('${background}')` : undefined}
+	style:--from={palette[0]}
+	style:--to={palette[1]}
+	data-testid="bot-avatar"
+>
 	{#if enabled && Animated}<div class="presence" style:--presence-size="{size}px">
 			<Animated
 				seatId={publicSeatId}
@@ -107,6 +122,10 @@
 		background:
 			radial-gradient(circle at 50% 38%, rgb(255 255 255 / 18%), transparent 55%),
 			linear-gradient(150deg, var(--from), var(--to));
+	}
+	.themed {
+		/* Every seat stays 4:3; fit the complete desk artwork at every player count. */
+		background: #17202b var(--bot-background) center / 100% 100% no-repeat;
 	}
 	.face {
 		font-size: clamp(1.8rem, calc(var(--seat-w, 12rem) * 0.28), 5rem);
