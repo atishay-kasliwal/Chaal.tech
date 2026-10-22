@@ -58,7 +58,7 @@ for (const [game, seats] of [
 		);
 		await page.getByRole('button', { name: 'I’m ready' }).click();
 		await page.getByRole('button', { name: 'Deal' }).click();
-		await page.locator('.hand .card').first().waitFor({ timeout: 20000 });
+		await page.locator('.hand .hand-card').first().waitFor({ timeout: 20000 });
 		assert.deepEqual(errors, []);
 		await page.screenshot({
 			path: `${process.env.CHAAL_BROWSER_OUTPUT || '/tmp'}/trick-ui-${game}.png`
