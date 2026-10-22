@@ -1,40 +1,52 @@
 # Chaal: current status
 
-The one place for "where is everything". Last verified **2026-10-21**. Phase reports elsewhere in
-`docs/` are historical records and are not rewritten; when they disagree with this page, this page is
+The canonical current-state summary. Last verified **2026-10-22**. Phase reports elsewhere in `docs/`
+are historical evidence and are not rewritten; when they disagree with this page, this page is
 current.
+
+Roadmap: **3 2 5** (done) → **10 Pakad** (planned, awaiting rule decisions) → 29 → cross-game
+character evaluation → Phase 5 (long-term memory).
 
 ## Production
 
-| Part                | State                                                                                                                                    | How verified                                                                                 |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Pages (chaal.tech)  | build `1792632850685`, from `origin/main` `9262e929` (PR #22)                                                                            | page source; `/`, `/club`, `/stats`, `/bots`, `/games` return 200; Google sign-in configured |
-| Worker (chaal-game) | `ENGINE_BUILD a090679aa7eb`                                                                                                              | `/health`                                                                                    |
-| Worker vs main      | nothing to deploy: `a090679a..9262e929` changes no `server/`, `shared/`, `wrangler` or package files (PRs #19 to #22 were frontend only) | `git diff --stat`                                                                            |
+| Part                | State                                                                         | How verified                                                      |
+| ------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| main                | `304b78ea` (PRs #23, #25, #26 merged 2026-10-22), plus this status page (#24) | GitHub                                                            |
+| Worker (chaal-game) | `ENGINE_BUILD 304b78eaf992` (deployed 2026-10-22)                             | `/health`                                                         |
+| Pages (chaal.tech)  | build `1792675886163`, from `304b78ea` (deployed 2026-10-22)                  | page source; `/`, `/club`, `/stats`, `/bots`, `/games` return 200 |
+| Sign-in             | Google client configured in the build                                         | sign-in page source                                               |
+| 3 2 5               | live: create-room option and `/games` guide                                   | production page source; `/test-325` returns the 404 page          |
 
 Deploys are manual from the owner's Mac: Worker (`npm run deploy:backend`, which stamps and checks
-`ENGINE_BUILD`), then Pages. Deploy only `origin/main`. No redeploy is needed today.
+`ENGINE_BUILD`), then Pages. Deploy only `origin/main`.
 
 ## Canonical bots (Teen Patti)
 
-Source: [bots/CANONICAL.md](bots/CANONICAL.md), frozen in [bots/phase4/champions.json](bots/phase4/champions.json) (on the `phase4` branch).
+Source of truth: [bots/CANONICAL.md](bots/CANONICAL.md) (`CANONICAL_STYLES` in
+`server/bots/dna-styles.mjs`). The pre-4.1 lineup is frozen as `PHASE4_CHAMPIONS`
+([bots/phase4/champions.json](bots/phase4/champions.json)) for reproducing Phases 3.1 to 4.1.
 
-| Character | Reference        | Policy                | Reference hash     |
-| --------- | ---------------- | --------------------- | ------------------ |
-| Rohit     | `rohit-sharma@3` | `tp-dna@3` / `mind@1` | `f2015fc5daf490a9` |
-| Virat     | `virat-kohli@3`  | `tp-dna@3` / `mind@1` | `ecd01fe38fca321d` |
-| GG        | `gg@4`           | `tp-dna@4` / `mind@2` | `862f1cd78b2c4597` |
-| Samay     | `samay-raina@3`  | `tp-dna@3` / `mind@1` | `7d7e81874eb7ddf7` |
-| Dhoni     | `ms-dhoni@3`     | `tp-dna@3` / `mind@1` | `2db238f3b5d01784` |
+| Character | Reference        | Policy                | Reference hash     | Directory hash     | Source                  |
+| --------- | ---------------- | --------------------- | ------------------ | ------------------ | ----------------------- |
+| Rohit     | `rohit-sharma@3` | `tp-dna@3` / `mind@1` | `f2015fc5daf490a9` | `13657c11ca64694c` | Phase 2                 |
+| Virat     | `virat-kohli@3`  | `tp-dna@3` / `mind@1` | `ecd01fe38fca321d` | `35d9023fb9525120` | Phase 2                 |
+| GG        | `gg@4`           | `tp-dna@4` / `mind@2` | `862f1cd78b2c4597` | `1c634dd3cf3e50f9` | Phase 3 c034            |
+| Samay     | `samay-raina@3`  | `tp-dna@3` / `mind@1` | `7d7e81874eb7ddf7` | `43686ccfe4328696` | Phase 2                 |
+| Dhoni     | `ms-dhoni@4`     | `tp-dna@8` / `mind@1` | `04254a1a0abbb72a` | `98d41082047cd70a` | Phase 4.1 C1 (approved) |
 
-**Publication to the production database: unverified.** The read-only plan
-(`npm run bots:publish-dna`, which prints what would be published) could not reach Atlas from the
-build machine (connection reset: the Atlas network access list). To check, from an allowed machine:
+**Publication to the production database: not done; needs the owner.** The code (and the deployed
+Worker) knows this lineup, but tables seat what the bot directory has published. The read-only plan
+could not reach Atlas from the build machine (connection reset: Atlas Network Access), and no admin
+connection string is stored. From a machine Atlas allows:
 
 ```sh
-MONGODB_ADMIN_URI='<admin connection string>' npm run bots:publish-dna                              # plan only
-MONGODB_ADMIN_URI='<admin connection string>' npm run bots:publish-dna -- --publish --descriptions  # only with approval
+MONGODB_ADMIN_URI='<admin connection string>' npm run bots:publish-dna                              # plan: check every hash against the table above
+MONGODB_ADMIN_URI='<admin connection string>' npm run bots:publish-dna -- --publish --descriptions  # then publish
 ```
+
+The script publishes each bot's next immutable directory version, refuses unless the drafted hash and
+genes equal the reference exactly, skips bots already on their reference, and never edits an earlier
+version.
 
 **Known, intentional weaknesses (kept; they are the characters):**
 
@@ -44,55 +56,54 @@ MONGODB_ADMIN_URI='<admin connection string>' npm run bots:publish-dna -- --publ
 - **Samay**, the caller: calls too often and rarely takes the initiative; a patient value player
   profits.
 - **Virat**, temporary tilt: after a painful loss he plays looser for a few hands.
-- **Dhoni** (the shared base brain, all tp-dna@3 characters): blind play does not price a stake that
-  other blind players keep raising. Phase 4.1 has a candidate fix awaiting approval (below).
+
+Dhoni's repeated-blind-raise flaw is fixed by C1. Rohit, Virat and Samay still share the base brain's
+blind pricing; Rohit's blind pride is meant to keep him blind. Offering the factor to others is a
+separate decision.
 
 **Samay finding (design, not a bug):** Phase 4 could not make Samay take the initiative without
-breaking his identity: the quirk form is capped (about -0.012 in fold rate), the read form costs
-regression bands and bad actions. His passivity needs memory across nights (what this table punishes),
-which is Phase 5, not a tuning change.
+breaking his identity. His passivity needs memory across nights, which is Phase 5, not a tuning change.
 
 ## Bot phases
 
-| Phase                             | State                                                                                                                                                                                          | Where                                          |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| 1, 1.1, 2, 3                      | done, on main                                                                                                                                                                                  | [bots/](bots/) reports                         |
-| 3.1                               | done; baseline `a090679a`                                                                                                                                                                      | branch `phase3.1` (report and results)         |
-| 4 (exploit search, league, gates) | **closed**: every champion kept                                                                                                                                                                | branch `phase4`, `docs/bots/PHASE4_REPORT.md`  |
-| 4.1 (Dhoni blind raises)          | **candidate awaiting approval**: `ms-dhoni@8-blindraises` passes all 8 gates (exploit +1,227 ± 33 boots/100, strength -1 ± 140, no counter-exploit regression); `ms-dhoni@9` fails personality | branch `phase4`, `docs/bots/PHASE41_REPORT.md` |
-| 5 (long-term memory)              | **direction only, not started**                                                                                                                                                                | below                                          |
+| Phase        | State                                                                                                              | Where                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| 1, 1.1, 2, 3 | done                                                                                                               | [bots/](bots/) reports                                                |
+| 3.1          | done; nothing adopted                                                                                              | [bots/PHASE31_REPORT.md](bots/PHASE31_REPORT.md)                      |
+| 4            | **closed**: every champion kept                                                                                    | [bots/PHASE4_REPORT.md](bots/PHASE4_REPORT.md)                        |
+| 4.1          | **closed**: C1 `ms-dhoni@8-blindraises` adopted as `ms-dhoni@4`, checked identical to the measured C1; C2 rejected | [bots/PHASE41_REPORT.md](bots/PHASE41_REPORT.md), `phase41-canonical` |
+| 5            | **not started** (direction below)                                                                                  |                                                                       |
 
-`phase4` is not merged. Adopting C1 would mean: merge `phase4`, add `ms-dhoni@4` as canonical with its
-hash, update `CANONICAL.md` and the digest lock, deploy the Worker, then publish. Until then
-`ms-dhoni@3` is canonical.
+### Phase 5 direction: long-term cross-session memory (not started)
 
-### Phase 5 direction (not started)
+Deliberately after 10 Pakad and 29, so the memory architecture is not Teen-Patti-specific.
 
-Per-character memory across nights, built only from what that character could observe at the table
-(its own projections), stored per club, decaying with time. It is where Samay learns which tables
-punish passivity and where reads of regulars persist. It must not change identities, must stay
-interpretable (counts with confidence, no neural or RL policy), and is gated by the same eight gates.
-Note the name clash: [ANALYTICS_PHASE5.md](ANALYTICS_PHASE5.md) is the analytics "intelligence layer"
-(already on main), not this.
+publicly observable information only → bounded summary → confidence → decay → returning-player prior
+→ new evidence overrides stale memory.
+
+No live retraining, no hidden cards, no automatic DNA changes, no neural or RL system. Gated by the
+same eight gates. Name clash: [ANALYTICS_PHASE5.md](ANALYTICS_PHASE5.md) is the analytics
+"intelligence layer", not this.
 
 ## Games
 
-| Game                                                | State                                                                                                                                                                | Waiting on                                                                                                                                                                     |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Teen Patti (26 variants), Hold'em, Blackjack, Rummy | live                                                                                                                                                                 |                                                                                                                                                                                |
-| Rummy "Game service unavailable"                    | **fixed in PR #23** (open, not merged): rule errors in Rummy, Blackjack and Hold'em are `GameError`s, so players see the reason; a dropped player shows Away at once | review and merge; then Worker deploy only                                                                                                                                      |
-| 3 2 5                                               | Phase 2 built on branch `phase2-325` (engine, bots, UI, Worker test); not merged, not deployed                                                                       | rule 2 of [games/325_RULE_LOCK.md](https://github.com/atishay-kasliwal/teenpatti/blob/phase2-325/docs/games/325_RULE_LOCK.md) (return-card restriction), then Phase 2 approval |
-| 10 Pakad                                            | not started                                                                                                                                                          | 3 2 5 approval; then one pinned written ruleset (decision R4 in `TRICK_GAMES_PHASE1.md`: trump selection, 2-2 tens tie-break, early stop, Kot scoring)                         |
-| 29                                                  | not started                                                                                                                                                          | 10 Pakad review                                                                                                                                                                |
+| Game                                                | State                                                                                                                |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Teen Patti (26 variants), Hold'em, Blackjack, Rummy | live; rule errors reach players as messages and a dropped player shows Away at once (PR #23)                         |
+| 3 2 5                                               | **Phase 2 approved and live**; rules locked in [games/325_RULE_LOCK.md](games/325_RULE_LOCK.md) (canonical)          |
+| 10 Pakad                                            | **planned, not implemented**: [games/10PAKAD_PLAN.md](games/10PAKAD_PLAN.md); six rule decisions for the owner (§15) |
+| 29                                                  | not started; after 10 Pakad is implemented and reviewed                                                              |
+
+3 2 5 known limits, for the cross-game character evaluation (not blockers): faint Rohit and Dhoni
+identities and weak adaptation.
 
 ## Analytics
 
-All analytics code (recorder, compute, `/stats`, intelligence, bot memory) is on main. **Production
-recording is not active yet:** the Atlas schema migration has not run, so the Worker refuses recorder
-writes (`SchemaNotReady`) and rows wait in each room's outbox.
+**ANALYTICS PENDING: REQUIRES ATLAS / VALIDATION NIGHT.** All analytics code is on main, but
+production recording is not active: the Atlas schema migration has not run, so the Worker refuses
+recorder writes (`SchemaNotReady`) and rows wait in each room's outbox. It does not block the games.
 
-**Not complete.** The procedure, with every check, is in
-[ANALYTICS_OPERATIONS.md: First production validation](ANALYTICS_OPERATIONS.md#first-production-validation). In short:
+Procedure: [ANALYTICS_OPERATIONS.md: First production validation](ANALYTICS_OPERATIONS.md#first-production-validation).
 
 1. Allow the owner's machine in Atlas Network Access; create `chaal-admin` (dbAdmin + readWrite on
    `chaal`) and, separately, `chaal-runtime` for the Worker (custom role in that doc).
@@ -101,38 +112,42 @@ writes (`SchemaNotReady`) and rows wait in each room's outbox.
 3. Play a validation night (4+ people, 20+ hands, the scenario list in the doc).
 4. `npm run analytics:validate -- --since <night start ISO time>`: every check PASS.
 
-**Rollback:** the migration only creates collections, validators, indexes and published styles and is
-idempotent; it deletes nothing. If recording misbehaves, rotate the Worker's `MONGODB_URI` to a user
-without access to the analytics collections: the recorder then fails closed and rooms keep playing,
-with rows held in their outboxes. Dropping the new collections (`hand_records`, `hand_private`,
-`hand_sealed`, `night_events`, `recorder_failures`, `recorder_status`, `analytics_meta`) returns the
-database to its pre-migration state; existing club data is in other collections. **Never drop `bots` or
-`bot_styles`:** the migration only adds missing entries there, and the bot directory depends on them.
+**Rollback:** the migration only creates collections, validators, indexes and published styles, is
+idempotent and deletes nothing. If recording misbehaves, rotate the Worker's `MONGODB_URI` to a user
+without access to the analytics collections: the recorder fails closed and rooms keep playing.
+Dropping `hand_records`, `hand_private`, `hand_sealed`, `night_events`, `recorder_failures`,
+`recorder_status` and `analytics_meta` returns the database to its pre-migration state. **Never drop
+`bots` or `bot_styles`:** the bot directory depends on them.
 
-## Art: Blender (external dependency)
+## Art: Blender
 
-The pipeline works (`scripts/blender/directions_atlas.py`, branch `blender-pilot`,
-`docs/mascots/BLENDER_PIPELINE.md`), but its stand-in bust is not usable art. It needs a base model, one
-of:
+**BLENDER PIPELINE READY: PRODUCTION ART ASSET REQUIRED.** The pipeline works
+(`scripts/blender/directions_atlas.py`, branch `blender-pilot`, `docs/mascots/BLENDER_PIPELINE.md`);
+its stand-in bust is not usable art. It needs one base model, from:
 
-1. **Image to 3D** from the approved 2D art: fastest; needs mesh cleanup and a head/body split.
-2. **An artist** sculpts and rigs the five busts: best quality and consistency.
-3. **A licensed base head** restyled per character.
+1. **image to 3D** from the approved 2D art (fastest; needs cleanup and a head/body split);
+2. **a commissioned artist or modeller** (best quality and consistency);
+3. **a properly licensed base head**, restyled per character.
 
-Owner decision and an outside art source. No code work is waiting on it.
+No engineering work is waiting on it, and it does not block the game roadmap.
 
-## Branches and worktrees
+## ATO
 
-| Branch                                          | State                                      |
-| ----------------------------------------------- | ------------------------------------------ |
-| `main`                                          | production                                 |
-| `phase4`                                        | Phase 4 + 4.1, unmerged (decision pending) |
-| `shared-room-fixes`                             | PR #23, open                               |
-| `phase2-325`                                    | 3 2 5 Phase 2 + rule lock, unmerged        |
-| `phase3.1`, `blender-pilot`, `trick-games-plan` | pushed; records                            |
-| `mascot-rollout` (local only)                   | one unpushed commit; keep                  |
-| `private-club`                                  | the older parallel bot line; do not deploy |
+Conference follow-ups are separate from Chaal and need the owner's contact and meeting details. No
+contacts are invented.
 
-Removed worktrees on 2026-10-21 (branches kept): `bots-memory-fix`, `phase31`, `blender-pilot`,
-`bots-phase3`, `navbar`. Their uncommitted work and simulation outputs (including the Phase 3 trial
-files) are archived outside the repo in `~/chaal-archive/2026-10-21-worktree-*`.
+## Branches, worktrees and archives
+
+| Branch                                                         | State                                  |
+| -------------------------------------------------------------- | -------------------------------------- |
+| `main`                                                         | production                             |
+| `phase4`, `dhoni-canonical`, `phase2-325`, `shared-room-fixes` | merged (kept on GitHub as history)     |
+| `phase3.1`, `blender-pilot`, `trick-games-plan`                | pushed records                         |
+| `mascot-rollout` (local only)                                  | one unpushed commit; keep              |
+| `private-club`                                                 | older parallel bot line; do not deploy |
+
+No working worktrees remain beyond the owner's own checkout. Simulation outputs and uncommitted work
+from removed worktrees are archived outside the repo in `~/chaal-archive/` (2026-10-21: bots-phase3,
+navbar, phase31, blender-pilot; 2026-10-22: phase4 and phase2-325 `.sim`). Measured results that
+reports cite are committed under `docs/bots/phase3`, `phase31`, `phase4/results` and
+`docs/games/325-phase2/results`.
