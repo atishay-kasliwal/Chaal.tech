@@ -62,3 +62,24 @@ QA: all 29 game examples are checked at 320px, 390px and 1440px for loaded image
 ## Release integration
 
 The approved design is applied as a three-way patch to current main in an isolated release checkout. Keep the published bot picker, bot navigation, intelligence tools, richer stats sections and mascot/presence features. Do not merge the old private-club branch or its uncommitted simulation work. Production builds use the existing Cloudflare game origin and Google OAuth client from CI.
+
+## Shuffle motion refinement
+
+Scope: landing hero only, isolated on frontend/hero-shuffle. Keep existing typography, colors, card art and composition.
+Concepts: riffle and fan (fit 5, originality 4, feasibility 5, portability 2); orbiting cards (3/3/5/4); Blender film (4/4/3/3). Choose riffle and fan because the actual deck becomes the interaction.
+Signature: gather, split into alternating packets, interleave, square, fan. Tap or keyboard activation replays; one entrance, no endless loop. GSAP timeline in Svelte lifecycle, paused outside viewport; reduced motion shows the complete static fan. Existing SVG faces stay sharp and do not require a downloaded video or WebGL runtime. Blender is installed but deferred until actual bending/physical simulation is needed.
+
+Shuffle verification: Svelte check passed with zero errors/warnings; production build passed using the existing public game endpoint. Two browser passes covered 1440px desktop, 390px phone, reduced motion and replay. All thirteen card images loaded, no page errors, no document overflow. Separate screenshot critic rated desktop composition 8/10 and phone 7/10 before stamp spacing correction; timing is not scored from stills. The existing phone heading wrap is outside this motion change. Final polish increases hint contrast and moves the phone stamp above the fan. Local preview: port 4400. No deployment or merge performed.
+
+Reference-driven flourish: replace the quick two-packet shuffle with an approximately 13-second sequence: ribbon/spring, airborne three-packet cut, reverse-side thumb fan, final hero fan. Add deliberate holds and use the actual Diwali Taash back artwork. Preserve navigation clearance and reduced-motion fallback. No hands or photo textures are added.
+
+Spacing refinement: enlarge desktop cards from 17vh/208px cap to 22vh/264px cap, tighten hero padding and heading margins, and bring the ellipse/stamp closer with a 6.4-card art width. Phone cards grow from 21vw to 25vw; smaller headline restores the intended two-line lockup. Keep intrinsic hero height so short screens can scroll without crushing the artwork.
+
+Horizontal composition: desktop resting fan now offsets cards outward from the middle by 10% of card width per index. This adds 1.2 card widths to the overall span while preserving symmetry and vertical scale. Apply the same pose to initial state, reduced motion and the final animation frame. Phone span remains unchanged to preserve edge clearance.
+
+Add one face-down deck-back card before the two, recenter all poses using the hand's actual midpoint, and increase timeline playback rate to 1.05 for a 5% faster flourish.
+
+Full-deck flourish: all 52 unique suited faces plus two matching joker assets participate in ribbon, cut and thumb-fan poses. Normalize positions and total stagger duration for 54 cards, keeping the approved pacing. The decorative face-down card stays hidden during shuffling. Extra deck faces disappear while squared; final hero retains its compact selection with a red joker immediately after the Ace. Reduced motion displays only that final hand.
+
+
+Release scope: landing shuffle and spacing only; bot and table experiments discarded. Existing bot portraits, media seats and live-table layout remain unchanged.

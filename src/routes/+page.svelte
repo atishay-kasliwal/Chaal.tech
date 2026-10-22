@@ -2,23 +2,7 @@
 	import { openStart } from '#lib/start/start-modal.svelte.js';
 	import GameDemo from '#lib/games/GameDemo.svelte';
 	import { GAME_GUIDES } from '#lib/games/catalog.js';
-	let spread = $state(false);
-	/** A whole hand, 2 to ace, mixed suits: the fan opens wider on hover, focus or tap. */
-	const HAND = [
-		'clubs-2',
-		'hearts-3',
-		'spades-4',
-		'diamonds-5',
-		'clubs-6',
-		'hearts-7',
-		'spades-8',
-		'diamonds-9',
-		'clubs-10',
-		'hearts-j',
-		'diamonds-q',
-		'clubs-k',
-		'spades-a'
-	];
+	import ShuffleHand from '#lib/landing/ShuffleHand.svelte';
 	const games = [
 		{
 			name: 'Teen Patti',
@@ -57,9 +41,6 @@
 		['Pair', 'Two cards of the same rank', 'K♥ K♣ 7♦'],
 		['High card', 'Your highest card decides', 'A♦ J♣ 9♥']
 	];
-	function deal(open: boolean) {
-		spread = open;
-	}
 </script>
 
 <svelte:head>
@@ -77,37 +58,7 @@
 				<div class="circle-label" aria-hidden="true">
 					<span>GOOD TIMES</span><strong>✳</strong><span>ON THE CARDS</span>
 				</div>
-				<button
-					type="button"
-					class="card-fan"
-					aria-pressed={spread}
-					class:spread
-					aria-label="Spread the hand: thirteen cards from two to ace, from the Diwali Taash deck"
-					onpointerenter={(event) => {
-						if (event.pointerType === 'mouse') deal(true);
-					}}
-					onpointerleave={(event) => {
-						if (event.pointerType === 'mouse') deal(false);
-					}}
-					onfocus={(event) => {
-						if (event.currentTarget.matches(':focus-visible')) deal(true);
-					}}
-					onblur={() => deal(false)}
-					onclick={() => deal(!spread)}
-				>
-					{#each HAND as card, i (card)}
-						<img
-							class="fan-card"
-							src="/cards/diwali-taash/{card}.svg"
-							alt=""
-							width="224"
-							height="314"
-							style:--k={i - 6}
-							loading={Math.abs(i - 6) < 4 ? 'eager' : 'lazy'}
-							fetchpriority={i === 12 ? 'high' : 'auto'}
-						/>
-					{/each}
-				</button>
+				<ShuffleHand />
 			</div>
 			<h1 id="home-title">Good cards.<br /><span>Better company.</span></h1>
 			<button class="club-cta" onclick={openStart}
@@ -260,11 +211,10 @@
 		max-width: var(--page-max);
 		margin: auto;
 		/* Fills the screen under the header, leaving room for the strip below. */
-		height: calc(100dvh - var(--header-h, 64px) - 82px);
-		min-height: 460px;
-		padding: clamp(8px, 2dvh, 24px) 0;
+		min-height: max(540px, calc(100dvh - var(--header-h, 64px) - 82px));
+		padding: clamp(24px, 3dvh, 40px) 0;
 		justify-content: center;
-		--cw: clamp(78px, min(12.5vw, 20dvh), 240px);
+		--cw: clamp(96px, min(15vw, 22dvh), 264px);
 	}
 	h1 {
 		font-family: var(--font-display);
@@ -272,7 +222,7 @@
 		font-weight: 800;
 		line-height: 0.9;
 		letter-spacing: -0.065em;
-		margin: clamp(12px, 3dvh, 36px) 0 clamp(14px, 3.2dvh, 34px);
+		margin: clamp(18px, 2.4dvh, 28px) 0 clamp(16px, 2.4dvh, 28px);
 	}
 	h1 span {
 		color: var(--night);
@@ -312,44 +262,15 @@
 		box-shadow: none;
 	}
 	.hero-art {
+		flex-shrink: 0;
 		position: relative;
 		display: flex;
 		justify-content: center;
-		width: min(100%, calc(var(--cw) * 8.5));
+		width: min(100%, calc(var(--cw) * 6.4));
 	}
 	/* Thirteen cards around one pivot below the hand, like cards held in a hand. */
-	.card-fan {
-		--step: 10deg;
-		position: relative;
-		width: 100%;
-		/* Room for the side cards, which dip below the hand as they swing around the pivot. */
-		height: calc(var(--cw) * 2.4);
-		cursor: pointer;
-		border-radius: 24px;
-		display: grid;
-		place-items: end center;
-		isolation: isolate;
-	}
-	.card-fan.spread {
-		--step: 11.5deg;
-	}
-	.fan-card {
-		grid-area: 1/1;
-		width: var(--cw);
-		height: auto;
-		max-width: none;
-		transform-origin: 50% 175%;
-		rotate: calc(var(--k) * var(--step));
-		translate: 0 calc(var(--cw) * -0.7);
-		filter: drop-shadow(0 10px 6px rgb(33 28 46 / 14%));
-		border-radius: calc(var(--cw) * 0.07);
-		transition: rotate 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-		transition-delay: calc(max(var(--k), -1 * var(--k)) * 18ms);
-	}
-	.card-fan.spread .fan-card:last-child {
-		translate: 0 calc(var(--cw) * -0.82);
-	}
 	.circle-label {
+		pointer-events: none;
 		position: absolute;
 		right: 10px;
 		top: -12px;
@@ -692,27 +613,21 @@
 			padding-top: 18px;
 		}
 		.hero {
-			min-height: 420px;
-			height: calc(100dvh - var(--header-h, 56px) - 66px);
-			--cw: clamp(70px, min(21vw, 15dvh), 110px);
+			min-height: max(520px, calc(100dvh - var(--header-h, 56px) - 66px));
+			padding-top: 80px;
+			--cw: clamp(78px, min(25vw, 17dvh), 118px);
 		}
 		h1 {
-			font-size: clamp(40px, min(13vw, 8dvh), 84px);
+			font-size: clamp(32px, min(10.8vw, 7dvh), 64px);
 		}
 		.club-cta {
 			min-height: 50px;
-		}
-		.card-fan {
-			--step: 4.4deg;
-		}
-		.card-fan.spread {
-			--step: 6.6deg;
 		}
 		.circle-label {
 			width: 76px;
 			height: 76px;
 			right: 4px;
-			top: 0;
+			top: -100px;
 			font-size: 6px;
 		}
 		.circle-label strong {
@@ -837,9 +752,6 @@
 			translate: none !important;
 			rotate: none !important;
 		}
-		.fan-card {
-			transition: none;
-		}
 	}
 
 	.game-tile {
@@ -918,14 +830,6 @@
 		border-radius: 50%;
 		rotate: -12deg;
 		pointer-events: none;
-	}
-	.card-fan {
-		z-index: 1;
-	}
-	.fan-card {
-		box-shadow:
-			0 1px 0 #fff8,
-			0 0 0 1px #211c2e16;
 	}
 	@media (max-width: 600px) {
 		.game-tile {
