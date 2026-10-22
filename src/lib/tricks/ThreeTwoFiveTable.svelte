@@ -35,11 +35,11 @@
 	const playing = $derived(room.isStarted && !room.gameShow);
 	const myTurn = $derived(playing && room.currentPlayerId === selfId);
 	const isHost = $derived(room.hostId === selfId);
-	// Seats around the felt, from my point of view: me at the bottom, then clockwise.
+	// Seats around the felt, from my point of view: me at the bottom, then clockwise, by seat number
+	// (play goes clockwise in seat order). An empty seat stays empty; nobody is drawn twice.
 	const ring = $derived.by(() => {
-		const ids = room.order.length === 3 ? room.order : users.map((u) => u.id);
-		const i = Math.max(ids.indexOf(selfId), 0);
-		return [ids[i], ids[(i + 1) % ids.length], ids[(i + 2) % ids.length]].filter(Boolean);
+		const mine = me?.seatNumber ?? 0;
+		return [0, 1, 2].map((k) => users.find((u) => u.seatNumber === (mine + k) % 3)?.id ?? null);
 	});
 	const freeCast = $derived(CAST.filter((c) => !users.some((u) => u.characterId === c.id)));
 	const emptySeats = $derived(Math.max(0, 3 - users.length));
@@ -120,9 +120,9 @@
 	{#if !seated}<p class="banner" role="status">Taking your seat…</p>{/if}
 
 	<div class="felt">
-		{#each ring as id, k (id)}
+		{#each ring as id, k (k)}
 			{@const u = user(id)}
-			{#if u}
+			{#if u && id}
 				<div
 					class="seat s{k}"
 					class:turn={room.currentPlayerId === id && playing}
@@ -286,7 +286,8 @@
 						{#if isHost}<button
 								class="cta"
 								disabled={!room.legalActions.start || busy}
-								onclick={() => act('start', [])}>{room.round ? 'Next round' : 'Deal'}</button
+								onclick={() => act('start', [room.name])}
+								>{room.round ? 'Next round' : 'Deal'}</button
 							>{/if}
 					</div>
 				</div>

@@ -296,7 +296,7 @@
 						{#if isHost}<button
 								class="cta"
 								disabled={!room.legalActions.start || busy}
-								onclick={() => act('start', [])}>{room.hand ? 'Next hand' : 'Deal'}</button
+								onclick={() => act('start', [room.name])}>{room.hand ? 'Next hand' : 'Deal'}</button
 							>{/if}
 					</div>
 				</div>

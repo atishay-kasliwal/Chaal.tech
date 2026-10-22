@@ -140,7 +140,14 @@
 						<h3>{name}</h3>
 						<p>{note}</p>
 					</div>
-					<span class="rank-cards">{cards}</span>
+					<span class="rank-cards" role="img" aria-label={cards}
+						>{#each cards.split(' ') as card, k (k)}<span
+								class="mini-card"
+								class:red={/[♥♦]/.test(card)}
+								style:--i={k - 1}
+								aria-hidden="true"><b>{card.slice(0, -1)}</b><i>{card.slice(-1)}</i></span
+							>{/each}</span
+					>
 				</div>{/each}
 		</div>
 		<div class="learning-notes">
@@ -457,13 +464,50 @@
 		font-size: 12px;
 		margin-top: 4px;
 	}
+	/* Each hand as three small paper cards, gently fanned. */
 	.rank-cards {
-		font-family: var(--font-display);
-		font-size: 19px;
-		color: var(--butter);
+		display: flex;
 		margin-left: auto;
-		white-space: nowrap;
-		letter-spacing: 0.035em;
+		padding-right: 6px;
+	}
+	.mini-card {
+		display: grid;
+		place-items: center;
+		align-content: center;
+		width: 36px;
+		height: 50px;
+		margin-left: -8px;
+		border-radius: 6px;
+		background: var(--paper);
+		color: var(--night);
+		box-shadow: 0 3px 8px #00000059;
+		font-family: var(--font-display);
+		line-height: 1;
+		rotate: calc(var(--i) * 6deg);
+		translate: 0 calc(var(--i) * var(--i) * 3px);
+		transition:
+			rotate 0.25s,
+			translate 0.25s;
+	}
+	.mini-card b {
+		font-size: 15px;
+		font-weight: 800;
+	}
+	.mini-card i {
+		font-style: normal;
+		font-size: 16px;
+	}
+	.mini-card.red {
+		color: #b8322a;
+	}
+	.ranking-row:hover .mini-card {
+		rotate: calc(var(--i) * 11deg);
+		translate: calc(var(--i) * 4px) calc(var(--i) * var(--i) * 4px - 2px);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.mini-card {
+			transition: none;
+		}
 	}
 	.learning-notes {
 		margin-top: 36px;
