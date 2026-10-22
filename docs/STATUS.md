@@ -34,14 +34,24 @@ Source of truth: [bots/CANONICAL.md](bots/CANONICAL.md) (`CANONICAL_STYLES` in
 | Samay     | `samay-raina@3`  | `tp-dna@3` / `mind@1` | `7d7e81874eb7ddf7` | `43686ccfe4328696` | Phase 2                 |
 | Dhoni     | `ms-dhoni@4`     | `tp-dna@8` / `mind@1` | `04254a1a0abbb72a` | `98d41082047cd70a` | Phase 4.1 C1 (approved) |
 
-**Publication to the production database: not done; needs the owner.** The code (and the deployed
-Worker) knows this lineup, but tables seat what the bot directory has published. The read-only plan
-could not reach Atlas from the build machine (connection reset: Atlas Network Access), and no admin
-connection string is stored. From a machine Atlas allows:
+**Publication to the production database: verified plan, not published (owner approval needed).**
+Production tables seat what the bot directory has published, and every character is still on its
+`@2` version (main's earlier line). The read-only plan, run 2026-10-22 against Atlas, matches the
+source exactly:
+
+| Bot   | Production now   | Would publish                   | Directory hash (plan = source) |
+| ----- | ---------------- | ------------------------------- | ------------------------------ |
+| Rohit | `rohit-sharma@2` | next version = `rohit-sharma@3` | `13657c11ca64694c` ✓           |
+| Virat | `virat-kohli@2`  | next version = `virat-kohli@3`  | `35d9023fb9525120` ✓           |
+| GG    | `gg@2`           | next version = `gg@4`           | `1c634dd3cf3e50f9` ✓           |
+| Samay | `samay-raina@2`  | next version = `samay-raina@3`  | `43686ccfe4328696` ✓           |
+| Dhoni | `ms-dhoni@2`     | next version = `ms-dhoni@4`     | `98d41082047cd70a` ✓           |
+
+To publish (Atlas must allow the machine; a VPN can block it):
 
 ```sh
-MONGODB_ADMIN_URI='<admin connection string>' npm run bots:publish-dna                              # plan: check every hash against the table above
-MONGODB_ADMIN_URI='<admin connection string>' npm run bots:publish-dna -- --publish --descriptions  # then publish
+MONGODB_ADMIN_URI='<connection string>' npm run bots:publish-dna                              # plan
+MONGODB_ADMIN_URI='<connection string>' npm run bots:publish-dna -- --publish --descriptions  # publish
 ```
 
 The script publishes each bot's next immutable directory version, refuses unless the drafted hash and
@@ -99,25 +109,31 @@ identities and weak adaptation.
 
 ## Analytics
 
-**ANALYTICS PENDING: REQUIRES ATLAS / VALIDATION NIGHT.** All analytics code is on main, but
-production recording is not active: the Atlas schema migration has not run, so the Worker refuses
-recorder writes (`SchemaNotReady`) and rows wait in each room's outbox. It does not block the games.
+**ANALYTICS PENDING: REQUIRES THE VALIDATION NIGHT.** The Atlas side is done: the schema migration
+has run and production is recording. Checked read-only on 2026-10-22: 149 hands attempted, captured
+and recorded, 0 failures, nothing waiting or unaccounted, across engine builds `4d00796b` to
+`a090679a`; `npm run analytics:validate` passes all 13 checks (replay, privacy, chips, leaderboard,
+bots, night summaries) after PR #27 fixed one false positive.
 
-Procedure: [ANALYTICS_OPERATIONS.md: First production validation](ANALYTICS_OPERATIONS.md#first-production-validation).
+What the data does not cover yet: every recorded hand is a practice hand by one person with bots, Teen
+Patti only. The validation night still needs 4+ people for 20+ hands with a Show, a pot-limit forced
+show, a timeout, a disconnect and reconnect, a late reveal, a chip loan, a hidden balance, two
+variants including a joker or table game, and one Hold'em or Rummy (and now 3 2 5) table. Then:
 
-1. Allow the owner's machine in Atlas Network Access; create `chaal-admin` (dbAdmin + readWrite on
-   `chaal`) and, separately, `chaal-runtime` for the Worker (custom role in that doc).
-2. `MONGODB_ADMIN_URI='…' MONGODB_DB=chaal npm run analytics:migrate`, then
-   `npm run analytics:health` (expect zeros, no errors).
-3. Play a validation night (4+ people, 20+ hands, the scenario list in the doc).
-4. `npm run analytics:validate -- --since <night start ISO time>`: every check PASS.
+```sh
+MONGODB_URI='…' npm run analytics:health
+MONGODB_URI='…' npm run analytics:validate -- --since <night start ISO time>
+```
 
-**Rollback:** the migration only creates collections, validators, indexes and published styles, is
-idempotent and deletes nothing. If recording misbehaves, rotate the Worker's `MONGODB_URI` to a user
-without access to the analytics collections: the recorder fails closed and rooms keep playing.
-Dropping `hand_records`, `hand_private`, `hand_sealed`, `night_events`, `recorder_failures`,
-`recorder_status` and `analytics_meta` returns the database to its pre-migration state. **Never drop
-`bots` or `bot_styles`:** the bot directory depends on them.
+Plus the two manual steps in [ANALYTICS_OPERATIONS.md](ANALYTICS_OPERATIONS.md#first-production-validation):
+inspect one hand's public, private and sealed records, and compare Durable Object rows written
+(Cloudflare dashboard) with the volume table.
+
+**Rollback:** if recording misbehaves, rotate the Worker's `MONGODB_URI` to a user without access to
+the analytics collections: the recorder fails closed and rooms keep playing. Dropping `hand_records`,
+`hand_private`, `hand_sealed`, `night_events`, `recorder_failures`, `recorder_status` and
+`analytics_meta` removes the recorded history. **Never drop `bots` or `bot_styles`:** the bot directory
+depends on them.
 
 ## Art: Blender
 
