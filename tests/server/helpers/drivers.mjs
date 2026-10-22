@@ -6,6 +6,7 @@
 import { freshDeck } from '../../../server/classic.mjs';
 import { freshRummyDeck } from '../../../server/rummy/rummy.mjs';
 import { fresh325Deck } from '../../../server/tricks/three-two-five.mjs';
+import { freshPakadDeck } from '../../../server/tricks/ten-pakad.mjs';
 import { getVariant } from '../../../server/variants/index.mjs';
 import { TableSim, shuffled } from './table-sim.mjs';
 
@@ -258,6 +259,40 @@ export function playThreeTwoFive(sim, { timeoutBias = 0.1 } = {}) {
 		else if (l.pull) sim.act('a', 'pull', { position: Math.floor(random() * l.pull) });
 		else if (l.give.length) sim.act('a', 'give', { card: pick(random, l.give) });
 		else sim.act('a', 'play', { card: pick(random, l.play) });
+	}
+}
+
+/** A 10 Pakad table: one person and three Chaal characters (bots move through the real runner). */
+export function tenPakadTable({ seed = 1 } = {}) {
+	const sim = new TableSim({ seed });
+	sim.connected = new Set(['a']);
+	sim.create({ gameType: 'ten-pakad', host: 'a', table: 0 });
+	sim.act('a', 'join', { username: 'A' });
+	sim.act('a', 'addBot', { botId: 'bot-gg-test1', characterId: 'gg' });
+	sim.act('a', 'addBot', { botId: 'bot-virat-test1', characterId: 'virat-kohli' });
+	sim.act('a', 'addBot', { botId: 'bot-samay-test1', characterId: 'samay-raina' });
+	return sim;
+}
+
+/** One hand: bots through the runner, the person at random (sometimes letting the turn run out). */
+export function playTenPakad(sim, { timeoutBias = 0.1 } = {}) {
+	const random = sim.random;
+	attempt(sim, 'a', 'ready', { ready: true });
+	sim.tick(1000);
+	sim.act(
+		'a',
+		'start',
+		{},
+		{ ctx: { deck: shuffled(freshPakadDeck(), random), handId: `t${sim.room.revision}` } }
+	);
+	for (let n = 0; n < 120 && sim.playing(); n++) {
+		sim.tick(400);
+		if (sim.botMove()) continue;
+		if (random() < timeoutBias) {
+			sim.timeout();
+			continue;
+		}
+		sim.act('a', 'play', { card: pick(random, sim.view('a').legalActions.play) });
 	}
 }
 

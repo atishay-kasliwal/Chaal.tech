@@ -17,7 +17,8 @@ export const GAME_VERSIONS = Object.freeze({
 	'texas-holdem': 1,
 	blackjack: 1,
 	rummy: 1,
-	'three-two-five': 1
+	'three-two-five': 1,
+	'ten-pakad': 1
 });
 
 /** Game versions this code can replay exactly (the current one, plus any kept older ones). */
@@ -26,7 +27,8 @@ export const REPLAYABLE_GAME_VERSIONS = Object.freeze({
 	'texas-holdem': Object.freeze([1]),
 	blackjack: Object.freeze([1]),
 	rummy: Object.freeze([1]),
-	'three-two-five': Object.freeze([1])
+	'three-two-five': Object.freeze([1]),
+	'ten-pakad': Object.freeze([1])
 });
 
 /** Every version a hand dealt in this room state is played under. */

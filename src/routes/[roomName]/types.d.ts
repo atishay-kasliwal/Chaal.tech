@@ -132,7 +132,7 @@ interface RoomData {
 	revision: number;
 	handId: string | null;
 	rulesVersion: string;
-	gameType?: 'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy' | 'three-two-five';
+	gameType?: 'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy' | 'three-two-five' | 'ten-pakad';
 	variantState?: { wildRank: number; indicator: Card } & {
 		wildColor?: 'red' | 'black';
 	} & TableCards;
