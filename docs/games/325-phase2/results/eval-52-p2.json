@@ -1,0 +1,853 @@
+{
+	"seed": 52,
+	"personaScale": 2,
+	"rounds": 12,
+	"strength": {
+		"random": {
+			"perRound": {
+				"mean": -1.7052083333333328,
+				"ci": 0.12279061431542398,
+				"n": 80
+			},
+			"vsBaseline": {
+				"mean": -1.9145833333333333,
+				"ci": 0.15657691089691256,
+				"n": 80
+			}
+		},
+		"baseline": {
+			"perRound": {
+				"mean": 0.20937500000000003,
+				"ci": 0.20071564117862922,
+				"n": 80
+			},
+			"vsBaseline": {
+				"mean": 0,
+				"ci": 0,
+				"n": 80
+			}
+		},
+		"rohit-sharma": {
+			"perRound": {
+				"mean": 0.08645833333333333,
+				"ci": 0.21177683637233516,
+				"n": 80
+			},
+			"vsBaseline": {
+				"mean": -0.12291666666666665,
+				"ci": 0.14142022465059598,
+				"n": 80
+			}
+		},
+		"virat-kohli": {
+			"perRound": {
+				"mean": -0.325,
+				"ci": 0.19912375382901765,
+				"n": 80
+			},
+			"vsBaseline": {
+				"mean": -0.5343749999999999,
+				"ci": 0.15510663603928992,
+				"n": 80
+			}
+		},
+		"gg": {
+			"perRound": {
+				"mean": 0.33645833333333325,
+				"ci": 0.20181568093399208,
+				"n": 80
+			},
+			"vsBaseline": {
+				"mean": 0.1270833333333334,
+				"ci": 0.13200290847017385,
+				"n": 80
+			}
+		},
+		"samay-raina": {
+			"perRound": {
+				"mean": -0.07083333333333332,
+				"ci": 0.19610119574667834,
+				"n": 80
+			},
+			"vsBaseline": {
+				"mean": -0.2802083333333334,
+				"ci": 0.1384418927869951,
+				"n": 80
+			}
+		},
+		"ms-dhoni": {
+			"perRound": {
+				"mean": 0.16875000000000007,
+				"ci": 0.18390155493981747,
+				"n": 80
+			},
+			"vsBaseline": {
+				"mean": -0.040624999999999994,
+				"ci": 0.1269834894324132,
+				"n": 80
+			}
+		}
+	},
+	"profiles": {
+		"random": {
+			"rounds": 960,
+			"meanDiff": -1.705,
+			"sdDiff": 1.837,
+			"byRole": {
+				"2": {
+					"rounds": 320,
+					"success": 0.409,
+					"meanDiff": -0.544,
+					"overshoot": 0.338,
+					"shortfall": 0.881
+				},
+				"3": {
+					"rounds": 320,
+					"success": 0.278,
+					"meanDiff": -1.262,
+					"overshoot": 0.203,
+					"shortfall": 1.466
+				},
+				"5": {
+					"rounds": 320,
+					"success": 0.025,
+					"meanDiff": -3.309,
+					"overshoot": 0.009,
+					"shortfall": 3.319
+				}
+			},
+			"trumpLongest": 0.322,
+			"contestRate": 0,
+			"newSuitLeadRate": 0,
+			"earlyTrumpLeadRate": 0.104,
+			"ruffWinRate": 0.906,
+			"wastedTrumpRate": 0.607,
+			"characterOverrideRate": 0,
+			"meanLambda": 0
+		},
+		"baseline": {
+			"rounds": 960,
+			"meanDiff": 0.209,
+			"sdDiff": 2.069,
+			"byRole": {
+				"2": {
+					"rounds": 320,
+					"success": 0.778,
+					"meanDiff": 0.9,
+					"overshoot": 1.228,
+					"shortfall": 0.328
+				},
+				"3": {
+					"rounds": 320,
+					"success": 0.691,
+					"meanDiff": 0.513,
+					"overshoot": 1.025,
+					"shortfall": 0.513
+				},
+				"5": {
+					"rounds": 320,
+					"success": 0.466,
+					"meanDiff": -0.784,
+					"overshoot": 0.438,
+					"shortfall": 1.222
+				}
+			},
+			"trumpLongest": 0.994,
+			"contestRate": 0.834,
+			"newSuitLeadRate": 0.389,
+			"earlyTrumpLeadRate": 0.281,
+			"ruffWinRate": 0.948,
+			"wastedTrumpRate": 0.381,
+			"characterOverrideRate": 0.24,
+			"meanLambda": 0.455
+		},
+		"rohit-sharma": {
+			"rounds": 960,
+			"meanDiff": 0.086,
+			"sdDiff": 2.084,
+			"byRole": {
+				"2": {
+					"rounds": 320,
+					"success": 0.759,
+					"meanDiff": 0.781,
+					"overshoot": 1.138,
+					"shortfall": 0.356
+				},
+				"3": {
+					"rounds": 320,
+					"success": 0.634,
+					"meanDiff": 0.341,
+					"overshoot": 0.938,
+					"shortfall": 0.597
+				},
+				"5": {
+					"rounds": 320,
+					"success": 0.459,
+					"meanDiff": -0.862,
+					"overshoot": 0.431,
+					"shortfall": 1.294
+				}
+			},
+			"trumpLongest": 0.997,
+			"contestRate": 0.873,
+			"newSuitLeadRate": 0.392,
+			"earlyTrumpLeadRate": 0.32,
+			"ruffWinRate": 0.944,
+			"wastedTrumpRate": 0.394,
+			"characterOverrideRate": 0.258,
+			"meanLambda": 0.468
+		},
+		"virat-kohli": {
+			"rounds": 960,
+			"meanDiff": -0.325,
+			"sdDiff": 2.092,
+			"byRole": {
+				"2": {
+					"rounds": 320,
+					"success": 0.675,
+					"meanDiff": 0.491,
+					"overshoot": 0.956,
+					"shortfall": 0.466
+				},
+				"3": {
+					"rounds": 320,
+					"success": 0.547,
+					"meanDiff": -0.066,
+					"overshoot": 0.694,
+					"shortfall": 0.759
+				},
+				"5": {
+					"rounds": 320,
+					"success": 0.341,
+					"meanDiff": -1.4,
+					"overshoot": 0.303,
+					"shortfall": 1.703
+				}
+			},
+			"trumpLongest": 0.997,
+			"contestRate": 0.898,
+			"newSuitLeadRate": 0.423,
+			"earlyTrumpLeadRate": 0.355,
+			"ruffWinRate": 0.942,
+			"wastedTrumpRate": 0.45,
+			"characterOverrideRate": 0.35,
+			"meanLambda": 0.495
+		},
+		"gg": {
+			"rounds": 960,
+			"meanDiff": 0.336,
+			"sdDiff": 2.07,
+			"byRole": {
+				"2": {
+					"rounds": 320,
+					"success": 0.784,
+					"meanDiff": 1.003,
+					"overshoot": 1.284,
+					"shortfall": 0.281
+				},
+				"3": {
+					"rounds": 320,
+					"success": 0.703,
+					"meanDiff": 0.644,
+					"overshoot": 1.081,
+					"shortfall": 0.438
+				},
+				"5": {
+					"rounds": 320,
+					"success": 0.481,
+					"meanDiff": -0.637,
+					"overshoot": 0.513,
+					"shortfall": 1.15
+				}
+			},
+			"trumpLongest": 1,
+			"contestRate": 0.853,
+			"newSuitLeadRate": 0.362,
+			"earlyTrumpLeadRate": 0.297,
+			"ruffWinRate": 0.951,
+			"wastedTrumpRate": 0.373,
+			"characterOverrideRate": 0.195,
+			"meanLambda": 0.424
+		},
+		"samay-raina": {
+			"rounds": 960,
+			"meanDiff": -0.071,
+			"sdDiff": 2.044,
+			"byRole": {
+				"2": {
+					"rounds": 320,
+					"success": 0.731,
+					"meanDiff": 0.684,
+					"overshoot": 1.066,
+					"shortfall": 0.381
+				},
+				"3": {
+					"rounds": 320,
+					"success": 0.616,
+					"meanDiff": 0.188,
+					"overshoot": 0.825,
+					"shortfall": 0.638
+				},
+				"5": {
+					"rounds": 320,
+					"success": 0.381,
+					"meanDiff": -1.084,
+					"overshoot": 0.369,
+					"shortfall": 1.453
+				}
+			},
+			"trumpLongest": 0.994,
+			"contestRate": 0.889,
+			"newSuitLeadRate": 0.436,
+			"earlyTrumpLeadRate": 0.316,
+			"ruffWinRate": 0.936,
+			"wastedTrumpRate": 0.411,
+			"characterOverrideRate": 0.269,
+			"meanLambda": 0.476
+		},
+		"ms-dhoni": {
+			"rounds": 960,
+			"meanDiff": 0.169,
+			"sdDiff": 1.971,
+			"byRole": {
+				"2": {
+					"rounds": 320,
+					"success": 0.813,
+					"meanDiff": 0.922,
+					"overshoot": 1.197,
+					"shortfall": 0.275
+				},
+				"3": {
+					"rounds": 320,
+					"success": 0.669,
+					"meanDiff": 0.438,
+					"overshoot": 0.931,
+					"shortfall": 0.494
+				},
+				"5": {
+					"rounds": 320,
+					"success": 0.438,
+					"meanDiff": -0.853,
+					"overshoot": 0.416,
+					"shortfall": 1.269
+				}
+			},
+			"trumpLongest": 1,
+			"contestRate": 0.859,
+			"newSuitLeadRate": 0.385,
+			"earlyTrumpLeadRate": 0.278,
+			"ruffWinRate": 0.953,
+			"wastedTrumpRate": 0.379,
+			"characterOverrideRate": 0.208,
+			"meanLambda": 0.43
+		},
+		"rohit-sharma:mixed": {
+			"rounds": 1152,
+			"meanDiff": 0.086,
+			"sdDiff": 1.986,
+			"byRole": {
+				"2": {
+					"rounds": 384,
+					"success": 0.776,
+					"meanDiff": 0.859,
+					"overshoot": 1.161,
+					"shortfall": 0.302
+				},
+				"3": {
+					"rounds": 384,
+					"success": 0.669,
+					"meanDiff": 0.344,
+					"overshoot": 0.872,
+					"shortfall": 0.529
+				},
+				"5": {
+					"rounds": 384,
+					"success": 0.401,
+					"meanDiff": -0.945,
+					"overshoot": 0.424,
+					"shortfall": 1.37
+				}
+			},
+			"trumpLongest": 0.997,
+			"contestRate": 0.919,
+			"newSuitLeadRate": 0.4,
+			"earlyTrumpLeadRate": 0.318,
+			"ruffWinRate": 0.953,
+			"wastedTrumpRate": 0.381,
+			"characterOverrideRate": 0.254,
+			"meanLambda": 0.461
+		},
+		"virat-kohli:mixed": {
+			"rounds": 1152,
+			"meanDiff": -0.403,
+			"sdDiff": 2.034,
+			"byRole": {
+				"2": {
+					"rounds": 384,
+					"success": 0.633,
+					"meanDiff": 0.341,
+					"overshoot": 0.836,
+					"shortfall": 0.495
+				},
+				"3": {
+					"rounds": 384,
+					"success": 0.497,
+					"meanDiff": -0.26,
+					"overshoot": 0.648,
+					"shortfall": 0.909
+				},
+				"5": {
+					"rounds": 384,
+					"success": 0.357,
+					"meanDiff": -1.289,
+					"overshoot": 0.365,
+					"shortfall": 1.654
+				}
+			},
+			"trumpLongest": 1,
+			"contestRate": 0.935,
+			"newSuitLeadRate": 0.416,
+			"earlyTrumpLeadRate": 0.356,
+			"ruffWinRate": 0.938,
+			"wastedTrumpRate": 0.456,
+			"characterOverrideRate": 0.35,
+			"meanLambda": 0.499
+		},
+		"gg:mixed": {
+			"rounds": 1152,
+			"meanDiff": 0.417,
+			"sdDiff": 2.113,
+			"byRole": {
+				"2": {
+					"rounds": 384,
+					"success": 0.823,
+					"meanDiff": 1.24,
+					"overshoot": 1.466,
+					"shortfall": 0.227
+				},
+				"3": {
+					"rounds": 384,
+					"success": 0.688,
+					"meanDiff": 0.539,
+					"overshoot": 1.078,
+					"shortfall": 0.539
+				},
+				"5": {
+					"rounds": 384,
+					"success": 0.503,
+					"meanDiff": -0.529,
+					"overshoot": 0.544,
+					"shortfall": 1.073
+				}
+			},
+			"trumpLongest": 1,
+			"contestRate": 0.867,
+			"newSuitLeadRate": 0.344,
+			"earlyTrumpLeadRate": 0.275,
+			"ruffWinRate": 0.937,
+			"wastedTrumpRate": 0.356,
+			"characterOverrideRate": 0.199,
+			"meanLambda": 0.433
+		},
+		"samay-raina:mixed": {
+			"rounds": 1152,
+			"meanDiff": -0.191,
+			"sdDiff": 1.926,
+			"byRole": {
+				"2": {
+					"rounds": 384,
+					"success": 0.719,
+					"meanDiff": 0.583,
+					"overshoot": 0.964,
+					"shortfall": 0.38
+				},
+				"3": {
+					"rounds": 384,
+					"success": 0.552,
+					"meanDiff": -0.065,
+					"overshoot": 0.674,
+					"shortfall": 0.74
+				},
+				"5": {
+					"rounds": 384,
+					"success": 0.372,
+					"meanDiff": -1.091,
+					"overshoot": 0.323,
+					"shortfall": 1.414
+				}
+			},
+			"trumpLongest": 0.997,
+			"contestRate": 0.91,
+			"newSuitLeadRate": 0.443,
+			"earlyTrumpLeadRate": 0.348,
+			"ruffWinRate": 0.923,
+			"wastedTrumpRate": 0.415,
+			"characterOverrideRate": 0.265,
+			"meanLambda": 0.476
+		},
+		"ms-dhoni:mixed": {
+			"rounds": 1152,
+			"meanDiff": 0.091,
+			"sdDiff": 1.985,
+			"byRole": {
+				"2": {
+					"rounds": 384,
+					"success": 0.776,
+					"meanDiff": 0.951,
+					"overshoot": 1.245,
+					"shortfall": 0.294
+				},
+				"3": {
+					"rounds": 384,
+					"success": 0.654,
+					"meanDiff": 0.227,
+					"overshoot": 0.792,
+					"shortfall": 0.565
+				},
+				"5": {
+					"rounds": 384,
+					"success": 0.398,
+					"meanDiff": -0.904,
+					"overshoot": 0.398,
+					"shortfall": 1.302
+				}
+			},
+			"trumpLongest": 0.997,
+			"contestRate": 0.879,
+			"newSuitLeadRate": 0.389,
+			"earlyTrumpLeadRate": 0.247,
+			"ruffWinRate": 0.968,
+			"wastedTrumpRate": 0.387,
+			"characterOverrideRate": 0.21,
+			"meanLambda": 0.437
+		}
+	},
+	"identity": {
+		"sessions": 480,
+		"roundsPerSession": 12,
+		"accuracy": 0.515,
+		"chance": 0.2,
+		"confusion": {
+			"rohit-sharma": {
+				"rohit-sharma": 30,
+				"virat-kohli": 4,
+				"gg": 17,
+				"samay-raina": 30,
+				"ms-dhoni": 15
+			},
+			"virat-kohli": {
+				"rohit-sharma": 16,
+				"virat-kohli": 69,
+				"gg": 1,
+				"samay-raina": 10,
+				"ms-dhoni": 0
+			},
+			"gg": {
+				"rohit-sharma": 4,
+				"virat-kohli": 0,
+				"gg": 59,
+				"samay-raina": 3,
+				"ms-dhoni": 30
+			},
+			"samay-raina": {
+				"rohit-sharma": 26,
+				"virat-kohli": 9,
+				"gg": 4,
+				"samay-raina": 48,
+				"ms-dhoni": 9
+			},
+			"ms-dhoni": {
+				"rohit-sharma": 15,
+				"virat-kohli": 0,
+				"gg": 31,
+				"samay-raina": 9,
+				"ms-dhoni": 41
+			}
+		}
+	},
+	"adaptation": {
+		"hoarder": {
+			"rohit-sharma": {
+				"adaptive": {
+					"mean": 0.5611111111111111,
+					"ci": 0.3530951605761644,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.5305555555555554,
+					"ci": 0.3494769484605836,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.03055555555555555,
+					"ci": 0.20473597509392086,
+					"n": 30
+				}
+			},
+			"virat-kohli": {
+				"adaptive": {
+					"mean": 0.12499999999999999,
+					"ci": 0.3291681046576088,
+					"n": 30
+				},
+				"static": {
+					"mean": -0.052777777777777785,
+					"ci": 0.3787827341993608,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.17777777777777778,
+					"ci": 0.25481412018379285,
+					"n": 30
+				}
+			},
+			"gg": {
+				"adaptive": {
+					"mean": 0.7416666666666667,
+					"ci": 0.3245335526874277,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.5749999999999998,
+					"ci": 0.284237113884382,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.1666666666666666,
+					"ci": 0.17282026925727145,
+					"n": 30
+				}
+			},
+			"samay-raina": {
+				"adaptive": {
+					"mean": 0.4416666666666666,
+					"ci": 0.3364834352106157,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.21111111111111114,
+					"ci": 0.2921515611726474,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.23055555555555557,
+					"ci": 0.21485048906668194,
+					"n": 30
+				}
+			},
+			"ms-dhoni": {
+				"adaptive": {
+					"mean": 0.7444444444444442,
+					"ci": 0.3575825220990051,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.6222222222222221,
+					"ci": 0.3697912749894495,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.12222222222222222,
+					"ci": 0.2545733281305947,
+					"n": 30
+				}
+			}
+		},
+		"ruffer": {
+			"rohit-sharma": {
+				"adaptive": {
+					"mean": -0.10555555555555556,
+					"ci": 0.34465734120103014,
+					"n": 30
+				},
+				"static": {
+					"mean": -0.30277777777777776,
+					"ci": 0.2953614355454898,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.19722222222222224,
+					"ci": 0.2606146327489975,
+					"n": 30
+				}
+			},
+			"virat-kohli": {
+				"adaptive": {
+					"mean": -0.4,
+					"ci": 0.2907487317804301,
+					"n": 30
+				},
+				"static": {
+					"mean": -0.38333333333333325,
+					"ci": 0.3046742539528264,
+					"n": 30
+				},
+				"gain": {
+					"mean": -0.016666666666666666,
+					"ci": 0.1285372465660801,
+					"n": 30
+				}
+			},
+			"gg": {
+				"adaptive": {
+					"mean": 0.10555555555555558,
+					"ci": 0.29447244571547515,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.08055555555555559,
+					"ci": 0.2255454284950765,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.024999999999999977,
+					"ci": 0.15468421670148422,
+					"n": 30
+				}
+			},
+			"samay-raina": {
+				"adaptive": {
+					"mean": -0.09444444444444443,
+					"ci": 0.3122427312226216,
+					"n": 30
+				},
+				"static": {
+					"mean": -0.22499999999999995,
+					"ci": 0.23819699232353791,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.13055555555555554,
+					"ci": 0.2702267475737732,
+					"n": 30
+				}
+			},
+			"ms-dhoni": {
+				"adaptive": {
+					"mean": -0.11388888888888887,
+					"ci": 0.25004620177591735,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.061111111111111144,
+					"ci": 0.3045064651427791,
+					"n": 30
+				},
+				"gain": {
+					"mean": -0.175,
+					"ci": 0.20872111649276703,
+					"n": 30
+				}
+			}
+		},
+		"ducker": {
+			"rohit-sharma": {
+				"adaptive": {
+					"mean": 0.5166666666666666,
+					"ci": 0.34076217629283084,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.38888888888888906,
+					"ci": 0.3250040704463965,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.12777777777777774,
+					"ci": 0.18411451357275205,
+					"n": 30
+				}
+			},
+			"virat-kohli": {
+				"adaptive": {
+					"mean": 0.09999999999999999,
+					"ci": 0.32557595688825625,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.14999999999999997,
+					"ci": 0.33458712095211357,
+					"n": 30
+				},
+				"gain": {
+					"mean": -0.049999999999999996,
+					"ci": 0.23423114627448138,
+					"n": 30
+				}
+			},
+			"gg": {
+				"adaptive": {
+					"mean": 0.5388888888888886,
+					"ci": 0.3535984956500961,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.3555555555555555,
+					"ci": 0.31915841333959716,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.18333333333333324,
+					"ci": 0.2632972185332696,
+					"n": 30
+				}
+			},
+			"samay-raina": {
+				"adaptive": {
+					"mean": 0.5722222222222223,
+					"ci": 0.30185656829793556,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.5444444444444444,
+					"ci": 0.36979127498944947,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.027777777777777776,
+					"ci": 0.29147904565688004,
+					"n": 30
+				}
+			},
+			"ms-dhoni": {
+				"adaptive": {
+					"mean": 0.7055555555555556,
+					"ci": 0.28610631919507584,
+					"n": 30
+				},
+				"static": {
+					"mean": 0.36944444444444446,
+					"ci": 0.2970385410159292,
+					"n": 30
+				},
+				"gain": {
+					"mean": 0.3361111111111112,
+					"ci": 0.2262241840275044,
+					"n": 30
+				}
+			}
+		}
+	},
+	"roles": {
+		"2": {
+			"mean": 0.7041666666666667,
+			"ci": 0.1134034570878729,
+			"n": 960
+		},
+		"3": {
+			"mean": 0.19375,
+			"ci": 0.11823093497128818,
+			"n": 960
+		},
+		"5": {
+			"mean": -0.8979166666666667,
+			"ci": 0.1257233363755831,
+			"n": 960
+		}
+	},
+	"totals": {
+		"rounds": 22320,
+		"decisions": 786998,
+		"ms": 1439630.480236001
+	}
+}
