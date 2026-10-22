@@ -86,8 +86,12 @@
 	);
 
 	onMount(() => {
-		const code = roomCodeFrom(new URLSearchParams(window.location.search).get('join') ?? '');
+		const query = new URLSearchParams(window.location.search);
+		const code = roomCodeFrom(query.get('join') ?? '');
 		if (code) joinCode = code;
+		// From the Games page: open with that game chosen (Teen Patti variants start on Classic).
+		const game = query.get('game');
+		if (game === 'texas-holdem' || game === 'blackjack' || game === 'rummy') gameType = game;
 		// Connect early so tapping Start is instant. The room page owns the socket afterwards.
 		socket.connect();
 	});

@@ -2,14 +2,16 @@
 	import { properName } from '#lib/names.js';
 	import '../app.css';
 	import { Toasts } from '#lib/components/Toasts/index.js';
-	import { page } from '$app/state';
+	import { page, updated } from '$app/state';
 	import StartModal from '#lib/start/StartModal.svelte';
 	import { onMount } from 'svelte';
 	import { club } from '#lib/club/club.svelte.js';
 	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
 	import ProfilePanel from '#lib/club/ProfilePanel.svelte';
 	import { profileModal } from '#lib/club/profile-modal.svelte.js';
-	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation';
+	/** One-screen pages that lay out their own width (content lines up with the header). */
+	const FULL_BLEED = new Set(['/stats', '/games', '/bots', '/bots/[botId]']);
 	import { identify, trackPage } from '#lib/analytics.js';
 	import { openStart } from '#lib/start/start-modal.svelte.js';
 	let { children } = $props();
@@ -49,6 +51,10 @@
 				await navigation.complete;
 			});
 		});
+	});
+	// A newer deploy is live: load the next page fresh instead of from this tab's old code.
+	beforeNavigate(({ willUnload, to }) => {
+		if (updated.current && !willUnload && to?.url) location.href = to.url.href;
 	});
 	afterNavigate(({ to }) => {
 		menuOpen = meOpen = false;
@@ -177,6 +183,7 @@
 	class="site-main"
 	class:home-main={isHome}
 	class:club-main={page.route.id === '/club'}
+	class:stats-main={FULL_BLEED.has(page.route.id ?? '')}
 	class:room-main={isRoom}
 >
 	{@render children?.()}
@@ -199,9 +206,11 @@
 <ProfilePanel />
 
 <style>
-	/* Header height, shared with pages that fill the viewport under it. */
+	/* Header height, shared with pages that fill the viewport under it; and one page width for
+	   every page, so header, content and footer line up on wide screens. */
 	:global(:root) {
 		--header-h: 64px;
+		--page-max: 1680px;
 	}
 	@media (max-width: 720px) {
 		:global(:root) {
@@ -245,7 +254,7 @@
 		grid-template-columns: 1fr auto 1fr;
 		align-items: center;
 		gap: 20px;
-		max-width: 1440px;
+		max-width: var(--page-max);
 		margin: auto;
 		padding: 0 var(--gutter);
 		height: var(--header-h);
@@ -420,12 +429,13 @@
 		width: 100%;
 		min-height: calc(100dvh - var(--header-h));
 		padding: 0 var(--gutter);
-		max-width: 1440px;
+		max-width: var(--page-max);
 		margin: auto;
 		outline: none;
 	}
 	.site-main.home-main,
-	.site-main.club-main {
+	.site-main.club-main,
+	.site-main.stats-main {
 		padding: 0;
 		max-width: none;
 	}
@@ -436,7 +446,7 @@
 
 	/* Footer: one quiet line. */
 	.site-footer {
-		max-width: 1440px;
+		max-width: var(--page-max);
 		margin: auto;
 		padding: 28px var(--gutter);
 		display: flex;

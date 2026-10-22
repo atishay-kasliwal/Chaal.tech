@@ -2,6 +2,7 @@
 	import { club } from '#lib/club/club.svelte.js';
 	import ClubGate from '#lib/club/ClubGate.svelte';
 	import BotPortrait from './BotPortrait.svelte';
+	import { METERS, STYLE_METERS, BOT_LOOK } from './style-meters.js';
 	import type { ClubBot } from './types.js';
 	let { id }: { id?: string } = $props();
 	let bots = $state<ClubBot[]>([]);
@@ -10,7 +11,25 @@
 	let retry = $state(0);
 	const date = (at: number) =>
 		new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(at);
-	const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
+	const signed = (n: number) => `${n > 0 ? '+' : ''}${n.toLocaleString('en-IN')}`;
+	const FALLBACK = [
+		{ suit: '♠', tone: '#263b2a', accent: '#7fc48e' },
+		{ suit: '♦', tone: '#243243', accent: '#79a7e6' },
+		{ suit: '♣', tone: '#494026', accent: '#f2dc91' },
+		{ suit: '♠', tone: '#263a40', accent: '#79d1d6' },
+		{ suit: '♥', tone: '#422b34', accent: '#ee9a8b' }
+	];
+	const look = (bot: ClubBot, index = 0) =>
+		(BOT_LOOK as Record<string, (typeof FALLBACK)[number]>)[bot.botId] ??
+		FALLBACK[index % FALLBACK.length];
+	const meters = (bot: ClubBot) =>
+		(STYLE_METERS as Record<string, Record<string, number>>)[bot.botId] ?? null;
+	const verdictText: Record<string, string> = {
+		ahead: 'You have the edge',
+		behind: 'They have the edge',
+		even: 'Even so far',
+		'too-few': 'Too early to call'
+	};
 	$effect(() => {
 		const token = club.token;
 		const route = id;
@@ -39,453 +58,695 @@
 	});
 </script>
 
+{#snippet meterBars(bot: ClubBot, accent: string, big = false)}
+	{@const m = meters(bot)}
+	{#if m}
+		<ul class="meters" class:big style:--accent={accent} aria-label="How {bot.name} plays">
+			{#each METERS as meter (meter.key)}
+				<li>
+					<span>{meter.label}</span>
+					<span class="track"
+						><span class="fill" style:width={`${Math.round(m[meter.key] * 100)}%`}></span></span
+					>
+				</li>
+			{/each}
+		</ul>
+	{/if}
+{/snippet}
+
 <svelte:head><title>{id ? 'Meet your opponent' : 'The bot room'} · Chaal</title></svelte:head>
 <ClubGate>
 	<div class="bot-room">
-		<a class="back" href={id ? '/bots' : '/club'}>← {id ? 'All characters' : 'Back to the adda'}</a>
 		{#if error}
-			<p role="alert">{error}</p>
-			<button class="action" onclick={() => retry++}>Try again</button>
-		{:else if !loaded}<p role="status">Pulling up a chair…</p>
+			<div class="state">
+				<p role="alert">{error}</p>
+				<button class="cta" onclick={() => retry++}>Try again</button>
+			</div>
+		{:else if !loaded}<div class="state"><p role="status">Pulling up a chair…</p></div>
 		{:else if id && bots[0]}
 			{@const bot = bots[0]}
-			<section class="profile">
-				<div class="profile-art">
-					<span class="watermark" aria-hidden="true">♠</span><BotPortrait
-						mascotId={bot.avatar?.mascotId}
-						name={bot.name}
-						size={510}
-					/>
-				</div>
-				<div class="profile-copy">
-					<p class="eyebrow">CLUB CHARACTER · BOT {bot.status === 'retired' ? '· RETIRED' : ''}</p>
-					<h1>{bot.name}<span>.</span></h1>
-					<p class="tagline">{bot.personality?.title ?? 'An old club opponent'}</p>
-					<p class="description">{bot.description}</p>
-					<div class="traits">
-						{#each bot.personality?.traits ?? [] as trait (trait)}<span>{trait}</span>{/each}
+			{@const l = look(bot)}
+			{@const record = bot.record}
+			<div class="bar">
+				<a class="back" href="/bots">← All bots</a>
+			</div>
+			<div class="profile" style:--tone={l.tone} style:--accent={l.accent}>
+				<section class="tile hero" aria-labelledby="bot-name">
+					<span class="watermark" aria-hidden="true">{l.suit}</span>
+					<div class="art">
+						<BotPortrait mascotId={bot.avatar?.mascotId} name={bot.name} size={420} />
 					</div>
-					{#if bot.available}<a
-							class="action"
-							href={`/create-room?bot=${encodeURIComponent(bot.botId)}`}>Pull up a table ↗</a
-						>{:else}<p class="muted">
-							{bot.status === 'retired'
-								? 'Retired from new tables. Your shared history stays here.'
-								: 'Sitting out in this club for now.'}
-						</p>{/if}
+					<div class="hero-copy">
+						<p class="title">{bot.personality?.title ?? 'Club character'}</p>
+						<h1 id="bot-name">{bot.name}<span>.</span></h1>
+						<div class="chips">
+							{#each bot.personality?.traits ?? [] as trait (trait)}<span>{trait}</span>{/each}
+						</div>
+						{#if bot.available}<a
+								class="cta"
+								href={`/create-room?bot=${encodeURIComponent(bot.botId)}`}
+								><span aria-hidden="true">♠</span> Pull up a table</a
+							>{:else}<p class="muted">
+								{bot.status === 'retired' ? 'Retired from new tables.' : 'Sitting out for now.'}
+							</p>{/if}
+					</div>
+				</section>
+
+				<section class="tile style" aria-labelledby="style-title">
+					<h2 id="style-title"><span aria-hidden="true">✦</span> How {bot.name} plays</h2>
+					{@render meterBars(bot, l.accent, true)}
+					<p class="desc">{bot.description}</p>
 					{#if bot.style}<p class="fine">
-							Teen Patti · Style {bot.style.version} · {bot.style.difficulty.declared}<br
-							/>Character play style; measured difficulty is still building.
+							Teen Patti · style {bot.style.version} · {bot.style.difficulty.declared}
 						</p>{/if}
-				</div>
-			</section>
-			<section class="rivalry" aria-labelledby="your-record">
-				<p class="eyebrow">YOU TWO AT THE TABLE</p>
-				<h2 id="your-record">A little history<span>.</span></h2>
-				{#if bot.memory?.status === 'remembered'}
-					<div class="remembered">
-						<p class="eyebrow">{bot.memory.familiarity}</p>
-						<p><strong>{bot.name}</strong> {bot.memory.moment?.replace(/^Remembers/, 'remembers')}</p>
-						{#if bot.memory.firstPlayed && bot.memory.lastPlayed}<p class="fine">
-							First table together: {date(bot.memory.firstPlayed)} · Last played: {date(bot.memory.lastPlayed)}
-						</p>{/if}
-						{#each bot.memory.contexts.filter(c => c.hands >= 6).slice(0, 4) as context (context.variant)}
-							<p class="fine">{context.variant.replace(/-1$/, '').replaceAll('-', ' ')} · {context.familiarity}</p>
-						{/each}
-					</div>
-				{/if}
-				{#if !bot.record}
-					<p class="empty">
-						You haven’t played {bot.name} yet.<br /><span
-							>Every rivalry starts with a first hand.</span
-						>
-					</p>
-				{:else}
-					{@const record = bot.record}
-					<div class="record-strip">
-						<div><strong>{record.hands}</strong><span>hands together</span></div>
-						<div><strong>{record.nights}</strong><span>nights together</span></div>
-						<div><strong>{signed(record.units)}</strong><span>boots · your net flow</span></div>
-					</div>
-					<p class="muted">
-						{record.verdict === 'too-few'
-							? 'A few more hands before we call this an edge.'
-							: record.verdict === 'ahead'
-								? 'Your record shows an edge so far.'
-								: record.verdict === 'behind'
-									? 'Their record shows an edge so far.'
-									: 'No clear edge yet.'} Results include practice tables.
-					</p>
-					{#if record.evidence !== 'insufficient' && record.fair.you !== null}<p class="fine">
-							Your wins / fair share: {record.fair.you.toFixed(2)}×. Fair share accounts for table
-							size and split pots.
-						</p>{/if}
-					<div class="history-columns">
-						<div>
-							<h3>Games together</h3>
-							{#each Object.entries(record.games) as [game, hands] (game)}<p class="history-row">
-									<span>{game === 'teen-patti' ? 'Teen Patti' : game}</span><strong
-										>{hands} hands</strong
-									>
-								</p>{/each}
-							<h3>At the Show</h3>
-							<p>
-								{record.contests.won} won · {record.contests.lost} lost · {record.contests.split} split
-							</p>
+				</section>
+
+				<section class="tile memory" aria-labelledby="memory-title">
+					<h2 id="memory-title"><span aria-hidden="true">☾</span> Remembers</h2>
+					{#if bot.memory?.status === 'remembered' && bot.memory.moment}
+						<blockquote>
+							{bot.name}
+							{bot.memory.moment.replace(/^Remembers/, 'remembers')}
+						</blockquote>
+						<div class="chips small">
+							<span>{bot.memory.familiarity}</span>
+							{#if bot.memory.firstPlayed}<span>since {date(bot.memory.firstPlayed)}</span>{/if}
+							{#if bot.memory.lastPlayed}<span>last {date(bot.memory.lastPlayed)}</span>{/if}
 						</div>
-						<div>
-							<h3>Recent nights</h3>
-							{#each [...record.recentNights].reverse() as night (night.nightId)}<div
-									class="history-row"
-								>
-									<span>{date(night.at)} · {night.hands} hands</span><strong
-										>{signed(night.units)} boots</strong
-									>
-								</div>{/each}
+					{:else}
+						<p class="quiet">Nothing yet. Every rivalry starts with a first hand.</p>
+					{/if}
+				</section>
+
+				<section class="tile record" aria-labelledby="record-title">
+					<h2 id="record-title"><span aria-hidden="true">⚔</span> You two</h2>
+					{#if !record}
+						<div class="first">
+							<span aria-hidden="true">{l.suit}</span>
+							<p>No hands together yet.</p>
 						</div>
-					</div>
-					{#if record.biggestWin || record.biggestLoss}<p class="fine">
-							Biggest swing together: {record.biggestWin ? `+${record.biggestWin.units}` : '—'} / {record
-								.biggestLoss?.units ?? '—'} boots.
-						</p>{/if}
-					<p class="fine">
-						Based on your most recent 5,000 recorded hands. Shared pots use proportional chip
-						attribution. Hidden cards stay hidden.
-					</p>
-				{/if}
-			</section>
-		{:else}
-			<header>
-				<p class="eyebrow">THE USUAL SUSPECTS</p>
-				<h1>Someone’s always<br />up for a <em>chaal</em><span>.</span></h1>
-				<p class="intro">
-					Familiar faces. Different ways to play.<br />Pick your company for the next hand.
-				</p>
-			</header>
-			{#if !bots.length}<p class="empty">
-					The bot room is quiet tonight.<br /><span
-						>Your club owner can invite characters from Admin → Bots.</span
-					>
-				</p>{/if}
-			<div class="lineup">
-				{#each bots as bot, index (bot.botId)}
-					<a
-						class="character"
-						href={`/bots/${bot.slug}`}
-						style:--tone={['#263b2a', '#243243', '#494026', '#263a40', '#422b34'][index % 5]}
-					>
-						<div class="stage">
-							<span class="number">0{index + 1}</span><span class="suit" aria-hidden="true"
-								>{['♠', '♦', '♣', '♠', '♥'][index % 5]}</span
-							><BotPortrait mascotId={bot.avatar?.mascotId} name={bot.name} size={300} /><span
-								class="meet">Meet your opponent ↗</span
+					{:else}
+						<div class="net" class:negative={record.units < 0} class:positive={record.units > 0}>
+							<strong>{signed(record.units)}</strong>
+							<span>boots to you</span>
+						</div>
+						<div class="chips small">
+							<span><b>{record.hands}</b> hands</span>
+							<span><b>{record.nights}</b> nights</span>
+							<span class="verdict">{verdictText[record.verdict] ?? 'Even so far'}</span>
+						</div>
+						{#if record.recentNights.length}
+							{@const top = Math.max(...record.recentNights.map((n) => Math.abs(n.units)), 1)}
+							<div class="nights" aria-label="Recent nights">
+								{#each record.recentNights as night (night.nightId)}
+									<div
+										class="night"
+										title="{date(night.at)} · {night.hands} hands · {signed(night.units)} boots"
+									>
+										<span
+											class="barv"
+											class:down={night.units < 0}
+											style:height={`${Math.max(4, (Math.abs(night.units) / top) * 100)}%`}
+										></span>
+										<small>{date(night.at)}</small>
+									</div>
+								{/each}
+							</div>
+						{/if}
+						{@const c = record.contests}
+						{@const total = Math.max(c.won + c.lost + c.split, 1)}
+						<div class="show" aria-label="At the show: {c.won} won, {c.lost} lost, {c.split} split">
+							<span class="label">At the show</span>
+							<div class="seg">
+								<span class="won" style:flex={c.won / total}></span><span
+									class="split"
+									style:flex={c.split / total}
+								></span><span class="lost" style:flex={c.lost / total}></span>
+							</div>
+							<span class="counts"
+								><b>{c.won}</b> won · <b>{c.lost}</b> lost{c.split
+									? ` · ${c.split} split`
+									: ''}</span
 							>
 						</div>
-						<p class="eyebrow">{bot.personality?.title ?? 'CLUB BOT'}</p>
-						<h2>{bot.name}</h2>
-						<p class="bio">{bot.description}</p>
-						<p class="fine">Teen Patti · {bot.style?.difficulty.declared}</p>
-						<p class="connection">
-							{bot.memory?.status === 'remembered' ? `${bot.memory.familiarity} · ${bot.memory.hands} hands together` : bot.record
-								? `${bot.record.hands} hands together`
-								: 'Your first hand is still to come'}
+						{#if record.biggestWin || record.biggestLoss}<div class="chips small">
+								{#if record.biggestWin}<span class="up">best {signed(record.biggestWin.units)}</span
+									>{/if}
+								{#if record.biggestLoss}<span class="downc"
+										>worst {signed(record.biggestLoss.units)}</span
+									>{/if}
+							</div>{/if}
+					{/if}
+				</section>
+			</div>
+		{:else}
+			<div class="bar">
+				<h1>Bots <span>{bots.length}</span></h1>
+				<a class="cta" href="/create-room"><span aria-hidden="true">♠</span> Pull up a table</a>
+			</div>
+			{#if !bots.length}<div class="state">
+					<p>The bot room is quiet tonight.</p>
+				</div>{/if}
+			<div class="lineup">
+				{#each bots as bot, index (bot.botId)}
+					{@const l = look(bot, index)}
+					<a
+						class="tile character"
+						href={`/bots/${bot.slug}`}
+						style:--tone={l.tone}
+						style:--accent={l.accent}
+						aria-label="{bot.name}, {bot.personality?.title ?? 'club character'}"
+					>
+						<div class="stage">
+							<span class="number">0{index + 1}</span>
+							<span class="watermark" aria-hidden="true">{l.suit}</span>
+							<div class="art">
+								<BotPortrait mascotId={bot.avatar?.mascotId} name={bot.name} size={300} />
+							</div>
+						</div>
+						<div class="who">
+							<p class="title">{bot.personality?.title ?? 'Club character'}</p>
+							<h2>{bot.name}</h2>
+						</div>
+						{@render meterBars(bot, l.accent)}
+						<p class="with">
+							{#if bot.record}<span
+									class:negative={bot.record.units < 0}
+									class:positive={bot.record.units > 0}>{signed(bot.record.units)}</span
+								>
+								· {bot.record.hands} hands{:else}New face{/if}
 						</p>
 					</a>
 				{/each}
 			</div>
-			<p class="footnote">
-				Club characters inspired by familiar faces. Automated opponents, each with their own playing
-				style.
-			</p>
 		{/if}
 	</div>
 </ClubGate>
 
 <style>
-	.remembered { border-left: 2px solid #d6b467; padding: .25rem 1.25rem; margin: 1.5rem 0 2rem; color: #ded9c9; }
+	/* One screen, like Club and Stats. */
 	.bot-room {
-		max-width: 1360px;
-		margin: 0 auto;
-		padding: 2rem 1.2rem 5rem;
-		color: #f1ebdc;
+		--tile: var(--surface);
+		--tile-line: #ffffff1a;
+		--green: #8fd19e;
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		height: calc(100dvh - var(--header-h, 64px));
+		overflow: hidden;
+		padding: 16px max(var(--gutter), calc((100vw - var(--page-max)) / 2 + var(--gutter))) 18px;
+		color: var(--paper);
+		background: radial-gradient(ellipse at 70% 0%, #3a2b4a66, transparent 45%), var(--night);
+		color-scheme: dark;
+	}
+	.bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 14px;
+		flex: none;
+		min-height: 44px;
+	}
+	.bar h1 {
+		font-family: var(--font-display);
+		font-size: 24px;
+		font-weight: 800;
+		letter-spacing: -0.04em;
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+	}
+	.bar h1 span {
+		font-size: 14px;
+		color: var(--butter);
 	}
 	.back {
-		color: #aaa999;
-		font-size: 0.82rem;
-	}
-	header {
-		margin: 3rem 0;
-	}
-	.eyebrow {
-		color: #b9b7a5;
-		font-size: 0.65rem;
+		font-size: 13px;
 		font-weight: 700;
-		letter-spacing: 0.16em;
-		text-transform: uppercase;
+		color: var(--muted);
+		padding: 10px 16px;
+		border-radius: 100px;
+		background: #ffffff10;
+		transition: background 0.2s;
 	}
-	h1 {
-		font-size: clamp(2.8rem, 6vw, 5.5rem);
+	.back:hover {
+		background: #ffffff1c;
+		color: var(--paper);
+	}
+	.cta {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 11px 20px;
+		border-radius: 100px;
+		background: var(--butter);
+		color: var(--night);
 		font-weight: 800;
-		line-height: 1.02;
-		letter-spacing: -0.055em;
-		margin: 0.8rem 0 1.2rem;
+		font-size: 14px;
+		transition:
+			translate 0.2s,
+			box-shadow 0.2s;
 	}
-	h1 em {
-		font-family: Georgia, serif;
-		font-weight: 400;
+	.cta span {
+		color: #c0392b;
 	}
-	h1 span,
-	h2 span {
-		color: #d6b467;
+	.cta:hover,
+	.cta:focus-visible {
+		translate: 0 -2px;
+		box-shadow: 0 8px 18px #0006;
 	}
-	.intro,
-	.description {
-		color: #b8b9aa;
-		font-size: 1rem;
-		line-height: 1.7;
-	}
-	.lineup {
-		display: grid;
-		grid-template-columns: repeat(5, minmax(0, 1fr));
-		gap: 1.1rem;
-	}
-	.character {
-		min-width: 0;
-	}
-	.stage {
-		position: relative;
-		overflow: hidden;
+	.state {
+		flex: 1;
 		display: grid;
 		place-items: center;
-		background: var(--tone);
-		border-radius: 0.45rem;
-		border: 1px solid #ffffff12;
-		padding: 1rem 0 0.8rem;
+		align-content: center;
+		gap: 12px;
+		color: var(--muted);
 	}
-	.stage :global(.portrait) {
-		width: 100%;
-		height: auto;
-		aspect-ratio: 1;
-		transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-		z-index: 1;
-	}
-	.character:hover .stage :global(.portrait) {
-		transform: translateY(-0.5rem) rotate(-3deg);
-	}
-	.number {
-		position: absolute;
-		left: 1rem;
-		top: 0.8rem;
-		color: #d4cbb4;
-		text-decoration: underline;
-		font-size: 0.75rem;
-	}
-	.suit {
-		position: absolute;
-		font-size: 12rem;
-		opacity: 0.055;
-		top: -0.8rem;
-		right: -0.2rem;
-	}
-	.meet {
-		color: #f0e4c1;
-		font-size: 0.65rem;
-		z-index: 2;
-	}
-	.character .eyebrow {
-		margin: 1.3rem 0 0.5rem;
+	.tile {
+		min-height: 0;
+		min-width: 0;
+		overflow: hidden;
+		border-radius: 18px;
+		background: var(--tile);
+		border: 1px solid var(--tile-line);
+		padding: 14px 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
 	}
 	h2 {
-		font-size: 1.25rem;
-		font-weight: 750;
-		letter-spacing: -0.03em;
-	}
-	.bio {
-		color: #b9bbad;
-		font-size: 0.8rem;
-		line-height: 1.6;
-		margin: 0.65rem 0;
-	}
-	.fine {
-		color: #929b8d;
-		font-size: 0.72rem;
-		line-height: 1.6;
-		margin: 0.8rem 0;
-	}
-	.connection {
-		color: #c5b27d;
-		font-size: 0.72rem;
-		border-top: 1px solid #ffffff18;
-		padding-top: 0.9rem;
-		margin-top: 1rem;
-	}
-	.footnote {
-		color: #7f8e7d;
-		font-size: 0.7rem;
-		margin-top: 3rem;
-	}
-	.action {
-		display: inline-block;
-		border-radius: 999px;
-		background: #d7ba75;
-		color: #151d15;
-		padding: 0.8rem 1.4rem;
-		font-weight: 750;
-		margin: 1.2rem 0 0.4rem;
-		cursor: pointer;
-	}
-	.profile {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 4rem;
+		font-family: var(--font-display);
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		font-size: 15px;
+		display: flex;
 		align-items: center;
-		padding: 2rem 0 4rem;
+		gap: 7px;
 	}
-	.profile-art {
-		position: relative;
-		display: grid;
-		place-items: center;
-		background: radial-gradient(ellipse at 50% 60%, #304331, transparent 70%);
-		overflow: hidden;
+	h2 > span {
+		color: var(--butter);
 	}
-	.profile-art :global(.portrait) {
-		z-index: 1;
-		width: 100%;
-		height: auto;
-		aspect-ratio: 1;
+	.title {
+		font-size: 11px;
+		font-weight: 800;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--accent, var(--butter));
 	}
 	.watermark {
 		position: absolute;
-		font-size: 30rem;
-		color: #bfa15b09;
+		font-size: 220px;
+		line-height: 1;
+		color: #ffffff0c;
+		right: -18px;
+		bottom: -40px;
+		pointer-events: none;
 	}
-	.profile h1 {
-		font-size: clamp(3rem, 6vw, 5.4rem);
-	}
-	.tagline {
-		font-size: 1.4rem;
-		font-family: Georgia, serif;
-		font-style: italic;
-		color: #d7c49b;
-		margin-bottom: 1.2rem;
-	}
-	.traits {
-		display: flex;
-		gap: 0.8rem;
-		color: #b9b7a5;
-		font-size: 0.75rem;
-		margin-top: 1rem;
-	}
-	.traits span + span::before {
-		content: '·';
-		margin-right: 0.8rem;
-	}
-	.rivalry {
-		border-top: 1px solid #ffffff20;
-		padding-top: 2.5rem;
-	}
-	.rivalry h2 {
-		font-size: 2.3rem;
-		margin: 0.6rem 0 1.5rem;
-	}
-	.empty {
-		font-size: 1.2rem;
-		color: #e2d9bf;
-		padding: 1rem 0 3rem;
-		line-height: 1.8;
-	}
-	.empty span {
-		font-size: 0.9rem;
-		color: #929b8d;
-	}
-	.record-strip {
-		display: flex;
-		gap: 4rem;
-		margin: 2rem 0;
-		flex-wrap: wrap;
-	}
-	.record-strip strong {
-		display: block;
-		font-size: 2.5rem;
-	}
-	.record-strip span {
-		color: #a5af9f;
-		font-size: 0.8rem;
-	}
-	.muted {
-		color: #a5af9f;
-		font-size: 0.9rem;
-	}
-	.history-columns {
+	.art {
+		position: relative;
+		width: 100%;
+		height: 100%;
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 4rem;
-		margin: 2rem 0;
+		place-items: center;
 	}
-	h3 {
-		font-size: 1.1rem;
-		margin: 1rem 0;
+	.art :global(.portrait) {
+		width: min(100%, 100cqh) !important;
+		height: auto !important;
+		aspect-ratio: 1;
 	}
-	.history-row {
+	.positive {
+		color: var(--green);
+	}
+	.negative {
+		color: var(--red);
+	}
+
+	/* Meters: six bars, the character's DNA. */
+	.meters {
+		display: grid;
+		gap: 6px;
+	}
+	.meters li {
+		display: grid;
+		grid-template-columns: 74px 1fr;
+		align-items: center;
+		gap: 8px;
+		font-size: 11px;
+		font-weight: 700;
+		color: var(--muted);
+	}
+	.track {
+		height: 6px;
+		border-radius: 6px;
+		background: #ffffff14;
+		overflow: hidden;
+	}
+	.fill {
+		display: block;
+		height: 100%;
+		border-radius: 6px;
+		background: var(--accent);
+		transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.meters.big {
+		gap: 12px;
+	}
+	.meters.big li {
+		grid-template-columns: 96px 1fr;
+		font-size: 13px;
+	}
+	.meters.big .track {
+		height: 10px;
+	}
+
+	/* The lineup: five tall characters filling the screen. */
+	.lineup {
+		flex: 1;
+		min-height: 0;
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+		gap: 14px;
+	}
+	.character {
+		padding: 10px 10px 14px;
+		gap: 12px;
+		transition:
+			translate 0.25s,
+			box-shadow 0.25s,
+			border-color 0.25s;
+	}
+	.character:hover,
+	.character:focus-visible {
+		translate: 0 -4px;
+		box-shadow: 0 14px 30px #0007;
+		border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+	}
+	.stage {
+		position: relative;
+		flex: 1;
+		min-height: 140px;
+		border-radius: 12px;
+		overflow: hidden;
+		background: radial-gradient(ellipse at 50% 40%, #ffffff14, transparent 65%), var(--tone);
+		container-type: size;
+	}
+	/* The sprite cell has room around the face: fill the stage with it. */
+	.stage .art :global(.portrait) {
+		scale: 1.5;
+		transition: scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.character:hover .stage .art :global(.portrait) {
+		scale: 1.6;
+	}
+	.number {
+		position: absolute;
+		top: 10px;
+		left: 12px;
+		font-size: 11px;
+		font-weight: 800;
+		color: #ffffff90;
+		z-index: 1;
+	}
+	.who {
+		padding: 0 6px;
+	}
+	.who h2 {
+		font-size: clamp(22px, 2vw, 30px);
+		font-weight: 800;
+		letter-spacing: -0.04em;
+	}
+	.character .meters {
+		padding: 0 6px;
+	}
+	.with {
+		margin: 0 6px;
+		padding-top: 10px;
+		border-top: 1px solid var(--tile-line);
+		font-size: 12px;
+		color: var(--muted);
+	}
+	.with span {
+		font-weight: 800;
+	}
+
+	/* Profile: the character, how they play, what they remember, and you two. */
+	.profile {
+		flex: 1;
+		min-height: 0;
+		display: grid;
+		grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1.25fr) minmax(0, 1fr);
+		gap: 14px;
+	}
+	.hero {
+		grid-row: 1 / 3;
+		position: relative;
+		padding: 0;
+		background: radial-gradient(ellipse at 50% 35%, #ffffff16, transparent 60%), var(--tone);
+	}
+	.hero .art {
+		flex: 1;
+		min-height: 0;
+		container-type: size;
+	}
+	.hero-copy {
+		position: relative;
+		display: grid;
+		gap: 10px;
+		justify-items: start;
+		padding: 0 24px 22px;
+	}
+	.hero h1 {
+		font-family: var(--font-display);
+		font-size: clamp(44px, 5vw, 84px);
+		font-weight: 800;
+		letter-spacing: -0.055em;
+		line-height: 0.9;
+	}
+	.hero h1 span {
+		color: var(--butter);
+	}
+	.chips {
 		display: flex;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 0.75rem 0;
-		border-bottom: 1px solid #ffffff12;
-		font-size: 0.8rem;
-		color: #a5af9f;
+		flex-wrap: wrap;
+		gap: 6px;
 	}
-	.history-row strong {
-		color: #ded2af;
+	.chips span {
+		padding: 6px 12px;
+		border-radius: 100px;
+		background: #00000030;
+		font-size: 12px;
+		font-weight: 700;
 	}
-	@media (max-width: 1000px) {
-		.lineup {
-			grid-template-columns: repeat(3, minmax(0, 1fr));
-			gap: 2rem 1rem;
-		}
-		.profile {
-			gap: 1.5rem;
-		}
+	.chips.small span {
+		background: #ffffff10;
+		color: var(--muted);
+		font-size: 12px;
 	}
-	@media (max-width: 600px) {
+	.chips b {
+		color: var(--paper);
+	}
+	.chips .verdict {
+		color: var(--butter);
+	}
+	.chips .up {
+		color: var(--green);
+	}
+	.chips .downc {
+		color: var(--red);
+	}
+	.style {
+		grid-row: 1 / 3;
+		gap: 16px;
+	}
+	.desc {
+		font-size: 14px;
+		line-height: 1.5;
+		color: #e8e0f0;
+		margin-top: auto;
+	}
+	.fine {
+		font-size: 12px;
+		color: var(--muted);
+	}
+	blockquote {
+		font-family: var(--font-display);
+		font-size: clamp(18px, 1.5vw, 24px);
+		font-weight: 700;
+		line-height: 1.25;
+		letter-spacing: -0.015em;
+		color: var(--butter);
+		padding-left: 14px;
+		border-left: 3px solid var(--accent);
+	}
+	.quiet {
+		color: var(--muted);
+		font-size: 14px;
+	}
+	.memory {
+		justify-content: flex-start;
+	}
+	.record {
+		grid-row: 1 / 3;
+		grid-column: 3;
+	}
+	.memory {
+		grid-column: 2;
+		grid-row: 2;
+	}
+	.style {
+		grid-column: 2;
+		grid-row: 1;
+	}
+	.net {
+		display: grid;
+		gap: 2px;
+	}
+	.net strong {
+		font-family: var(--font-display);
+		font-size: clamp(48px, 4.6vw, 76px);
+		font-weight: 800;
+		letter-spacing: -0.05em;
+		line-height: 0.95;
+	}
+	.net span {
+		font-size: 12px;
+		color: var(--muted);
+	}
+	.nights {
+		flex: 1;
+		min-height: 60px;
+		display: flex;
+		align-items: stretch;
+		gap: 8px;
+	}
+	.night {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		align-items: center;
+		gap: 4px;
+	}
+	.barv {
+		width: 100%;
+		max-width: 34px;
+		border-radius: 6px 6px 2px 2px;
+		background: var(--green);
+	}
+	.barv.down {
+		background: var(--red);
+		border-radius: 2px 2px 6px 6px;
+	}
+	.night small {
+		font-size: 10px;
+		color: var(--muted);
+	}
+	.show {
+		display: grid;
+		gap: 6px;
+	}
+	.show .label {
+		font-size: 12px;
+		font-weight: 700;
+		color: var(--muted);
+	}
+	.seg {
+		display: flex;
+		height: 10px;
+		border-radius: 10px;
+		overflow: hidden;
+		background: #ffffff10;
+	}
+	.won {
+		background: var(--green);
+	}
+	.lost {
+		background: var(--red);
+	}
+	.split {
+		background: var(--muted);
+	}
+	.counts {
+		font-size: 12px;
+		color: var(--muted);
+	}
+	.counts b {
+		color: var(--paper);
+	}
+	.first {
+		flex: 1;
+		display: grid;
+		place-items: center;
+		align-content: center;
+		gap: 8px;
+		color: var(--muted);
+	}
+	.first span {
+		font-size: 64px;
+		color: #ffffff22;
+	}
+
+	/* Narrower screens: scroll the page; the lineup becomes a row you swipe. */
+	@media (max-width: 1100px) {
 		.bot-room {
-			padding: 1.2rem 0.8rem 3rem;
-		}
-		header {
-			margin: 2rem 0;
+			height: auto;
+			overflow: visible;
 		}
 		.lineup {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
+			display: flex;
+			overflow-x: auto;
+			scroll-snap-type: x mandatory;
+			padding-bottom: 6px;
+		}
+		.character {
+			flex: none;
+			width: min(300px, 78vw);
+			min-height: 520px;
+			scroll-snap-align: start;
+		}
+		.profile {
+			grid-template-columns: 1fr 1fr;
+			grid-template-rows: auto;
+		}
+		.hero {
+			grid-column: 1 / -1;
+			grid-row: auto;
+			min-height: 480px;
+		}
+		.style,
+		.memory,
+		.record {
+			grid-column: auto;
+			grid-row: auto;
+		}
+		.record {
+			min-height: 360px;
+		}
+	}
+	@media (max-width: 640px) {
+		.lineup {
+			flex-direction: column;
+			overflow: visible;
+		}
+		.character {
+			width: auto;
+			min-height: 0;
+		}
+		.stage {
+			flex: none;
+			height: 240px;
+		}
+		.stage .art :global(.portrait),
+		.character:hover .stage .art :global(.portrait) {
+			scale: 1.1;
 		}
 		.profile {
 			grid-template-columns: 1fr;
-			gap: 0;
-			padding-bottom: 2rem;
 		}
-		.profile-art {
-			max-width: 320px;
-			margin: 0 auto;
+		.hero {
+			min-height: 440px;
 		}
-		.profile h1 {
-			font-size: 3.1rem;
-		}
-		.history-columns {
-			grid-template-columns: 1fr;
-			gap: 1rem;
-		}
-		.record-strip {
-			gap: 1.8rem;
-		}
-		.record-strip strong {
-			font-size: 2rem;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.stage :global(.portrait) {
-			transition: none;
-		}
-	}
-	:global([data-reduced-motion]) .stage :global(.portrait) {
-		transition: none;
 	}
 </style>

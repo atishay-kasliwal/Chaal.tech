@@ -257,14 +257,14 @@
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
-		max-width: 1320px;
+		max-width: var(--page-max);
 		margin: auto;
 		/* Fills the screen under the header, leaving room for the strip below. */
 		height: calc(100dvh - var(--header-h, 64px) - 82px);
 		min-height: 460px;
 		padding: clamp(8px, 2dvh, 24px) 0;
 		justify-content: center;
-		--cw: clamp(78px, min(10.5vw, 17dvh), 168px);
+		--cw: clamp(78px, min(12.5vw, 20dvh), 240px);
 	}
 	h1 {
 		font-family: var(--font-display);
@@ -315,15 +315,15 @@
 		position: relative;
 		display: flex;
 		justify-content: center;
-		width: min(100%, calc(var(--cw) * 5.4));
+		width: min(100%, calc(var(--cw) * 8.5));
 	}
 	/* Thirteen cards around one pivot below the hand, like cards held in a hand. */
 	.card-fan {
-		--step: 6.2deg;
+		--step: 10deg;
 		position: relative;
 		width: 100%;
 		/* Room for the side cards, which dip below the hand as they swing around the pivot. */
-		height: calc(var(--cw) * 2.1);
+		height: calc(var(--cw) * 2.4);
 		cursor: pointer;
 		border-radius: 24px;
 		display: grid;
@@ -331,7 +331,7 @@
 		isolation: isolate;
 	}
 	.card-fan.spread {
-		--step: 8deg;
+		--step: 11.5deg;
 	}
 	.fan-card {
 		grid-area: 1/1;
@@ -387,7 +387,7 @@
 	.game-shelf,
 	.night-plan,
 	.learn {
-		max-width: 1440px;
+		max-width: var(--page-max);
 		margin: auto;
 		padding: 90px var(--gutter);
 	}

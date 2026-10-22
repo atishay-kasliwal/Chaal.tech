@@ -1,11 +1,9 @@
 import { freshDeck } from '../classic.mjs';
+import { GameError } from '../engine.mjs';
 
+// Rule errors are GameErrors, so the room server shows players the reason, not a service failure.
 const require = (ok, message, code = 'INVALID_ACTION') => {
-	if (!ok) {
-		const error = new Error(message);
-		error.code = code;
-		throw error;
-	}
+	if (!ok) throw new GameError(message, code);
 };
 
 const seated = (room) => room.players.filter((p) => p.seatNumber !== null).sort((a, b) => a.seatNumber - b.seatNumber);
@@ -214,7 +212,7 @@ export function transition(snapshot, id, action, payload = {}, ctx = {}) {
 				if (raiseBy >= room.minRaise) room.acted = [];
 				room.minRaise = Math.max(room.minRaise, raiseBy); room.currentBet = target;
 				if (!player.balance) player.isAllIn = true;
-			} else throw new Error('Unknown Poker action');
+			} else throw new GameError('Unknown Poker action');
 			if (!room.acted.includes(id)) room.acted.push(id);
 			advance(room, player.seatNumber, ctx);
 		}
