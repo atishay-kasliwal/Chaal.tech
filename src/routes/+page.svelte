@@ -7,6 +7,7 @@
 		{
 			name: 'Teen Patti',
 			note: 'Three cards. Endless possibilities.',
+			family: 'The original adda game',
 			suit: '♠',
 			id: 'classic-1',
 			className: 'patti'
@@ -14,6 +15,7 @@
 		{
 			name: 'Poker',
 			note: 'Keep a straight face.',
+			family: 'Texas Hold’em',
 			suit: '♦',
 			id: 'texas-holdem',
 			className: 'poker'
@@ -21,6 +23,7 @@
 		{
 			name: 'Blackjack',
 			note: 'Feeling twenty-one?',
+			family: 'Beat the dealer',
 			suit: '♣',
 			id: 'blackjack',
 			className: 'blackjack'
@@ -28,9 +31,34 @@
 		{
 			name: 'Rummy',
 			note: 'A little order in the chaos.',
+			family: '13-card Indian Rummy',
 			suit: '♥',
 			id: 'rummy',
 			className: 'rummy'
+		},
+		{
+			name: '3 2 5',
+			note: 'Make your number.',
+			family: 'Three players, three targets',
+			suit: '♤',
+			id: 'three-two-five',
+			className: 'trick t325'
+		},
+		{
+			name: '10 Pakad',
+			note: 'Grab the tens.',
+			family: 'Two teams chase the tens',
+			suit: '♤',
+			id: 'ten-pakad',
+			className: 'trick pakad'
+		},
+		{
+			name: '29',
+			note: 'Say it, then prove it.',
+			family: 'Bid, then keep trump secret',
+			suit: '♤',
+			id: 'twenty-nine',
+			className: 'trick g29'
 		}
 	];
 	const rankings = [
@@ -47,7 +75,7 @@
 	<title>Chaal · Good cards. Better company.</title>
 	<meta
 		name="description"
-		content="Your friends, your favourite card games, one video table. Play Teen Patti, Poker, Blackjack and Rummy in the Chaal private clubhouse."
+		content="Your friends, your favourite card games, one video table. Play Teen Patti, Poker, Blackjack, Rummy, 3 2 5, 10 Pakad and 29 in the Chaal private clubhouse."
 	/>
 </svelte:head>
 
@@ -87,15 +115,10 @@
 						<GameDemo game={GAME_GUIDES.find((guide) => guide.id === game.id)!} compact />
 					</div>
 					<span class="tile-footer"
-						><span class="tile-family"
-							>{game.id === 'classic-1'
-								? 'The original adda game'
-								: game.id === 'texas-holdem'
-									? 'Texas Hold’em'
-									: game.id === 'blackjack'
-										? 'Beat the dealer'
-										: '13-card Indian Rummy'}</span
-						><span class="tile-suit-mark" aria-hidden="true">{game.suit}</span></span
+						><span class="tile-family">{game.family}</span><span
+							class="tile-suit-mark"
+							aria-hidden="true">{game.suit}</span
+						></span
 					>
 					<p>{game.note}</p></a
 				>
@@ -104,39 +127,6 @@
 		<p class="shelf-note">
 			{GAME_GUIDES.length} games and variants. Your usual favourites, plus a few new arguments.
 		</p>
-	</section>
-
-	<section class="night-plan" aria-labelledby="night-heading">
-		<div>
-			<span class="small-label">No complicated plans required.</span>
-			<h2 id="night-heading">Less “when<br />are we free?”<br />More <span>“deal me in.”</span></h2>
-			<p>Bring the banter back to the table.<br />We’ll take care of the cards.</p>
-		</div>
-		<ol class="night-steps">
-			<li>
-				<span class="step-symbol" aria-hidden="true">↗</span>
-				<div>
-					<h3>Make it a game night.</h3>
-					<p>Sign in to your private club and start a table. Pick the game and set the chips.</p>
-				</div>
-			</li>
-			<li>
-				<span class="step-symbol" aria-hidden="true">♧</span>
-				<div>
-					<h3>Round up your people.</h3>
-					<p>
-						Invite your club friends or share a table link. Everyone joins right in their browser.
-					</p>
-				</div>
-			</li>
-			<li>
-				<span class="step-symbol" aria-hidden="true">♠</span>
-				<div>
-					<h3>Read the room. Or try to.</h3>
-					<p>Turn on video, play your hand, and see who really has a poker face.</p>
-				</div>
-			</li>
-		</ol>
 	</section>
 
 	<section class="learn" aria-labelledby="learn-heading">
@@ -202,7 +192,9 @@
 		font-size: 12px;
 		font-weight: 600;
 	}
-	/* One centred column: the dealt hand, the line, the way in. */
+	/* One centred column: the dealt hand,
+	the line,
+	the way in. */
 	.hero {
 		display: flex;
 		flex-direction: column;
@@ -268,7 +260,8 @@
 		justify-content: center;
 		width: min(100%, calc(var(--cw) * 6.4));
 	}
-	/* Thirteen cards around one pivot below the hand, like cards held in a hand. */
+	/* Thirteen cards around one pivot below the hand,
+	like cards held in a hand. */
 	.circle-label {
 		pointer-events: none;
 		position: absolute;
@@ -306,7 +299,6 @@
 		font-size: 20px;
 	}
 	.game-shelf,
-	.night-plan,
 	.learn {
 		max-width: var(--page-max);
 		margin: auto;
@@ -342,8 +334,16 @@
 	}
 	.game-tiles {
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
+		grid-template-columns: repeat(12, minmax(0, 1fr));
 		gap: 12px;
+	}
+	/* Four classic games in one row,
+	the three trick games in a wider row below. */
+	.game-tile {
+		grid-column: span 3;
+	}
+	.game-tile.trick {
+		grid-column: span 4;
 	}
 	.game-tile {
 		min-height: 285px;
@@ -376,6 +376,15 @@
 	.rummy {
 		background: #ee8e78;
 	}
+	.t325 {
+		background: #9fc3e0;
+	}
+	.pakad {
+		background: #e3b6cf;
+	}
+	.g29 {
+		background: #d9c79a;
+	}
 	.tile-top {
 		display: flex;
 		justify-content: space-between;
@@ -403,66 +412,18 @@
 		font-size: 12px;
 		color: var(--muted);
 	}
-	.night-plan {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 80px;
-		border-block: 1px solid var(--line);
-		padding-block: 100px;
-	}
+
 	.small-label {
 		font-size: 12px;
 		color: var(--muted);
 		display: block;
 		margin-bottom: 30px;
 	}
-	.night-plan h2 {
-		font-size: clamp(40px, 5.3vw, 75px);
-	}
-	.night-plan h2 span {
-		color: var(--butter);
-	}
-	.night-plan > div > p {
-		margin-top: 28px;
-		color: var(--muted);
-		font-size: 16px;
-		line-height: 1.6;
-	}
+
 	.steps {
 		align-self: center;
 	}
-	.night-steps li {
-		display: flex;
-		gap: 26px;
-		padding: 28px 0;
-		border-bottom: 1px solid var(--line);
-	}
-	.night-steps li:first-child {
-		padding-top: 0;
-	}
-	.night-steps li:last-child {
-		border: 0;
-		padding-bottom: 0;
-	}
-	.step-symbol {
-		font-size: 34px;
-		color: var(--butter);
-		width: 40px;
-		flex-shrink: 0;
-	}
-	.night-steps h3 {
-		font-family: var(--font-display);
-		font-size: 25px;
-		font-weight: 600;
-		letter-spacing: -0.035em;
-	}
-	.night-steps p {
-		font-size: 15px;
-		line-height: 1.65;
-		color: var(--muted);
-		margin-top: 10px;
-		max-width: 350px;
-	}
+
 	.learn {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -589,10 +550,16 @@
 		.game-tiles {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
+		.game-tile,
+		.game-tile.trick {
+			grid-column: auto;
+		}
+		.game-tile.trick:last-child {
+			grid-column: 1 / -1;
+		}
 		.game-tile {
 			min-height: 250px;
 		}
-		.night-plan,
 		.learn {
 			gap: 36px;
 		}
@@ -603,7 +570,6 @@
 			gap: 10px;
 		}
 		.game-shelf,
-		.night-plan,
 		.learn {
 			padding-block: 64px;
 		}
@@ -644,7 +610,6 @@
 			gap: 12px;
 		}
 		.game-shelf,
-		.night-plan,
 		.learn {
 			padding-block: 48px;
 		}
@@ -683,31 +648,15 @@
 			font-size: 11px;
 			line-height: 1.7;
 		}
-		.night-plan,
 		.learn {
 			grid-template-columns: 1fr;
 			gap: 34px;
 		}
-		.night-plan h2 {
-			font-size: 48px;
-		}
+
 		.small-label {
 			margin-bottom: 22px;
 		}
-		.night-plan > div > p {
-			font-size: 14px;
-			margin-top: 22px;
-		}
-		.night-steps h3 {
-			font-size: 23px;
-		}
-		.night-steps p {
-			font-size: 14px;
-		}
-		.night-steps li {
-			gap: 20px;
-			padding: 22px 0;
-		}
+
 		.learn h2 {
 			font-size: 43px;
 		}
