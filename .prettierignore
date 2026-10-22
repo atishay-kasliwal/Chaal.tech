@@ -21,3 +21,5 @@ docs/bots/PHASE*_REPORT.md
 docs/bots/phase3/*.json
 docs/bots/phase31/*.json
 docs/bots/PHASE31_REPORT.md
+docs/bots/PHASE4_REPORT.md
+docs/bots/phase4/results/*.json

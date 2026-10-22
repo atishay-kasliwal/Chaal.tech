@@ -1,0 +1,1801 @@
+{
+	"seed": 44,
+	"nights": 80,
+	"sources": [
+		"decision",
+		"mood",
+		"cards",
+		"opponents",
+		"night",
+		"stateless"
+	],
+	"variety": {
+		"rohit-sharma": {
+			"decision": {
+				"mean": 0.5866255223969049,
+				"ci": 0.0920206884427553,
+				"n": 80
+			},
+			"mood": {
+				"mean": 0.8613665357477414,
+				"ci": 0.07616823171300059,
+				"n": 80
+			},
+			"cards": {
+				"mean": 0.5533934726669593,
+				"ci": 0.13229748149858708,
+				"n": 80
+			},
+			"opponents": {
+				"mean": 1.1664856358193307,
+				"ci": 0.1589913029443625,
+				"n": 80
+			},
+			"night": {
+				"mean": 1.6449714641038562,
+				"ci": 0.16269630159811213,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 0.5998632134228707,
+				"ci": 0.11765349573143793,
+				"n": 80
+			}
+		},
+		"virat-kohli": {
+			"decision": {
+				"mean": 1.0363709157546013,
+				"ci": 0.13070336063206697,
+				"n": 80
+			},
+			"mood": {
+				"mean": 1.1719542799113634,
+				"ci": 0.13670351662407257,
+				"n": 80
+			},
+			"cards": {
+				"mean": 0.7653045116067088,
+				"ci": 0.16042389293546347,
+				"n": 80
+			},
+			"opponents": {
+				"mean": 1.583955145101673,
+				"ci": 0.19095232715439858,
+				"n": 80
+			},
+			"night": {
+				"mean": 1.8239830805710189,
+				"ci": 0.17923195590659713,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 0.611778159799237,
+				"ci": 0.11619654334485495,
+				"n": 80
+			}
+		},
+		"gg": {
+			"decision": {
+				"mean": 0.656631757657599,
+				"ci": 0.21638822596817175,
+				"n": 80
+			},
+			"mood": {
+				"mean": 0.12156261904832663,
+				"ci": 0.11279649656453052,
+				"n": 80
+			},
+			"cards": {
+				"mean": 0.6256570122155392,
+				"ci": 0.3510485410827056,
+				"n": 80
+			},
+			"opponents": {
+				"mean": 1.2122202618856899,
+				"ci": 0.1764096019955476,
+				"n": 80
+			},
+			"night": {
+				"mean": 1.3936045495135612,
+				"ci": 0.21640589505990235,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 0.6198564318986968,
+				"ci": 0.13864917479739255,
+				"n": 80
+			}
+		},
+		"samay-raina": {
+			"decision": {
+				"mean": 0.8406850463965638,
+				"ci": 0.12678371895924606,
+				"n": 80
+			},
+			"mood": {
+				"mean": 0.3484570025477195,
+				"ci": 0.11823465881174984,
+				"n": 80
+			},
+			"cards": {
+				"mean": 0.7708902248267983,
+				"ci": 0.1341108725915534,
+				"n": 80
+			},
+			"opponents": {
+				"mean": 1.5433510083231419,
+				"ci": 0.13794817759979042,
+				"n": 80
+			},
+			"night": {
+				"mean": 1.5935834987943338,
+				"ci": 0.17374123213031403,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 0.4297742122141993,
+				"ci": 0.13331604544799935,
+				"n": 80
+			}
+		},
+		"ms-dhoni": {
+			"decision": {
+				"mean": 0.6012587050152514,
+				"ci": 0.1274597217819437,
+				"n": 80
+			},
+			"mood": {
+				"mean": 0.7956987373913113,
+				"ci": 0.08845183657837202,
+				"n": 80
+			},
+			"cards": {
+				"mean": 0.8631579504004501,
+				"ci": 0.1581131931972193,
+				"n": 80
+			},
+			"opponents": {
+				"mean": 1.4117119763813766,
+				"ci": 0.19171764656584675,
+				"n": 80
+			},
+			"night": {
+				"mean": 1.4194359682924491,
+				"ci": 0.1697952459516132,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 0.21245586453791981,
+				"ci": 0.11956698863939491,
+				"n": 80
+			}
+		}
+	},
+	"identity": {
+		"rohit-sharma": {
+			"accuracy": 0.95,
+			"ownDistance": 2.049,
+			"band95": 3.529,
+			"nearestOther": 3.758,
+			"margin": 1.709
+		},
+		"virat-kohli": {
+			"accuracy": 0.925,
+			"ownDistance": 2.463,
+			"band95": 4.03,
+			"nearestOther": 3.715,
+			"margin": 1.252
+		},
+		"gg": {
+			"accuracy": 0.975,
+			"ownDistance": 2.394,
+			"band95": 3.966,
+			"nearestOther": 4.909,
+			"margin": 2.515
+		},
+		"samay-raina": {
+			"accuracy": 0.988,
+			"ownDistance": 2.096,
+			"band95": 3.499,
+			"nearestOther": 3.319,
+			"margin": 1.223
+		},
+		"ms-dhoni": {
+			"accuracy": 0.863,
+			"ownDistance": 1.981,
+			"band95": 3.101,
+			"nearestOther": 2.892,
+			"margin": 0.911
+		}
+	},
+	"development": {
+		"rohit-sharma": {
+			"night": {
+				"mean": 2.6747496408788116,
+				"ci": 0.2778805983017829,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 2.492654341178897,
+				"ci": 0.22229893569958695,
+				"n": 80
+			}
+		},
+		"virat-kohli": {
+			"night": {
+				"mean": 3.1872584626278218,
+				"ci": 0.377590987512123,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 2.4828496712567167,
+				"ci": 0.1965231224177176,
+				"n": 80
+			}
+		},
+		"gg": {
+			"night": {
+				"mean": 4.325941739908257,
+				"ci": 0.6141190615611097,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 4.148976231884299,
+				"ci": 0.4755652655164132,
+				"n": 80
+			}
+		},
+		"samay-raina": {
+			"night": {
+				"mean": 2.715966490052416,
+				"ci": 0.23805518019264793,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 2.739563006279094,
+				"ci": 0.23486468688146092,
+				"n": 80
+			}
+		},
+		"ms-dhoni": {
+			"night": {
+				"mean": 3.3767421792792915,
+				"ci": 0.3494193795357205,
+				"n": 80
+			},
+			"stateless": {
+				"mean": 2.653236061821358,
+				"ci": 0.2357777479934107,
+				"n": 80
+			}
+		}
+	},
+	"sequences": {
+		"rohit-sharma": {
+			"blindPressured": {
+				"n": 30344,
+				"raise": 9067,
+				"chaal": 8048,
+				"see": 12768,
+				"pack": 24,
+				"show": 437
+			},
+			"blindCalm": {
+				"n": 4053,
+				"raise": 1389,
+				"chaal": 2591,
+				"see": 49,
+				"pack": 9,
+				"show": 15
+			},
+			"lookPressured": {
+				"n": 12807,
+				"rounds": 62704.4,
+				"never": 2168
+			},
+			"lookCalm": {
+				"n": 10,
+				"rounds": 22,
+				"never": 986
+			},
+			"afterLoss": [
+				{
+					"seen": {
+						"n": 4801,
+						"raise": 1342,
+						"chaal": 1953,
+						"see": 0,
+						"pack": 1287,
+						"show": 219
+					},
+					"facing": {
+						"n": 819,
+						"raise": 225,
+						"chaal": 466,
+						"see": 0,
+						"pack": 67,
+						"show": 61
+					},
+					"weak": {
+						"n": 774,
+						"raise": 0,
+						"chaal": 11,
+						"see": 0,
+						"pack": 763,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 3428,
+						"raise": 917,
+						"chaal": 1220,
+						"see": 0,
+						"pack": 1093,
+						"show": 198
+					},
+					"facing": {
+						"n": 483,
+						"raise": 128,
+						"chaal": 272,
+						"see": 0,
+						"pack": 45,
+						"show": 38
+					},
+					"weak": {
+						"n": 644,
+						"raise": 0,
+						"chaal": 11,
+						"see": 0,
+						"pack": 633,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 2798,
+						"raise": 733,
+						"chaal": 1055,
+						"see": 0,
+						"pack": 838,
+						"show": 172
+					},
+					"facing": {
+						"n": 392,
+						"raise": 92,
+						"chaal": 246,
+						"see": 0,
+						"pack": 19,
+						"show": 35
+					},
+					"weak": {
+						"n": 502,
+						"raise": 1,
+						"chaal": 1,
+						"see": 0,
+						"pack": 500,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 2337,
+						"raise": 621,
+						"chaal": 878,
+						"see": 0,
+						"pack": 725,
+						"show": 113
+					},
+					"facing": {
+						"n": 348,
+						"raise": 86,
+						"chaal": 219,
+						"see": 0,
+						"pack": 24,
+						"show": 19
+					},
+					"weak": {
+						"n": 456,
+						"raise": 0,
+						"chaal": 5,
+						"see": 0,
+						"pack": 451,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 2030,
+						"raise": 534,
+						"chaal": 813,
+						"see": 0,
+						"pack": 584,
+						"show": 99
+					},
+					"facing": {
+						"n": 319,
+						"raise": 80,
+						"chaal": 185,
+						"see": 0,
+						"pack": 29,
+						"show": 25
+					},
+					"weak": {
+						"n": 349,
+						"raise": 0,
+						"chaal": 7,
+						"see": 0,
+						"pack": 342,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1701,
+						"raise": 471,
+						"chaal": 638,
+						"see": 0,
+						"pack": 505,
+						"show": 87
+					},
+					"facing": {
+						"n": 280,
+						"raise": 84,
+						"chaal": 148,
+						"see": 0,
+						"pack": 22,
+						"show": 26
+					},
+					"weak": {
+						"n": 302,
+						"raise": 0,
+						"chaal": 5,
+						"see": 0,
+						"pack": 297,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1418,
+						"raise": 405,
+						"chaal": 533,
+						"see": 0,
+						"pack": 410,
+						"show": 70
+					},
+					"facing": {
+						"n": 232,
+						"raise": 63,
+						"chaal": 137,
+						"see": 0,
+						"pack": 12,
+						"show": 20
+					},
+					"weak": {
+						"n": 243,
+						"raise": 0,
+						"chaal": 4,
+						"see": 0,
+						"pack": 238,
+						"show": 1
+					}
+				},
+				{
+					"seen": {
+						"n": 1184,
+						"raise": 342,
+						"chaal": 470,
+						"see": 0,
+						"pack": 317,
+						"show": 55
+					},
+					"facing": {
+						"n": 201,
+						"raise": 52,
+						"chaal": 115,
+						"see": 0,
+						"pack": 16,
+						"show": 18
+					},
+					"weak": {
+						"n": 176,
+						"raise": 0,
+						"chaal": 0,
+						"see": 0,
+						"pack": 176,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 994,
+						"raise": 281,
+						"chaal": 412,
+						"see": 0,
+						"pack": 254,
+						"show": 47
+					},
+					"facing": {
+						"n": 168,
+						"raise": 50,
+						"chaal": 99,
+						"see": 0,
+						"pack": 6,
+						"show": 13
+					},
+					"weak": {
+						"n": 165,
+						"raise": 0,
+						"chaal": 3,
+						"see": 0,
+						"pack": 162,
+						"show": 0
+					}
+				}
+			],
+			"facingStrong": {
+				"n": 870,
+				"raise": 571,
+				"chaal": 229,
+				"see": 0,
+				"pack": 4,
+				"show": 66
+			},
+			"facingMid": {
+				"n": 2365,
+				"raise": 289,
+				"chaal": 1658,
+				"see": 0,
+				"pack": 229,
+				"show": 189
+			},
+			"facingWeak": {
+				"n": 7,
+				"raise": 0,
+				"chaal": 0,
+				"see": 0,
+				"pack": 7,
+				"show": 0
+			},
+			"strongAfterGiveUp": {
+				"n": 2826,
+				"raise": 2176,
+				"chaal": 503,
+				"see": 0,
+				"pack": 12,
+				"show": 135
+			},
+			"strongOther": {
+				"n": 1649,
+				"raise": 1279,
+				"chaal": 281,
+				"see": 0,
+				"pack": 7,
+				"show": 82
+			}
+		},
+		"virat-kohli": {
+			"blindPressured": {
+				"n": 19935,
+				"raise": 1514,
+				"chaal": 5050,
+				"see": 13271,
+				"pack": 77,
+				"show": 23
+			},
+			"blindCalm": {
+				"n": 4417,
+				"raise": 748,
+				"chaal": 2448,
+				"see": 1164,
+				"pack": 32,
+				"show": 25
+			},
+			"lookPressured": {
+				"n": 13540,
+				"rounds": 31808.7,
+				"never": 728
+			},
+			"lookCalm": {
+				"n": 895,
+				"rounds": 1412,
+				"never": 811
+			},
+			"afterLoss": [
+				{
+					"seen": {
+						"n": 8104,
+						"raise": 3296,
+						"chaal": 2863,
+						"see": 0,
+						"pack": 1772,
+						"show": 173
+					},
+					"facing": {
+						"n": 1677,
+						"raise": 819,
+						"chaal": 745,
+						"see": 0,
+						"pack": 60,
+						"show": 53
+					},
+					"weak": {
+						"n": 1371,
+						"raise": 2,
+						"chaal": 34,
+						"see": 0,
+						"pack": 1335,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 4073,
+						"raise": 2046,
+						"chaal": 858,
+						"see": 0,
+						"pack": 1084,
+						"show": 85
+					},
+					"facing": {
+						"n": 701,
+						"raise": 421,
+						"chaal": 216,
+						"see": 0,
+						"pack": 41,
+						"show": 23
+					},
+					"weak": {
+						"n": 891,
+						"raise": 2,
+						"chaal": 30,
+						"see": 0,
+						"pack": 859,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 3415,
+						"raise": 1752,
+						"chaal": 790,
+						"see": 0,
+						"pack": 777,
+						"show": 96
+					},
+					"facing": {
+						"n": 516,
+						"raise": 291,
+						"chaal": 176,
+						"see": 0,
+						"pack": 25,
+						"show": 24
+					},
+					"weak": {
+						"n": 608,
+						"raise": 7,
+						"chaal": 14,
+						"see": 0,
+						"pack": 586,
+						"show": 1
+					}
+				},
+				{
+					"seen": {
+						"n": 2892,
+						"raise": 1365,
+						"chaal": 801,
+						"see": 0,
+						"pack": 658,
+						"show": 68
+					},
+					"facing": {
+						"n": 574,
+						"raise": 291,
+						"chaal": 238,
+						"see": 0,
+						"pack": 26,
+						"show": 19
+					},
+					"weak": {
+						"n": 535,
+						"raise": 4,
+						"chaal": 24,
+						"see": 0,
+						"pack": 507,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 2314,
+						"raise": 1032,
+						"chaal": 642,
+						"see": 0,
+						"pack": 571,
+						"show": 69
+					},
+					"facing": {
+						"n": 432,
+						"raise": 216,
+						"chaal": 181,
+						"see": 0,
+						"pack": 21,
+						"show": 14
+					},
+					"weak": {
+						"n": 446,
+						"raise": 0,
+						"chaal": 12,
+						"see": 0,
+						"pack": 434,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1871,
+						"raise": 894,
+						"chaal": 461,
+						"see": 0,
+						"pack": 473,
+						"show": 43
+					},
+					"facing": {
+						"n": 345,
+						"raise": 209,
+						"chaal": 109,
+						"see": 0,
+						"pack": 15,
+						"show": 12
+					},
+					"weak": {
+						"n": 377,
+						"raise": 1,
+						"chaal": 10,
+						"see": 0,
+						"pack": 366,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1806,
+						"raise": 807,
+						"chaal": 573,
+						"see": 0,
+						"pack": 388,
+						"show": 38
+					},
+					"facing": {
+						"n": 378,
+						"raise": 188,
+						"chaal": 159,
+						"see": 0,
+						"pack": 17,
+						"show": 14
+					},
+					"weak": {
+						"n": 311,
+						"raise": 1,
+						"chaal": 17,
+						"see": 0,
+						"pack": 293,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1471,
+						"raise": 584,
+						"chaal": 509,
+						"see": 0,
+						"pack": 345,
+						"show": 33
+					},
+					"facing": {
+						"n": 301,
+						"raise": 142,
+						"chaal": 139,
+						"see": 0,
+						"pack": 10,
+						"show": 10
+					},
+					"weak": {
+						"n": 278,
+						"raise": 0,
+						"chaal": 11,
+						"see": 0,
+						"pack": 267,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1248,
+						"raise": 543,
+						"chaal": 419,
+						"see": 0,
+						"pack": 272,
+						"show": 14
+					},
+					"facing": {
+						"n": 268,
+						"raise": 134,
+						"chaal": 112,
+						"see": 0,
+						"pack": 19,
+						"show": 3
+					},
+					"weak": {
+						"n": 219,
+						"raise": 1,
+						"chaal": 11,
+						"see": 0,
+						"pack": 207,
+						"show": 0
+					}
+				}
+			],
+			"facingStrong": {
+				"n": 1451,
+				"raise": 1257,
+				"chaal": 145,
+				"see": 0,
+				"pack": 2,
+				"show": 47
+			},
+			"facingMid": {
+				"n": 3694,
+				"raise": 1454,
+				"chaal": 1924,
+				"see": 0,
+				"pack": 191,
+				"show": 125
+			},
+			"facingWeak": {
+				"n": 47,
+				"raise": 0,
+				"chaal": 6,
+				"see": 0,
+				"pack": 41,
+				"show": 0
+			},
+			"strongAfterGiveUp": {
+				"n": 3723,
+				"raise": 3338,
+				"chaal": 281,
+				"see": 0,
+				"pack": 7,
+				"show": 97
+			},
+			"strongOther": {
+				"n": 2516,
+				"raise": 2272,
+				"chaal": 182,
+				"see": 0,
+				"pack": 7,
+				"show": 55
+			}
+		},
+		"gg": {
+			"blindPressured": {
+				"n": 15672,
+				"raise": 14,
+				"chaal": 2232,
+				"see": 13420,
+				"pack": 6,
+				"show": 0
+			},
+			"blindCalm": {
+				"n": 3840,
+				"raise": 6,
+				"chaal": 1902,
+				"see": 1925,
+				"pack": 4,
+				"show": 3
+			},
+			"lookPressured": {
+				"n": 13546,
+				"rounds": 20489.5,
+				"never": 75
+			},
+			"lookCalm": {
+				"n": 1799,
+				"rounds": 2070,
+				"never": 565
+			},
+			"afterLoss": [
+				{
+					"seen": {
+						"n": 13238,
+						"raise": 4085,
+						"chaal": 2684,
+						"see": 0,
+						"pack": 5520,
+						"show": 949
+					},
+					"facing": {
+						"n": 2384,
+						"raise": 1035,
+						"chaal": 814,
+						"see": 0,
+						"pack": 170,
+						"show": 365
+					},
+					"weak": {
+						"n": 3173,
+						"raise": 0,
+						"chaal": 5,
+						"see": 0,
+						"pack": 3168,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1642,
+						"raise": 452,
+						"chaal": 229,
+						"see": 0,
+						"pack": 870,
+						"show": 91
+					},
+					"facing": {
+						"n": 224,
+						"raise": 102,
+						"chaal": 65,
+						"see": 0,
+						"pack": 27,
+						"show": 30
+					},
+					"weak": {
+						"n": 481,
+						"raise": 0,
+						"chaal": 0,
+						"see": 0,
+						"pack": 481,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1629,
+						"raise": 470,
+						"chaal": 292,
+						"see": 0,
+						"pack": 756,
+						"show": 111
+					},
+					"facing": {
+						"n": 239,
+						"raise": 98,
+						"chaal": 76,
+						"see": 0,
+						"pack": 22,
+						"show": 43
+					},
+					"weak": {
+						"n": 416,
+						"raise": 0,
+						"chaal": 0,
+						"see": 0,
+						"pack": 416,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1404,
+						"raise": 383,
+						"chaal": 223,
+						"see": 0,
+						"pack": 702,
+						"show": 96
+					},
+					"facing": {
+						"n": 179,
+						"raise": 78,
+						"chaal": 53,
+						"see": 0,
+						"pack": 19,
+						"show": 29
+					},
+					"weak": {
+						"n": 380,
+						"raise": 0,
+						"chaal": 0,
+						"see": 0,
+						"pack": 380,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1302,
+						"raise": 323,
+						"chaal": 255,
+						"see": 0,
+						"pack": 622,
+						"show": 102
+					},
+					"facing": {
+						"n": 181,
+						"raise": 56,
+						"chaal": 64,
+						"see": 0,
+						"pack": 21,
+						"show": 40
+					},
+					"weak": {
+						"n": 338,
+						"raise": 0,
+						"chaal": 1,
+						"see": 0,
+						"pack": 337,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1218,
+						"raise": 353,
+						"chaal": 210,
+						"see": 0,
+						"pack": 575,
+						"show": 80
+					},
+					"facing": {
+						"n": 184,
+						"raise": 84,
+						"chaal": 58,
+						"see": 0,
+						"pack": 11,
+						"show": 31
+					},
+					"weak": {
+						"n": 336,
+						"raise": 0,
+						"chaal": 1,
+						"see": 0,
+						"pack": 335,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1089,
+						"raise": 370,
+						"chaal": 167,
+						"see": 0,
+						"pack": 497,
+						"show": 55
+					},
+					"facing": {
+						"n": 182,
+						"raise": 100,
+						"chaal": 48,
+						"see": 0,
+						"pack": 14,
+						"show": 20
+					},
+					"weak": {
+						"n": 279,
+						"raise": 0,
+						"chaal": 0,
+						"see": 0,
+						"pack": 279,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1135,
+						"raise": 331,
+						"chaal": 270,
+						"see": 0,
+						"pack": 458,
+						"show": 76
+					},
+					"facing": {
+						"n": 169,
+						"raise": 73,
+						"chaal": 48,
+						"see": 0,
+						"pack": 18,
+						"show": 30
+					},
+					"weak": {
+						"n": 247,
+						"raise": 1,
+						"chaal": 0,
+						"see": 0,
+						"pack": 246,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 937,
+						"raise": 246,
+						"chaal": 192,
+						"see": 0,
+						"pack": 444,
+						"show": 55
+					},
+					"facing": {
+						"n": 127,
+						"raise": 44,
+						"chaal": 48,
+						"see": 0,
+						"pack": 19,
+						"show": 16
+					},
+					"weak": {
+						"n": 247,
+						"raise": 0,
+						"chaal": 1,
+						"see": 0,
+						"pack": 246,
+						"show": 0
+					}
+				}
+			],
+			"facingStrong": {
+				"n": 1915,
+				"raise": 1351,
+				"chaal": 255,
+				"see": 0,
+				"pack": 65,
+				"show": 244
+			},
+			"facingMid": {
+				"n": 1950,
+				"raise": 319,
+				"chaal": 1019,
+				"see": 0,
+				"pack": 252,
+				"show": 360
+			},
+			"facingWeak": {
+				"n": 4,
+				"raise": 0,
+				"chaal": 0,
+				"see": 0,
+				"pack": 4,
+				"show": 0
+			},
+			"strongAfterGiveUp": {
+				"n": 5302,
+				"raise": 4129,
+				"chaal": 611,
+				"see": 0,
+				"pack": 136,
+				"show": 426
+			},
+			"strongOther": {
+				"n": 1747,
+				"raise": 1358,
+				"chaal": 192,
+				"see": 0,
+				"pack": 74,
+				"show": 123
+			}
+		},
+		"samay-raina": {
+			"blindPressured": {
+				"n": 17267,
+				"raise": 231,
+				"chaal": 3991,
+				"see": 12963,
+				"pack": 49,
+				"show": 33
+			},
+			"blindCalm": {
+				"n": 3959,
+				"raise": 135,
+				"chaal": 2271,
+				"see": 1482,
+				"pack": 20,
+				"show": 51
+			},
+			"lookPressured": {
+				"n": 13172,
+				"rounds": 24457.5,
+				"never": 440
+			},
+			"lookCalm": {
+				"n": 1273,
+				"rounds": 1653,
+				"never": 1097
+			},
+			"afterLoss": [
+				{
+					"seen": {
+						"n": 10362,
+						"raise": 665,
+						"chaal": 7339,
+						"see": 0,
+						"pack": 1704,
+						"show": 654
+					},
+					"facing": {
+						"n": 2977,
+						"raise": 135,
+						"chaal": 2566,
+						"see": 0,
+						"pack": 68,
+						"show": 208
+					},
+					"weak": {
+						"n": 1452,
+						"raise": 0,
+						"chaal": 58,
+						"see": 0,
+						"pack": 1394,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 4781,
+						"raise": 315,
+						"chaal": 3150,
+						"see": 0,
+						"pack": 976,
+						"show": 340
+					},
+					"facing": {
+						"n": 1256,
+						"raise": 57,
+						"chaal": 1023,
+						"see": 0,
+						"pack": 46,
+						"show": 130
+					},
+					"weak": {
+						"n": 808,
+						"raise": 1,
+						"chaal": 33,
+						"see": 0,
+						"pack": 773,
+						"show": 1
+					}
+				},
+				{
+					"seen": {
+						"n": 4054,
+						"raise": 251,
+						"chaal": 2771,
+						"see": 0,
+						"pack": 785,
+						"show": 247
+					},
+					"facing": {
+						"n": 1043,
+						"raise": 50,
+						"chaal": 877,
+						"see": 0,
+						"pack": 24,
+						"show": 92
+					},
+					"weak": {
+						"n": 662,
+						"raise": 0,
+						"chaal": 33,
+						"see": 0,
+						"pack": 629,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 3392,
+						"raise": 198,
+						"chaal": 2301,
+						"see": 0,
+						"pack": 683,
+						"show": 210
+					},
+					"facing": {
+						"n": 821,
+						"raise": 39,
+						"chaal": 688,
+						"see": 0,
+						"pack": 21,
+						"show": 73
+					},
+					"weak": {
+						"n": 589,
+						"raise": 0,
+						"chaal": 29,
+						"see": 0,
+						"pack": 559,
+						"show": 1
+					}
+				},
+				{
+					"seen": {
+						"n": 2965,
+						"raise": 158,
+						"chaal": 2055,
+						"see": 0,
+						"pack": 564,
+						"show": 188
+					},
+					"facing": {
+						"n": 763,
+						"raise": 24,
+						"chaal": 650,
+						"see": 0,
+						"pack": 21,
+						"show": 68
+					},
+					"weak": {
+						"n": 475,
+						"raise": 0,
+						"chaal": 18,
+						"see": 0,
+						"pack": 456,
+						"show": 1
+					}
+				},
+				{
+					"seen": {
+						"n": 2644,
+						"raise": 175,
+						"chaal": 1829,
+						"see": 0,
+						"pack": 497,
+						"show": 143
+					},
+					"facing": {
+						"n": 624,
+						"raise": 40,
+						"chaal": 511,
+						"see": 0,
+						"pack": 25,
+						"show": 48
+					},
+					"weak": {
+						"n": 434,
+						"raise": 1,
+						"chaal": 23,
+						"see": 0,
+						"pack": 410,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 2413,
+						"raise": 129,
+						"chaal": 1721,
+						"see": 0,
+						"pack": 409,
+						"show": 154
+					},
+					"facing": {
+						"n": 675,
+						"raise": 34,
+						"chaal": 573,
+						"see": 0,
+						"pack": 13,
+						"show": 55
+					},
+					"weak": {
+						"n": 356,
+						"raise": 0,
+						"chaal": 22,
+						"see": 0,
+						"pack": 334,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 2130,
+						"raise": 103,
+						"chaal": 1566,
+						"see": 0,
+						"pack": 348,
+						"show": 113
+					},
+					"facing": {
+						"n": 600,
+						"raise": 21,
+						"chaal": 527,
+						"see": 0,
+						"pack": 16,
+						"show": 36
+					},
+					"weak": {
+						"n": 289,
+						"raise": 0,
+						"chaal": 14,
+						"see": 0,
+						"pack": 275,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1768,
+						"raise": 128,
+						"chaal": 1258,
+						"see": 0,
+						"pack": 269,
+						"show": 113
+					},
+					"facing": {
+						"n": 498,
+						"raise": 32,
+						"chaal": 406,
+						"see": 0,
+						"pack": 11,
+						"show": 49
+					},
+					"weak": {
+						"n": 274,
+						"raise": 0,
+						"chaal": 45,
+						"see": 0,
+						"pack": 229,
+						"show": 0
+					}
+				}
+			],
+			"facingStrong": {
+				"n": 2647,
+				"raise": 414,
+				"chaal": 1916,
+				"see": 0,
+				"pack": 5,
+				"show": 312
+			},
+			"facingMid": {
+				"n": 6550,
+				"raise": 18,
+				"chaal": 5890,
+				"see": 0,
+				"pack": 195,
+				"show": 447
+			},
+			"facingWeak": {
+				"n": 60,
+				"raise": 0,
+				"chaal": 15,
+				"see": 0,
+				"pack": 45,
+				"show": 0
+			},
+			"strongAfterGiveUp": {
+				"n": 4743,
+				"raise": 1067,
+				"chaal": 3198,
+				"see": 0,
+				"pack": 3,
+				"show": 475
+			},
+			"strongOther": {
+				"n": 3307,
+				"raise": 888,
+				"chaal": 2057,
+				"see": 0,
+				"pack": 10,
+				"show": 352
+			}
+		},
+		"ms-dhoni": {
+			"blindPressured": {
+				"n": 24192,
+				"raise": 317,
+				"chaal": 9999,
+				"see": 13821,
+				"pack": 16,
+				"show": 39
+			},
+			"blindCalm": {
+				"n": 4038,
+				"raise": 109,
+				"chaal": 3261,
+				"see": 600,
+				"pack": 3,
+				"show": 65
+			},
+			"lookPressured": {
+				"n": 14136,
+				"rounds": 38944,
+				"never": 714
+			},
+			"lookCalm": {
+				"n": 285,
+				"rounds": 624,
+				"never": 846
+			},
+			"afterLoss": [
+				{
+					"seen": {
+						"n": 10311,
+						"raise": 2776,
+						"chaal": 4296,
+						"see": 0,
+						"pack": 2454,
+						"show": 785
+					},
+					"facing": {
+						"n": 2189,
+						"raise": 486,
+						"chaal": 1421,
+						"see": 0,
+						"pack": 88,
+						"show": 194
+					},
+					"weak": {
+						"n": 1705,
+						"raise": 2,
+						"chaal": 56,
+						"see": 0,
+						"pack": 1646,
+						"show": 1
+					}
+				},
+				{
+					"seen": {
+						"n": 3135,
+						"raise": 724,
+						"chaal": 1246,
+						"see": 0,
+						"pack": 902,
+						"show": 263
+					},
+					"facing": {
+						"n": 638,
+						"raise": 112,
+						"chaal": 420,
+						"see": 0,
+						"pack": 38,
+						"show": 68
+					},
+					"weak": {
+						"n": 576,
+						"raise": 1,
+						"chaal": 10,
+						"see": 0,
+						"pack": 565,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 2718,
+						"raise": 688,
+						"chaal": 1085,
+						"see": 0,
+						"pack": 707,
+						"show": 238
+					},
+					"facing": {
+						"n": 554,
+						"raise": 106,
+						"chaal": 355,
+						"see": 0,
+						"pack": 32,
+						"show": 61
+					},
+					"weak": {
+						"n": 465,
+						"raise": 0,
+						"chaal": 18,
+						"see": 0,
+						"pack": 447,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 2321,
+						"raise": 553,
+						"chaal": 909,
+						"see": 0,
+						"pack": 668,
+						"show": 191
+					},
+					"facing": {
+						"n": 486,
+						"raise": 80,
+						"chaal": 323,
+						"see": 0,
+						"pack": 28,
+						"show": 55
+					},
+					"weak": {
+						"n": 430,
+						"raise": 0,
+						"chaal": 8,
+						"see": 0,
+						"pack": 421,
+						"show": 1
+					}
+				},
+				{
+					"seen": {
+						"n": 2078,
+						"raise": 439,
+						"chaal": 873,
+						"see": 0,
+						"pack": 600,
+						"show": 166
+					},
+					"facing": {
+						"n": 419,
+						"raise": 63,
+						"chaal": 288,
+						"see": 0,
+						"pack": 17,
+						"show": 51
+					},
+					"weak": {
+						"n": 388,
+						"raise": 0,
+						"chaal": 7,
+						"see": 0,
+						"pack": 381,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 2030,
+						"raise": 501,
+						"chaal": 835,
+						"see": 0,
+						"pack": 531,
+						"show": 163
+					},
+					"facing": {
+						"n": 397,
+						"raise": 74,
+						"chaal": 266,
+						"see": 0,
+						"pack": 22,
+						"show": 35
+					},
+					"weak": {
+						"n": 350,
+						"raise": 0,
+						"chaal": 9,
+						"see": 0,
+						"pack": 341,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1840,
+						"raise": 477,
+						"chaal": 817,
+						"see": 0,
+						"pack": 389,
+						"show": 157
+					},
+					"facing": {
+						"n": 446,
+						"raise": 88,
+						"chaal": 297,
+						"see": 0,
+						"pack": 10,
+						"show": 51
+					},
+					"weak": {
+						"n": 261,
+						"raise": 0,
+						"chaal": 6,
+						"see": 0,
+						"pack": 255,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1526,
+						"raise": 389,
+						"chaal": 654,
+						"see": 0,
+						"pack": 367,
+						"show": 116
+					},
+					"facing": {
+						"n": 337,
+						"raise": 63,
+						"chaal": 224,
+						"see": 0,
+						"pack": 20,
+						"show": 30
+					},
+					"weak": {
+						"n": 257,
+						"raise": 0,
+						"chaal": 7,
+						"see": 0,
+						"pack": 250,
+						"show": 0
+					}
+				},
+				{
+					"seen": {
+						"n": 1209,
+						"raise": 327,
+						"chaal": 441,
+						"see": 0,
+						"pack": 336,
+						"show": 105
+					},
+					"facing": {
+						"n": 265,
+						"raise": 61,
+						"chaal": 168,
+						"see": 0,
+						"pack": 9,
+						"show": 27
+					},
+					"weak": {
+						"n": 236,
+						"raise": 0,
+						"chaal": 8,
+						"see": 0,
+						"pack": 228,
+						"show": 0
+					}
+				}
+			],
+			"facingStrong": {
+				"n": 1670,
+				"raise": 731,
+				"chaal": 701,
+				"see": 0,
+				"pack": 2,
+				"show": 236
+			},
+			"facingMid": {
+				"n": 3990,
+				"raise": 402,
+				"chaal": 3032,
+				"see": 0,
+				"pack": 221,
+				"show": 335
+			},
+			"facingWeak": {
+				"n": 71,
+				"raise": 0,
+				"chaal": 29,
+				"see": 0,
+				"pack": 41,
+				"show": 1
+			},
+			"strongAfterGiveUp": {
+				"n": 4264,
+				"raise": 2757,
+				"chaal": 1085,
+				"see": 0,
+				"pack": 9,
+				"show": 413
+			},
+			"strongOther": {
+				"n": 2071,
+				"raise": 1315,
+				"chaal": 529,
+				"see": 0,
+				"pack": 11,
+				"show": 216
+			}
+		}
+	},
+	"totals": {
+		"hands": 480000,
+		"decisions": 7454313,
+		"seconds": 554.733208958,
+		"maxRssMb": 174.93254852294922
+	}
+}
