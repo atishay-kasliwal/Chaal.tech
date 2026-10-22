@@ -453,6 +453,23 @@ export const PRIORS = Object.freeze({
 	aggression: 0.25
 });
 
+/**
+ * Phase 5: a returning player's long-term prior (server/bots/memory/prior.mjs), folded into this
+ * session's model of them as capped pseudo-observations, once per session. It then decays with the
+ * session's own evidence like any other count, so new play overrides old memory. Nothing else in the
+ * mind changes, and a mind is recorded at each deal, so a seeded hand replays exactly.
+ */
+export function seedPrior(mind, id, kind, prior) {
+	if (!mind || !prior) return mind;
+	if (!mind.others[id] && Object.keys(mind.others).length >= MAX_OTHERS) return mind;
+	const s = (mind.others[id] ??= emptySubject(kind));
+	if (s.ltm) return mind;
+	for (const k of ['facing', 'facingPack', 'packs', 'chaals', 'raises'])
+		s.model[k] = round(s.model[k] + (prior.counts[k] ?? 0));
+	s.ltm = { v: prior.v, weight: prior.weight, asOf: prior.asOf };
+	return mind;
+}
+
 /** What this bot believes about one player, each with its confidence. */
 export function beliefs(mind, id) {
 	const s = mind?.others?.[id];

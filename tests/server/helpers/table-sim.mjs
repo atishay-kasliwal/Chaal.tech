@@ -3,6 +3,8 @@
  * room-object.mjs): transition with a recorded context, seal patch, commit, recorder, outbox.
  * Lets recorder tests cover every game without Cloudflare.
  */
+import { seedMinds } from '../../../server/bots/memory/prior.mjs';
+import { seedPrior } from '../../../server/bots/mind.mjs';
 import { newRoom, transition, playing, projection } from '../../../server/engine.mjs';
 import { createGameRoom } from '../../../server/games/index.mjs';
 import { nextBotMove, updateMinds } from '../../../server/bots/runner.mjs';
@@ -69,7 +71,10 @@ export class TableSim {
 		// Bot minds exactly as the room keeps them: recorded at the deal, updated every commit.
 		const parsed = JSON.parse(afterJson);
 		const startsHand = !!parsed.handId && parsed.handId !== this.room?.handId;
-		const minds = this.minds ?? {};
+		// Phase 5: long-term priors seed the minds at the deal, as the room does.
+		const minds = startsHand
+			? seedMinds(this.minds ?? {}, this.priors, seedPrior, () => 'human')
+			: (this.minds ?? {});
 		const recordedStep = startsHand && Object.keys(minds).length ? { ...step, minds } : step;
 		const out = recordCommitSafely(this.state, {
 			before: this.room,
@@ -148,11 +153,20 @@ export class TableSim {
 	/** The bot runner's move, with its random draws logged, as the room's alarm does. */
 	botMove() {
 		const rng = botRandom(() => Math.floor(this.random() * 0x1_0000_0000));
-		const move = nextBotMove(this.room, this.connected, rng.random, { memoryFor: this.memoryFor, minds: this.minds });
+		const move = nextBotMove(this.room, this.connected, rng.random, {
+			memoryFor: this.memoryFor,
+			minds: this.minds
+		});
 		if (!move) return null;
 		this.act(move.botId, move.action, move.payload, {
 			kind: 'bot',
-			bot: { seed: rng.seed, draws: rng.draws, reason: move.reason, ...(move.adaptive ? { memory: move.memory, adaptive: move.adaptive } : {}), ...(move.trace ? { trace: move.trace } : {}) }
+			bot: {
+				seed: rng.seed,
+				draws: rng.draws,
+				reason: move.reason,
+				...(move.adaptive ? { memory: move.memory, adaptive: move.adaptive } : {}),
+				...(move.trace ? { trace: move.trace } : {})
+			}
 		});
 		return move;
 	}

@@ -27,6 +27,8 @@ import { saveNight, nightEmail } from '../club/nights.mjs';
 import { botSeat } from '../bots/directory.mjs';
 import { ADAPTIVE_POLICY } from '../bots/memory/adaptive.mjs';
 import { decisionScope, loadMemory, timedMemory } from '../bots/memory/provider.mjs';
+import { seedMinds, ltmRosterKey, memoryBotIds, priorsForTable } from '../bots/memory/prior.mjs';
+import { seedPrior } from '../bots/mind.mjs';
 import { clubSettings } from '../club/admin.mjs';
 import { useMomentBackend } from '../bots/memory/moments.mjs';
 import { nextBotMove, botDue, botDelay, thinkingContext, humansPresent, botMoveText, updateMinds } from '../bots/runner.mjs';
@@ -197,9 +199,19 @@ export class RoomDurableObject {
 			// Bot minds (server/bots/mind.mjs): a deal records them as they were, so the hand replays
 			// on its own; then every bot observes this commit through its own projection.
 			const after = JSON.parse(snapshot);
-			const minds = this.getMeta('botMinds') ?? {};
+			const sessionMinds = this.getMeta('botMinds') ?? {};
 			const startsHand = !!after.handId && after.handId !== current?.snapshot?.handId;
 			let recordedStep = step ?? { actor: playerId, action: 'unknown', payload: {}, ctx: {}, kind: 'system', cause: 'unrecorded' };
+			// Phase 5: returning people's long-term priors (loaded off the decision path, see
+			// refreshPriors) seed the characters' minds now, so the deal records them and replays exactly.
+			let minds = sessionMinds;
+			if (startsHand)
+				try {
+					minds = seedMinds(sessionMinds, this.getMeta('ltmPriors')?.priors, seedPrior, () => 'human');
+				} catch (error) {
+					// Memory must never fail a commit: the characters play from the session alone.
+					console.error('Long-term prior seeding failed:', error?.message ?? 'Error');
+				}
 			if (startsHand && Object.keys(minds).length) recordedStep = { ...recordedStep, minds };
 			const recorded = recordCommitSafely(this.getMeta('recorder'), {
 				before: current?.snapshot ?? null,
@@ -251,6 +263,35 @@ export class RoomDurableObject {
 		// Hands and failures go out now; between-hand events ride along or go on the next alarm.
 		if (this.urgentHistory) this.ctx.waitUntil(this.flushHistory());
 		this.urgentHistory = false;
+		const key = ltmRosterKey(JSON.parse(snapshot));
+		if (key && key !== this.getMeta('ltmPriors')?.key) this.ctx.waitUntil(this.refreshPriors(key));
+	}
+
+	/**
+	 * Phase 5 (docs/bots/PHASE5_REPORT.md): load what each seated character remembers about the
+	 * people at the table (bot_memory: public observations only) and keep just the resulting priors.
+	 * Runs in the background when the table's people or characters change; never on a decision's
+	 * path. A failure or a slow database leaves no prior, and the characters play from the session.
+	 */
+	async refreshPriors(key) {
+		try {
+			const room = this.room()?.snapshot;
+			if (!room || ltmRosterKey(room) !== key) return;
+			const docs = await Promise.race([
+				withClubDatabase(this.env, (db) =>
+					db.collection('bot_memory').find(
+						{ botId: { $in: memoryBotIds(room) }, game: 'teen-patti' },
+						{ projection: { botId: 1, game: 1, models: 1 } }
+					).toArray()
+				),
+				new Promise((resolve) => setTimeout(() => resolve(null), 2000))
+			]);
+			const now = Date.now();
+			const priors = priorsForTable(room, docs, now);
+			if (ltmRosterKey(this.room()?.snapshot) === key) this.setMeta('ltmPriors', { key, priors, at: now, loaded: !!docs });
+		} catch (error) {
+			console.error('Long-term memory load failed:', error?.message ?? 'Error');
+		}
 	}
 
 	/**
