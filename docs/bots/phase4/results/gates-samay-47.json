@@ -1,0 +1,3164 @@
+{
+	"seed": 47,
+	"character": "samay-raina",
+	"tables": 120,
+	"scenarioTables": 48,
+	"exploitTables": 32,
+	"nights": 30,
+	"searchExploit": {
+		"id": "x002",
+		"says": "Looks after 1 blind round, calls with a 35%+ chance to win, almost never raises for value, facing pressure folds hands under 40% (60% of the time)."
+	},
+	"rows": [
+		{
+			"key": "samay-raina@3",
+			"change": "champion",
+			"gates": {
+				"regression": {
+					"pass": true,
+					"detail": "bands 6/9 (champion 6), violation 4.17 (4.17)"
+				},
+				"personality": {
+					"pass": true,
+					"detail": "identified 96% (champion 96%)",
+					"nearestOther": 2.134944919144187
+				},
+				"strength": {
+					"pass": true,
+					"paired": {
+						"mean": 0,
+						"ci": 0,
+						"n": 120
+					}
+				},
+				"counter": {
+					"pass": true,
+					"worse": []
+				},
+				"variety": {
+					"pass": true,
+					"detail": "1.53 ± 0.58 (champion 1.53)"
+				},
+				"badActions": {
+					"pass": true,
+					"detail": "1.87% (champion 1.87%)"
+				},
+				"performance": {
+					"pass": true,
+					"detail": "0.321 ms mean, p99 1.154 (champion 0.321)"
+				},
+				"exploit": {
+					"pass": null,
+					"detail": "no target"
+				}
+			},
+			"pass": true,
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7229540056143382,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.02236007907832845,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.3039130852802615,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06793467964990717,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.07662835249042145,
+						"pass": false,
+						"miss": 0.532567049808429,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.04239702015775636,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": 0.0032536876407759374,
+						"pass": false,
+						"miss": 1.2169125093850626,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.01417233011066905,
+						"pass": false,
+						"miss": 2.4172330110669047,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.01874543187583301,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 6,
+				"violation": 4.166712570260396
+			},
+			"m": {
+				"hands": 24000,
+				"bootsPer100": 259.23541666666665,
+				"blindRounds": 0.583375,
+				"blindRaiseRate": 0.05349617884436826,
+				"lookAtOnce": 0.4145690948491415,
+				"neverLooked": 0.014544090681780296,
+				"seenRaiseRate": 0.06793467964990717,
+				"aggression": 0.10533117932148627,
+				"chaalRate": 0.5044529058543713,
+				"packRate": 0.1633869815164411,
+				"showRate": 0.3039130852802615,
+				"stayAfterSeeing": 0.4931703810208483,
+				"seenFoldToRaise": 0.02236007907832845,
+				"blindFoldToRaise": 0.01235447849845569,
+				"seeUnderPressure": 0.786187406164444,
+				"continueWeak": 0.04239702015775636,
+				"continueMid": 0.7229540056143382,
+				"continueBorder": 0.9763961344394082,
+				"thinRaise": 0.0028128838001663958,
+				"valueRaise": 0.13786476310009413,
+				"entropy": 0.41236939581485793,
+				"strongPackRate": 0.0005969703753451235,
+				"weakCallRate": 0.04055096418732782,
+				"weakRaiseRate": 0.0006688963210702341,
+				"monsterNoRaiseRate": 0.07662835249042145,
+				"bigOverrideRate": 0.04330677693751194,
+				"badActionRate": 0.01874543187583301,
+				"stateOverrideRate": 0.004921735417392379,
+				"memoryOverrideRate": 0.023260256424662614,
+				"lossAggressionDelta": 0.0018458220709887951,
+				"lossSeenRaiseDelta": -0.004922032021860576,
+				"lossPackDelta": 0.06414648171772425,
+				"winSeenRaiseDelta": 0.00935054721596941,
+				"blindWinBlindRaiseDelta": 0.006419925634872502,
+				"blindWinBlindRoundsDelta": -0.009853165010296427,
+				"caughtBluffFoldDelta": 0.004071320009658954,
+				"caughtBluffPackDelta": -0.01386477493746402,
+				"bluffedOffFoldDelta": 0.003383083191418248,
+				"pressuredPackDelta": 0.03420175804762876,
+				"events": {
+					"bigLoss": 3605,
+					"bigWin": 3109,
+					"blindWin": 151,
+					"caughtBluff": 314,
+					"bluffedOff": 812,
+					"pressured": 8601
+				},
+				"lossAggressionDeltaX": 0.0064393697531944655,
+				"lossSeenRaiseDeltaX": 0.0044006430069870595,
+				"lossPackDeltaX": 0.0032536876407759374,
+				"winSeenRaiseDeltaX": 0.00910435746939868,
+				"blindWinBlindRaiseDeltaX": -0.007815679820726382,
+				"blindWinBlindRoundsDeltaX": 0.04450050257811089,
+				"caughtBluffFoldDeltaX": 0.01417233011066905,
+				"caughtBluffPackDeltaX": 0.0012184773486516587,
+				"bluffedOffFoldDeltaX": -0.004430758470955105,
+				"pressuredPackDeltaX": -0.005444068738823804
+			},
+			"scenarioPaired": {
+				"human-very-conservative": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-station": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-maniac": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-value": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-switch": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-switch-reverse": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-deceptive": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-blind-heavy": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				}
+			},
+			"xPaired": {
+				"always-raise": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"raise-often": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"never-raise": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"call-everything": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"fold-a-lot": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"bluff-a-lot": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"never-bluff": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"stay-blind": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"pressure-weakness": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"pressure-after-loss": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"attack-short": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"alternate": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"sudden-change": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"loose-then-value": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"value-then-bluff": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"search": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				}
+			},
+			"adapt": {
+				"rock": {
+					"effect": -0.003,
+					"lo": -0.008,
+					"hi": 0,
+					"verdict": "none",
+					"curve": [
+						0.009,
+						0.007,
+						0,
+						0.002,
+						0.007,
+						0.007,
+						0.004,
+						0.002,
+						0.002,
+						0
+					],
+					"control": [
+						0.004,
+						0.004,
+						0,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						1,
+						2.9,
+						3.9,
+						4.8,
+						5.7,
+						6.3,
+						6.8,
+						7.1,
+						7.2,
+						7.4
+					],
+					"boots": {
+						"mean": -52.541666666666664,
+						"ci": 25.93161080511565,
+						"n": 48
+					}
+				},
+				"station": {
+					"effect": 0,
+					"lo": -0.002,
+					"hi": 0.002,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.004,
+						0.004,
+						0.004,
+						0.005,
+						0.004,
+						0.004,
+						0.005,
+						0.005,
+						0.003,
+						0.005
+					],
+					"control": [
+						0.005,
+						0.005,
+						0.005,
+						0.006,
+						0.005,
+						0.006,
+						0.007,
+						0.006,
+						0.005,
+						0.005
+					],
+					"halfwayHands": 80,
+					"readsAtHalfway": 21.8,
+					"reads": [
+						3.2,
+						9.2,
+						14.1,
+						17.5,
+						20.2,
+						21.8,
+						24.7,
+						24.8,
+						26.4,
+						25.9
+					],
+					"boots": {
+						"mean": 1020.3020833333334,
+						"ci": 1115.9054215157967,
+						"n": 48
+					}
+				},
+				"station-value": {
+					"effect": -0.001,
+					"lo": -0.005,
+					"hi": 0.004,
+					"verdict": "none",
+					"curve": [
+						0.051,
+						0.061,
+						0.043,
+						0.049,
+						0.04,
+						0.054,
+						0.049,
+						0.051,
+						0.044,
+						0.049
+					],
+					"control": [
+						0.054,
+						0.061,
+						0.044,
+						0.05,
+						0.043,
+						0.048,
+						0.053,
+						0.054,
+						0.047,
+						0.051
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						3.2,
+						9.2,
+						14.1,
+						17.5,
+						20.2,
+						21.8,
+						24.7,
+						24.8,
+						26.4,
+						25.9
+					],
+					"boots": {
+						"mean": 1020.3020833333334,
+						"ci": 1115.9054215157967,
+						"n": 48
+					}
+				},
+				"maniac": {
+					"effect": -0.001,
+					"lo": -0.023,
+					"hi": 0.019,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.049,
+						0.05,
+						0.021,
+						0.023,
+						0.033,
+						0.038,
+						0.058,
+						0.017,
+						0.018,
+						0.019
+					],
+					"control": [
+						0.049,
+						0.062,
+						0.029,
+						0.041,
+						0.028,
+						0.025,
+						0.043,
+						0.028,
+						0.022,
+						0.025
+					],
+					"halfwayHands": 20,
+					"readsAtHalfway": 30.6,
+					"reads": [
+						7.7,
+						21.1,
+						30.6,
+						37.2,
+						40.3,
+						44.9,
+						48.3,
+						48.5,
+						52.7,
+						55
+					],
+					"boots": {
+						"mean": 1086.4635416666667,
+						"ci": 1068.2080275486671,
+						"n": 48
+					}
+				},
+				"value": {
+					"effect": -0.028,
+					"lo": -0.05,
+					"hi": -0.008,
+					"verdict": "WRONG",
+					"curve": [
+						0.064,
+						0.052,
+						0.093,
+						0.051,
+						0.059,
+						0.076,
+						0.085,
+						0.029,
+						0.048,
+						0.053
+					],
+					"control": [
+						0.064,
+						0.047,
+						0.081,
+						0.04,
+						0.076,
+						0.074,
+						0.09,
+						0.072,
+						0.067,
+						0.069
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						1.1,
+						3.3,
+						4.7,
+						5.6,
+						6.7,
+						7.2,
+						7.6,
+						8.2,
+						8.5,
+						9
+					],
+					"boots": {
+						"mean": -249.578125,
+						"ci": 57.52508027737213,
+						"n": 48
+					}
+				},
+				"switch-a": {
+					"effect": 0.014,
+					"lo": -0.022,
+					"hi": 0.059,
+					"verdict": "none",
+					"curve": [
+						0.02,
+						0.019,
+						0.091,
+						0.054,
+						0.077,
+						0.039,
+						0.038,
+						0.041,
+						0.016,
+						0.023
+					],
+					"control": [
+						0.019,
+						0.017,
+						0.067,
+						0.054,
+						0.071,
+						0.05,
+						0.047,
+						0.047,
+						0.005,
+						0.028
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.1,
+						11.1,
+						14.6,
+						18,
+						20,
+						26.7,
+						34.4,
+						39.9,
+						47.4,
+						49.1
+					],
+					"boots": {
+						"mean": 693.625,
+						"ci": 580.4359383753078,
+						"n": 48
+					}
+				},
+				"switch-b": {
+					"effect": -0.003,
+					"lo": -0.028,
+					"hi": 0.021,
+					"verdict": "none",
+					"curve": [
+						0.016,
+						0.027,
+						0.056,
+						0.052,
+						0.036,
+						0.058,
+						0.045,
+						0.054,
+						0.041,
+						0.068
+					],
+					"control": [
+						0.016,
+						0.053,
+						0.054,
+						0.055,
+						0.033,
+						0.043,
+						0.051,
+						0.039,
+						0.032,
+						0.05
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						7,
+						21.7,
+						30.2,
+						38.2,
+						45.3,
+						42.7,
+						42.9,
+						41.2,
+						43.3,
+						42.8
+					],
+					"boots": {
+						"mean": 315.7395833333333,
+						"ci": 518.8819000101588,
+						"n": 48
+					}
+				},
+				"deceptive": {
+					"effect": 0.02,
+					"lo": -0.003,
+					"hi": 0.044,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.04,
+						0.035,
+						0.028,
+						0.039,
+						0.051,
+						0.049,
+						0.07,
+						0.048,
+						0.07,
+						0.053
+					],
+					"control": [
+						0.041,
+						0.031,
+						0.025,
+						0.045,
+						0.059,
+						0.038,
+						0.062,
+						0.026,
+						0.068,
+						0.033
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 7.1,
+					"reads": [
+						1.2,
+						3.4,
+						4.7,
+						5.6,
+						6.7,
+						7.1,
+						7.6,
+						8.1,
+						8.5,
+						8.9
+					],
+					"boots": {
+						"mean": 369.7916666666667,
+						"ci": 265.00181769738793,
+						"n": 48
+					}
+				},
+				"blind-heavy": {
+					"effect": -0.001,
+					"lo": -0.008,
+					"hi": 0.007,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.05,
+						0.046,
+						0.034,
+						0.028,
+						0.052,
+						0.049,
+						0.039,
+						0.047,
+						0.024,
+						0.027
+					],
+					"control": [
+						0.049,
+						0.043,
+						0.032,
+						0.029,
+						0.046,
+						0.047,
+						0.044,
+						0.045,
+						0.028,
+						0.024
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 29,
+					"reads": [
+						5.6,
+						15.4,
+						23.5,
+						29,
+						33.3,
+						36,
+						38.5,
+						40.8,
+						41.2,
+						43.5
+					],
+					"boots": {
+						"mean": -138.08333333333334,
+						"ci": 119.76929001465548,
+						"n": 48
+					}
+				}
+			},
+			"events": {
+				"foldCaught12": 0.018,
+				"foldCaught34": 0.017,
+				"foldCaught58": 0.023,
+				"foldOther": 0.024,
+				"nCaught12": 500,
+				"packAfterLoss": 0.2,
+				"packCalm": 0.181,
+				"attrActed": null,
+				"attrPackWhenActed": null,
+				"attrCallWhenActed": null,
+				"attrShowWhenActed": null,
+				"events": {
+					"caught": 856,
+					"bluffedOff": 1843,
+					"bigLoss": 6801
+				}
+			},
+			"night": {
+				"mean": 1.5324452378927171,
+				"ci": 0.5769030301048247,
+				"n": 30
+			},
+			"perf": {
+				"mean": 0.32099466459165105,
+				"p99": 1.154124999884516,
+				"n": 1926
+			},
+			"identity": 0.9625
+		},
+		{
+			"key": "samay-raina@6-q100",
+			"change": "opponent-specific call-down quirk at 1.0",
+			"gates": {
+				"regression": {
+					"pass": true,
+					"detail": "bands 6/9 (champion 6), violation 3.59 (4.17)"
+				},
+				"personality": {
+					"pass": true,
+					"detail": "identified 97% (champion 96%)",
+					"nearestOther": 2.134944919144187
+				},
+				"strength": {
+					"pass": true,
+					"paired": {
+						"mean": -49.02291666666667,
+						"ci": 226.5148778229678,
+						"n": 120
+					}
+				},
+				"counter": {
+					"pass": true,
+					"worse": []
+				},
+				"variety": {
+					"pass": true,
+					"detail": "1.43 ± 0.58 (champion 1.53)"
+				},
+				"badActions": {
+					"pass": true,
+					"detail": "1.84% (champion 1.87%)"
+				},
+				"performance": {
+					"pass": true,
+					"detail": "0.261 ms mean, p99 1.052 (champion 0.321)"
+				},
+				"exploit": {
+					"pass": false,
+					"detail": "fold to a bluffer caught 1-2 / 3-4 hands ago 0.015 / 0.018 (champion 0.018 / 0.017); event reactions change P(pack) by -0.012 where they act"
+				}
+			},
+			"pass": false,
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7304872789995688,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.022457425876925164,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.2986962819893771,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06688553046168941,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.061923583662714096,
+						"pass": false,
+						"miss": 0.23847167325428187,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.0431260945709282,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": 0.007514526689299306,
+						"pass": false,
+						"miss": 1.500968445953287,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.008522751526078082,
+						"pass": false,
+						"miss": 1.852275152607808,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.018369788106630213,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 6,
+				"violation": 3.591715271815377
+			},
+			"m": {
+				"hands": 24000,
+				"bootsPer100": 210.2125,
+				"blindRounds": 0.5839166666666666,
+				"blindRaiseRate": 0.05259026687598116,
+				"lookAtOnce": 0.413836215878308,
+				"neverLooked": 0.015086476349239425,
+				"seenRaiseRate": 0.06688553046168941,
+				"aggression": 0.10315728211843446,
+				"chaalRate": 0.5073425270219903,
+				"packRate": 0.16245141366274427,
+				"showRate": 0.2986962819893771,
+				"stayAfterSeeing": 0.49680531460246263,
+				"seenFoldToRaise": 0.022457425876925164,
+				"blindFoldToRaise": 0.011831519167061051,
+				"seeUnderPressure": 0.7848375132462028,
+				"continueWeak": 0.0431260945709282,
+				"continueMid": 0.7304872789995688,
+				"continueBorder": 0.9766165794360966,
+				"thinRaise": 0.0025595589683008466,
+				"valueRaise": 0.1366045142296369,
+				"entropy": 0.40881184805125736,
+				"strongPackRate": 0.0007371913011426465,
+				"weakCallRate": 0.041061206516952886,
+				"weakRaiseRate": 0.0005561735261401557,
+				"monsterNoRaiseRate": 0.061923583662714096,
+				"bigOverrideRate": 0.046106568868252526,
+				"badActionRate": 0.018369788106630213,
+				"stateOverrideRate": 0.004856274463622803,
+				"memoryOverrideRate": 0.02218408981303904,
+				"lossAggressionDelta": 0.011655812682456801,
+				"lossSeenRaiseDelta": 0.00038837644267164517,
+				"lossPackDelta": 0.06840732076624761,
+				"winSeenRaiseDelta": 0.010264752976542044,
+				"blindWinBlindRaiseDelta": 0.0024116145099008154,
+				"blindWinBlindRoundsDelta": 0.0011604211479678828,
+				"caughtBluffFoldDelta": -0.0015782585749320142,
+				"caughtBluffPackDelta": -0.005557498268752847,
+				"bluffedOffFoldDelta": 0.0008434874149144539,
+				"pressuredPackDelta": 0.036109417075356365,
+				"events": {
+					"bigLoss": 3594,
+					"bigWin": 3158,
+					"blindWin": 163,
+					"caughtBluff": 326,
+					"bluffedOff": 788,
+					"pressured": 8598
+				},
+				"lossAggressionDeltaX": 0.01624936036466247,
+				"lossSeenRaiseDeltaX": 0.00971105147151928,
+				"lossPackDeltaX": 0.007514526689299306,
+				"winSeenRaiseDeltaX": 0.010018563229971314,
+				"blindWinBlindRaiseDeltaX": -0.011823990945698068,
+				"blindWinBlindRoundsDeltaX": 0.0555140887363752,
+				"caughtBluffFoldDeltaX": 0.008522751526078082,
+				"caughtBluffPackDeltaX": 0.00952575401736283,
+				"bluffedOffFoldDeltaX": -0.006970354247458899,
+				"pressuredPackDeltaX": -0.0035364097110962
+			},
+			"scenarioPaired": {
+				"human-very-conservative": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-station": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-maniac": {
+					"mean": 263.7291666666667,
+					"ci": 622.4676471694577,
+					"n": 48
+				},
+				"human-value": {
+					"mean": 2.9166666666666665,
+					"ci": 4.728661001803403,
+					"n": 48
+				},
+				"human-switch": {
+					"mean": -85.78125,
+					"ci": 296.0149977786528,
+					"n": 48
+				},
+				"human-switch-reverse": {
+					"mean": -1.2395833333333333,
+					"ci": 260.6976361561902,
+					"n": 48
+				},
+				"human-deceptive": {
+					"mean": 87.67708333333333,
+					"ci": 142.07624244965567,
+					"n": 48
+				},
+				"human-blind-heavy": {
+					"mean": 13.239583333333334,
+					"ci": 85.50070565630914,
+					"n": 48
+				}
+			},
+			"xPaired": {
+				"always-raise": {
+					"mean": 3.328125,
+					"ci": 6.523124999999999,
+					"n": 32
+				},
+				"raise-often": {
+					"mean": 359.03125,
+					"ci": 936.1172337807916,
+					"n": 32
+				},
+				"never-raise": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"call-everything": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"fold-a-lot": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"bluff-a-lot": {
+					"mean": 170.1640625,
+					"ci": 650.7851528278369,
+					"n": 32
+				},
+				"never-bluff": {
+					"mean": -4.562499999999998,
+					"ci": 7.546116751296227,
+					"n": 32
+				},
+				"stay-blind": {
+					"mean": -47.328125,
+					"ci": 75.86503881102205,
+					"n": 32
+				},
+				"pressure-weakness": {
+					"mean": -128.9921875,
+					"ci": 199.39320932872346,
+					"n": 32
+				},
+				"pressure-after-loss": {
+					"mean": -8.187499999999993,
+					"ci": 27.940076528372114,
+					"n": 32
+				},
+				"attack-short": {
+					"mean": -6.218749999999993,
+					"ci": 21.80761667653957,
+					"n": 32
+				},
+				"alternate": {
+					"mean": 50.40625,
+					"ci": 394.97150485870844,
+					"n": 32
+				},
+				"sudden-change": {
+					"mean": -7.71875,
+					"ci": 15.194584294579455,
+					"n": 32
+				},
+				"loose-then-value": {
+					"mean": -4.4375,
+					"ci": 67.81313487736104,
+					"n": 32
+				},
+				"value-then-bluff": {
+					"mean": -82.62499999999999,
+					"ci": 307.75382910670453,
+					"n": 32
+				},
+				"search": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				}
+			},
+			"adapt": {
+				"rock": {
+					"effect": -0.003,
+					"lo": -0.008,
+					"hi": 0,
+					"verdict": "none",
+					"curve": [
+						0.009,
+						0.007,
+						0,
+						0.002,
+						0.007,
+						0.007,
+						0.004,
+						0.002,
+						0.002,
+						0
+					],
+					"control": [
+						0.004,
+						0.004,
+						0,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						1,
+						2.9,
+						3.9,
+						4.8,
+						5.7,
+						6.3,
+						6.8,
+						7.1,
+						7.2,
+						7.4
+					],
+					"boots": {
+						"mean": -52.541666666666664,
+						"ci": 25.93161080511565,
+						"n": 48
+					}
+				},
+				"station": {
+					"effect": 0,
+					"lo": -0.002,
+					"hi": 0.002,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.004,
+						0.004,
+						0.004,
+						0.005,
+						0.004,
+						0.004,
+						0.005,
+						0.005,
+						0.003,
+						0.005
+					],
+					"control": [
+						0.005,
+						0.005,
+						0.005,
+						0.006,
+						0.005,
+						0.006,
+						0.007,
+						0.006,
+						0.005,
+						0.005
+					],
+					"halfwayHands": 80,
+					"readsAtHalfway": 21.8,
+					"reads": [
+						3.2,
+						9.2,
+						14.1,
+						17.5,
+						20.2,
+						21.8,
+						24.7,
+						24.8,
+						26.4,
+						25.9
+					],
+					"boots": {
+						"mean": 1020.3020833333334,
+						"ci": 1115.9054215157967,
+						"n": 48
+					}
+				},
+				"station-value": {
+					"effect": -0.001,
+					"lo": -0.005,
+					"hi": 0.004,
+					"verdict": "none",
+					"curve": [
+						0.051,
+						0.061,
+						0.043,
+						0.049,
+						0.04,
+						0.054,
+						0.049,
+						0.051,
+						0.044,
+						0.049
+					],
+					"control": [
+						0.054,
+						0.061,
+						0.044,
+						0.05,
+						0.043,
+						0.048,
+						0.053,
+						0.054,
+						0.047,
+						0.051
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						3.2,
+						9.2,
+						14.1,
+						17.5,
+						20.2,
+						21.8,
+						24.7,
+						24.8,
+						26.4,
+						25.9
+					],
+					"boots": {
+						"mean": 1020.3020833333334,
+						"ci": 1115.9054215157967,
+						"n": 48
+					}
+				},
+				"maniac": {
+					"effect": 0.01,
+					"lo": -0.011,
+					"hi": 0.031,
+					"verdict": "none",
+					"curve": [
+						0.038,
+						0.047,
+						0.014,
+						0.03,
+						0.014,
+						0.032,
+						0.038,
+						0.013,
+						0.022,
+						0.032
+					],
+					"control": [
+						0.049,
+						0.062,
+						0.029,
+						0.041,
+						0.028,
+						0.025,
+						0.043,
+						0.028,
+						0.022,
+						0.025
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						7.7,
+						20.8,
+						29.8,
+						37.9,
+						39.8,
+						46.3,
+						48.7,
+						49.9,
+						53.6,
+						52
+					],
+					"boots": {
+						"mean": 1350.1927083333333,
+						"ci": 1161.587440426688,
+						"n": 48
+					}
+				},
+				"value": {
+					"effect": -0.029,
+					"lo": -0.051,
+					"hi": -0.01,
+					"verdict": "WRONG",
+					"curve": [
+						0.059,
+						0.052,
+						0.081,
+						0.045,
+						0.052,
+						0.083,
+						0.093,
+						0.028,
+						0.045,
+						0.046
+					],
+					"control": [
+						0.064,
+						0.047,
+						0.081,
+						0.04,
+						0.076,
+						0.074,
+						0.09,
+						0.072,
+						0.067,
+						0.069
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						1.1,
+						3.3,
+						4.7,
+						5.6,
+						6.7,
+						7.2,
+						7.6,
+						8.1,
+						8.5,
+						9
+					],
+					"boots": {
+						"mean": -246.66145833333334,
+						"ci": 57.28216013261281,
+						"n": 48
+					}
+				},
+				"switch-a": {
+					"effect": 0.038,
+					"lo": -0.001,
+					"hi": 0.089,
+					"verdict": "none",
+					"curve": [
+						0.02,
+						0.019,
+						0.091,
+						0.054,
+						0.077,
+						0.031,
+						0.043,
+						0.055,
+						0.027,
+						0.044
+					],
+					"control": [
+						0.019,
+						0.017,
+						0.067,
+						0.054,
+						0.071,
+						0.05,
+						0.047,
+						0.047,
+						0.005,
+						0.028
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.1,
+						11.1,
+						14.6,
+						18,
+						20,
+						26.7,
+						34.8,
+						40.1,
+						46.8,
+						50
+					],
+					"boots": {
+						"mean": 607.84375,
+						"ci": 577.0747663388955,
+						"n": 48
+					}
+				},
+				"switch-b": {
+					"effect": 0.002,
+					"lo": -0.038,
+					"hi": 0.036,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.014,
+						0.043,
+						0.055,
+						0.049,
+						0.029,
+						0.059,
+						0.04,
+						0.053,
+						0.053,
+						0.066
+					],
+					"control": [
+						0.016,
+						0.053,
+						0.054,
+						0.055,
+						0.033,
+						0.043,
+						0.051,
+						0.039,
+						0.032,
+						0.05
+					],
+					"halfwayHands": 60,
+					"readsAtHalfway": 43.2,
+					"reads": [
+						7.3,
+						21.4,
+						30.4,
+						38.7,
+						43.3,
+						42.8,
+						42.9,
+						40.9,
+						43.2,
+						43.3
+					],
+					"boots": {
+						"mean": 314.5,
+						"ci": 532.3816733429469,
+						"n": 48
+					}
+				},
+				"deceptive": {
+					"effect": 0.018,
+					"lo": -0.004,
+					"hi": 0.045,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.036,
+						0.039,
+						0.018,
+						0.042,
+						0.045,
+						0.052,
+						0.058,
+						0.046,
+						0.071,
+						0.057
+					],
+					"control": [
+						0.041,
+						0.031,
+						0.025,
+						0.045,
+						0.059,
+						0.038,
+						0.062,
+						0.026,
+						0.068,
+						0.033
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 7.2,
+					"reads": [
+						1.2,
+						3.3,
+						4.7,
+						5.5,
+						6.6,
+						7.2,
+						7.5,
+						8,
+						8.4,
+						8.9
+					],
+					"boots": {
+						"mean": 457.46875,
+						"ci": 264.22419743615905,
+						"n": 48
+					}
+				},
+				"blind-heavy": {
+					"effect": -0.002,
+					"lo": -0.01,
+					"hi": 0.008,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.049,
+						0.042,
+						0.031,
+						0.025,
+						0.042,
+						0.048,
+						0.032,
+						0.043,
+						0.023,
+						0.024
+					],
+					"control": [
+						0.049,
+						0.043,
+						0.032,
+						0.029,
+						0.046,
+						0.047,
+						0.044,
+						0.045,
+						0.028,
+						0.024
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 29.1,
+					"reads": [
+						5.6,
+						15.7,
+						23.8,
+						29.1,
+						33.4,
+						36,
+						38.4,
+						40.7,
+						41.2,
+						43.6
+					],
+					"boots": {
+						"mean": -124.84375,
+						"ci": 106.07548359165912,
+						"n": 48
+					}
+				}
+			},
+			"events": {
+				"foldCaught12": 0.015,
+				"foldCaught34": 0.018,
+				"foldCaught58": 0.016,
+				"foldOther": 0.025,
+				"nCaught12": 468,
+				"packAfterLoss": 0.199,
+				"packCalm": 0.179,
+				"attrActed": 0.09,
+				"attrPackWhenActed": -0.012,
+				"attrCallWhenActed": 0.028,
+				"attrShowWhenActed": -0.014,
+				"events": {
+					"caught": 850,
+					"bluffedOff": 1815,
+					"bigLoss": 6827
+				}
+			},
+			"night": {
+				"mean": 1.4304786275516332,
+				"ci": 0.5751410826590768,
+				"n": 30
+			},
+			"perf": {
+				"mean": 0.2612120480038226,
+				"p99": 1.0518339998088777,
+				"n": 1875
+			},
+			"identity": 0.9666666666666667
+		},
+		{
+			"key": "samay-raina@6-r060",
+			"change": "the same memory as a read about that raiser, 0.6",
+			"gates": {
+				"regression": {
+					"pass": false,
+					"detail": "bands 4/9 (champion 6), violation 4.50 (4.17)"
+				},
+				"personality": {
+					"pass": true,
+					"detail": "identified 96% (champion 96%)",
+					"nearestOther": 2.134944919144187
+				},
+				"strength": {
+					"pass": true,
+					"paired": {
+						"mean": -80.36666666666666,
+						"ci": 250.3547452976522,
+						"n": 120
+					}
+				},
+				"counter": {
+					"pass": true,
+					"worse": []
+				},
+				"variety": {
+					"pass": true,
+					"detail": "1.63 ± 0.54 (champion 1.53)"
+				},
+				"badActions": {
+					"pass": false,
+					"detail": "4.14% (champion 1.87%)"
+				},
+				"performance": {
+					"pass": true,
+					"detail": "0.258 ms mean, p99 1.035 (champion 0.321)"
+				},
+				"exploit": {
+					"pass": false,
+					"detail": "fold to a bluffer caught 1-2 / 3-4 hands ago 0.031 / 0.012 (champion 0.018 / 0.017); event reactions change P(pack) by -0.086 where they act"
+				}
+			},
+			"pass": false,
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7808510638297872,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.026291512915129153,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.28159082361790144,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06196435482979155,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.09054593874833555,
+						"pass": false,
+						"miss": 0.8109187749667109,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.09748024770446295,
+						"pass": false,
+						"miss": 0.9496049540892589,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.007469690415397412,
+						"pass": false,
+						"miss": 0.5020206389735059,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.01012503982022745,
+						"pass": false,
+						"miss": 2.012503982022745,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.04143070044709389,
+						"pass": false,
+						"miss": 0.22861400894187783,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 4,
+				"violation": 4.503662358994099
+			},
+			"m": {
+				"hands": 24000,
+				"bootsPer100": 178.86875,
+				"blindRounds": 0.5804166666666667,
+				"blindRaiseRate": 0.05226130653266332,
+				"lookAtOnce": 0.41755219402425303,
+				"neverLooked": 0.014751843980497562,
+				"seenRaiseRate": 0.06196435482979155,
+				"aggression": 0.0934096465881307,
+				"chaalRate": 0.5178860932729761,
+				"packRate": 0.1586272239183072,
+				"showRate": 0.28159082361790144,
+				"stayAfterSeeing": 0.516305037431798,
+				"seenFoldToRaise": 0.026291512915129153,
+				"blindFoldToRaise": 0.01221264367816092,
+				"seeUnderPressure": 0.7868954204903135,
+				"continueWeak": 0.09748024770446295,
+				"continueMid": 0.7808510638297872,
+				"continueBorder": 0.9795968334285481,
+				"thinRaise": 0.002372970733360955,
+				"valueRaise": 0.13073112740241727,
+				"entropy": 0.4118324095364137,
+				"strongPackRate": 0.0008199776369735371,
+				"weakCallRate": 0.09593304002575384,
+				"weakRaiseRate": 0.0004348771472059143,
+				"monsterNoRaiseRate": 0.09054593874833555,
+				"bigOverrideRate": 0.05589565256035642,
+				"badActionRate": 0.04143070044709389,
+				"stateOverrideRate": 0.005032941882298044,
+				"memoryOverrideRate": 0.035541680091548435,
+				"lossAggressionDelta": 0.006984094178736813,
+				"lossSeenRaiseDelta": -0.0004982293387759268,
+				"lossPackDelta": 0.0534231036615509,
+				"winSeenRaiseDelta": 0.004213931440369259,
+				"blindWinBlindRaiseDelta": -0.013892406104646586,
+				"blindWinBlindRoundsDelta": -0.01466456965206786,
+				"caughtBluffFoldDelta": 0.00002402971921735414,
+				"caughtBluffPackDelta": -0.028676528507454835,
+				"bluffedOffFoldDelta": 0.004483049970110776,
+				"pressuredPackDelta": 0.026058513481595658,
+				"events": {
+					"bigLoss": 3739,
+					"bigWin": 3200,
+					"blindWin": 150,
+					"caughtBluff": 279,
+					"bluffedOff": 803,
+					"pressured": 8792
+				},
+				"lossAggressionDeltaX": 0.011577641860942484,
+				"lossSeenRaiseDeltaX": 0.008824445690071708,
+				"lossPackDeltaX": -0.007469690415397412,
+				"winSeenRaiseDeltaX": 0.003967741693798529,
+				"blindWinBlindRaiseDeltaX": -0.02812801156024547,
+				"blindWinBlindRoundsDeltaX": 0.03968909793633946,
+				"caughtBluffFoldDeltaX": 0.01012503982022745,
+				"caughtBluffPackDeltaX": -0.013593276221339157,
+				"bluffedOffFoldDeltaX": -0.0033307916922625767,
+				"pressuredPackDeltaX": -0.013587313304856907
+			},
+			"scenarioPaired": {
+				"human-very-conservative": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-station": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-maniac": {
+					"mean": -944.71875,
+					"ci": 765.0679859302999,
+					"n": 48
+				},
+				"human-value": {
+					"mean": -3.8489583333333335,
+					"ci": 24.990526976051214,
+					"n": 48
+				},
+				"human-switch": {
+					"mean": -434.21875,
+					"ci": 409.56376857808317,
+					"n": 48
+				},
+				"human-switch-reverse": {
+					"mean": 65.85416666666667,
+					"ci": 345.3907594244793,
+					"n": 48
+				},
+				"human-deceptive": {
+					"mean": 109.78645833333333,
+					"ci": 239.1352937580393,
+					"n": 48
+				},
+				"human-blind-heavy": {
+					"mean": 39.927083333333336,
+					"ci": 99.20442348506135,
+					"n": 48
+				}
+			},
+			"xPaired": {
+				"always-raise": {
+					"mean": -21.5625,
+					"ci": 36.64058159963727,
+					"n": 32
+				},
+				"raise-often": {
+					"mean": -295.71875,
+					"ci": 325.2802525626289,
+					"n": 32
+				},
+				"never-raise": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"call-everything": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"fold-a-lot": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"bluff-a-lot": {
+					"mean": -266.3828125,
+					"ci": 988.8078564957085,
+					"n": 32
+				},
+				"never-bluff": {
+					"mean": -8.40625,
+					"ci": 11.028111456106457,
+					"n": 32
+				},
+				"stay-blind": {
+					"mean": -15.562500000000002,
+					"ci": 165.08105342711147,
+					"n": 32
+				},
+				"pressure-weakness": {
+					"mean": 28.015625,
+					"ci": 321.36545958378207,
+					"n": 32
+				},
+				"pressure-after-loss": {
+					"mean": -19.335937499999993,
+					"ci": 28.5256592051186,
+					"n": 32
+				},
+				"attack-short": {
+					"mean": -1.4921874999999822,
+					"ci": 28.10660979754345,
+					"n": 32
+				},
+				"alternate": {
+					"mean": -17.9375,
+					"ci": 421.3293302755022,
+					"n": 32
+				},
+				"sudden-change": {
+					"mean": -205.375,
+					"ci": 403.3886101685441,
+					"n": 32
+				},
+				"loose-then-value": {
+					"mean": -18.43750000000001,
+					"ci": 101.74665367704141,
+					"n": 32
+				},
+				"value-then-bluff": {
+					"mean": -570.71875,
+					"ci": 696.8789902330068,
+					"n": 32
+				},
+				"search": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				}
+			},
+			"adapt": {
+				"rock": {
+					"effect": -0.003,
+					"lo": -0.008,
+					"hi": 0,
+					"verdict": "none",
+					"curve": [
+						0.009,
+						0.007,
+						0,
+						0.002,
+						0.007,
+						0.007,
+						0.004,
+						0.002,
+						0.002,
+						0
+					],
+					"control": [
+						0.004,
+						0.004,
+						0,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						1,
+						2.9,
+						3.9,
+						4.8,
+						5.7,
+						6.3,
+						6.8,
+						7.1,
+						7.2,
+						7.4
+					],
+					"boots": {
+						"mean": -52.541666666666664,
+						"ci": 25.93161080511565,
+						"n": 48
+					}
+				},
+				"station": {
+					"effect": 0,
+					"lo": -0.002,
+					"hi": 0.002,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.004,
+						0.004,
+						0.004,
+						0.005,
+						0.004,
+						0.004,
+						0.005,
+						0.005,
+						0.003,
+						0.005
+					],
+					"control": [
+						0.005,
+						0.005,
+						0.005,
+						0.006,
+						0.005,
+						0.006,
+						0.007,
+						0.006,
+						0.005,
+						0.005
+					],
+					"halfwayHands": 80,
+					"readsAtHalfway": 21.8,
+					"reads": [
+						3.2,
+						9.2,
+						14.1,
+						17.5,
+						20.2,
+						21.8,
+						24.7,
+						24.8,
+						26.4,
+						25.9
+					],
+					"boots": {
+						"mean": 1020.3020833333334,
+						"ci": 1115.9054215157967,
+						"n": 48
+					}
+				},
+				"station-value": {
+					"effect": -0.001,
+					"lo": -0.005,
+					"hi": 0.004,
+					"verdict": "none",
+					"curve": [
+						0.051,
+						0.061,
+						0.043,
+						0.049,
+						0.04,
+						0.054,
+						0.049,
+						0.051,
+						0.044,
+						0.049
+					],
+					"control": [
+						0.054,
+						0.061,
+						0.044,
+						0.05,
+						0.043,
+						0.048,
+						0.053,
+						0.054,
+						0.047,
+						0.051
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						3.2,
+						9.2,
+						14.1,
+						17.5,
+						20.2,
+						21.8,
+						24.7,
+						24.8,
+						26.4,
+						25.9
+					],
+					"boots": {
+						"mean": 1020.3020833333334,
+						"ci": 1115.9054215157967,
+						"n": 48
+					}
+				},
+				"maniac": {
+					"effect": 0.009,
+					"lo": -0.021,
+					"hi": 0.031,
+					"verdict": "none",
+					"curve": [
+						0.038,
+						0.056,
+						0.014,
+						0.033,
+						0.051,
+						0.06,
+						0.025,
+						0.015,
+						0.029,
+						0.033
+					],
+					"control": [
+						0.049,
+						0.062,
+						0.029,
+						0.041,
+						0.028,
+						0.025,
+						0.043,
+						0.028,
+						0.022,
+						0.025
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						7.7,
+						20.6,
+						30.2,
+						38,
+						39.7,
+						47,
+						48.2,
+						51.9,
+						54.1,
+						55.6
+					],
+					"boots": {
+						"mean": 141.74479166666666,
+						"ci": 865.7661173512234,
+						"n": 48
+					}
+				},
+				"value": {
+					"effect": -0.005,
+					"lo": -0.036,
+					"hi": 0.025,
+					"verdict": "none",
+					"curve": [
+						0.052,
+						0.043,
+						0.071,
+						0.045,
+						0.065,
+						0.067,
+						0.075,
+						0.04,
+						0.067,
+						0.058
+					],
+					"control": [
+						0.064,
+						0.047,
+						0.081,
+						0.04,
+						0.076,
+						0.074,
+						0.09,
+						0.072,
+						0.067,
+						0.069
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						1.1,
+						3.3,
+						4.7,
+						5.6,
+						6.7,
+						7.3,
+						7.7,
+						8.2,
+						8.5,
+						8.9
+					],
+					"boots": {
+						"mean": -253.42708333333334,
+						"ci": 57.924793467247305,
+						"n": 48
+					}
+				},
+				"switch-a": {
+					"effect": 0.052,
+					"lo": 0.005,
+					"hi": 0.116,
+					"verdict": "WRONG",
+					"curve": [
+						0.02,
+						0.019,
+						0.091,
+						0.054,
+						0.077,
+						0.033,
+						0.074,
+						0.086,
+						0.032,
+						0.071
+					],
+					"control": [
+						0.019,
+						0.017,
+						0.067,
+						0.054,
+						0.071,
+						0.05,
+						0.047,
+						0.047,
+						0.005,
+						0.028
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.1,
+						11.1,
+						14.6,
+						18,
+						20,
+						26.6,
+						35.1,
+						39.9,
+						46.3,
+						47.1
+					],
+					"boots": {
+						"mean": 259.40625,
+						"ci": 519.6355788877214,
+						"n": 48
+					}
+				},
+				"switch-b": {
+					"effect": 0.002,
+					"lo": -0.037,
+					"hi": 0.036,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.015,
+						0.031,
+						0.058,
+						0.047,
+						0.056,
+						0.069,
+						0.067,
+						0.083,
+						0.062,
+						0.076
+					],
+					"control": [
+						0.016,
+						0.053,
+						0.054,
+						0.055,
+						0.033,
+						0.043,
+						0.051,
+						0.039,
+						0.032,
+						0.05
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 40.9,
+					"reads": [
+						7.3,
+						21.5,
+						31.3,
+						38,
+						41.6,
+						42.3,
+						42.3,
+						40.9,
+						43.4,
+						43.5
+					],
+					"boots": {
+						"mean": 381.59375,
+						"ci": 569.6066536877194,
+						"n": 48
+					}
+				},
+				"deceptive": {
+					"effect": 0.012,
+					"lo": -0.01,
+					"hi": 0.041,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.041,
+						0.033,
+						0.021,
+						0.039,
+						0.051,
+						0.044,
+						0.049,
+						0.042,
+						0.046,
+						0.065
+					],
+					"control": [
+						0.041,
+						0.031,
+						0.025,
+						0.045,
+						0.059,
+						0.038,
+						0.062,
+						0.026,
+						0.068,
+						0.033
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 7.1,
+					"reads": [
+						1.2,
+						3.2,
+						4.7,
+						5.6,
+						6.7,
+						7.1,
+						7.4,
+						8.1,
+						8.5,
+						8.7
+					],
+					"boots": {
+						"mean": 479.578125,
+						"ci": 260.38035346078806,
+						"n": 48
+					}
+				},
+				"blind-heavy": {
+					"effect": 0.004,
+					"lo": -0.009,
+					"hi": 0.018,
+					"verdict": "none",
+					"curve": [
+						0.046,
+						0.04,
+						0.033,
+						0.024,
+						0.044,
+						0.046,
+						0.038,
+						0.044,
+						0.031,
+						0.024
+					],
+					"control": [
+						0.049,
+						0.043,
+						0.032,
+						0.029,
+						0.046,
+						0.047,
+						0.044,
+						0.045,
+						0.028,
+						0.024
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.6,
+						15.6,
+						23.6,
+						29.3,
+						33.6,
+						36.6,
+						38.8,
+						41,
+						41.8,
+						44
+					],
+					"boots": {
+						"mean": -98.15625,
+						"ci": 114.0655856553872,
+						"n": 48
+					}
+				}
+			},
+			"events": {
+				"foldCaught12": 0.031,
+				"foldCaught34": 0.012,
+				"foldCaught58": 0.026,
+				"foldOther": 0.03,
+				"nCaught12": 513,
+				"packAfterLoss": 0.183,
+				"packCalm": 0.167,
+				"attrActed": 0.125,
+				"attrPackWhenActed": -0.086,
+				"attrCallWhenActed": 0.119,
+				"attrShowWhenActed": -0.018,
+				"events": {
+					"caught": 786,
+					"bluffedOff": 1779,
+					"bigLoss": 7175
+				}
+			},
+			"night": {
+				"mean": 1.6270701066719935,
+				"ci": 0.5382311258722505,
+				"n": 30
+			},
+			"perf": {
+				"mean": 0.2582666445991325,
+				"p99": 1.0348330000415444,
+				"n": 1722
+			},
+			"identity": 0.9625
+		},
+		{
+			"key": "samay-raina@6-r100",
+			"change": "the same memory as a read about that raiser, 1.0",
+			"gates": {
+				"regression": {
+					"pass": false,
+					"detail": "bands 4/9 (champion 6), violation 7.63 (4.17)"
+				},
+				"personality": {
+					"pass": true,
+					"detail": "identified 97% (champion 96%)",
+					"nearestOther": 2.134944919144187
+				},
+				"strength": {
+					"pass": true,
+					"paired": {
+						"mean": -47.50291666666666,
+						"ci": 282.88580836629615,
+						"n": 120
+					}
+				},
+				"counter": {
+					"pass": true,
+					"worse": []
+				},
+				"variety": {
+					"pass": true,
+					"detail": "1.54 ± 0.51 (champion 1.53)"
+				},
+				"badActions": {
+					"pass": false,
+					"detail": "7.60% (champion 1.87%)"
+				},
+				"performance": {
+					"pass": true,
+					"detail": "0.384 ms mean, p99 1.989 (champion 0.321)"
+				},
+				"exploit": {
+					"pass": true,
+					"detail": "fold to a bluffer caught 1-2 / 3-4 hands ago 0.007 / 0.012 (champion 0.018 / 0.017); event reactions change P(pack) by -0.172 where they act"
+				}
+			},
+			"pass": false,
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7976366322008862,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.028190096045902457,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.2647747747747748,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.059772432665994524,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.11543450064850844,
+						"pass": false,
+						"miss": 1.3086900129701686,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.17848139558334172,
+						"pass": false,
+						"miss": 2.569627911666834,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.004939558330257554,
+						"pass": false,
+						"miss": 0.670696111316163,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.01163861505866235,
+						"pass": false,
+						"miss": 2.1638615058662354,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.07597501964514662,
+						"pass": false,
+						"miss": 0.9195003929029324,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 4,
+				"violation": 7.632375934722333
+			},
+			"m": {
+				"hands": 24000,
+				"bootsPer100": 211.73250000000002,
+				"blindRounds": 0.5812083333333333,
+				"blindRaiseRate": 0.0529070184242598,
+				"lookAtOnce": 0.4166527754625771,
+				"neverLooked": 0.014794132355392566,
+				"seenRaiseRate": 0.059772432665994524,
+				"aggression": 0.08850973073846974,
+				"chaalRate": 0.5270207084298791,
+				"packRate": 0.15463264097422097,
+				"showRate": 0.2647747747747748,
+				"stayAfterSeeing": 0.538344401675056,
+				"seenFoldToRaise": 0.028190096045902457,
+				"blindFoldToRaise": 0.011736526946107785,
+				"seeUnderPressure": 0.7877809237303132,
+				"continueWeak": 0.17848139558334172,
+				"continueMid": 0.7976366322008862,
+				"continueBorder": 0.9820455274126323,
+				"thinRaise": 0.002321953343250009,
+				"valueRaise": 0.12888924075686803,
+				"entropy": 0.4094505181709894,
+				"strongPackRate": 0.00044277175116227583,
+				"weakCallRate": 0.17672719894491223,
+				"weakRaiseRate": 0.000513347022587269,
+				"monsterNoRaiseRate": 0.11543450064850844,
+				"bigOverrideRate": 0.07048811288639982,
+				"badActionRate": 0.07597501964514662,
+				"stateOverrideRate": 0.004699939603579861,
+				"memoryOverrideRate": 0.049206610662713444,
+				"lossAggressionDelta": 0.005578768614032781,
+				"lossSeenRaiseDelta": -0.0011857803372501904,
+				"lossPackDelta": 0.055953235746690755,
+				"winSeenRaiseDelta": 0.004788158663471535,
+				"blindWinBlindRaiseDelta": 0.002402712798752399,
+				"blindWinBlindRoundsDelta": -0.015803485922237126,
+				"caughtBluffFoldDelta": 0.001537604957652254,
+				"caughtBluffPackDelta": -0.05260964279288666,
+				"bluffedOffFoldDelta": 0.020803868043182176,
+				"pressuredPackDelta": 0.03292928162645059,
+				"events": {
+					"bigLoss": 3924,
+					"bigWin": 3314,
+					"blindWin": 155,
+					"caughtBluff": 264,
+					"bluffedOff": 754,
+					"pressured": 9170
+				},
+				"lossAggressionDeltaX": 0.010172316296238451,
+				"lossSeenRaiseDeltaX": 0.008136894691597445,
+				"lossPackDeltaX": -0.004939558330257554,
+				"winSeenRaiseDeltaX": 0.004541968916900806,
+				"blindWinBlindRaiseDeltaX": -0.011832892656846485,
+				"blindWinBlindRoundsDeltaX": 0.03855018166617019,
+				"caughtBluffFoldDeltaX": 0.01163861505866235,
+				"caughtBluffPackDeltaX": -0.03752639050677098,
+				"bluffedOffFoldDeltaX": 0.012990026380808824,
+				"pressuredPackDeltaX": -0.006716545160001974
+			},
+			"scenarioPaired": {
+				"human-very-conservative": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-station": {
+					"mean": 0,
+					"ci": 0,
+					"n": 48
+				},
+				"human-maniac": {
+					"mean": -753.2135416666666,
+					"ci": 1041.3348054878359,
+					"n": 48
+				},
+				"human-value": {
+					"mean": 38.713541666666664,
+					"ci": 64.56014505292252,
+					"n": 48
+				},
+				"human-switch": {
+					"mean": -386.1770833333333,
+					"ci": 362.10024502425773,
+					"n": 48
+				},
+				"human-switch-reverse": {
+					"mean": 68.78645833333333,
+					"ci": 333.9905857776828,
+					"n": 48
+				},
+				"human-deceptive": {
+					"mean": 64.39583333333333,
+					"ci": 267.6595867729654,
+					"n": 48
+				},
+				"human-blind-heavy": {
+					"mean": -45.708333333333336,
+					"ci": 96.99484046165566,
+					"n": 48
+				}
+			},
+			"xPaired": {
+				"always-raise": {
+					"mean": 0,
+					"ci": 11.774398108033019,
+					"n": 32
+				},
+				"raise-often": {
+					"mean": -829.0625,
+					"ci": 847.7268576938231,
+					"n": 32
+				},
+				"never-raise": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"call-everything": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"fold-a-lot": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				},
+				"bluff-a-lot": {
+					"mean": -655.0703125,
+					"ci": 1138.0183724653555,
+					"n": 32
+				},
+				"never-bluff": {
+					"mean": -7.624999999999997,
+					"ci": 14.865106387215187,
+					"n": 32
+				},
+				"stay-blind": {
+					"mean": -117.734375,
+					"ci": 173.47585029121947,
+					"n": 32
+				},
+				"pressure-weakness": {
+					"mean": -76.0078125,
+					"ci": 348.3080711554834,
+					"n": 32
+				},
+				"pressure-after-loss": {
+					"mean": -12.804687499999996,
+					"ci": 34.57371947117415,
+					"n": 32
+				},
+				"attack-short": {
+					"mean": -56.078124999999986,
+					"ci": 53.85795027991999,
+					"n": 32
+				},
+				"alternate": {
+					"mean": -165.046875,
+					"ci": 310.8266596316825,
+					"n": 32
+				},
+				"sudden-change": {
+					"mean": -256.640625,
+					"ci": 725.7009755610289,
+					"n": 32
+				},
+				"loose-then-value": {
+					"mean": 99.046875,
+					"ci": 166.78358701221407,
+					"n": 32
+				},
+				"value-then-bluff": {
+					"mean": -491.0078125,
+					"ci": 866.6344064253383,
+					"n": 32
+				},
+				"search": {
+					"mean": 0,
+					"ci": 0,
+					"n": 32
+				}
+			},
+			"adapt": {
+				"rock": {
+					"effect": -0.003,
+					"lo": -0.008,
+					"hi": 0,
+					"verdict": "none",
+					"curve": [
+						0.009,
+						0.007,
+						0,
+						0.002,
+						0.007,
+						0.007,
+						0.004,
+						0.002,
+						0.002,
+						0
+					],
+					"control": [
+						0.004,
+						0.004,
+						0,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0.002,
+						0
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						1,
+						2.9,
+						3.9,
+						4.8,
+						5.7,
+						6.3,
+						6.8,
+						7.1,
+						7.2,
+						7.4
+					],
+					"boots": {
+						"mean": -52.541666666666664,
+						"ci": 25.93161080511565,
+						"n": 48
+					}
+				},
+				"station": {
+					"effect": 0,
+					"lo": -0.002,
+					"hi": 0.002,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.004,
+						0.004,
+						0.004,
+						0.005,
+						0.004,
+						0.004,
+						0.005,
+						0.005,
+						0.003,
+						0.005
+					],
+					"control": [
+						0.005,
+						0.005,
+						0.005,
+						0.006,
+						0.005,
+						0.006,
+						0.007,
+						0.006,
+						0.005,
+						0.005
+					],
+					"halfwayHands": 80,
+					"readsAtHalfway": 21.8,
+					"reads": [
+						3.2,
+						9.2,
+						14.1,
+						17.5,
+						20.2,
+						21.8,
+						24.7,
+						24.8,
+						26.4,
+						25.9
+					],
+					"boots": {
+						"mean": 1020.3020833333334,
+						"ci": 1115.9054215157967,
+						"n": 48
+					}
+				},
+				"station-value": {
+					"effect": -0.001,
+					"lo": -0.005,
+					"hi": 0.004,
+					"verdict": "none",
+					"curve": [
+						0.051,
+						0.061,
+						0.043,
+						0.049,
+						0.04,
+						0.054,
+						0.049,
+						0.051,
+						0.044,
+						0.049
+					],
+					"control": [
+						0.054,
+						0.061,
+						0.044,
+						0.05,
+						0.043,
+						0.048,
+						0.053,
+						0.054,
+						0.047,
+						0.051
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						3.2,
+						9.2,
+						14.1,
+						17.5,
+						20.2,
+						21.8,
+						24.7,
+						24.8,
+						26.4,
+						25.9
+					],
+					"boots": {
+						"mean": 1020.3020833333334,
+						"ci": 1115.9054215157967,
+						"n": 48
+					}
+				},
+				"maniac": {
+					"effect": 0.022,
+					"lo": -0.004,
+					"hi": 0.058,
+					"verdict": "none",
+					"curve": [
+						0.054,
+						0.045,
+						0.023,
+						0.027,
+						0.037,
+						0.092,
+						0.048,
+						0.025,
+						0.029,
+						0.071
+					],
+					"control": [
+						0.049,
+						0.062,
+						0.029,
+						0.041,
+						0.028,
+						0.025,
+						0.043,
+						0.028,
+						0.022,
+						0.025
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						7.7,
+						21,
+						28.5,
+						37.2,
+						40.4,
+						44.8,
+						50.8,
+						52.6,
+						54.5,
+						53.8
+					],
+					"boots": {
+						"mean": 333.25,
+						"ci": 919.7466444119773,
+						"n": 48
+					}
+				},
+				"value": {
+					"effect": 0.003,
+					"lo": -0.023,
+					"hi": 0.028,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.048,
+						0.043,
+						0.075,
+						0.037,
+						0.051,
+						0.066,
+						0.066,
+						0.047,
+						0.055,
+						0.086
+					],
+					"control": [
+						0.064,
+						0.047,
+						0.081,
+						0.04,
+						0.076,
+						0.074,
+						0.09,
+						0.072,
+						0.067,
+						0.069
+					],
+					"halfwayHands": 20,
+					"readsAtHalfway": 4.7,
+					"reads": [
+						1.1,
+						3.2,
+						4.7,
+						5.6,
+						6.7,
+						7.2,
+						7.7,
+						8.1,
+						8.5,
+						8.9
+					],
+					"boots": {
+						"mean": -210.86458333333334,
+						"ci": 87.95760508396211,
+						"n": 48
+					}
+				},
+				"switch-a": {
+					"effect": 0.062,
+					"lo": 0.015,
+					"hi": 0.124,
+					"verdict": "WRONG",
+					"curve": [
+						0.02,
+						0.019,
+						0.091,
+						0.054,
+						0.077,
+						0.042,
+						0.079,
+						0.081,
+						0.05,
+						0.091
+					],
+					"control": [
+						0.019,
+						0.017,
+						0.067,
+						0.054,
+						0.071,
+						0.05,
+						0.047,
+						0.047,
+						0.005,
+						0.028
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.1,
+						11.1,
+						14.6,
+						18,
+						20,
+						26.5,
+						34.7,
+						40,
+						45.8,
+						46.6
+					],
+					"boots": {
+						"mean": 307.4479166666667,
+						"ci": 520.0608560224002,
+						"n": 48
+					}
+				},
+				"switch-b": {
+					"effect": 0.003,
+					"lo": -0.037,
+					"hi": 0.039,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.014,
+						0.043,
+						0.071,
+						0.055,
+						0.043,
+						0.072,
+						0.069,
+						0.06,
+						0.07,
+						0.076
+					],
+					"control": [
+						0.016,
+						0.053,
+						0.054,
+						0.055,
+						0.033,
+						0.043,
+						0.051,
+						0.039,
+						0.032,
+						0.05
+					],
+					"halfwayHands": 60,
+					"readsAtHalfway": 43.5,
+					"reads": [
+						7.2,
+						21.2,
+						30.6,
+						36.8,
+						40,
+						42.1,
+						41.9,
+						41.1,
+						43.5,
+						43.2
+					],
+					"boots": {
+						"mean": 384.5260416666667,
+						"ci": 566.620946037479,
+						"n": 48
+					}
+				},
+				"deceptive": {
+					"effect": 0,
+					"lo": -0.031,
+					"hi": 0.031,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.045,
+						0.044,
+						0.025,
+						0.046,
+						0.048,
+						0.055,
+						0.071,
+						0.046,
+						0.041,
+						0.05
+					],
+					"control": [
+						0.041,
+						0.031,
+						0.025,
+						0.045,
+						0.059,
+						0.038,
+						0.062,
+						0.026,
+						0.068,
+						0.033
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 7,
+					"reads": [
+						1.2,
+						3.1,
+						4.3,
+						5.6,
+						6.4,
+						7,
+						7.5,
+						8.2,
+						8.5,
+						8.9
+					],
+					"boots": {
+						"mean": 434.1875,
+						"ci": 289.844917341554,
+						"n": 48
+					}
+				},
+				"blind-heavy": {
+					"effect": 0.006,
+					"lo": -0.005,
+					"hi": 0.018,
+					"verdict": "none",
+					"curve": [
+						0.05,
+						0.031,
+						0.038,
+						0.028,
+						0.04,
+						0.051,
+						0.045,
+						0.041,
+						0.029,
+						0.026
+					],
+					"control": [
+						0.049,
+						0.043,
+						0.032,
+						0.029,
+						0.046,
+						0.047,
+						0.044,
+						0.045,
+						0.028,
+						0.024
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.6,
+						15.7,
+						23.5,
+						29.4,
+						33.6,
+						36.2,
+						38.8,
+						40.9,
+						42,
+						44.4
+					],
+					"boots": {
+						"mean": -183.79166666666666,
+						"ci": 91.6853576885639,
+						"n": 48
+					}
+				}
+			},
+			"events": {
+				"foldCaught12": 0.007,
+				"foldCaught34": 0.012,
+				"foldCaught58": 0.027,
+				"foldOther": 0.036,
+				"nCaught12": 550,
+				"packAfterLoss": 0.173,
+				"packCalm": 0.158,
+				"attrActed": 0.131,
+				"attrPackWhenActed": -0.172,
+				"attrCallWhenActed": 0.22,
+				"attrShowWhenActed": -0.023,
+				"events": {
+					"caught": 758,
+					"bluffedOff": 1732,
+					"bigLoss": 7590
+				}
+			},
+			"night": {
+				"mean": 1.5427216506147057,
+				"ci": 0.5109364517368344,
+				"n": 30
+			},
+			"perf": {
+				"mean": 0.3837046702209582,
+				"p99": 1.9893749998882413,
+				"n": 1783
+			},
+			"identity": 0.9708333333333333
+		}
+	],
+	"totals": {
+		"hands": 1129600,
+		"decisions": 24623915,
+		"seconds": 3200.3659718330005,
+		"maxRssMb": 200.30316162109375
+	}
+}

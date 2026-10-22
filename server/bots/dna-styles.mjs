@@ -17,6 +17,7 @@ import { CHARACTER_POLICY } from './character.mjs';
 import { CHARACTER_POLICY_V2 } from './character-v2.mjs';
 import { CHARACTER_POLICY_V3 } from './character-v3.mjs';
 import { CHARACTER_POLICY_V4 } from './character-v4.mjs';
+import { CHARACTER_POLICY_V8 } from './character-v8.mjs';
 import { CAST } from '../../src/lib/bots/cast.js';
 import { styleConfigHash, LEGACY_STYLES, STYLES as LEGACY_STYLE_IDS } from './identity.mjs';
 export { LEGACY_STYLES };
@@ -122,16 +123,64 @@ export const GG_C034 = Object.freeze({
 });
 
 /**
- * The canonical characters (approved 2026-10-21): Rohit, Virat, Samay and Dhoni on their Phase 2
- * reference (tp-dna@3), GG on Phase 3 candidate c034 (tp-dna@4). The DNA publish script
- * (scripts/bots-publish-dna.mjs) publishes exactly these as each bot's next directory version.
+ * The Phase 4 champions (docs/bots/phase4/champions.json): the canonical lineup of 2026-10-21, before
+ * Phase 4.1. Frozen so the Phase 3.1, 4 and 4.1 harnesses (challengers, league, reports) reproduce
+ * their recorded results; never edit.
  */
-export const CANONICAL_STYLES = Object.freeze({
+export const PHASE4_CHAMPIONS = Object.freeze({
 	'rohit-sharma': CHARACTER_STYLES_V3['rohit-sharma'],
 	'virat-kohli': CHARACTER_STYLES_V3['virat-kohli'],
 	gg: GG_C034,
 	'samay-raina': CHARACTER_STYLES_V3['samay-raina'],
 	'ms-dhoni': CHARACTER_STYLES_V3['ms-dhoni']
+});
+
+/**
+ * Dhoni, Phase 4.1 candidate C1 `ms-dhoni@8-blindraises` (docs/bots/PHASE41_REPORT.md), approved
+ * 2026-10-22: Dhoni's Phase 2 DNA, quirks and tempo unchanged, on tp-dna@8 (tp-dna@3 plus pressure to
+ * look from repeated blind raises). Exactly the configuration measured by the eight gates (seed 49,
+ * docs/bots/phase4/results/gates-dhoni41-49.json) and the screen (seed 48);
+ * tests/server/bot-canonical.test.mjs checks the configuration, its hash and every decision against
+ * the challenger that produced those results (server/sim/challengers.mjs DHONI41_CHALLENGERS[0]).
+ */
+const MS_DHONI_C1_CONFIG = {
+	policy: CHARACTER_POLICY_V8,
+	tendencies: structuredClone(CHARACTER_STYLES_V3['ms-dhoni'].tendencies),
+	supportedGames: ['teen-patti']
+};
+export const MS_DHONI_C1 = Object.freeze({
+	_id: 'ms-dhoni@4',
+	botId: 'ms-dhoni',
+	version: 4,
+	parent: 'ms-dhoni@3',
+	status: 'published',
+	reference: 'dna',
+	...MS_DHONI_C1_CONFIG,
+	supportedVariants: ['*'],
+	difficulty: { declared: null },
+	configHash: styleConfigHash(MS_DHONI_C1_CONFIG),
+	source: 'phase4.1',
+	phase41: Object.freeze({
+		candidate: 'ms-dhoni@8-blindraises',
+		report: 'docs/bots/PHASE41_REPORT.md',
+		gates: 'docs/bots/phase4/results/gates-dhoni41-49.json',
+		gateSeed: 49,
+		screenSeed: 48,
+		baselineCommit: 'a766e991',
+		lineage: ['ms-dhoni@3', 'ms-dhoni@7-blindcost (rejected)', 'ms-dhoni@8-blindraises (C1)'],
+		approved: '2026-10-22'
+	})
+});
+
+/**
+ * The canonical characters: Rohit, Virat and Samay on their Phase 2 reference (tp-dna@3), GG on
+ * Phase 3 candidate c034 (tp-dna@4), Dhoni on Phase 4.1 C1 (tp-dna@8, approved 2026-10-22). The DNA
+ * publish script (scripts/bots-publish-dna.mjs) publishes exactly these as each bot's next directory
+ * version.
+ */
+export const CANONICAL_STYLES = Object.freeze({
+	...PHASE4_CHAMPIONS,
+	'ms-dhoni': MS_DHONI_C1
 });
 
 /** Legacy styles and every DNA reference, by style id (the simulator's and reports' catalogue). */
@@ -141,7 +190,8 @@ export const STYLES = Object.freeze({
 		...[CHARACTER_STYLES_V1, CHARACTER_STYLES_V2, CHARACTER_STYLES_V3].flatMap((f) =>
 			Object.values(f).map((s) => [s._id, s])
 		),
-		[GG_C034._id, GG_C034]
+		[GG_C034._id, GG_C034],
+		[MS_DHONI_C1._id, MS_DHONI_C1]
 	])
 });
 

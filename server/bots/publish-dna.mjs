@@ -55,9 +55,11 @@ const configOf = (ref, declared) => ({
 	difficulty: { declared }
 });
 const notesFor = (ref) =>
-	ref.phase3
-		? `Canonical DNA character: Phase 3 candidate ${ref.phase3.candidate} on ${ref.policy} (reference ${ref._id}, hash ${ref.configHash}; measured as ${ref.phase3.formerPolicy} ${ref.phase3.formerHash}; docs/bots/PHASE3_REPORT.md).`
-		: `Canonical DNA character: Phase 2 reference ${ref._id} on ${ref.policy} (hash ${ref.configHash}; docs/bots/PHASE2_REPORT.md).`;
+	ref.phase41
+		? `Canonical DNA character: Phase 4.1 candidate ${ref.phase41.candidate} on ${ref.policy} (reference ${ref._id}, hash ${ref.configHash}; docs/bots/PHASE41_REPORT.md).`
+		: ref.phase3
+			? `Canonical DNA character: Phase 3 candidate ${ref.phase3.candidate} on ${ref.policy} (reference ${ref._id}, hash ${ref.configHash}; measured as ${ref.phase3.formerPolicy} ${ref.phase3.formerHash}; docs/bots/PHASE3_REPORT.md).`
+			: `Canonical DNA character: Phase 2 reference ${ref._id} on ${ref.policy} (hash ${ref.configHash}; docs/bots/PHASE2_REPORT.md).`;
 
 /** New copy for one bot, recording what it replaces. Only the title, description and traits. */
 async function refreshCopy(db, owner, botId, now) {

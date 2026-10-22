@@ -1,0 +1,1883 @@
+{
+	"seed": 44,
+	"tables": 400,
+	"hands": 100,
+	"variants": {
+		"samay-raina@3": {
+			"change": "champion",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.6946440677966101,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.025333279632687583,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.29774647887323946,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06877676194884852,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.06342182890855458,
+						"pass": false,
+						"miss": 0.2684365781710915,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.03917922836841756,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.006691184291738428,
+						"pass": false,
+						"miss": 0.5539210472174382,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.009523222020932552,
+						"pass": false,
+						"miss": 1.9523222020932554,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.018180843076263005,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 6,
+				"violation": 2.774679827481785
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 319.5175,
+				"blindRounds": 0.59465,
+				"blindRaiseRate": 0.055915244261330196,
+				"lookAtOnce": 0.40411592608336877,
+				"neverLooked": 0.015078392638343627,
+				"seenRaiseRate": 0.06877676194884852,
+				"aggression": 0.10728211423207452,
+				"chaalRate": 0.5019115343205833,
+				"packRate": 0.16319281031003605,
+				"showRate": 0.29774647887323946,
+				"stayAfterSeeing": 0.4943383771707119,
+				"seenFoldToRaise": 0.025333279632687583,
+				"blindFoldToRaise": 0.009823750361167293,
+				"seeUnderPressure": 0.7838704462168571,
+				"continueWeak": 0.03917922836841756,
+				"continueMid": 0.6946440677966101,
+				"continueBorder": 0.9764646970455684,
+				"thinRaise": 0.0024029311001141987,
+				"valueRaise": 0.141940813450605,
+				"entropy": 0.41802303338622826,
+				"strongPackRate": 0.00138319183439855,
+				"weakCallRate": 0.037608550434201735,
+				"weakRaiseRate": 0.00047361299052774017,
+				"monsterNoRaiseRate": 0.06342182890855458,
+				"bigOverrideRate": 0.040559886557159044,
+				"badActionRate": 0.018180843076263005,
+				"stateOverrideRate": 0.006045309287793361,
+				"memoryOverrideRate": 0.022200058349786615,
+				"lossAggressionDelta": -0.017885774662532994,
+				"lossSeenRaiseDelta": -0.01691374432814663,
+				"lossPackDelta": 0.06759610442606906,
+				"winSeenRaiseDelta": -0.00797519306848371,
+				"blindWinBlindRaiseDelta": 0.01632619151977678,
+				"blindWinBlindRoundsDelta": -0.024069386762645473,
+				"caughtBluffFoldDelta": -0.006261346804786204,
+				"caughtBluffPackDelta": -0.026524310288168124,
+				"bluffedOffFoldDelta": -0.002597761481812233,
+				"pressuredPackDelta": 0.03536061683600228,
+				"events": {
+					"bigLoss": 5673,
+					"bigWin": 5503,
+					"blindWin": 299,
+					"caughtBluff": 580,
+					"bluffedOff": 1338,
+					"pressured": 14528
+				},
+				"lossAggressionDeltaX": -0.004671778904393062,
+				"lossSeenRaiseDeltaX": -0.0016825040268338837,
+				"lossPackDeltaX": -0.006691184291738428,
+				"winSeenRaiseDeltaX": -0.007644226232183998,
+				"blindWinBlindRaiseDeltaX": 0.009141143863170213,
+				"blindWinBlindRoundsDeltaX": 0.04334423139489796,
+				"caughtBluffFoldDeltaX": 0.009523222020932552,
+				"caughtBluffPackDeltaX": -0.04437029395340439,
+				"bluffedOffFoldDeltaX": -0.001391142346232374,
+				"pressuredPackDeltaX": -0.023056777678353735
+			},
+			"boots": {
+				"mean": 319.5175,
+				"ci": 165.02125253209644,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": 0,
+				"ci": 0,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": 0,
+				"ci": 0,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.012,
+				"foldCaught34": 0.018,
+				"foldCaught58": 0.019,
+				"foldOther": 0.029,
+				"nCaught12": 833,
+				"packAfterLoss": 0.207,
+				"packCalm": 0.187,
+				"attrActed": null,
+				"attrPackWhenActed": null,
+				"attrCallWhenActed": null,
+				"attrShowWhenActed": null,
+				"events": {
+					"caught": 1483,
+					"bluffedOff": 3056,
+					"bigLoss": 10947
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": 0,
+				"lo": 0,
+				"hi": 0
+			}
+		},
+		"samay-raina@6-q060": {
+			"change": "opponent-specific call-down quirk at 0.6",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7066542948038176,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.024738535800482703,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.2917502787068004,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06824782187802517,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.06544117647058824,
+						"pass": false,
+						"miss": 0.3088235294117647,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.04108858057630736,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.006223464977456128,
+						"pass": false,
+						"miss": 0.5851023348362582,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.007150857087409635,
+						"pass": false,
+						"miss": 1.7150857087409632,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.018916456781522963,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 6,
+				"violation": 2.6090115729889862
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 349.68375,
+				"blindRounds": 0.5938,
+				"blindRaiseRate": 0.056163691478612325,
+				"lookAtOnce": 0.40483096619323866,
+				"neverLooked": 0.015253050610122025,
+				"seenRaiseRate": 0.06824782187802517,
+				"aggression": 0.1059315970234688,
+				"chaalRate": 0.5040577154514972,
+				"packRate": 0.16210911103531275,
+				"showRate": 0.2917502787068004,
+				"stayAfterSeeing": 0.49718145345589354,
+				"seenFoldToRaise": 0.024738535800482703,
+				"blindFoldToRaise": 0.00969749601968447,
+				"seeUnderPressure": 0.784202152045522,
+				"continueWeak": 0.04108858057630736,
+				"continueMid": 0.7066542948038176,
+				"continueBorder": 0.9778055486128467,
+				"thinRaise": 0.0023237616484480593,
+				"valueRaise": 0.1411262964039934,
+				"entropy": 0.4155776515673898,
+				"strongPackRate": 0.0014720547034522058,
+				"weakCallRate": 0.0393209420921962,
+				"weakRaiseRate": 0.0005434044287460942,
+				"monsterNoRaiseRate": 0.06544117647058824,
+				"bigOverrideRate": 0.04243976128057661,
+				"badActionRate": 0.018916456781522963,
+				"stateOverrideRate": 0.005629280386936818,
+				"memoryOverrideRate": 0.021507780058392777,
+				"lossAggressionDelta": -0.013570637983436731,
+				"lossSeenRaiseDelta": -0.014484874070687492,
+				"lossPackDelta": 0.06806382374035136,
+				"winSeenRaiseDelta": -0.005614890927447158,
+				"blindWinBlindRaiseDelta": 0.0037677948231520098,
+				"blindWinBlindRoundsDelta": -0.010276716853282242,
+				"caughtBluffFoldDelta": -0.008633711738309121,
+				"caughtBluffPackDelta": -0.03164565568608599,
+				"bluffedOffFoldDelta": -0.004305210072893518,
+				"pressuredPackDelta": 0.03519489079762983,
+				"events": {
+					"bigLoss": 5719,
+					"bigWin": 5568,
+					"blindWin": 295,
+					"caughtBluff": 548,
+					"bluffedOff": 1338,
+					"pressured": 14497
+				},
+				"lossAggressionDeltaX": -0.00035664222529679934,
+				"lossSeenRaiseDeltaX": 0.0007463662306252533,
+				"lossPackDeltaX": -0.006223464977456128,
+				"winSeenRaiseDeltaX": -0.005283924091147446,
+				"blindWinBlindRaiseDeltaX": -0.003417252833454558,
+				"blindWinBlindRoundsDeltaX": 0.05713690130426119,
+				"caughtBluffFoldDeltaX": 0.007150857087409635,
+				"caughtBluffPackDeltaX": -0.04949163935132225,
+				"bluffedOffFoldDeltaX": -0.003098590937313659,
+				"pressuredPackDeltaX": -0.023222503716726184
+			},
+			"boots": {
+				"mean": 349.68375,
+				"ci": 168.88530809332372,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": 30.16625,
+				"ci": 70.81246796313118,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": 11.9875,
+				"ci": 56.23778327783201,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.014,
+				"foldCaught34": 0.021,
+				"foldCaught58": 0.021,
+				"foldOther": 0.028,
+				"nCaught12": 811,
+				"packAfterLoss": 0.204,
+				"packCalm": 0.185,
+				"attrActed": 0.095,
+				"attrPackWhenActed": -0.011,
+				"attrCallWhenActed": 0.026,
+				"attrShowWhenActed": -0.012,
+				"events": {
+					"caught": 1443,
+					"bluffedOff": 3089,
+					"bigLoss": 11005
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": 0.002,
+				"lo": -0.003,
+				"hi": 0.007
+			}
+		},
+		"samay-raina@6-q100": {
+			"change": "opponent-specific call-down quirk at 1.0",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.707800851970181,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.02488778454632895,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.28979455486888256,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.0679018735120588,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.06681350954478708,
+						"pass": false,
+						"miss": 0.3362701908957416,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.041244669509594885,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.00576605234209443,
+						"pass": false,
+						"miss": 0.615596510527038,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.006199256799786373,
+						"pass": false,
+						"miss": 1.619925679978637,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.018999383658922207,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 6,
+				"violation": 2.5717923814014165
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 379.27875,
+				"blindRounds": 0.59345,
+				"blindRaiseRate": 0.05615468868480917,
+				"lookAtOnce": 0.40533106621324266,
+				"neverLooked": 0.015278055611122224,
+				"seenRaiseRate": 0.0679018735120588,
+				"aggression": 0.10518251946339813,
+				"chaalRate": 0.5050059479792947,
+				"packRate": 0.16175931582162492,
+				"showRate": 0.28979455486888256,
+				"stayAfterSeeing": 0.4979558670424824,
+				"seenFoldToRaise": 0.02488778454632895,
+				"blindFoldToRaise": 0.009715777262180975,
+				"seeUnderPressure": 0.7844846195358878,
+				"continueWeak": 0.041244669509594885,
+				"continueMid": 0.707800851970181,
+				"continueBorder": 0.977667618046167,
+				"thinRaise": 0.002301741730340278,
+				"valueRaise": 0.13994119915172545,
+				"entropy": 0.414779237762871,
+				"strongPackRate": 0.0014735941436516613,
+				"weakCallRate": 0.03934843812843545,
+				"weakRaiseRate": 0.0005424832169254764,
+				"monsterNoRaiseRate": 0.06681350954478708,
+				"bigOverrideRate": 0.04317228312356205,
+				"badActionRate": 0.018999383658922207,
+				"stateOverrideRate": 0.005589389633238598,
+				"memoryOverrideRate": 0.021315468940316686,
+				"lossAggressionDelta": -0.013247859869892728,
+				"lossSeenRaiseDelta": -0.014313230375137286,
+				"lossPackDelta": 0.06852123637571306,
+				"winSeenRaiseDelta": -0.005086052997682833,
+				"blindWinBlindRaiseDelta": 0.002712802666549198,
+				"blindWinBlindRoundsDelta": -0.013363747738747711,
+				"caughtBluffFoldDelta": -0.009585312025932383,
+				"caughtBluffPackDelta": -0.032460514131098184,
+				"bluffedOffFoldDelta": -0.005048367644793019,
+				"pressuredPackDelta": 0.035096237985380085,
+				"events": {
+					"bigLoss": 5714,
+					"bigWin": 5574,
+					"blindWin": 296,
+					"caughtBluff": 541,
+					"bluffedOff": 1312,
+					"pressured": 14502
+				},
+				"lossAggressionDeltaX": -0.00003386411175279602,
+				"lossSeenRaiseDeltaX": 0.0009180099261754601,
+				"lossPackDeltaX": -0.00576605234209443,
+				"winSeenRaiseDeltaX": -0.004755086161383121,
+				"blindWinBlindRaiseDeltaX": -0.00447224499005737,
+				"blindWinBlindRoundsDeltaX": 0.05404987041879572,
+				"caughtBluffFoldDeltaX": 0.006199256799786373,
+				"caughtBluffPackDeltaX": -0.05030649779633445,
+				"bluffedOffFoldDeltaX": -0.0038417485092131602,
+				"pressuredPackDeltaX": -0.023321156528975928
+			},
+			"boots": {
+				"mean": 379.27875,
+				"ci": 171.71246373927028,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": 59.76125,
+				"ci": 85.19673372893878,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": 28.5625,
+				"ci": 61.00841220112708,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.014,
+				"foldCaught34": 0.019,
+				"foldCaught58": 0.021,
+				"foldOther": 0.028,
+				"nCaught12": 837,
+				"packAfterLoss": 0.204,
+				"packCalm": 0.183,
+				"attrActed": 0.098,
+				"attrPackWhenActed": -0.013,
+				"attrCallWhenActed": 0.031,
+				"attrShowWhenActed": -0.015,
+				"events": {
+					"caught": 1424,
+					"bluffedOff": 3050,
+					"bigLoss": 11020
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": 0.002,
+				"lo": -0.004,
+				"hi": 0.007
+			}
+		},
+		"samay-raina@6-q125": {
+			"change": "opponent-specific call-down quirk at 1.25",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7080456718003186,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.024774141738606707,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.28905550581915845,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06762057027179351,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.06671608598962195,
+						"pass": false,
+						"miss": 0.3343217197924389,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.041171760309622316,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.00556384699155732,
+						"pass": false,
+						"miss": 0.6290768672295121,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.007416212715983816,
+						"pass": false,
+						"miss": 1.7416212715983814,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.018940411584546773,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 6,
+				"violation": 2.7050198586203322
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 373.77625,
+				"blindRounds": 0.59285,
+				"blindRaiseRate": 0.05616935143796913,
+				"lookAtOnce": 0.4056561312262453,
+				"neverLooked": 0.015278055611122224,
+				"seenRaiseRate": 0.06762057027179351,
+				"aggression": 0.10483238231098431,
+				"chaalRate": 0.5047443212886542,
+				"packRate": 0.1622976024290925,
+				"showRate": 0.28905550581915845,
+				"stayAfterSeeing": 0.4974480079226023,
+				"seenFoldToRaise": 0.024774141738606707,
+				"blindFoldToRaise": 0.009598603839441536,
+				"seeUnderPressure": 0.7848463574013069,
+				"continueWeak": 0.041171760309622316,
+				"continueMid": 0.7080456718003186,
+				"continueBorder": 0.977675442987286,
+				"thinRaise": 0.0023022334037452827,
+				"valueRaise": 0.13980704596561647,
+				"entropy": 0.4143699641191319,
+				"strongPackRate": 0.0014778090289364542,
+				"weakCallRate": 0.03920515574650913,
+				"weakRaiseRate": 0.0005436259853220984,
+				"monsterNoRaiseRate": 0.06671608598962195,
+				"bigOverrideRate": 0.043216148479306375,
+				"badActionRate": 0.018940411584546773,
+				"stateOverrideRate": 0.0055205581521371,
+				"memoryOverrideRate": 0.020930705141231458,
+				"lossAggressionDelta": -0.013858919018211874,
+				"lossSeenRaiseDelta": -0.014662027130877671,
+				"lossPackDelta": 0.06872344172625017,
+				"winSeenRaiseDelta": -0.00533742300148525,
+				"blindWinBlindRaiseDelta": 0.0007490075649764019,
+				"blindWinBlindRoundsDelta": -0.015499077649493098,
+				"caughtBluffFoldDelta": -0.00836835610973494,
+				"caughtBluffPackDelta": -0.03608802938838665,
+				"bluffedOffFoldDelta": -0.005195772081688994,
+				"pressuredPackDelta": 0.03468654919825781,
+				"events": {
+					"bigLoss": 5726,
+					"bigWin": 5548,
+					"blindWin": 292,
+					"caughtBluff": 539,
+					"bluffedOff": 1328,
+					"pressured": 14492
+				},
+				"lossAggressionDeltaX": -0.0006449232600719418,
+				"lossSeenRaiseDeltaX": 0.0005692131704350747,
+				"lossPackDeltaX": -0.00556384699155732,
+				"winSeenRaiseDeltaX": -0.005006456165185538,
+				"blindWinBlindRaiseDeltaX": -0.006436040091630166,
+				"blindWinBlindRoundsDeltaX": 0.05191454050805033,
+				"caughtBluffFoldDeltaX": 0.007416212715983816,
+				"caughtBluffPackDeltaX": -0.053934013053622915,
+				"bluffedOffFoldDeltaX": -0.003989152946109135,
+				"pressuredPackDeltaX": -0.023730845316098204
+			},
+			"boots": {
+				"mean": 373.77625,
+				"ci": 172.57325165639205,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": 54.25875,
+				"ci": 86.57241462781857,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": 15.3125,
+				"ci": 60.57535559137833,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.014,
+				"foldCaught34": 0.019,
+				"foldCaught58": 0.021,
+				"foldOther": 0.028,
+				"nCaught12": 833,
+				"packAfterLoss": 0.204,
+				"packCalm": 0.183,
+				"attrActed": 0.099,
+				"attrPackWhenActed": -0.014,
+				"attrCallWhenActed": 0.033,
+				"attrShowWhenActed": -0.016,
+				"events": {
+					"caught": 1424,
+					"bluffedOff": 3072,
+					"bigLoss": 11031
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": 0.002,
+				"lo": -0.004,
+				"hi": 0.008
+			}
+		},
+		"samay-raina@6-q150": {
+			"change": "opponent-specific call-down quirk at 1.5",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7079563597658329,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.024690862373534607,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.2894074198422025,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06752097460062062,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.06745737583395107,
+						"pass": false,
+						"miss": 0.34914751667902144,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.04129695109747148,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.0057899683230457355,
+						"pass": false,
+						"miss": 0.614002111796951,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.008179802848421291,
+						"pass": false,
+						"miss": 1.8179802848421294,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.019004160515367064,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 6,
+				"violation": 2.781129913318102
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 365.3225,
+				"blindRounds": 0.592875,
+				"blindRaiseRate": 0.05620915032679739,
+				"lookAtOnce": 0.40575615123024605,
+				"neverLooked": 0.015078015603120625,
+				"seenRaiseRate": 0.06752097460062062,
+				"aggression": 0.10465654838249965,
+				"chaalRate": 0.5048317720355165,
+				"packRate": 0.16231925057704796,
+				"showRate": 0.2894074198422025,
+				"stayAfterSeeing": 0.4974739140369139,
+				"seenFoldToRaise": 0.024690862373534607,
+				"blindFoldToRaise": 0.00958744915746659,
+				"seeUnderPressure": 0.7847985100812438,
+				"continueWeak": 0.04129695109747148,
+				"continueMid": 0.7079563597658329,
+				"continueBorder": 0.9777511723037015,
+				"thinRaise": 0.0022992865100623415,
+				"valueRaise": 0.13971032715138912,
+				"entropy": 0.41404465543934993,
+				"strongPackRate": 0.0014756985766649212,
+				"weakCallRate": 0.039331498758305924,
+				"weakRaiseRate": 0.0005435151844554657,
+				"monsterNoRaiseRate": 0.06745737583395107,
+				"bigOverrideRate": 0.043339607566996625,
+				"badActionRate": 0.019004160515367064,
+				"stateOverrideRate": 0.0054707706474196646,
+				"memoryOverrideRate": 0.020881010738418623,
+				"lossAggressionDelta": -0.01431081636608486,
+				"lossSeenRaiseDelta": -0.014876775765474526,
+				"lossPackDelta": 0.06849732039476175,
+				"winSeenRaiseDelta": -0.005241575432632581,
+				"blindWinBlindRaiseDelta": 0.0031127388954708124,
+				"blindWinBlindRoundsDelta": -0.013886533096100107,
+				"caughtBluffFoldDelta": -0.007604765977297465,
+				"caughtBluffPackDelta": -0.03462779223462398,
+				"bluffedOffFoldDelta": -0.005500822380551992,
+				"pressuredPackDelta": 0.034903903403333825,
+				"events": {
+					"bigLoss": 5739,
+					"bigWin": 5544,
+					"blindWin": 288,
+					"caughtBluff": 540,
+					"bluffedOff": 1331,
+					"pressured": 14504
+				},
+				"lossAggressionDeltaX": -0.0010968206079449289,
+				"lossSeenRaiseDeltaX": 0.0003544645358382198,
+				"lossPackDeltaX": -0.0057899683230457355,
+				"winSeenRaiseDeltaX": -0.004910608596332869,
+				"blindWinBlindRaiseDeltaX": -0.004072308761135755,
+				"blindWinBlindRoundsDeltaX": 0.053527085061443325,
+				"caughtBluffFoldDeltaX": 0.008179802848421291,
+				"caughtBluffPackDeltaX": -0.05247377589986024,
+				"bluffedOffFoldDeltaX": -0.004294203244972133,
+				"pressuredPackDeltaX": -0.02351349111102219
+			},
+			"boots": {
+				"mean": 365.3225,
+				"ci": 172.45816345306181,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": 45.805,
+				"ci": 86.16098064505294,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": 17.0975,
+				"ci": 60.88101211623971,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.014,
+				"foldCaught34": 0.019,
+				"foldCaught58": 0.021,
+				"foldOther": 0.028,
+				"nCaught12": 830,
+				"packAfterLoss": 0.204,
+				"packCalm": 0.183,
+				"attrActed": 0.1,
+				"attrPackWhenActed": -0.014,
+				"attrCallWhenActed": 0.034,
+				"attrShowWhenActed": -0.016,
+				"events": {
+					"caught": 1426,
+					"bluffedOff": 3076,
+					"bigLoss": 11048
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": 0.002,
+				"lo": -0.004,
+				"hi": 0.008
+			}
+		},
+		"samay-raina@6-r060": {
+			"change": "the same memory as a read about that raiser, 0.6",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7497224620698162,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.025901118897363427,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.27817264391514296,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06438029183930823,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.07908351810790835,
+						"pass": false,
+						"miss": 0.581670362158167,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.09268165865072144,
+						"pass": false,
+						"miss": 0.8536331730144286,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.009930799861952444,
+						"pass": false,
+						"miss": 0.33794667586983707,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.013353590333767585,
+						"pass": false,
+						"miss": 2.335359033376758,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.04033113988537466,
+						"pass": false,
+						"miss": 0.20662279770749317,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 4,
+				"violation": 4.315232042126684
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 369.1625,
+				"blindRounds": 0.590825,
+				"blindRaiseRate": 0.05513476917869081,
+				"lookAtOnce": 0.40750650130026006,
+				"neverLooked": 0.015353070614122825,
+				"seenRaiseRate": 0.06438029183930823,
+				"aggression": 0.09781716162583824,
+				"chaalRate": 0.513892776265235,
+				"packRate": 0.1583420269204346,
+				"showRate": 0.27817264391514296,
+				"stayAfterSeeing": 0.5138402153486719,
+				"seenFoldToRaise": 0.025901118897363427,
+				"blindFoldToRaise": 0.009850044104675095,
+				"seeUnderPressure": 0.7864269298364202,
+				"continueWeak": 0.09268165865072144,
+				"continueMid": 0.7497224620698162,
+				"continueBorder": 0.979529423370986,
+				"thinRaise": 0.0020063187510089247,
+				"valueRaise": 0.13515589371864725,
+				"entropy": 0.41770510808620986,
+				"strongPackRate": 0.0011405217887183387,
+				"weakCallRate": 0.09083180748103584,
+				"weakRaiseRate": 0.0004634227077126779,
+				"monsterNoRaiseRate": 0.07908351810790835,
+				"bigOverrideRate": 0.05352783366867874,
+				"badActionRate": 0.04033113988537466,
+				"stateOverrideRate": 0.00596244131455399,
+				"memoryOverrideRate": 0.034339369550637155,
+				"lossAggressionDelta": -0.014949044768380049,
+				"lossSeenRaiseDelta": -0.014721330650411313,
+				"lossPackDelta": 0.06435648885585504,
+				"winSeenRaiseDelta": -0.007486690255758904,
+				"blindWinBlindRaiseDelta": -0.0012064911622413077,
+				"blindWinBlindRoundsDelta": -0.04116317887938892,
+				"caughtBluffFoldDelta": -0.002430978491951171,
+				"caughtBluffPackDelta": -0.05070893251397213,
+				"bluffedOffFoldDelta": -0.0017682692387812234,
+				"pressuredPackDelta": 0.028086424497867135,
+				"events": {
+					"bigLoss": 5888,
+					"bigWin": 5716,
+					"blindWin": 294,
+					"caughtBluff": 518,
+					"bluffedOff": 1315,
+					"pressured": 14819
+				},
+				"lossAggressionDeltaX": -0.0017350490102401167,
+				"lossSeenRaiseDeltaX": 0.0005099096509014328,
+				"lossPackDeltaX": -0.009930799861952444,
+				"winSeenRaiseDeltaX": -0.007155723419459192,
+				"blindWinBlindRaiseDeltaX": -0.008391538818847875,
+				"blindWinBlindRoundsDeltaX": 0.026250439278154514,
+				"caughtBluffFoldDeltaX": 0.013353590333767585,
+				"caughtBluffPackDeltaX": -0.06855491617920839,
+				"bluffedOffFoldDeltaX": -0.0005616501032013645,
+				"pressuredPackDeltaX": -0.03033097001648888
+			},
+			"boots": {
+				"mean": 369.1625,
+				"ci": 171.20062051382916,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": 49.645,
+				"ci": 127.4813360083825,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": -40.025499999999994,
+				"ci": 91.35204266645452,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.016,
+				"foldCaught34": 0.015,
+				"foldCaught58": 0.023,
+				"foldOther": 0.03,
+				"nCaught12": 958,
+				"packAfterLoss": 0.194,
+				"packCalm": 0.171,
+				"attrActed": 0.127,
+				"attrPackWhenActed": -0.076,
+				"attrCallWhenActed": 0.107,
+				"attrShowWhenActed": -0.017,
+				"events": {
+					"caught": 1406,
+					"bluffedOff": 2973,
+					"bigLoss": 11400
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": 0,
+				"lo": -0.008,
+				"hi": 0.008
+			}
+		},
+		"samay-raina@6-r100": {
+			"change": "the same memory as a read about that raiser, 1.0",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7630445189085687,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.03212607970904682,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.26991600235407415,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06120218579234973,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.09388971684053651,
+						"pass": false,
+						"miss": 0.8777943368107302,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.16477237438668405,
+						"pass": false,
+						"miss": 2.295447487733681,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.013509297133388165,
+						"pass": false,
+						"miss": 0.09938019110745563,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.01825126527071206,
+						"pass": false,
+						"miss": 2.8251265270712063,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.07212470526591563,
+						"pass": false,
+						"miss": 0.8424941053183127,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 4,
+				"violation": 6.9402426480413855
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 278.83875,
+				"blindRounds": 0.5863,
+				"blindRaiseRate": 0.055645573938256865,
+				"lookAtOnce": 0.41218682802420364,
+				"neverLooked": 0.014977246586988048,
+				"seenRaiseRate": 0.06120218579234973,
+				"aggression": 0.09228027105648132,
+				"chaalRate": 0.5172112240500875,
+				"packRate": 0.15812653671643304,
+				"showRate": 0.26991600235407415,
+				"stayAfterSeeing": 0.5302957228074628,
+				"seenFoldToRaise": 0.03212607970904682,
+				"blindFoldToRaise": 0.010444248308325979,
+				"seeUnderPressure": 0.7861077194410527,
+				"continueWeak": 0.16477237438668405,
+				"continueMid": 0.7630445189085687,
+				"continueBorder": 0.9787128220431712,
+				"thinRaise": 0.0018825557395268661,
+				"valueRaise": 0.13184213093960387,
+				"entropy": 0.41685098921008196,
+				"strongPackRate": 0.0008646363723700644,
+				"weakCallRate": 0.16296064959400375,
+				"weakRaiseRate": 0.000507227998985544,
+				"monsterNoRaiseRate": 0.09388971684053651,
+				"bigOverrideRate": 0.06610722047814538,
+				"badActionRate": 0.07212470526591563,
+				"stateOverrideRate": 0.005835949448603397,
+				"memoryOverrideRate": 0.046405860098204944,
+				"lossAggressionDelta": -0.01316078508229318,
+				"lossSeenRaiseDelta": -0.013155949487100062,
+				"lossPackDelta": 0.06077799158441932,
+				"winSeenRaiseDelta": -0.006393764833546617,
+				"blindWinBlindRaiseDelta": 0.00382891828494384,
+				"blindWinBlindRoundsDelta": -0.010915373205737211,
+				"caughtBluffFoldDelta": 0.0024666964449933035,
+				"caughtBluffPackDelta": -0.06380780995638324,
+				"bluffedOffFoldDelta": 0.011032403865326272,
+				"pressuredPackDelta": 0.025176470875665435,
+				"events": {
+					"bigLoss": 6175,
+					"bigWin": 5632,
+					"blindWin": 290,
+					"caughtBluff": 478,
+					"bluffedOff": 1288,
+					"pressured": 15164
+				},
+				"lossAggressionDeltaX": 0.00005321067584675154,
+				"lossSeenRaiseDeltaX": 0.002075290814212684,
+				"lossPackDeltaX": -0.013509297133388165,
+				"winSeenRaiseDeltaX": -0.006062797997246905,
+				"blindWinBlindRaiseDeltaX": -0.0033561293716627277,
+				"blindWinBlindRoundsDeltaX": 0.05649824495180622,
+				"caughtBluffFoldDeltaX": 0.01825126527071206,
+				"caughtBluffPackDeltaX": -0.08165379362161951,
+				"bluffedOffFoldDeltaX": 0.012239023000906131,
+				"pressuredPackDeltaX": -0.03324092363869058
+			},
+			"boots": {
+				"mean": 278.83875,
+				"ci": 172.7788650780896,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": -40.67875,
+				"ci": 141.32888448070716,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": -94.719,
+				"ci": 112.36238446603643,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.013,
+				"foldCaught34": 0.015,
+				"foldCaught58": 0.02,
+				"foldOther": 0.037,
+				"nCaught12": 964,
+				"packAfterLoss": 0.184,
+				"packCalm": 0.165,
+				"attrActed": 0.13,
+				"attrPackWhenActed": -0.152,
+				"attrCallWhenActed": 0.197,
+				"attrShowWhenActed": -0.023,
+				"events": {
+					"caught": 1354,
+					"bluffedOff": 2944,
+					"bigLoss": 11885
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": -0.001,
+				"lo": -0.009,
+				"hi": 0.008
+			}
+		},
+		"samay-raina@6-r150": {
+			"change": "the same memory as a read about that raiser, 1.5",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7749853886616014,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.03303247762077384,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.2567668371696505,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.05770688461918729,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.13130563798219586,
+						"pass": false,
+						"miss": 1.6261127596439169,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.22849638870650033,
+						"pass": false,
+						"miss": 3.569927774130006,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.007556167985153683,
+						"pass": false,
+						"miss": 0.4962554676564211,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.016773717384104887,
+						"pass": false,
+						"miss": 2.6773717384104887,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.10284255055716054,
+						"pass": false,
+						"miss": 1.456851011143211,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 4,
+				"violation": 9.256590976854037
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 253.59875,
+				"blindRounds": 0.5836,
+				"blindRaiseRate": 0.054360863605209045,
+				"lookAtOnce": 0.41456218432764913,
+				"neverLooked": 0.015427314097114567,
+				"seenRaiseRate": 0.05770688461918729,
+				"aggression": 0.08611475409836065,
+				"chaalRate": 0.5230896131372154,
+				"packRate": 0.15755969171871853,
+				"showRate": 0.2567668371696505,
+				"stayAfterSeeing": 0.547222998196917,
+				"seenFoldToRaise": 0.03303247762077384,
+				"blindFoldToRaise": 0.009714541921984756,
+				"seeUnderPressure": 0.7882586469436589,
+				"continueWeak": 0.22849638870650033,
+				"continueMid": 0.7749853886616014,
+				"continueBorder": 0.9786427145708583,
+				"thinRaise": 0.0018939815949553242,
+				"valueRaise": 0.1271434546214973,
+				"entropy": 0.4126645536038645,
+				"strongPackRate": 0.001156459307088132,
+				"weakCallRate": 0.2271554568908622,
+				"weakRaiseRate": 0.0004865588127964968,
+				"monsterNoRaiseRate": 0.13130563798219586,
+				"bigOverrideRate": 0.0782345698838392,
+				"badActionRate": 0.10284255055716054,
+				"stateOverrideRate": 0.006135913494994915,
+				"memoryOverrideRate": 0.05883651838766661,
+				"lossAggressionDelta": -0.012965902375826774,
+				"lossSeenRaiseDelta": -0.013390132968811655,
+				"lossPackDelta": 0.0667311207326538,
+				"winSeenRaiseDelta": -0.00767832430714864,
+				"blindWinBlindRaiseDelta": -0.0021598482675259656,
+				"blindWinBlindRoundsDelta": -0.02921232452047018,
+				"caughtBluffFoldDelta": 0.0009891485583861312,
+				"caughtBluffPackDelta": -0.06353568485138511,
+				"bluffedOffFoldDelta": 0.0033363583995077023,
+				"pressuredPackDelta": 0.031187283314726533,
+				"events": {
+					"bigLoss": 6407,
+					"bigWin": 5551,
+					"blindWin": 293,
+					"caughtBluff": 471,
+					"bluffedOff": 1315,
+					"pressured": 15516
+				},
+				"lossAggressionDeltaX": 0.00024809338231315814,
+				"lossSeenRaiseDeltaX": 0.0018411073325010907,
+				"lossPackDeltaX": -0.007556167985153683,
+				"winSeenRaiseDeltaX": -0.007347357470848928,
+				"blindWinBlindRaiseDeltaX": -0.009344895924132533,
+				"blindWinBlindRoundsDeltaX": 0.03820129363707325,
+				"caughtBluffFoldDeltaX": 0.016773717384104887,
+				"caughtBluffPackDeltaX": -0.08138166851662137,
+				"bluffedOffFoldDeltaX": 0.004542977535087561,
+				"pressuredPackDeltaX": -0.02723011119962948
+			},
+			"boots": {
+				"mean": 253.59875,
+				"ci": 179.1728750141342,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": -65.91875,
+				"ci": 159.81211725604777,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": -116.79125,
+				"ci": 123.84822273790016,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.009,
+				"foldCaught34": 0.008,
+				"foldCaught58": 0.028,
+				"foldOther": 0.04,
+				"nCaught12": 1042,
+				"packAfterLoss": 0.174,
+				"packCalm": 0.156,
+				"attrActed": 0.135,
+				"attrPackWhenActed": -0.22,
+				"attrCallWhenActed": 0.277,
+				"attrShowWhenActed": -0.029,
+				"events": {
+					"caught": 1323,
+					"bluffedOff": 2909,
+					"bigLoss": 12382
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": -0.007,
+				"lo": -0.013,
+				"hi": -0.001
+			}
+		},
+		"samay-raina@6-g100": {
+			"change": "Phase 3.1 global event quirks at 1.0, on the champion policy",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7429165583571614,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.022743204299400265,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.2402555910543131,
+						"pass": false,
+						"miss": 0.021654242101526448,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.06176903847870726,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.06345733041575492,
+						"pass": false,
+						"miss": 0.2691466083150984,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.05872295653317551,
+						"pass": false,
+						"miss": 0.17445913066351015,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.011099989268263333,
+						"pass": false,
+						"miss": 0.26000071544911113,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.008179379818606808,
+						"pass": false,
+						"miss": 1.817937981860681,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.02548141869520303,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 4,
+				"violation": 2.5431986783899267
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 316.20875,
+				"blindRounds": 0.591325,
+				"blindRaiseRate": 0.05614509787341986,
+				"lookAtOnce": 0.40734165187167115,
+				"neverLooked": 0.01617864019404366,
+				"seenRaiseRate": 0.06176903847870726,
+				"aggression": 0.09354876873933105,
+				"chaalRate": 0.5178270732590724,
+				"packRate": 0.1598876554428015,
+				"showRate": 0.2402555910543131,
+				"stayAfterSeeing": 0.5017537616917446,
+				"seenFoldToRaise": 0.022743204299400265,
+				"blindFoldToRaise": 0.009704455227172474,
+				"seeUnderPressure": 0.7860063361403699,
+				"continueWeak": 0.05872295653317551,
+				"continueMid": 0.7429165583571614,
+				"continueBorder": 0.9828330296346025,
+				"thinRaise": 0.0018448057188977286,
+				"valueRaise": 0.13057423941403165,
+				"entropy": 0.39929652550250305,
+				"strongPackRate": 0.0007053180984624065,
+				"weakCallRate": 0.05689712206417466,
+				"weakRaiseRate": 0.0006023693193226692,
+				"monsterNoRaiseRate": 0.06345733041575492,
+				"bigOverrideRate": 0.05666396359566526,
+				"badActionRate": 0.02548141869520303,
+				"stateOverrideRate": 0.006165682614785575,
+				"memoryOverrideRate": 0.022993975055792724,
+				"lossAggressionDelta": -0.013745216005261629,
+				"lossSeenRaiseDelta": -0.013647510189002801,
+				"lossPackDelta": 0.06318729944954415,
+				"winSeenRaiseDelta": -0.0002588382190731875,
+				"blindWinBlindRaiseDelta": -0.00022665277137113443,
+				"blindWinBlindRoundsDelta": -0.004870395897396351,
+				"caughtBluffFoldDelta": -0.007605189007111948,
+				"caughtBluffPackDelta": -0.020342486745578037,
+				"bluffedOffFoldDelta": -0.005531837326878522,
+				"pressuredPackDelta": 0.03732190827508575,
+				"events": {
+					"bigLoss": 5848,
+					"bigWin": 5618,
+					"blindWin": 322,
+					"caughtBluff": 510,
+					"bluffedOff": 1319,
+					"pressured": 14683
+				},
+				"lossAggressionDeltaX": -0.000531220247121697,
+				"lossSeenRaiseDeltaX": 0.0015837301123099445,
+				"lossPackDeltaX": -0.011099989268263333,
+				"winSeenRaiseDeltaX": 0.00007212861722652453,
+				"blindWinBlindRaiseDeltaX": -0.007411700427977702,
+				"blindWinBlindRoundsDeltaX": 0.06254322226014708,
+				"caughtBluffFoldDeltaX": 0.008179379818606808,
+				"caughtBluffPackDeltaX": -0.0381884704108143,
+				"bluffedOffFoldDeltaX": -0.004325218191298663,
+				"pressuredPackDeltaX": -0.021095486239270267
+			},
+			"boots": {
+				"mean": 316.20875,
+				"ci": 167.21359965499863,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": -3.308749999999999,
+				"ci": 133.4126809048026,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": 112.96674999999999,
+				"ci": 97.37003899160734,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.014,
+				"foldCaught34": 0.022,
+				"foldCaught58": 0.023,
+				"foldOther": 0.026,
+				"nCaught12": 834,
+				"packAfterLoss": 0.187,
+				"packCalm": 0.175,
+				"attrActed": 0.277,
+				"attrPackWhenActed": -0.02,
+				"attrCallWhenActed": 0.064,
+				"attrShowWhenActed": -0.033,
+				"events": {
+					"caught": 1354,
+					"bluffedOff": 3011,
+					"bigLoss": 11298
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": 0.003,
+				"lo": -0.004,
+				"hi": 0.01
+			}
+		},
+		"samay-raina@6-m100": {
+			"change": "read-based memory 1.0 plus digging in after a big loss 1.0",
+			"bands": {
+				"results": [
+					{
+						"key": "continueMid",
+						"value": 0.7960158434296365,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0.65,
+						"max": 1
+					},
+					{
+						"key": "seenFoldToRaise",
+						"value": 0.02917723147025319,
+						"pass": true,
+						"miss": 0,
+						"core": true,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "showRate",
+						"value": 0.2140772971589455,
+						"pass": false,
+						"miss": 0.07982822853567668,
+						"core": false,
+						"min": 0.25,
+						"max": 0.7
+					},
+					{
+						"key": "seenRaiseRate",
+						"value": 0.05534836595671294,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.1
+					},
+					{
+						"key": "monsterNoRaiseRate",
+						"value": 0.1037037037037037,
+						"pass": false,
+						"miss": 1.074074074074074,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "continueWeak",
+						"value": 0.18450816164333314,
+						"pass": false,
+						"miss": 2.6901632328666625,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "lossPackDeltaX",
+						"value": -0.010177339075310238,
+						"pass": false,
+						"miss": 0.3215107283126508,
+						"core": false,
+						"min": -0.3,
+						"max": -0.015
+					},
+					{
+						"key": "caughtBluffFoldDeltaX",
+						"value": 0.01705207642877575,
+						"pass": false,
+						"miss": 2.7052076428775753,
+						"core": false,
+						"min": -0.5,
+						"max": -0.01
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.08053846747831458,
+						"pass": false,
+						"miss": 1.0107693495662917,
+						"core": false,
+						"min": 0,
+						"max": 0.03
+					}
+				],
+				"passed": 3,
+				"violation": 7.881553256232932
+			},
+			"m": {
+				"hands": 40000,
+				"bootsPer100": 278.623,
+				"blindRounds": 0.585975,
+				"blindRaiseRate": 0.05482315798455566,
+				"lookAtOnce": 0.4122677602460554,
+				"neverLooked": 0.01567852766872546,
+				"seenRaiseRate": 0.05534836595671294,
+				"aggression": 0.08154417836498762,
+				"chaalRate": 0.5319676792420994,
+				"packRate": 0.15578580311334136,
+				"showRate": 0.2140772971589455,
+				"stayAfterSeeing": 0.5363276089828269,
+				"seenFoldToRaise": 0.02917723147025319,
+				"blindFoldToRaise": 0.010189013585351446,
+				"seeUnderPressure": 0.7866565333043809,
+				"continueWeak": 0.18450816164333314,
+				"continueMid": 0.7960158434296365,
+				"continueBorder": 0.9851076095311299,
+				"thinRaise": 0.0017002671848433326,
+				"valueRaise": 0.12166843067449244,
+				"entropy": 0.3994428614549537,
+				"strongPackRate": 0.0005651313930488839,
+				"weakCallRate": 0.18300854490686666,
+				"weakRaiseRate": 0.0004359469390297067,
+				"monsterNoRaiseRate": 0.1037037037037037,
+				"bigOverrideRate": 0.07995995704000318,
+				"badActionRate": 0.08053846747831458,
+				"stateOverrideRate": 0.005867221787613201,
+				"memoryOverrideRate": 0.04551903366525677,
+				"lossAggressionDelta": -0.017671657174341243,
+				"lossSeenRaiseDelta": -0.015827996580282083,
+				"lossPackDelta": 0.06410994964249725,
+				"winSeenRaiseDelta": -0.003659891663538209,
+				"blindWinBlindRaiseDelta": 0.0034023984899344203,
+				"blindWinBlindRoundsDelta": -0.016236948680381835,
+				"caughtBluffFoldDelta": 0.0012675076030569943,
+				"caughtBluffPackDelta": -0.04129197630368592,
+				"bluffedOffFoldDelta": 0.007562331372198788,
+				"pressuredPackDelta": 0.034760944390917564,
+				"events": {
+					"bigLoss": 6431,
+					"bigWin": 5687,
+					"blindWin": 290,
+					"caughtBluff": 463,
+					"bluffedOff": 1253,
+					"pressured": 15448
+				},
+				"lossAggressionDeltaX": -0.004457661416201311,
+				"lossSeenRaiseDeltaX": -0.0005967562789693376,
+				"lossPackDeltaX": -0.010177339075310238,
+				"winSeenRaiseDeltaX": -0.003328924827238497,
+				"blindWinBlindRaiseDeltaX": -0.0037826491666721473,
+				"blindWinBlindRoundsDeltaX": 0.051176669477161596,
+				"caughtBluffFoldDeltaX": 0.01705207642877575,
+				"caughtBluffPackDeltaX": -0.05913795996892218,
+				"bluffedOffFoldDeltaX": 0.008768950507778647,
+				"pressuredPackDeltaX": -0.02365645012343845
+			},
+			"boots": {
+				"mean": 278.623,
+				"ci": 176.72232390667833,
+				"n": 400
+			},
+			"pairedPop": {
+				"mean": -40.8945,
+				"ci": 158.92141689274123,
+				"n": 400
+			},
+			"pairedBluffy": {
+				"mean": -92.087,
+				"ci": 113.86175103121438,
+				"n": 400
+			},
+			"events": {
+				"foldCaught12": 0.013,
+				"foldCaught34": 0.009,
+				"foldCaught58": 0.025,
+				"foldOther": 0.036,
+				"nCaught12": 920,
+				"packAfterLoss": 0.165,
+				"packCalm": 0.158,
+				"attrActed": 0.315,
+				"attrPackWhenActed": -0.078,
+				"attrCallWhenActed": 0.133,
+				"attrShowWhenActed": -0.037,
+				"events": {
+					"caught": 1237,
+					"bluffedOff": 2817,
+					"bigLoss": 12423
+				}
+			},
+			"foldCaughtVsChampion": {
+				"diff": -0.003,
+				"lo": -0.011,
+				"hi": 0.005
+			}
+		}
+	},
+	"totals": {
+		"hands": 880000,
+		"decisions": 15072578,
+		"seconds": 1997.264955958,
+		"maxRssMb": 177.30551147460938
+	}
+}

@@ -142,10 +142,40 @@ export function crossover(a, b, random) {
 	return { dna, quirks, tempo: { ...a.tempo } };
 }
 
+/**
+ * Phase 3.1: the event quirks a character starts its search with (tp-dna@5), at a middle strength
+ * the search then tunes. Only Samay: his flat reactions to events were the Phase 3 finding.
+ */
+export const EVENT_QUIRKS = Object.freeze({
+	'samay-raina': Object.freeze([
+		{ id: 'stubbornStreak', strength: 0.6 },
+		{ id: 'onToYou', strength: 0.6 }
+	])
+});
+
+/** The ancestor's genome plus its Phase 3.1 event quirks (if any). */
+export function phase31Genome(character) {
+	const g = ancestorGenome(character);
+	for (const q of EVENT_QUIRKS[character] ?? [])
+		if (!g.quirks.some((x) => x.id === q.id)) g.quirks.push({ ...q });
+	return g;
+}
+
 /** An unpublished candidate style with its ancestry. */
-export function candidateStyle(character, genome, { id, parent, generation, changed = [] }) {
+export function candidateStyle(
+	character,
+	genome,
+	{
+		id,
+		parent,
+		generation,
+		changed = [],
+		policy = CHARACTER_POLICY_V4,
+		ancestor = `${character}@3`
+	}
+) {
 	const config = {
-		policy: CHARACTER_POLICY_V4,
+		policy,
 		tendencies: { dna: genome.dna, quirks: genome.quirks, tempo: genome.tempo },
 		supportedGames: ['teen-patti']
 	};
@@ -153,7 +183,7 @@ export function candidateStyle(character, genome, { id, parent, generation, chan
 		_id: id,
 		botId: character,
 		status: 'candidate',
-		ancestor: `${character}@3`,
+		ancestor,
 		parent,
 		generation,
 		changed,

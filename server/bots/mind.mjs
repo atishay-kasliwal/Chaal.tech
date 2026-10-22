@@ -24,8 +24,21 @@ export const MIND_VERSION = 'mind@1';
  * Appraisal rules by version. mind@1 (tp-dna@3) is frozen. mind@2 (tp-dna@4, Phase 3):
  * - opponent models forget faster for adaptable styles, so they follow a player who changes gear;
  * - being bluffed off a pot makes a suspicious style more suspicious (a calling station's trigger).
+ * mind@3 (tp-dna@5, Phase 3.1): mind@2, plus each cue records the hand number it happened in.
  */
-export const MIND_VERSIONS = Object.freeze({ 1: 'mind@1', 2: 'mind@2' });
+export const MIND_VERSIONS = Object.freeze({ 1: 'mind@1', 2: 'mind@2', 3: 'mind@3', 4: 'mind@4' });
+/**
+ * What each version adds, so a later version can take some features and not others.
+ * mind@4 (tp-dna@6, Phase 4 challengers only): mind@1, plus the hand number on each cue, plus for
+ * each opponent the hand this bot last caught them bluffing and the hand they last bluffed it off a
+ * pot (opponent-specific event memory).
+ */
+const MIND_FEATURES = Object.freeze({
+	1: { adaptiveDecay: false, bluffedSuspicion: false, stamp: false, eventHands: false },
+	2: { adaptiveDecay: true, bluffedSuspicion: true, stamp: false, eventHands: false },
+	3: { adaptiveDecay: true, bluffedSuspicion: true, stamp: true, eventHands: false },
+	4: { adaptiveDecay: false, bluffedSuspicion: false, stamp: true, eventHands: true }
+});
 const MAX_OTHERS = 8;
 /** A result is big when it moves at least this many boots and this share of the starting stack. */
 export const BIG_POT = 6;
@@ -168,8 +181,9 @@ export function updateMind(
 	const push = (key, amount) => (mood[key] = clamp(mood[key] + amount));
 	for (const e of events) {
 		if (e.k === 'deal') {
-			const decay =
-				rules >= 2 ? MODEL_DECAY - 0.03 * Math.max(0, trait('adaptability') - 0.5) : MODEL_DECAY;
+			const decay = MIND_FEATURES[rules].adaptiveDecay
+				? MODEL_DECAY - 0.03 * Math.max(0, trait('adaptability') - 0.5)
+				: MODEL_DECAY;
 			mind.hands++;
 			if (!mind.form) {
 				mind.form = nightForm(`${self}|${e.hand}`, trait('discipline'));
@@ -276,7 +290,13 @@ function appraiseResult(mind, e, { self, view, trait, push, kindOf, rules }) {
 	const cue = (name, who = null) =>
 		(mind.cues = [
 			...(mind.cues ?? []),
-			{ hand: hand?.id ?? null, cue: name, ...(who ? { who } : {}) }
+			// mind@3 and mind@4: the hand number too, so a policy can tell how recent an event is.
+			{
+				hand: hand?.id ?? null,
+				cue: name,
+				...(who ? { who } : {}),
+				...(MIND_FEATURES[rules].stamp ? { n: mind.hands } : {})
+			}
 		].slice(-5));
 	const boot = Math.max(view.boot ?? 1, 1);
 	const me = view.usersList.find((u) => u.id === self);
@@ -366,14 +386,16 @@ function appraiseResult(mind, e, { self, view, trait, push, kindOf, rules }) {
 			if (!hand.packed) {
 				// Caught their bluff: confidence for this bot, suspicion of them by temperament.
 				s.recent.caughtBluffing++;
+				if (MIND_FEATURES[rules].eventHands) s.recent.caughtAt = mind.hands;
 				cue('CAUGHT_THEIR_BLUFF', id);
 				push('confidence', 0.06);
 				push('suspicion', 0.1 * trait('suspicion'));
 			} else {
 				// Bluffed off a pot: it stings by ego, and breeds rivalry by appetite for revenge.
 				s.recent.bluffedMe++;
+				if (MIND_FEATURES[rules].eventHands) s.recent.bluffedAt = mind.hands;
 				cue('GOT_BLUFFED', id);
-				if (rules >= 2) push('suspicion', 0.15 * trait('suspicion'));
+				if (MIND_FEATURES[rules].bluffedSuspicion) push('suspicion', 0.15 * trait('suspicion'));
 				push('frustration', 0.12 * trait('ego'));
 				s.rel.rivalry = clamp(s.rel.rivalry + 0.15 * trait('revenge'));
 				s.rel.annoyance = clamp(s.rel.annoyance + 0.15);
