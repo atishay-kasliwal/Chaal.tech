@@ -4,7 +4,7 @@ import { observation29, remember29 } from './observation-29.mjs';
 
 /**
  * A 29 bot = Game Brain + Character Personality + Session Adaptation, as the other trick games
- * (docs/games/29_REPORT.md). One Rohit: canonical DNA; 29's strategy is its own.
+ * (docs/archive/games/29_REPORT.md). One Rohit: canonical DNA; 29's strategy is its own.
  *
  *  1. Game Brain (no personality).
  *     - Bid: how many points the partnership can expect from four cards, through the best trump suit
@@ -65,7 +65,7 @@ const suitScore = (hand, suit) =>
 		);
 
 /** Expected partnership points from four cards: a heuristic, its offset calibrated by simulation
- * (docs/games/29_REPORT.md: the offset that wins most hands against the greedy and random players). */
+ * (docs/archive/games/29_REPORT.md: the offset that wins most hands against the greedy and random players). */
 export function bidEstimate(obs) {
 	const best = Math.max(...obs.suits.map((s) => suitScore(obs.hand, s)));
 	const held = obs.hand.reduce((s, c) => s + pts(c), 0);

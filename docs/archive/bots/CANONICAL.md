@@ -48,7 +48,7 @@ riskTolerance, pressureResistance; `c008`: showPreference, ego) plus one mutatio
 generation 2 of the search. Measured under the former policy name as `af244057d0c062cc`; recomputing
 that hash from the ported configuration gives the same value
 (`tests/server/bot-canonical.test.mjs`). Not adopted: Virat `c024`, Samay `c008`, Dhoni `c039`,
-any Rohit candidate (reasons in `docs/bots/PHASE3_REPORT.md`).
+any Rohit candidate (reasons in `docs/archive/bots/PHASE3_REPORT.md`).
 
 **Dhoni C1 (Phase 4.1, approved 2026-10-22).** Dhoni's Phase 2 DNA, quirks and tempo, unchanged, on
 `tp-dna@8`: tp-dna@3 plus one base factor (from the second distinct opponent still in the hand who

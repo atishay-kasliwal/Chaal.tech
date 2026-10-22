@@ -1,5 +1,5 @@
 /**
- * The rivalry experience (docs/ANALYTICS_PHASE5.md, "Rivalries"). Everything numeric comes from
+ * The rivalry experience (docs/archive/ANALYTICS_PHASE5.md, "Rivalries"). Everything numeric comes from
  * compute/rivals.mjs, the one definition of head to head; this layer only chooses which rivalries
  * are worth a title and words them. No composite score is ever shown: each title lists the plain
  * facts that earned it. Built only from hands the viewer sat in.

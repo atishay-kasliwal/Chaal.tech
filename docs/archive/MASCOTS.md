@@ -43,4 +43,4 @@ expression art exists. The 30 unfinished sheets are listed, with prompts, in
 `scripts/mascots/bot-generation-plan.json`; the image service rejected those requests at its
 usage limit. These are pending jobs, not generated assets.
 
-See `docs/BOT_CHARACTERS_PHASE3.md` for permanent bot identities, publishing and migration.
+See `docs/archive/BOT_CHARACTERS_PHASE3.md` for permanent bot identities, publishing and migration.

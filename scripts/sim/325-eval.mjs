@@ -1,5 +1,5 @@
 /**
- * 3 2 5 Phase 2 evaluation (docs/games/325_PHASE2_REPORT.md). Deterministic: every deal and every
+ * 3 2 5 Phase 2 evaluation (docs/archive/games/325_PHASE2_REPORT.md). Deterministic: every deal and every
  * decision draw comes from (seed, table, round, seat, k), so comparisons are matched: the same deals
  * and the same draws for the other seats, only the hero changes.
  *

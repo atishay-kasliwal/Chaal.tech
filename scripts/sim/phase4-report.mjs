@@ -1,5 +1,5 @@
 /**
- * Phase 4 report: docs/bots/PHASE4_REPORT.md from the stage results in .sim/phase4/.
+ * Phase 4 report: docs/archive/bots/PHASE4_REPORT.md from the stage results in .sim/phase4/.
  *   node scripts/sim/phase4-report.mjs [--seed 44] [--final 45]
  * Sections whose stage has not run are left out. The summary and recommendations are written by a
  * reviewer into the <!-- ANSWERS --> marker; everything else is generated.
@@ -627,7 +627,7 @@ out.push(`## 12. Engineering
 <!-- TESTS -->
 `);
 
-writeFileSync('docs/bots/PHASE4_REPORT.md', out.join('\n'));
+writeFileSync('docs/archive/bots/PHASE4_REPORT.md', out.join('\n'));
 console.log(
-	`docs/bots/PHASE4_REPORT.md: ${out.length} sections, ${totals.hands.toLocaleString()} hands`
+	`docs/archive/bots/PHASE4_REPORT.md: ${out.length} sections, ${totals.hands.toLocaleString()} hands`
 );

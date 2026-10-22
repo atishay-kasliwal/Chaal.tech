@@ -1,5 +1,5 @@
 /**
- * Permanent bot identities and their immutable style versions (docs/ANALYTICS_SPEC.md §15.3).
+ * Permanent bot identities and their immutable style versions (docs/archive/ANALYTICS_SPEC.md §15.3).
  *
  * A bot is a character (`botId`); a style is one published version of how it plays
  * (`styleId` = `${botId}@${version}`). A style never changes once published: its `configHash`

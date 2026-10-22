@@ -1,6 +1,6 @@
 /**
  * The character bots' personalities: version 1 (policy tp-dna@1) and version 2 (policy
- * tp-dna@2, docs/BOT_BRAIN.md §27). Data only: the shared policy
+ * tp-dna@2, docs/archive/BOT_BRAIN.md §27). Data only: the shared policy
  * (server/bots/character.mjs) reads these numbers and never asks which character it is playing.
  *
  * DNA traits are in [0, 1], 0.5 = typical. Policy tp-dna@1 uses aggression, bluffAffinity,
@@ -11,7 +11,7 @@
  * Published styles are immutable: change a character by adding version 2, never by editing these.
  * The weaknesses are tendencies, not stupidity: each one is still a capable player.
  */
-/** Version 1, as first measured (docs/bots/PHASE1_REPORT.md). Published: never edit. */
+/** Version 1, as first measured (docs/archive/bots/PHASE1_REPORT.md). Published: never edit. */
 export const CHARACTER_DNA_V1 = Object.freeze({
 	// Plays blind for ages and loves a big blind hit. Proud of it; doesn't like being made to look.
 	'rohit-sharma': {

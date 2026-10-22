@@ -1,5 +1,5 @@
 /**
- * What a recorded hand must be replayed with (docs/ANALYTICS_OPERATIONS.md, "Versioning").
+ * What a recorded hand must be replayed with (docs/archive/ANALYTICS_OPERATIONS.md, "Versioning").
  *
  * A hand records its game, game version, rules version and variant version. Replay runs only
  * when this code still implements exactly those versions; otherwise it is reported unavailable,

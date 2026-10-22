@@ -1,16 +1,18 @@
 # Chaal.tech
 
+What's left and the ideas list: [docs/ROADMAP.md](docs/ROADMAP.md). Older docs are in [docs/archive/](docs/archive/).
+
 ## Cloudflare development
 
 Chaal.tech keeps the existing SvelteKit, Svelte, Tailwind, and DaisyUI application on Cloudflare Pages. The authoritative game service runs on a Cloudflare Worker with one SQLite-backed Durable Object per room. The frontend game UI and game rules remain in this repository; the production boundary uses native WebSockets and stores confidential room state durably in Cloudflare.
 
-Use Node 24+ and `npm ci --ignore-scripts`. Run `npm run dev:backend` and `npm run dev` in separate terminals, then open the Vite URL. The backend defaults to `http://127.0.0.1:8787`; provide a local `SESSION_SECRET` in `.dev.vars` or `.env`. See [Cloudflare deployment and local test instructions](docs/cloudflare-deployment.md).
+Use Node 24+ and `npm ci --ignore-scripts`. Run `npm run dev:backend` and `npm run dev` in separate terminals, then open the Vite URL. The backend defaults to `http://127.0.0.1:8787`; provide a local `SESSION_SECRET` in `.dev.vars` or `.env`. See [Cloudflare deployment and local test instructions](docs/archive/cloudflare-deployment.md).
 
 Run `npm run lint`, `npm run check`, `npm test`, `npm run test:cloudflare`, and `npm run build` for verification. `npm run phase1:browser` captures the local reference screen; use the Worker at port 8787 while running browser checks.
 
 Classic remains the default. The room supports Classic, Muflis, AK47, Joker, Lowest Joker, 999, 2 Card, and 4 Card, each with its own server rules module. Poker, Blackjack, and Rummy use the shared room transport with their own game engines. The original theme, card renderer, and game controls remain at the center of the evolved player layout.
 
-Optional camera and audio use LiveKit. Configure the three backend-only LiveKit secrets documented in [Cloudflare deployment](docs/cloudflare-deployment.md). The game remains playable when media is disabled or unavailable.
+Optional camera and audio use LiveKit. Configure the three backend-only LiveKit secrets documented in [Cloudflare deployment](docs/archive/cloudflare-deployment.md). The game remains playable when media is disabled or unavailable.
 
 ## Development history
 

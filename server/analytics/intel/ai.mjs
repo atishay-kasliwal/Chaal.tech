@@ -1,5 +1,5 @@
 /**
- * Optional richer summaries (docs/ANALYTICS_PHASE5.md, "Optional AI summaries"). Nothing in the product
+ * Optional richer summaries (docs/archive/ANALYTICS_PHASE5.md, "Optional AI summaries"). Nothing in the product
  * needs this: recaps and insights are deterministic templates. This is only the narrow door a language
  * model could later be put behind, and it is built so the model cannot see or invent anything it should
  * not:

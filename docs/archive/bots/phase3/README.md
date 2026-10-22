@@ -1,6 +1,6 @@
 # Phase 3 artifacts
 
-The Phase 3 study (`docs/bots/PHASE3_REPORT.md`): a staged population search over the five
+The Phase 3 study (`docs/archive/bots/PHASE3_REPORT.md`): a staged population search over the five
 characters (8.5M hands) and a final validation of each character's best candidate (2.1M hands).
 
 ## Files here
@@ -13,7 +13,7 @@ characters (8.5M hands) and a final validation of each character's best candidat
 | `baseline-31.json` | The baseline used to set the target bands (seed 31)                                                                                       |
 
 Policy names in these files are the former ones (`tp-character@3`, `@4`); see
-`docs/bots/CANONICAL.md` for the mapping. Config hashes in the league were computed under those
+`docs/archive/bots/CANONICAL.md` for the mapping. Config hashes in the league were computed under those
 names.
 
 ## Reproducing

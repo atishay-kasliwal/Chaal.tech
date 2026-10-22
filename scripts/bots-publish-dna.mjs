@@ -1,4 +1,4 @@
-/** Explicit operator command: publish the canonical DNA characters (docs/bots/CANONICAL.md).
+/** Explicit operator command: publish the canonical DNA characters (docs/archive/bots/CANONICAL.md).
  *   npm run bots:publish-dna            (plan only)
  *   npm run bots:publish-dna -- --publish [--descriptions]
  * Needs MONGODB_ADMIN_URI. Idempotent: a bot already on its canonical style is skipped. */

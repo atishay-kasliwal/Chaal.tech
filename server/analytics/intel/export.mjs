@@ -1,5 +1,5 @@
 /**
- * Warehouse-ready export (docs/ANALYTICS_PHASE5.md, "Export"). One row per seat per completed hand,
+ * Warehouse-ready export (docs/archive/ANALYTICS_PHASE5.md, "Export"). One row per seat per completed hand,
  * from the canonical facts, as plain JSON lines. Owners only, never on a member request. No cards, no
  * deck, no seal, no bot internals: only what the public hand record already holds. Product usage
  * analytics (GA4) is a separate system and is never mixed in here.

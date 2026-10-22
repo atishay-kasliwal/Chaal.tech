@@ -15,7 +15,7 @@ import { GameError } from '../../server/engine.mjs';
 import { runTable29, random29 } from '../../server/sim/tricks/table-29.mjs';
 import { stream, shuffle } from '../../server/sim/seeds.mjs';
 
-/* 29, Chaal V1 (docs/games/29_RULES.md, locked 2026-10-22). */
+/* 29, Chaal V1 (docs/archive/games/29_RULES.md, locked 2026-10-22). */
 
 const IDS = ['a', 'b', 'c', 'd'];
 const C = new Set(IDS);

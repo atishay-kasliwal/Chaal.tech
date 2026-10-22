@@ -8,7 +8,7 @@ import { EVOLUTIONS } from './evolution.mjs';
 import { compareStyles } from './exploit-sim.mjs';
 import { ADAPTIVE_POLICY, defaultMemory } from './memory/adaptive.mjs';
 
-/** What each character weighs when it reads a line (see docs/BOT_PERSONALITY.md). */
+/** What each character weighs when it reads a line (see docs/archive/BOT_PERSONALITY.md). */
 export const FOCUS = Object.freeze({
 	'rohit-sharma': 'balanced',
 	'virat-kohli': 'bluffs',

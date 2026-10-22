@@ -4,7 +4,7 @@ Source: `mustafa-kapadia1483/teen-patti`, commit `3f0cb69a71d922557f9b17a08a78f4
 
 This document records the existing visual system. It does not introduce a replacement design system. The original application must remain recognizable as video, variants and reliability are added. Changes to theme, fonts or card presentation require explicit approval.
 
-Source inspection establishes the values below. Phase 0 subsequently captured 20 real desktop/mobile references, the computed system font stack and six-player gameplay states. See [the original capture inventory](visual-baselines/original/README.md) and [Phase 0 findings](docs/phase0/RESULTS.md). These captures establish appearance and the tested path; they do not verify every rule or production behavior.
+Source inspection establishes the values below. Phase 0 subsequently captured 20 real desktop/mobile references, the computed system font stack and six-player gameplay states. See [the original capture inventory](visual-baselines/original/README.md) and [Phase 0 findings](docs/archive/phase0/RESULTS.md). These captures establish appearance and the tested path; they do not verify every rule or production behavior.
 
 ## 1. Colors and background
 

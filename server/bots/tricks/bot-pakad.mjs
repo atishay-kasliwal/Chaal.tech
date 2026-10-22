@@ -4,7 +4,7 @@ import { observationPakad, rememberPakad } from './observation-pakad.mjs';
 
 /**
  * A 10 Pakad bot = Game Brain + Character Personality + Session Adaptation
- * (docs/games/10PAKAD_PLAN.md §7-8). One Rohit: the character's DNA is his canonical DNA
+ * (docs/archive/games/10PAKAD_PLAN.md §7-8). One Rohit: the character's DNA is his canonical DNA
  * (server/bots/dna-styles.mjs); identity carries across games, strategy does not. Nothing here is
  * per character, and nothing is borrowed from Teen Patti or 3 2 5 except the shared trick core.
  *
@@ -31,7 +31,7 @@ const BETA = 5;
 const TAU = 0.35;
 const CLARITY = 0.12;
 const PERSONA_CAP = 0.35;
-/** Personality strength, as 3 2 5 (docs/games/325_PHASE2_REPORT.md); checked by 10 Pakad's evaluation. */
+/** Personality strength, as 3 2 5 (docs/archive/games/325_PHASE2_REPORT.md); checked by 10 Pakad's evaluation. */
 export const PERSONA_SCALE = 2;
 const SAMPLES = 32;
 const TRICKS = 13;

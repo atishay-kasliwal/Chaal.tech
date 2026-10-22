@@ -1,5 +1,5 @@
 /**
- * Bot intelligence for the owner (docs/ANALYTICS_PHASE5.md, "Bot intelligence"). Bots are software, so
+ * Bot intelligence for the owner (docs/archive/ANALYTICS_PHASE5.md, "Bot intelligence"). Bots are software, so
  * the analysis can be blunt: how predictable, how exploitable, how each published version performs.
  * Built from the club's public hand records and the bots' own derived caches (adaptation reports,
  * memory summaries). It never reads a bot's sealed decision traces and never names a person as

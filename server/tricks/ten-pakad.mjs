@@ -12,7 +12,7 @@ import { castMember } from '../../src/lib/bots/cast.js';
 import { GameError } from '../engine.mjs';
 
 /**
- * 10 Pakad (Dehla Pakad), Chaal V1 rules (docs/games/10PAKAD_PLAN.md §1, locked 2026-10-22): four
+ * 10 Pakad (Dehla Pakad), Chaal V1 rules (docs/archive/games/10PAKAD_PLAN.md §1, locked 2026-10-22): four
  * players in two partnerships (seats 0 and 2 against 1 and 3), 52 cards, play anticlockwise.
  *
  * - Five cards each; play starts with no trump. The first player who cannot follow suit sets trump

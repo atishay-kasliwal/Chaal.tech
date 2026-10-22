@@ -1,5 +1,5 @@
 /**
- * Club timeline (docs/ANALYTICS_PHASE5.md, "Timeline"): a light, friendly history built from
+ * Club timeline (docs/archive/ANALYTICS_PHASE5.md, "Timeline"): a light, friendly history built from
  * structured events, never from free text. Every item links to a night or hand where one exists.
  */
 import { handFacts } from '../compute/facts.mjs';

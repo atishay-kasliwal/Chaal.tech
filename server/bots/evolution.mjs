@@ -1,5 +1,5 @@
 /**
- * The bot evolution workflow (docs/ANALYTICS_PHASE5.md, "Bot evolution"). Analytics can notice a
+ * The bot evolution workflow (docs/archive/ANALYTICS_PHASE5.md, "Bot evolution"). Analytics can notice a
  * weakness; only an owner can change a bot, and only by publishing a NEW immutable style version.
  *
  *   observed → proposed → simulated → validated → approved → published      (or rejected)

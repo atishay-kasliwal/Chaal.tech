@@ -1,6 +1,6 @@
 # Analytics Phase 2: computation layer and Stats
 
-Phase 2 turns the permanent hand history (Phase 1, docs/ANALYTICS_OPERATIONS.md) into one reusable
+Phase 2 turns the permanent hand history (Phase 1, docs/archive/ANALYTICS_OPERATIONS.md) into one reusable
 analytics layer and a player-facing Stats page. Everything here is computed from the public and
 private tiers that the recorder writes. Nothing reads the sealed tier.
 

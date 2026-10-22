@@ -4,7 +4,7 @@ import { observation325 } from './observation-325.mjs';
 
 /**
  * A 3 2 5 bot = Game Brain + Character Personality + Session Adaptation
- * (docs/games/TRICK_GAMES_PHASE1.md §5). One Rohit: the character's DNA is his canonical Teen Patti
+ * (docs/archive/games/TRICK_GAMES_PHASE1.md §5). One Rohit: the character's DNA is his canonical Teen Patti
  * DNA (server/bots/dna-styles.mjs), translated into 3 2 5 decisions; nothing here is per character.
  *
  * Decide(observation):
@@ -28,7 +28,7 @@ const TAU = 0.35;
 const CLARITY = 0.12;
 const PERSONA_CAP = 0.35;
 /**
- * Personality strength, chosen by simulation (docs/games/325_PHASE2_REPORT.md): at 1x characters were
+ * Personality strength, chosen by simulation (docs/archive/games/325_PHASE2_REPORT.md): at 1x characters were
  * identified blind 43% of the time, at 2x 51%, at 3x 56%; strength against the baseline held at 2x
  * except Virat (whose early aggression costs most), and fell away at 3x. 2x is the middle ground.
  */

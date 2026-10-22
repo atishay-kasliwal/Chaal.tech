@@ -1,5 +1,5 @@
 /**
- * 29 character evaluation (docs/games/29_REPORT.md): strength and identity of the five characters on
+ * 29 character evaluation (docs/archive/games/29_REPORT.md): strength and identity of the five characters on
  * matched tables.
  *   node scripts/sim/29-eval.mjs [tables] > docs/games/29/results/eval-<seed>.json
  *

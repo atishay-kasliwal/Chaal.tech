@@ -1,5 +1,5 @@
 /**
- * Phase 1.1 report (docs/BOT_BRAIN.md §27): character styles @1 (tp-dna@1) against @2
+ * Phase 1.1 report (docs/archive/BOT_BRAIN.md §27): character styles @1 (tp-dna@1) against @2
  * (tp-dna@2), measured the same way. Measurement only: nothing is tuned here.
  *
  *   node scripts/sim/phase11-report.mjs [--seed 11] [--hands 200] [--scale 1]
@@ -12,7 +12,7 @@
  *    same tables against the same four reference opponents with the same decks. Strength,
  *    decision quality and distances come from here, so every policy faces one field.
  *
- * Writes docs/bots/PHASE1_1_REPORT.md and .sim/phase11-<seed>.json.
+ * Writes docs/archive/bots/PHASE1_1_REPORT.md and .sim/phase11-<seed>.json.
  */
 import { runPool } from './pool.mjs';
 import { availableParallelism } from 'node:os';
@@ -522,9 +522,9 @@ ${toMermaid(CHARACTER_GRAPH_V2)}
 Styles published: ${Object.keys(STYLES).length}.
 `;
 mkdirSync(new URL('../../docs/bots/', import.meta.url), { recursive: true });
-writeFileSync(new URL('../../docs/bots/PHASE1_1_REPORT.md', import.meta.url), md);
+writeFileSync(new URL('../../docs/archive/bots/PHASE1_1_REPORT.md', import.meta.url), md);
 console.log(
-	`Phase 1.1 report: ${totalHands} hands in ${(wallMs / 1000).toFixed(0)} s. Wrote docs/bots/PHASE1_1_REPORT.md and .sim/phase11-${SEED}.json`
+	`Phase 1.1 report: ${totalHands} hands in ${(wallMs / 1000).toFixed(0)} s. Wrote docs/archive/bots/PHASE1_1_REPORT.md and .sim/phase11-${SEED}.json`
 );
 console.log(
 	[1, 2].map((v) => `v${v}: ${ident[v].map((r) => `${r.k}=${p(r.accuracy)}`).join(' ')}`).join('\n')

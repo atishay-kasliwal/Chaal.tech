@@ -1,5 +1,5 @@
 /**
- * Statistical language rules (docs/ANALYTICS_PHASE5.md, "Language"). One place decides how strongly a
+ * Statistical language rules (docs/archive/ANALYTICS_PHASE5.md, "Language"). One place decides how strongly a
  * finding may be worded, and every generated sentence is a deterministic template over structured
  * facts. No model writes routine product text; nothing here invents an explanation.
  *

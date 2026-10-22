@@ -268,7 +268,7 @@ export class RoomDurableObject {
 	}
 
 	/**
-	 * Phase 5 (docs/bots/PHASE5_REPORT.md): load what each seated character remembers about the
+	 * Phase 5 (docs/archive/bots/PHASE5_REPORT.md): load what each seated character remembers about the
 	 * people at the table (bot_memory: public observations only) and keep just the resulting priors.
 	 * Runs in the background when the table's people or characters change; never on a decision's
 	 * path. A failure or a slow database leaves no prior, and the characters play from the session.

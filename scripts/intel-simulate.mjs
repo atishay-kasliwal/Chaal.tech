@@ -1,5 +1,5 @@
 /**
- * Validate the Phase 5 methodology itself, not just its code (docs/ANALYTICS_PHASE5.md, "Validation").
+ * Validate the Phase 5 methodology itself, not just its code (docs/archive/ANALYTICS_PHASE5.md, "Validation").
  * Everything is seeded and runs on the real evaluators, with known ground truth:
  *   - honest dealing and honest play must rarely look hot, cold or skilled
  *   - real skill and real luck must be found, and kept apart

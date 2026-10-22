@@ -1,5 +1,5 @@
 /**
- * Behaviour from recorded action sequences (docs/ANALYTICS_PHASE2.md, "Patterns").
+ * Behaviour from recorded action sequences (docs/archive/ANALYTICS_PHASE2.md, "Patterns").
  *
  * Every rate counts only opportunities: a fold rate's denominator is the decisions where
  * folding was legal (from the decision's recorded legal options), a raise rate's where raising

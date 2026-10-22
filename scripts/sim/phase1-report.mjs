@@ -1,11 +1,11 @@
 /**
- * Phase 1 measurement report (docs/BOT_BRAIN.md §20): reference fingerprints, character
+ * Phase 1 measurement report (docs/archive/BOT_BRAIN.md §20): reference fingerprints, character
  * fingerprints, character identifiability at 10/25/50/100 hands, performance, example traces.
  * Measurement only: nothing is tuned or trained here.
  *
  *   node scripts/sim/phase1-report.mjs [--seed 1] [--hands 150] [--scale 1]
  *
- * Writes docs/bots/PHASE1_REPORT.md and the raw numbers to .sim/phase1-<seed>.json.
+ * Writes docs/archive/bots/PHASE1_REPORT.md and the raw numbers to .sim/phase1-<seed>.json.
  */
 import { runPool } from './pool.mjs';
 import { availableParallelism } from 'node:os';
@@ -335,8 +335,8 @@ ${toMermaid(CHARACTER_GRAPH)}
 Styles published: ${Object.keys(STYLES).length}.
 `;
 mkdirSync(new URL('../../docs/bots/', import.meta.url), { recursive: true });
-writeFileSync(new URL('../../docs/bots/PHASE1_REPORT.md', import.meta.url), md);
+writeFileSync(new URL('../../docs/archive/bots/PHASE1_REPORT.md', import.meta.url), md);
 console.log(
-	`Phase 1 report: ${totalHands} hands in ${(wallMs / 1000).toFixed(1)} s. Wrote docs/bots/PHASE1_REPORT.md and .sim/phase1-${SEED}.json`
+	`Phase 1 report: ${totalHands} hands in ${(wallMs / 1000).toFixed(1)} s. Wrote docs/archive/bots/PHASE1_REPORT.md and .sim/phase1-${SEED}.json`
 );
 console.log(ident.map((r) => `k=${r.k}: ${Math.round(r.accuracy * 100)}%`).join('  '));

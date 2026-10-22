@@ -1,5 +1,5 @@
 /**
- * The insight engine (docs/ANALYTICS_PHASE2.md, "Insights"). It turns computed analytics into
+ * The insight engine (docs/archive/ANALYTICS_PHASE2.md, "Insights"). It turns computed analytics into
  * structured, testable observations; the UI only renders them. Every candidate carries its
  * test; the whole set is corrected with Benjamini–Hochberg so that looking at many patterns at
  * once does not manufacture discoveries. Records (biggest pot, best night) are descriptive and

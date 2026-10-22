@@ -1,5 +1,5 @@
 /**
- * Surprise detection (docs/ANALYTICS_PHASE5.md, "Surprises"). A night is compared with the same
+ * Surprise detection (docs/archive/ANALYTICS_PHASE5.md, "Surprises"). A night is compared with the same
  * person's own earlier history, never with other people, and a departure is reported only when the
  * baseline is large enough to know what "usual" is and the gap is bigger than chance explains.
  * Every detector returns a ranked-insight candidate (confidence, magnitude, evidence ids); wording is

@@ -1,7 +1,7 @@
 import { buildDeck, cardKey, SUITS } from '../../tricks/cards.mjs';
 
 /**
- * BotObservation for 10 Pakad (docs/games/10PAKAD_PLAN.md §6): the only input a 10 Pakad bot gets.
+ * BotObservation for 10 Pakad (docs/archive/games/10PAKAD_PLAN.md §6): the only input a 10 Pakad bot gets.
  * Built from its seat's projection (never the room) plus what this seat has remembered this hand:
  * the tricks it saw completed (each one as it happened, from `lastTrick`). The projection shows only
  * the current and last trick and the number of cards and tens in each pile, so remembering earlier

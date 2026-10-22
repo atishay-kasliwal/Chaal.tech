@@ -1,5 +1,5 @@
 /**
- * The production validation checklist (docs/ANALYTICS_OPERATIONS.md), read-only, in one report.
+ * The production validation checklist (docs/archive/ANALYTICS_OPERATIONS.md), read-only, in one report.
  *   npm run analytics:validate [-- --since 2026-10-18T00:00:00Z]
  * Exits 1 if any check fails.
  */

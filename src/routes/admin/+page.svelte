@@ -915,7 +915,7 @@
 </ClubGate>
 
 <style>
-	/* The host's ledger (docs/design/ADMIN.md): a masthead with tonight's numbers, the sections on a
+	/* The host's ledger (docs/archive/design/ADMIN.md): a masthead with tonight's numbers, the sections on a
 	   spine with what each holds, and ruled panels. Site tokens only. */
 	.admin {
 		--live: #8fe0ad;

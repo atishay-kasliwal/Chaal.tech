@@ -1,5 +1,5 @@
 /**
- * The post-night recap (docs/ANALYTICS_PHASE5.md, "Recap"). Two layers, one definition of every
+ * The post-night recap (docs/archive/ANALYTICS_PHASE5.md, "Recap"). Two layers, one definition of every
  * number (compute/facts.mjs):
  *
  *   shared    what anyone who was at the table is entitled to: results, biggest swing, biggest pot,

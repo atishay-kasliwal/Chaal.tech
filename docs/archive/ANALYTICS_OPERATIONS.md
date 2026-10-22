@@ -1,6 +1,6 @@
 # Hand recorder: operations
 
-How the recorder (docs/ANALYTICS_SPEC.md §10.3, Phase 1) is versioned, migrated, deployed,
+How the recorder (docs/archive/ANALYTICS_SPEC.md §10.3, Phase 1) is versioned, migrated, deployed,
 monitored and validated in production.
 
 ## Versioning: replay never reinterprets history

@@ -1,5 +1,5 @@
 /**
- * Card analytics over a player's OWN private cards (docs/ANALYTICS_PHASE2.md, "Cards").
+ * Card analytics over a player's OWN private cards (docs/archive/ANALYTICS_PHASE2.md, "Cards").
  * Callers must pass only the signed-in player's hand_private documents; nothing here may be fed
  * another named player's cards. Club-wide fairness is anonymous counts only.
  *

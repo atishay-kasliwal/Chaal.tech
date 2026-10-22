@@ -1,5 +1,5 @@
 /**
- * Improvement tracking (docs/ANALYTICS_PHASE5.md, "Improvement"). A player's last 30 days against
+ * Improvement tracking (docs/archive/ANALYTICS_PHASE5.md, "Improvement"). A player's last 30 days against
  * their own earlier history, never against other people.
  *
  * Luck is not improvement. The headline verdict is built only from dimensions that remove the cards:

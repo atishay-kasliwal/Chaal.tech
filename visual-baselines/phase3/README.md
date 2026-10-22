@@ -4,7 +4,7 @@ Separate six-browser runs verify each starting variant and switch to the other v
 
 - [Classic browser report](classic/browser-report.json)
 - [Muflis browser report](muflis/browser-report.json)
-- [Implementation, exact house rules and test results](../../docs/phase3/IMPLEMENTATION.md)
+- [Implementation, exact house rules and test results](../../docs/archive/phase3/IMPLEMENTATION.md)
 
 | State | Classic starting room | Muflis starting room |
 |---|---|---|

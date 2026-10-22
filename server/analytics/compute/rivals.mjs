@@ -1,5 +1,5 @@
 /**
- * Head to head (docs/ANALYTICS_PHASE2.md, "Rivals"): one viewer against each person or bot they
+ * Head to head (docs/archive/ANALYTICS_PHASE2.md, "Rivals"): one viewer against each person or bot they
  * have actually sat with. Built only from public hand records the viewer was dealt into, so it
  * is information the viewer observed. Never uses an opponent's hidden cards or tendencies.
  * Bots are grouped by their permanent identity, so "you against Raju" spans every table.

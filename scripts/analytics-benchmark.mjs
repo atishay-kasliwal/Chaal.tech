@@ -1,6 +1,6 @@
 /**
  * Measure real analytics cost on synthetic history of a given size, against a throwaway MongoDB.
- * No production access. Results are the evidence behind docs/ANALYTICS_PHASE5.md "Performance".
+ * No production access. Results are the evidence behind docs/archive/ANALYTICS_PHASE5.md "Performance".
  *   node scripts/analytics-benchmark.mjs [hands=4000] [players=8]
  */
 import { MongoMemoryServer } from 'mongodb-memory-server';

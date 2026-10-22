@@ -3,7 +3,7 @@
  * Every analytic (player, game, rivals, admin, bots later) starts from these, so each metric
  * has a single definition.
  *
- * Normalisation (docs/ANALYTICS_PHASE2.md):
+ * Normalisation (docs/archive/ANALYTICS_PHASE2.md):
  * - Chips are never compared raw. Each game has a stake unit: Teen Patti the table's boot,
  *   Hold'em the big blind, Blackjack the player's own opening bet. These are comparable
  *   ("boots" in the UI). Rummy has no stake (points), so it is reported in points and kept out

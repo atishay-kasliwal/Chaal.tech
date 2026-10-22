@@ -2,7 +2,7 @@
  * MongoDB side of the hand recorder: schema (validators that keep each tier to its own fields),
  * indexes, the immutable bot identity registry, the outbox writer, and recorder health.
  *
- * Two kinds of access, kept apart (docs/ANALYTICS_OPERATIONS.md):
+ * Two kinds of access, kept apart (docs/archive/ANALYTICS_OPERATIONS.md):
  * - Migration (`migrateAnalytics`, run by `npm run analytics:migrate` with an admin connection)
  *   creates collections, validators and indexes and publishes bot styles.
  * - Runtime (`archiveRecorderRow`, the Worker's account) only reads and writes documents. It
