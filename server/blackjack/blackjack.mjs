@@ -1,11 +1,9 @@
 import { freshDeck } from '../classic.mjs';
+import { GameError } from '../engine.mjs';
 
+// Rule errors are GameErrors, so the room server shows players the reason, not a service failure.
 const fail = (condition, message, code = 'INVALID_ACTION') => {
-	if (!condition) {
-		const error = new Error(message);
-		error.code = code;
-		throw error;
-	}
+	if (!condition) throw new GameError(message, code);
 };
 const seated = (room) => room.players.filter((player) => player.seatNumber !== null).sort((a, b) => a.seatNumber - b.seatNumber);
 const activePlayers = (room) => seated(room).filter((player) => !player.departed && player.balance >= 0);
