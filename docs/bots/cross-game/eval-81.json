@@ -1,0 +1,170 @@
+{
+	"seed": 81,
+	"teenPattiTables": 60,
+	"axes": {
+		"boldness": {
+			"predicted": {
+				"rohit-sharma": 2,
+				"virat-kohli": 1,
+				"gg": 5,
+				"samay-raina": 3,
+				"ms-dhoni": 4
+			},
+			"ranks": {
+				"teen-patti": {
+					"rohit-sharma": 4,
+					"virat-kohli": 3,
+					"gg": 1,
+					"samay-raina": 5,
+					"ms-dhoni": 2
+				},
+				"three-two-five": {
+					"rohit-sharma": 3,
+					"virat-kohli": 1,
+					"gg": 5,
+					"samay-raina": 2,
+					"ms-dhoni": 4
+				},
+				"ten-pakad": {
+					"rohit-sharma": 3,
+					"virat-kohli": 1,
+					"gg": 4,
+					"samay-raina": 2,
+					"ms-dhoni": 5
+				},
+				"twenty-nine": {
+					"rohit-sharma": 2,
+					"virat-kohli": 1,
+					"gg": 5,
+					"samay-raina": 3,
+					"ms-dhoni": 4
+				}
+			},
+			"values": {
+				"teen-patti": {
+					"rohit-sharma": 0.847,
+					"virat-kohli": 1.376,
+					"gg": 1.73,
+					"samay-raina": 0.117,
+					"ms-dhoni": 1.503
+				},
+				"three-two-five": {
+					"rohit-sharma": 0.873,
+					"virat-kohli": 0.898,
+					"gg": 0.853,
+					"samay-raina": 0.889,
+					"ms-dhoni": 0.859
+				},
+				"ten-pakad": {
+					"rohit-sharma": 0.933,
+					"virat-kohli": 1.067,
+					"gg": 0.792,
+					"samay-raina": 0.997,
+					"ms-dhoni": 0.768
+				},
+				"twenty-nine": {
+					"rohit-sharma": 0.348,
+					"virat-kohli": 0.374,
+					"gg": 0.255,
+					"samay-raina": 0.288,
+					"ms-dhoni": 0.261
+				}
+			},
+			"agreement": {
+				"teen-patti": -0.6,
+				"three-two-five": 0.9,
+				"ten-pakad": 0.8,
+				"twenty-nine": 1
+			},
+			"consistency": {
+				"rohit-sharma": "3/4",
+				"virat-kohli": "4/4",
+				"gg": "3/4",
+				"samay-raina": "4/4",
+				"ms-dhoni": "3/4"
+			}
+		},
+		"patience": {
+			"predicted": {
+				"rohit-sharma": 3,
+				"virat-kohli": 5,
+				"gg": 1,
+				"samay-raina": 4,
+				"ms-dhoni": 2
+			},
+			"ranks": {
+				"teen-patti": {
+					"rohit-sharma": 3,
+					"virat-kohli": 4,
+					"gg": 1,
+					"samay-raina": 5,
+					"ms-dhoni": 2
+				},
+				"three-two-five": {
+					"rohit-sharma": 4,
+					"virat-kohli": 5,
+					"gg": 2,
+					"samay-raina": 3,
+					"ms-dhoni": 1
+				},
+				"ten-pakad": {
+					"rohit-sharma": 3,
+					"virat-kohli": 5,
+					"gg": 2,
+					"samay-raina": 4,
+					"ms-dhoni": 1
+				},
+				"twenty-nine": {
+					"rohit-sharma": 5,
+					"virat-kohli": 4,
+					"gg": 3,
+					"samay-raina": 2,
+					"ms-dhoni": 1
+				}
+			},
+			"values": {
+				"teen-patti": {
+					"rohit-sharma": -0.017,
+					"virat-kohli": -0.052,
+					"gg": -0.001,
+					"samay-raina": -0.083,
+					"ms-dhoni": -0.006
+				},
+				"three-two-five": {
+					"rohit-sharma": -0.32,
+					"virat-kohli": -0.355,
+					"gg": -0.297,
+					"samay-raina": -0.316,
+					"ms-dhoni": -0.278
+				},
+				"ten-pakad": {
+					"rohit-sharma": -0.325,
+					"virat-kohli": -0.446,
+					"gg": -0.304,
+					"samay-raina": -0.412,
+					"ms-dhoni": -0.259
+				},
+				"twenty-nine": {
+					"rohit-sharma": 0.607,
+					"virat-kohli": 0.613,
+					"gg": 0.651,
+					"samay-raina": 0.67,
+					"ms-dhoni": 0.674
+				}
+			},
+			"agreement": {
+				"teen-patti": 0.9,
+				"three-two-five": 0.8,
+				"ten-pakad": 0.9,
+				"twenty-nine": 0.3
+			},
+			"consistency": {
+				"rohit-sharma": "4/4",
+				"virat-kohli": "4/4",
+				"gg": "4/4",
+				"samay-raina": "3/4",
+				"ms-dhoni": "4/4"
+			}
+		}
+	}
+}
