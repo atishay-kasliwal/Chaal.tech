@@ -125,7 +125,8 @@
 					<h2 id="memory-title"><span aria-hidden="true">☾</span> Remembers</h2>
 					{#if bot.memory?.status === 'remembered' && bot.memory.moment}
 						<blockquote>
-							{bot.memory.moment.replace(/^Remembers/, '').trim()}
+							{bot.name}
+							{bot.memory.moment.replace(/^Remembers/, 'remembers')}
 						</blockquote>
 						<div class="chips small">
 							<span>{bot.memory.familiarity}</span>
@@ -578,9 +579,6 @@
 		color: var(--butter);
 		padding-left: 14px;
 		border-left: 3px solid var(--accent);
-	}
-	blockquote::first-letter {
-		text-transform: uppercase;
 	}
 	.quiet {
 		color: var(--muted);
