@@ -1,0 +1,971 @@
+{
+	"seed": 101,
+	"tables": 40,
+	"hands": 100,
+	"strategies": [
+		"always-raise",
+		"raise-often",
+		"never-raise",
+		"call-everything",
+		"fold-a-lot",
+		"bluff-a-lot",
+		"never-bluff",
+		"stay-blind",
+		"pressure-weakness",
+		"pressure-after-loss",
+		"attack-short",
+		"alternate",
+		"sudden-change",
+		"loose-then-value",
+		"value-then-bluff"
+	],
+	"switched": {
+		"always-raise": "bluff-a-lot",
+		"raise-often": "never-bluff",
+		"never-raise": "stay-blind",
+		"call-everything": "pressure-weakness",
+		"fold-a-lot": "pressure-after-loss",
+		"bluff-a-lot": "attack-short",
+		"never-bluff": "alternate",
+		"stay-blind": "sudden-change",
+		"pressure-weakness": "loose-then-value",
+		"pressure-after-loss": "value-then-bluff",
+		"attack-short": "always-raise",
+		"alternate": "raise-often",
+		"sudden-change": "never-raise",
+		"loose-then-value": "call-everything",
+		"value-then-bluff": "fold-a-lot"
+	},
+	"characters": {
+		"rohit-sharma": {
+			"sameMean": 11,
+			"switchedMean": 13,
+			"neutralStrength": {
+				"mean": -1,
+				"ci": 6
+			},
+			"perStrategy": {
+				"always-raise": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": -100,
+						"ci": 326
+					}
+				},
+				"raise-often": {
+					"same": {
+						"mean": -3,
+						"ci": 6
+					},
+					"switched": {
+						"mean": 50,
+						"ci": 99
+					}
+				},
+				"never-raise": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": 45,
+						"ci": 67
+					}
+				},
+				"call-everything": {
+					"same": {
+						"mean": 3,
+						"ci": 11
+					},
+					"switched": {
+						"mean": 19,
+						"ci": 56
+					}
+				},
+				"fold-a-lot": {
+					"same": {
+						"mean": -4,
+						"ci": 7
+					},
+					"switched": {
+						"mean": -2,
+						"ci": 4
+					}
+				},
+				"bluff-a-lot": {
+					"same": {
+						"mean": -99,
+						"ci": 326
+					},
+					"switched": {
+						"mean": -74,
+						"ci": 132
+					}
+				},
+				"never-bluff": {
+					"same": {
+						"mean": 25,
+						"ci": 103
+					},
+					"switched": {
+						"mean": 142,
+						"ci": 287
+					}
+				},
+				"stay-blind": {
+					"same": {
+						"mean": 26,
+						"ci": 67
+					},
+					"switched": {
+						"mean": 7,
+						"ci": 11
+					}
+				},
+				"pressure-weakness": {
+					"same": {
+						"mean": -29,
+						"ci": 36
+					},
+					"switched": {
+						"mean": 96,
+						"ci": 188
+					}
+				},
+				"pressure-after-loss": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": 50,
+						"ci": 236
+					}
+				},
+				"attack-short": {
+					"same": {
+						"mean": 4,
+						"ci": 8
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 0
+					}
+				},
+				"alternate": {
+					"same": {
+						"mean": 142,
+						"ci": 287
+					},
+					"switched": {
+						"mean": -3,
+						"ci": 6
+					}
+				},
+				"sudden-change": {
+					"same": {
+						"mean": -11,
+						"ci": 29
+					},
+					"switched": {
+						"mean": 12,
+						"ci": 53
+					}
+				},
+				"loose-then-value": {
+					"same": {
+						"mean": 96,
+						"ci": 188
+					},
+					"switched": {
+						"mean": -38,
+						"ci": 30
+					}
+				},
+				"value-then-bluff": {
+					"same": {
+						"mean": 17,
+						"ci": 238
+					},
+					"switched": {
+						"mean": -6,
+						"ci": 8
+					}
+				}
+			},
+			"style": {
+				"packRate": {
+					"with": 0.174,
+					"without": 0.175
+				},
+				"aggression": {
+					"with": 0.753,
+					"without": 0.764
+				},
+				"blindRounds": {
+					"with": 1.485,
+					"without": 1.486
+				},
+				"showRate": {
+					"with": 0.104,
+					"without": 0.104
+				},
+				"weakCallRate": {
+					"with": 0.01,
+					"without": 0.01
+				},
+				"badActionRate": {
+					"with": 0.006,
+					"without": 0.006
+				}
+			}
+		},
+		"virat-kohli": {
+			"sameMean": 13,
+			"switchedMean": 11,
+			"neutralStrength": {
+				"mean": -52,
+				"ci": 166
+			},
+			"perStrategy": {
+				"always-raise": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": 10,
+						"ci": 32
+					}
+				},
+				"raise-often": {
+					"same": {
+						"mean": -9,
+						"ci": 16
+					},
+					"switched": {
+						"mean": 23,
+						"ci": 66
+					}
+				},
+				"never-raise": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": 28,
+						"ci": 54
+					}
+				},
+				"call-everything": {
+					"same": {
+						"mean": 5,
+						"ci": 10
+					},
+					"switched": {
+						"mean": -65,
+						"ci": 108
+					}
+				},
+				"fold-a-lot": {
+					"same": {
+						"mean": -1,
+						"ci": 2
+					},
+					"switched": {
+						"mean": -12,
+						"ci": 17
+					}
+				},
+				"bluff-a-lot": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": -1,
+						"ci": 1
+					}
+				},
+				"never-bluff": {
+					"same": {
+						"mean": 18,
+						"ci": 42
+					},
+					"switched": {
+						"mean": 2,
+						"ci": 12
+					}
+				},
+				"stay-blind": {
+					"same": {
+						"mean": -17,
+						"ci": 24
+					},
+					"switched": {
+						"mean": 100,
+						"ci": 171
+					}
+				},
+				"pressure-weakness": {
+					"same": {
+						"mean": 25,
+						"ci": 38
+					},
+					"switched": {
+						"mean": -15,
+						"ci": 28
+					}
+				},
+				"pressure-after-loss": {
+					"same": {
+						"mean": 1,
+						"ci": 8
+					},
+					"switched": {
+						"mean": 137,
+						"ci": 182
+					}
+				},
+				"attack-short": {
+					"same": {
+						"mean": 11,
+						"ci": 23
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 0
+					}
+				},
+				"alternate": {
+					"same": {
+						"mean": 6,
+						"ci": 19
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 0
+					}
+				},
+				"sudden-change": {
+					"same": {
+						"mean": 99,
+						"ci": 171
+					},
+					"switched": {
+						"mean": -44,
+						"ci": 79
+					}
+				},
+				"loose-then-value": {
+					"same": {
+						"mean": -15,
+						"ci": 28
+					},
+					"switched": {
+						"mean": 2,
+						"ci": 14
+					}
+				},
+				"value-then-bluff": {
+					"same": {
+						"mean": 66,
+						"ci": 137
+					},
+					"switched": {
+						"mean": 1,
+						"ci": 2
+					}
+				}
+			},
+			"style": {
+				"packRate": {
+					"with": 0.16,
+					"without": 0.161
+				},
+				"aggression": {
+					"with": 1.79,
+					"without": 1.768
+				},
+				"blindRounds": {
+					"with": 0.802,
+					"without": 0.804
+				},
+				"showRate": {
+					"with": 0.046,
+					"without": 0.045
+				},
+				"weakCallRate": {
+					"with": 0.041,
+					"without": 0.041
+				},
+				"badActionRate": {
+					"with": 0.02,
+					"without": 0.02
+				}
+			}
+		},
+		"gg": {
+			"sameMean": 4,
+			"switchedMean": -14,
+			"neutralStrength": {
+				"mean": -17,
+				"ci": 27
+			},
+			"perStrategy": {
+				"always-raise": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": -143,
+						"ci": 241
+					}
+				},
+				"raise-often": {
+					"same": {
+						"mean": 60,
+						"ci": 114
+					},
+					"switched": {
+						"mean": -6,
+						"ci": 14
+					}
+				},
+				"never-raise": {
+					"same": {
+						"mean": 7,
+						"ci": 14
+					},
+					"switched": {
+						"mean": -10,
+						"ci": 21
+					}
+				},
+				"call-everything": {
+					"same": {
+						"mean": 2,
+						"ci": 4
+					},
+					"switched": {
+						"mean": 22,
+						"ci": 38
+					}
+				},
+				"fold-a-lot": {
+					"same": {
+						"mean": 0,
+						"ci": 1
+					},
+					"switched": {
+						"mean": -4,
+						"ci": 13
+					}
+				},
+				"bluff-a-lot": {
+					"same": {
+						"mean": -4,
+						"ci": 5
+					},
+					"switched": {
+						"mean": 19,
+						"ci": 50
+					}
+				},
+				"never-bluff": {
+					"same": {
+						"mean": -1,
+						"ci": 16
+					},
+					"switched": {
+						"mean": -1,
+						"ci": 2
+					}
+				},
+				"stay-blind": {
+					"same": {
+						"mean": 10,
+						"ci": 16
+					},
+					"switched": {
+						"mean": -16,
+						"ci": 36
+					}
+				},
+				"pressure-weakness": {
+					"same": {
+						"mean": 4,
+						"ci": 13
+					},
+					"switched": {
+						"mean": -2,
+						"ci": 5
+					}
+				},
+				"pressure-after-loss": {
+					"same": {
+						"mean": -1,
+						"ci": 14
+					},
+					"switched": {
+						"mean": -12,
+						"ci": 26
+					}
+				},
+				"attack-short": {
+					"same": {
+						"mean": 26,
+						"ci": 50
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 0
+					}
+				},
+				"alternate": {
+					"same": {
+						"mean": 0,
+						"ci": 3
+					},
+					"switched": {
+						"mean": -1,
+						"ci": 8
+					}
+				},
+				"sudden-change": {
+					"same": {
+						"mean": -19,
+						"ci": 37
+					},
+					"switched": {
+						"mean": -49,
+						"ci": 82
+					}
+				},
+				"loose-then-value": {
+					"same": {
+						"mean": -3,
+						"ci": 9
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 55
+					}
+				},
+				"value-then-bluff": {
+					"same": {
+						"mean": -17,
+						"ci": 51
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 2
+					}
+				}
+			},
+			"style": {
+				"packRate": {
+					"with": 0.264,
+					"without": 0.264
+				},
+				"aggression": {
+					"with": 1.658,
+					"without": 1.713
+				},
+				"blindRounds": {
+					"with": 0.437,
+					"without": 0.437
+				},
+				"showRate": {
+					"with": 0.33,
+					"without": 0.332
+				},
+				"weakCallRate": {
+					"with": 0.001,
+					"without": 0.001
+				},
+				"badActionRate": {
+					"with": 0.023,
+					"without": 0.022
+				}
+			}
+		},
+		"samay-raina": {
+			"sameMean": -16,
+			"switchedMean": 8,
+			"neutralStrength": {
+				"mean": 0,
+				"ci": 0
+			},
+			"perStrategy": {
+				"always-raise": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": -18,
+						"ci": 36
+					}
+				},
+				"raise-often": {
+					"same": {
+						"mean": -240,
+						"ci": 504
+					},
+					"switched": {
+						"mean": 1,
+						"ci": 10
+					}
+				},
+				"never-raise": {
+					"same": {
+						"mean": -7,
+						"ci": 14
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 0
+					}
+				},
+				"call-everything": {
+					"same": {
+						"mean": 22,
+						"ci": 32
+					},
+					"switched": {
+						"mean": -29,
+						"ci": 63
+					}
+				},
+				"fold-a-lot": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 1
+					}
+				},
+				"bluff-a-lot": {
+					"same": {
+						"mean": 3,
+						"ci": 5
+					},
+					"switched": {
+						"mean": 2,
+						"ci": 4
+					}
+				},
+				"never-bluff": {
+					"same": {
+						"mean": 2,
+						"ci": 7
+					},
+					"switched": {
+						"mean": 1,
+						"ci": 1
+					}
+				},
+				"stay-blind": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 0
+					}
+				},
+				"pressure-weakness": {
+					"same": {
+						"mean": -28,
+						"ci": 57
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 0
+					}
+				},
+				"pressure-after-loss": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": -51,
+						"ci": 104
+					}
+				},
+				"attack-short": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 0
+					}
+				},
+				"alternate": {
+					"same": {
+						"mean": 49,
+						"ci": 99
+					},
+					"switched": {
+						"mean": 2,
+						"ci": 3
+					}
+				},
+				"sudden-change": {
+					"same": {
+						"mean": -4,
+						"ci": 9
+					},
+					"switched": {
+						"mean": 1,
+						"ci": 2
+					}
+				},
+				"loose-then-value": {
+					"same": {
+						"mean": 0,
+						"ci": 0
+					},
+					"switched": {
+						"mean": 218,
+						"ci": 295
+					}
+				},
+				"value-then-bluff": {
+					"same": {
+						"mean": -39,
+						"ci": 112
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 1
+					}
+				}
+			},
+			"style": {
+				"packRate": {
+					"with": 0.164,
+					"without": 0.164
+				},
+				"aggression": {
+					"with": 0.104,
+					"without": 0.104
+				},
+				"blindRounds": {
+					"with": 0.631,
+					"without": 0.631
+				},
+				"showRate": {
+					"with": 0.245,
+					"without": 0.245
+				},
+				"weakCallRate": {
+					"with": 0.058,
+					"without": 0.058
+				},
+				"badActionRate": {
+					"with": 0.025,
+					"without": 0.025
+				}
+			}
+		},
+		"ms-dhoni": {
+			"sameMean": -33,
+			"switchedMean": -30,
+			"neutralStrength": {
+				"mean": -166,
+				"ci": 308
+			},
+			"perStrategy": {
+				"always-raise": {
+					"same": {
+						"mean": -7,
+						"ci": 19
+					},
+					"switched": {
+						"mean": -97,
+						"ci": 530
+					}
+				},
+				"raise-often": {
+					"same": {
+						"mean": -408,
+						"ci": 559
+					},
+					"switched": {
+						"mean": 15,
+						"ci": 119
+					}
+				},
+				"never-raise": {
+					"same": {
+						"mean": 3,
+						"ci": 167
+					},
+					"switched": {
+						"mean": 28,
+						"ci": 95
+					}
+				},
+				"call-everything": {
+					"same": {
+						"mean": -237,
+						"ci": 464
+					},
+					"switched": {
+						"mean": -96,
+						"ci": 182
+					}
+				},
+				"fold-a-lot": {
+					"same": {
+						"mean": -5,
+						"ci": 7
+					},
+					"switched": {
+						"mean": -13,
+						"ci": 113
+					}
+				},
+				"bluff-a-lot": {
+					"same": {
+						"mean": -6,
+						"ci": 458
+					},
+					"switched": {
+						"mean": -21,
+						"ci": 76
+					}
+				},
+				"never-bluff": {
+					"same": {
+						"mean": 1,
+						"ci": 88
+					},
+					"switched": {
+						"mean": -15,
+						"ci": 30
+					}
+				},
+				"stay-blind": {
+					"same": {
+						"mean": -22,
+						"ci": 139
+					},
+					"switched": {
+						"mean": -25,
+						"ci": 204
+					}
+				},
+				"pressure-weakness": {
+					"same": {
+						"mean": 187,
+						"ci": 223
+					},
+					"switched": {
+						"mean": -7,
+						"ci": 14
+					}
+				},
+				"pressure-after-loss": {
+					"same": {
+						"mean": -12,
+						"ci": 103
+					},
+					"switched": {
+						"mean": -40,
+						"ci": 284
+					}
+				},
+				"attack-short": {
+					"same": {
+						"mean": 49,
+						"ci": 149
+					},
+					"switched": {
+						"mean": 0,
+						"ci": 0
+					}
+				},
+				"alternate": {
+					"same": {
+						"mean": -3,
+						"ci": 24
+					},
+					"switched": {
+						"mean": -173,
+						"ci": 382
+					}
+				},
+				"sudden-change": {
+					"same": {
+						"mean": 2,
+						"ci": 284
+					},
+					"switched": {
+						"mean": 69,
+						"ci": 145
+					}
+				},
+				"loose-then-value": {
+					"same": {
+						"mean": -8,
+						"ci": 14
+					},
+					"switched": {
+						"mean": -72,
+						"ci": 583
+					}
+				},
+				"value-then-bluff": {
+					"same": {
+						"mean": -34,
+						"ci": 237
+					},
+					"switched": {
+						"mean": -8,
+						"ci": 5
+					}
+				}
+			},
+			"style": {
+				"packRate": {
+					"with": 0.18,
+					"without": 0.179
+				},
+				"aggression": {
+					"with": 0.753,
+					"without": 0.776
+				},
+				"blindRounds": {
+					"with": 0.972,
+					"without": 0.976
+				},
+				"showRate": {
+					"with": 0.194,
+					"without": 0.191
+				},
+				"weakCallRate": {
+					"with": 0.025,
+					"without": 0.019
+				},
+				"badActionRate": {
+					"with": 0.019,
+					"without": 0.015
+				}
+			}
+		}
+	}
+}

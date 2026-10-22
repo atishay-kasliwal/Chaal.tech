@@ -27,3 +27,4 @@ docs/bots/phase4/results/*.json
 docs/games/10pakad/results/*.json
 docs/games/29/results/*.json
 docs/bots/cross-game/*.json
+docs/bots/phase5/results/*.json
