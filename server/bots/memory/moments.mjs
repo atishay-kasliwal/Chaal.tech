@@ -44,7 +44,8 @@ export function fingerprint(decision, { handNo = 1, outcome = 'unknown' } = {}) 
 	const norm = Math.hypot(...v) || 1;
 	return v.map((x) => Math.round((x / norm) * 1e6) / 1e6);
 }
-export const cosine = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0) / (Math.hypot(...a) * Math.hypot(...b) || 1);
+export const cosine = (a, b) =>
+	a.reduce((s, x, i) => s + x * b[i], 0) / (Math.hypot(...a) * Math.hypot(...b) || 1);
 
 /** What kind of moment it was, in the bot's terms (for table talk and for reading history back). */
 export function momentKind(decision, outcome) {
@@ -64,7 +65,9 @@ export function momentsFrom(observation) {
 	for (const peer of observation.peers) {
 		if (peer.kind !== 'human' || !peer.decisions.length) continue;
 		const betting = peer.decisions.filter((d) => d.betting);
-		const key = [...betting].sort((a, b) => PRIORITY.indexOf(a.action) - PRIORITY.indexOf(b.action))[0];
+		const key = [...betting].sort(
+			(a, b) => PRIORITY.indexOf(a.action) - PRIORITY.indexOf(b.action)
+		)[0];
 		if (!key) continue;
 		const net = peer.result?.netBetween ?? 0;
 		// netBetween is what the bot received from this person: positive means the bot won chips from them.
@@ -101,7 +104,10 @@ export class MemoryMomentIndex {
 			.slice(0, limit);
 	}
 	async recent({ botId, playerId, limit = 12 }) {
-		return [...this.docs.values()].filter((m) => m.botId === botId && m.playerId === playerId).sort((a, b) => b.at - a.at).slice(0, limit);
+		return [...this.docs.values()]
+			.filter((m) => m.botId === botId && m.playerId === playerId)
+			.sort((a, b) => b.at - a.at)
+			.slice(0, limit);
 	}
 }
 
@@ -111,25 +117,51 @@ export class MongoMomentIndex {
 		this.atlas = atlas;
 	}
 	async upsert(moments) {
-		for (const m of moments) await this.db.collection(MOMENTS).replaceOne({ _id: m._id }, m, { upsert: true });
+		for (const m of moments)
+			await this.db.collection(MOMENTS).replaceOne({ _id: m._id }, m, { upsert: true });
 	}
 	async query({ botId, playerId, vec, limit = 5 }) {
 		if (this.atlas) {
 			try {
 				const rows = await this.db
 					.collection(MOMENTS)
-					.aggregate([{ $vectorSearch: { index: MOMENT_INDEX, path: 'vec', queryVector: vec, numCandidates: 100, limit, filter: { botId, playerId } } }, { $addFields: { score: { $meta: 'vectorSearchScore' } } }])
+					.aggregate([
+						{
+							$vectorSearch: {
+								index: MOMENT_INDEX,
+								path: 'vec',
+								queryVector: vec,
+								numCandidates: 100,
+								limit,
+								filter: { botId, playerId }
+							}
+						},
+						{ $addFields: { score: { $meta: 'vectorSearchScore' } } }
+					])
 					.toArray();
 				return rows;
 			} catch {
 				this.atlas = false; // no vector index on this cluster yet: fall back to an exact search
 			}
 		}
-		const recent = await this.db.collection(MOMENTS).find({ botId, playerId }).sort({ at: -1 }).limit(400).toArray();
-		return recent.map((m) => ({ ...m, score: cosine(vec, m.vec) })).sort((a, b) => b.score - a.score).slice(0, limit);
+		const recent = await this.db
+			.collection(MOMENTS)
+			.find({ botId, playerId })
+			.sort({ at: -1 })
+			.limit(400)
+			.toArray();
+		return recent
+			.map((m) => ({ ...m, score: cosine(vec, m.vec) }))
+			.sort((a, b) => b.score - a.score)
+			.slice(0, limit);
 	}
 	async recent({ botId, playerId, limit = 12 }) {
-		return this.db.collection(MOMENTS).find({ botId, playerId }).sort({ at: -1 }).limit(limit).toArray();
+		return this.db
+			.collection(MOMENTS)
+			.find({ botId, playerId })
+			.sort({ at: -1 })
+			.limit(limit)
+			.toArray();
 	}
 }
 
@@ -141,22 +173,56 @@ export class PineconeMomentIndex {
 		this.fetch = fetcher;
 	}
 	async call(path, body) {
-		const response = await this.fetch(`${this.host}${path}`, { method: 'POST', headers: { 'Api-Key': this.apiKey, 'Content-Type': 'application/json', 'X-Pinecone-API-Version': '2024-07' }, body: JSON.stringify(body) });
+		const response = await this.fetch(`${this.host}${path}`, {
+			method: 'POST',
+			headers: {
+				'Api-Key': this.apiKey,
+				'Content-Type': 'application/json',
+				'X-Pinecone-API-Version': '2024-07'
+			},
+			body: JSON.stringify(body)
+		});
 		if (!response.ok) throw new Error(`Pinecone ${path} ${response.status}`);
 		return response.json();
 	}
 	async upsert(moments) {
 		const byBot = Map.groupBy(moments, (m) => m.botId);
 		for (const [botId, list] of byBot)
-			await this.call('/vectors/upsert', { namespace: botId, vectors: list.map((m) => ({ id: m._id, values: m.vec, metadata: { playerId: m.playerId, handId: m.handId, nightId: m.nightId, at: m.at, kind: m.kind, outcome: m.outcome, units: m.units } })) });
+			await this.call('/vectors/upsert', {
+				namespace: botId,
+				vectors: list.map((m) => ({
+					id: m._id,
+					values: m.vec,
+					metadata: {
+						playerId: m.playerId,
+						handId: m.handId,
+						nightId: m.nightId,
+						at: m.at,
+						kind: m.kind,
+						outcome: m.outcome,
+						units: m.units
+					}
+				}))
+			});
 	}
 	async query({ botId, playerId, vec, limit = 5 }) {
-		const { matches = [] } = await this.call('/query', { namespace: botId, vector: vec, topK: limit, includeMetadata: true, filter: { playerId: { $eq: playerId } } });
+		const { matches = [] } = await this.call('/query', {
+			namespace: botId,
+			vector: vec,
+			topK: limit,
+			includeMetadata: true,
+			filter: { playerId: { $eq: playerId } }
+		});
 		return matches.map((m) => ({ _id: m.id, botId, ...m.metadata, vec, score: m.score }));
 	}
 	async recent({ botId, playerId, limit = 12 }) {
 		// Pinecone cannot sort by time; a broad similarity query on a neutral vector, then sort here.
-		const rows = await this.query({ botId, playerId, vec: Array(DIMENSIONS).fill(1 / Math.sqrt(DIMENSIONS)), limit: 50 });
+		const rows = await this.query({
+			botId,
+			playerId,
+			vec: Array(DIMENSIONS).fill(1 / Math.sqrt(DIMENSIONS)),
+			limit: 50
+		});
 		return rows.sort((a, b) => b.at - a.at).slice(0, limit);
 	}
 }
@@ -164,9 +230,13 @@ export class PineconeMomentIndex {
 let backend = null;
 /** The Worker calls this with its environment: Pinecone when configured, otherwise MongoDB. */
 export function useMomentBackend(env = {}) {
-	backend = env.PINECONE_API_KEY && env.PINECONE_HOST ? { type: 'pinecone', host: env.PINECONE_HOST, apiKey: env.PINECONE_API_KEY } : null;
+	backend =
+		env.PINECONE_API_KEY && env.PINECONE_HOST
+			? { type: 'pinecone', host: env.PINECONE_HOST, apiKey: env.PINECONE_API_KEY }
+			: null;
 }
-export const momentIndexFor = (db) => (backend?.type === 'pinecone' ? new PineconeMomentIndex(backend) : new MongoMomentIndex(db));
+export const momentIndexFor = (db) =>
+	backend?.type === 'pinecone' ? new PineconeMomentIndex(backend) : new MongoMomentIndex(db);
 
 /* ------------------------------------------- reading back ------------------------------------------- */
 
@@ -180,13 +250,25 @@ export async function recallRelationship(index, { botId, playerId, now = Date.no
 	const last = recent[0];
 	const lost = recent.filter((m) => m.outcome === 'lost').length;
 	const won = recent.filter((m) => m.outcome === 'won').length;
-	const pushed = recent.filter((m) => m.kind === 'they-pushed-and-won' || m.kind === 'they-pushed-and-lost').length;
-	const mood = pushed >= 3 ? 'pressure' : lost >= won + 2 ? 'rematch' : won >= lost + 2 ? 'revenge' : 'back';
-	return { moments: recent.length, mood, lastAt: last.at, lastOutcome: last.outcome, daysSince: Math.floor((now - last.at) / DAY) };
+	const pushed = recent.filter(
+		(m) => m.kind === 'they-pushed-and-won' || m.kind === 'they-pushed-and-lost'
+	).length;
+	const mood =
+		pushed >= 3 ? 'pressure' : lost >= won + 2 ? 'rematch' : won >= lost + 2 ? 'revenge' : 'back';
+	return {
+		moments: recent.length,
+		mood,
+		lastAt: last.at,
+		lastOutcome: last.outcome,
+		daysSince: Math.floor((now - last.at) / DAY)
+	};
 }
 
 /** Moments most like a given situation, for "this feels like last time". */
-export async function recallSimilar(index, { botId, playerId, decision, handNo, outcome, limit = 3 }) {
+export async function recallSimilar(
+	index,
+	{ botId, playerId, decision, handNo, outcome, limit = 3 }
+) {
 	return index.query({ botId, playerId, vec: fingerprint(decision, { handNo, outcome }), limit });
 }
 
@@ -194,9 +276,22 @@ export async function recallSimilar(index, { botId, playerId, decision, handNo, 
 export async function createAtlasIndex(db) {
 	const collection = db.collection(MOMENTS);
 	await db.createCollection(MOMENTS).catch(() => {});
-	const existing = await collection.listSearchIndexes(MOMENT_INDEX).toArray().catch(() => []);
+	const existing = await collection
+		.listSearchIndexes(MOMENT_INDEX)
+		.toArray()
+		.catch(() => []);
 	if (existing.length) return { created: false, status: existing[0].status };
-	await collection.createSearchIndex({ name: MOMENT_INDEX, type: 'vectorSearch', definition: { fields: [{ type: 'vector', path: 'vec', numDimensions: DIMENSIONS, similarity: 'cosine' }, { type: 'filter', path: 'botId' }, { type: 'filter', path: 'playerId' }] } });
+	await collection.createSearchIndex({
+		name: MOMENT_INDEX,
+		type: 'vectorSearch',
+		definition: {
+			fields: [
+				{ type: 'vector', path: 'vec', numDimensions: DIMENSIONS, similarity: 'cosine' },
+				{ type: 'filter', path: 'botId' },
+				{ type: 'filter', path: 'playerId' }
+			]
+		}
+	});
 	await collection.createIndex({ botId: 1, playerId: 1, at: -1 });
 	return { created: true };
 }

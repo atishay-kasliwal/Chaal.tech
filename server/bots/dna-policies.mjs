@@ -12,8 +12,26 @@ export const DNA_POLICY_V1 = 'tp-dna@1';
 export const DNA_POLICY_V2 = 'tp-dna@2';
 export const DNA_POLICY_V3 = 'tp-dna@3';
 export const DNA_POLICY_V4 = 'tp-dna@4';
+/** Phase 3.1: tp-dna@4 plus recent-event recall and the event quirks (mind@3). Candidates only until approved. */
+export const DNA_POLICY_V5 = 'tp-dna@5';
+/** Phase 4: tp-dna@3 plus event memory (mind@4) and event quirks. Challengers only until approved. */
+export const DNA_POLICY_V6 = 'tp-dna@6';
+/** Phase 4: tp-dna@3 plus the cost of staying blind as a base-brain factor. Challengers only. */
+export const DNA_POLICY_V7 = 'tp-dna@7';
+/** Phase 4.1 C1: tp-dna@3 plus pressure to look from repeated blind raises. Published (approved 2026-10-22). */
+export const DNA_POLICY_V8 = 'tp-dna@8';
+/** Phase 4.1 C2: blind raises by cost. Rejected (personality gate); offline only. */
+export const DNA_POLICY_V9 = 'tp-dna@9';
 export const DNA_POLICIES = Object.freeze(
-	new Set([DNA_POLICY_V1, DNA_POLICY_V2, DNA_POLICY_V3, DNA_POLICY_V4])
+	new Set([
+		DNA_POLICY_V1,
+		DNA_POLICY_V2,
+		DNA_POLICY_V3,
+		DNA_POLICY_V4,
+		DNA_POLICY_V5,
+		DNA_POLICY_V6,
+		DNA_POLICY_V8
+	])
 );
 /** The names these policies had before the rename, for reading older reports and league files. */
 export const FORMER_NAMES = Object.freeze({

@@ -25,6 +25,8 @@ const stats = (xs) => ({
 
 // v4: Phase 3 candidates (--candidates <json of { character: genome }>), else the v3 DNA on tp-dna@4.
 const ci = process.argv.indexOf('--candidates');
+const pi = process.argv.indexOf('--policy');
+const policy = pi > 0 ? process.argv[pi + 1] : undefined;
 const chosen =
 	ci > 0 && existsSync(process.argv[ci + 1])
 		? JSON.parse(readFileSync(process.argv[ci + 1], 'utf8'))
@@ -33,7 +35,8 @@ const v4 = CHARACTER_IDS.map((c) => {
 	const style = candidateStyle(c, chosen[c] ?? ancestorGenome(c), {
 		id: `${c}@4-bench`,
 		parent: `${c}@3`,
-		generation: 0
+		generation: 0,
+		...(policy && chosen[c] ? { policy } : {})
 	});
 	return { id: style._id, style };
 });

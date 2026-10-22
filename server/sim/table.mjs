@@ -45,6 +45,9 @@ export function runTable(spec, onHand = null, hooks = {}) {
 		stopAfter = Infinity,
 		// Decisions can be seeded apart from decks: same cards, different choices (session studies).
 		decisionSeed = seed,
+		// Which night this is, for the hand ids (and so each bot's mood for the night, which is drawn
+		// from them): by default the decision seed. Phase 4 varies the two apart.
+		nightKey = decisionSeed,
 		// Matched (duplicate) play: each seat's k-th decision of a hand draws from its own stream,
 		// so when one seat changes policy the others keep their draws (classic variant only).
 		matched = false
@@ -112,7 +115,7 @@ export function runTable(spec, onHand = null, hooks = {}) {
 				...ctx,
 				deck,
 				// Another night at the same table (a different decision seed) has its own hand ids.
-				handId: decisionSeed === seed ? `s${table}-${h}` : `s${table}-${h}-n${decisionSeed}`,
+				handId: nightKey === seed ? `s${table}-${h}` : `s${table}-${h}-n${nightKey}`,
 				requireReady: true
 			}
 		);
@@ -159,7 +162,9 @@ export function runTable(spec, onHand = null, hooks = {}) {
 				...(traces ? { move } : {})
 			};
 			// Offline grading (server/sim/judge.mjs) sees the bot's own cards, before the move.
-			if (hooks.decision) row.q = hooks.decision({ room, view, actor, move, row });
+			// The deciding bot's own mind as it decided (Phase 4 attribution: offline only).
+			if (hooks.decision)
+				row.q = hooks.decision({ room, view, actor, move, row, mind: minds[actor.id] ?? null });
 			decisions.push(row);
 			if (name === 'raise') lastRaise = step;
 			if (['pack', 'chaal', 'raise', 'show', 'see'].includes(name)) lastAct[seat] = step;

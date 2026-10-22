@@ -240,7 +240,9 @@ function choose(view, botId, random, styleProfile, extra = {}) {
 		// Blind match (optional trait): a seen player facing a blind one pays double and cannot Show, so a
 		// bot with this trait stays blind for as long as a live opponent does.
 		const matchBlind = profile.blindMatch && opponents.some((user) => user.isBlind);
-		const stayBlind = legal.see ? matchBlind || roundsPlayed < profile.blindRounds + random() * 1.5 : true; // Pot Blind: nobody may look.
+		const stayBlind = legal.see
+			? matchBlind || roundsPlayed < profile.blindRounds + random() * 1.5
+			: true; // Pot Blind: nobody may look.
 		if (!stayBlind) return { action: 'see', payload: {}, reason: 'blind-see' };
 		if (legal.show && (roundsPlayed > 3 || random() < (profile.blindShowChance ?? 0.25)))
 			return { action: 'show', payload: {}, reason: 'blind-show' };
@@ -260,8 +262,10 @@ function choose(view, botId, random, styleProfile, extra = {}) {
 	// A seen opponent who has been betting big is probably holding something.
 	const seenBetters = opponents.filter((user) => !user.isBlind && (user.handBet ?? 0) > me.handBet);
 	if (seenBetters.length) strength *= 1 - (profile.pressureRead ?? (level === 'hard' ? 0.1 : 0));
-	if (profile.shortStackCall !== undefined && me.balance < boot * 15) strength -= profile.shortStackCall;
-	if (profile.largePotCaution !== undefined) strength -= profile.largePotCaution * Math.min(1, view.pot / Math.max(me.balance, 1));
+	if (profile.shortStackCall !== undefined && me.balance < boot * 15)
+		strength -= profile.shortStackCall;
+	if (profile.largePotCaution !== undefined)
+		strength -= profile.largePotCaution * Math.min(1, view.pot / Math.max(me.balance, 1));
 	// A reading of the opponent's betting line (adaptive styles with a line weight). 0 for everyone else.
 	strength += extra.strengthAdjust ?? 0;
 	strength += (random() - 0.5) * profile.randomness;
@@ -279,7 +283,10 @@ function choose(view, botId, random, styleProfile, extra = {}) {
 	const potOdds = cost / Math.max(view.pot + cost, 1);
 	const callLine = Math.min(profile.call, profile.call * 0.6 + potOdds);
 	if (strength >= profile.raise && canRaise)
-		return { ...(random() < (profile.strongRaiseChance ?? 0.7) ? high : low), reason: 'strong-raise' };
+		return {
+			...(random() < (profile.strongRaiseChance ?? 0.7) ? high : low),
+			reason: 'strong-raise'
+		};
 	if (strength >= callLine) return { ...low, reason: 'pot-odds-call' };
 	if (canRaise && random() < profile.bluff) return { ...high, reason: 'bluff-raise' };
 	return { ...pack, reason: 'weak-pack' };

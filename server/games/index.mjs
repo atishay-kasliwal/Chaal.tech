@@ -1,11 +1,13 @@
 import * as holdem from '../poker/holdem.mjs';
 import * as blackjack from '../blackjack/blackjack.mjs';
 import * as rummy from '../rummy/rummy.mjs';
+import * as threeTwoFive from '../tricks/three-two-five.mjs';
 
 const games = new Map([
 	['texas-holdem', holdem],
 	['blackjack', blackjack],
-	['rummy', rummy]
+	['rummy', rummy],
+	['three-two-five', threeTwoFive]
 ]);
 
 export function getGameEngine(gameType) {

@@ -69,9 +69,13 @@ function amplify(c) {
 		c.extra.push({ f: 'state.frustration', d, sign: 1 });
 }
 
-const V4 = characterPolicy(
-	CHARACTER_POLICY_V4,
-	Object.freeze({ traits: TRAITS_V4, moods: MOODS_V4, pressure: weightedPressure, amplify })
-);
+/** tp-dna@4's rules, which tp-dna@5 builds on. */
+export const RULES_V4 = Object.freeze({
+	traits: TRAITS_V4,
+	moods: MOODS_V4,
+	pressure: weightedPressure,
+	amplify
+});
+const V4 = characterPolicy(CHARACTER_POLICY_V4, RULES_V4);
 export const CHARACTER_GRAPH_V4 = V4.graph;
 export const decideCharacterV4 = V4.decide;

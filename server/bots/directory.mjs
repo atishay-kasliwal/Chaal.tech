@@ -1,6 +1,8 @@
 /** Permanent global characters, immutable publications, club availability. */
 import { ClubError } from '../club/members.mjs';
 import { BOT_CHARACTERS } from '../../shared/bot-characters.mjs';
+
+const TRICK_GAMES = new Set(['three-two-five']);
 import { CHARACTER_SEEDS } from './characters.mjs';
 import { LEGACY_BOTS } from './identity.mjs';
 import { CHARACTER_POLICY, characterHash, configErrors, runtimeStyle } from './config.mjs';
@@ -127,9 +129,18 @@ export async function botDirectory(db, member, { id } = {}) {
 		if (!id && !style) continue;
 		list.push({
 			...publicBot(bot, style, enabled.has(bot._id)),
-			memory: await publicMemory(db, bot._id, member.playerId).catch(() => ({ status: 'unavailable', contexts: [], moment: null })),
+			memory: await publicMemory(db, bot._id, member.playerId).catch(() => ({
+				status: 'unavailable',
+				contexts: [],
+				moment: null
+			})),
 			// What this bot remembers of the viewer's moments with it, for table talk. Their own history only.
-			recall: member.playerId ? await recallRelationship(momentIndexFor(db), { botId: bot._id, playerId: member.playerId }).catch(() => ({ moments: 0, mood: 'new', lastAt: null })) : { moments: 0, mood: 'new', lastAt: null },
+			recall: member.playerId
+				? await recallRelationship(momentIndexFor(db), {
+						botId: bot._id,
+						playerId: member.playerId
+					}).catch(() => ({ moments: 0, mood: 'new', lastAt: null }))
+				: { moments: 0, mood: 'new', lastAt: null },
 			record: id
 				? rivalry(records, member.playerId, `bot:${bot._id}`)
 				: (history.get(`bot:${bot._id}`) ?? null)
@@ -167,12 +178,17 @@ export async function botSeat(db, room, requestedId) {
 			.collection('bot_styles')
 			.findOne({ _id: bot.currentStyle, botId: id, status: 'published' }));
 	if (!style || configErrors(style).length) throw fail('That bot has no playable published style');
-	if (!style.supportedGames.includes(room.gameType ?? 'teen-patti'))
+	const characterId = BOT_CHARACTERS.find((art) => art.mascotId === bot.avatar?.mascotId)?.id;
+	// Trick games (3 2 5): the character plays with its canonical personality and that game's brain
+	// (server/bots/tricks/), not its Teen Patti style, so any of the five characters may sit down.
+	if (TRICK_GAMES.has(room.gameType)) {
+		if (!characterId) throw fail('Only the Chaal characters play this game');
+	} else if (!style.supportedGames.includes(room.gameType ?? 'teen-patti'))
 		throw fail('This bot plays Teen Patti only');
 	return {
 		name: bot.name,
 		level: 'normal',
-		characterId: BOT_CHARACTERS.find((art) => art.mascotId === bot.avatar?.mascotId)?.id,
+		characterId,
 		mascotId: bot.avatar?.mascotId,
 		style: runtimeStyle(style),
 		identity: identityForStyle(style)
@@ -240,12 +256,26 @@ export async function manageBot(db, owner, body, now = new Date()) {
 	const bot = await db.collection('bots').findOne({ _id: id });
 	if (!bot) throw fail('Unknown bot', 404);
 	if (body.action === 'adaptive-draft') {
-		const current = await db.collection('bot_styles').findOne({ _id: bot.currentStyle, status: 'published' });
+		const current = await db
+			.collection('bot_styles')
+			.findOne({ _id: bot.currentStyle, status: 'published' });
 		if (!current) throw fail('Publish a base character style first');
-		return manageBot(db, owner, { action: 'draft', botId: id, config: {
-			...current, policy: ADAPTIVE_POLICY, memory: current.memory ?? defaultMemory(current.tendencies),
-			notes: 'Persistent observer-scoped memory. Bounded adaptation; existing seats keep their frozen policy.'
-		} }, now);
+		return manageBot(
+			db,
+			owner,
+			{
+				action: 'draft',
+				botId: id,
+				config: {
+					...current,
+					policy: ADAPTIVE_POLICY,
+					memory: current.memory ?? defaultMemory(current.tendencies),
+					notes:
+						'Persistent observer-scoped memory. Bounded adaptation; existing seats keep their frozen policy.'
+				}
+			},
+			now
+		);
 	}
 	if (body.action === 'identity') {
 		if (bot.status !== 'draft') throw fail('Only draft identities can be edited');

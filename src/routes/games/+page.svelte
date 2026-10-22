@@ -10,7 +10,8 @@
 		'Teen Patti': '♠',
 		Poker: '♦',
 		Blackjack: '♣',
-		Rummy: '♥'
+		Rummy: '♥',
+		Tricks: '♤'
 	};
 	const filtered = $derived(
 		GAME_GUIDES.filter(
@@ -27,11 +28,13 @@
 	const dealt = (id: string, cards: number) =>
 		id === 'rummy'
 			? '13 cards'
-			: id === 'blackjack'
-				? 'to 21'
-				: id === 'texas-holdem'
-					? '2 + 5'
-					: `${cards} cards`;
+			: id === 'three-two-five'
+				? '10 cards'
+				: id === 'blackjack'
+					? 'to 21'
+					: id === 'texas-holdem'
+						? '2 + 5'
+						: `${cards} cards`;
 	const playHref = (id: string, c: string) =>
 		`/create-room${c === 'Teen Patti' ? '' : `?game=${id === 'rummy' ? 'rummy' : id}`}`;
 	async function syncHash() {
@@ -65,7 +68,7 @@
 	<title>All Games & Rules · Chaal</title>
 	<meta
 		name="description"
-		content="Every game on Chaal. Explore Teen Patti variants, Texas Hold’em, Blackjack and Indian Rummy with simple rules and card examples."
+		content="Every game on Chaal. Explore Teen Patti variants, Texas Hold’em, Blackjack, Indian Rummy and 3 2 5 with simple rules and card examples."
 	/>
 </svelte:head>
 

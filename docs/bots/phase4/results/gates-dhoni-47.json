@@ -1,0 +1,1578 @@
+{
+	"seed": 47,
+	"character": "ms-dhoni",
+	"tables": 240,
+	"scenarioTables": 96,
+	"exploitTables": 64,
+	"nights": 60,
+	"searchExploit": {
+		"id": "x000",
+		"says": "Looks after 3 blind rounds, raises 100% of blind bets, calls with anything, raises for value from 0%, bluff-raises 100% of weak hands, never folds to pressure."
+	},
+	"rows": [
+		{
+			"key": "ms-dhoni@3",
+			"change": "champion",
+			"gates": {
+				"regression": {
+					"pass": true,
+					"detail": "bands 4/10 (champion 4), violation 7.00 (7.00)"
+				},
+				"personality": {
+					"pass": true,
+					"detail": "identified 73% (champion 73%)",
+					"nearestOther": 2.2191298366005556
+				},
+				"strength": {
+					"pass": true,
+					"paired": {
+						"mean": 0,
+						"ci": 0,
+						"n": 240
+					}
+				},
+				"counter": {
+					"pass": true,
+					"worse": []
+				},
+				"variety": {
+					"pass": true,
+					"detail": "1.77 ± 0.33 (champion 1.77)"
+				},
+				"badActions": {
+					"pass": true,
+					"detail": "1.22% (champion 1.22%)"
+				},
+				"performance": {
+					"pass": true,
+					"detail": "0.140 ms mean, p99 0.614 (champion 0.140)"
+				},
+				"exploit": {
+					"pass": null,
+					"detail": "no target"
+				}
+			},
+			"pass": true,
+			"bands": {
+				"results": [
+					{
+						"key": "bluffIndex",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": true,
+						"min": 0.1,
+						"max": 0.4
+					},
+					{
+						"key": "bluffGrowth",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": 0.05,
+						"max": 0.4
+					},
+					{
+						"key": "bluffVsCallerLate",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": 0,
+						"max": 0.02
+					},
+					{
+						"key": "valueGrowthVsCaller",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": 0,
+						"max": 0.5
+					},
+					{
+						"key": "callIndex",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": -0.03,
+						"max": 0.3
+					},
+					{
+						"key": "blindFoldVsManiacLate",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "aggression",
+						"value": 0.6642752023546725,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.5,
+						"max": 1.2
+					},
+					{
+						"key": "blindRounds",
+						"value": 1.0123541666666667,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.7,
+						"max": 1.2
+					},
+					{
+						"key": "showRate",
+						"value": 0.22873572728777097,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.15,
+						"max": 0.5
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.012235222145752084,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.02
+					}
+				],
+				"passed": 4,
+				"violation": 7
+			},
+			"m": {
+				"hands": 48000,
+				"bootsPer100": 563.8843750000001,
+				"blindRounds": 1.0123541666666667,
+				"blindRaiseRate": 0.03163007017471652,
+				"lookAtOnce": 0.06295192648315238,
+				"neverLooked": 0.025068244806101397,
+				"seenRaiseRate": 0.25594499769642415,
+				"aggression": 0.6642752023546725,
+				"chaalRate": 0.42882593882373204,
+				"packRate": 0.16470657889779375,
+				"showRate": 0.22873572728777097,
+				"stayAfterSeeing": 0.46120634377805325,
+				"seenFoldToRaise": 0.04035097221469967,
+				"blindFoldToRaise": 0.0020316701523752615,
+				"seeUnderPressure": 0.6621521947238744,
+				"continueWeak": 0.022655719488857338,
+				"continueMid": 0.34019406057042045,
+				"continueBorder": 0.884192537738536,
+				"thinRaise": 0.07023552478097933,
+				"valueRaise": 0.45174597083653106,
+				"entropy": 0.3248515929122182,
+				"strongPackRate": 0.0036169719452817063,
+				"weakCallRate": 0.021849467690022283,
+				"weakRaiseRate": 0.0006234802668495542,
+				"monsterNoRaiseRate": 0.03245033112582781,
+				"bigOverrideRate": 0.04039163568460542,
+				"badActionRate": 0.012235222145752084,
+				"stateOverrideRate": 0.008568432503967386,
+				"memoryOverrideRate": 0.10192957959726125,
+				"lossAggressionDelta": -0.024754466007602116,
+				"lossSeenRaiseDelta": -0.03256491823569188,
+				"lossPackDelta": 0.06894157866958739,
+				"winSeenRaiseDelta": 0.03029405305775773,
+				"blindWinBlindRaiseDelta": -0.00012459718112207974,
+				"blindWinBlindRoundsDelta": -0.047263694303743886,
+				"caughtBluffFoldDelta": -0.016416351845438416,
+				"caughtBluffPackDelta": -0.017709736680221633,
+				"bluffedOffFoldDelta": -0.0030513927099934945,
+				"pressuredPackDelta": 0.025761515086806852,
+				"events": {
+					"bigLoss": 6209,
+					"bigWin": 7450,
+					"blindWin": 803,
+					"caughtBluff": 448,
+					"bluffedOff": 1475,
+					"pressured": 18917
+				},
+				"lossAggressionDeltaX": -0.024461931167180206,
+				"lossSeenRaiseDeltaX": 0.0005691887081293867,
+				"lossPackDeltaX": -0.01151976021579737,
+				"winSeenRaiseDeltaX": 0.009651781961896366,
+				"blindWinBlindRaiseDeltaX": 0.006680519864375352,
+				"blindWinBlindRoundsDeltaX": 0.048925032662672896,
+				"caughtBluffFoldDeltaX": -0.010668719711944434,
+				"caughtBluffPackDeltaX": -0.03651678084408855,
+				"bluffedOffFoldDeltaX": -0.014170090967420071,
+				"pressuredPackDeltaX": -0.03318186370883658
+			},
+			"scenarioPaired": {
+				"human-very-conservative": {
+					"mean": 0,
+					"ci": 0,
+					"n": 96
+				},
+				"human-station": {
+					"mean": 0,
+					"ci": 0,
+					"n": 96
+				},
+				"human-maniac": {
+					"mean": 0,
+					"ci": 0,
+					"n": 96
+				},
+				"human-value": {
+					"mean": 0,
+					"ci": 0,
+					"n": 96
+				},
+				"human-switch": {
+					"mean": 0,
+					"ci": 0,
+					"n": 96
+				},
+				"human-switch-reverse": {
+					"mean": 0,
+					"ci": 0,
+					"n": 96
+				},
+				"human-deceptive": {
+					"mean": 0,
+					"ci": 0,
+					"n": 96
+				},
+				"human-blind-heavy": {
+					"mean": 0,
+					"ci": 0,
+					"n": 96
+				}
+			},
+			"xPaired": {
+				"always-raise": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"raise-often": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"never-raise": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"call-everything": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"fold-a-lot": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"bluff-a-lot": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"never-bluff": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"stay-blind": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"pressure-weakness": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"pressure-after-loss": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"attack-short": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"alternate": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"sudden-change": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"loose-then-value": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"value-then-bluff": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"search": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				}
+			},
+			"adapt": {
+				"rock": {
+					"effect": 0.211,
+					"lo": 0.184,
+					"hi": 0.243,
+					"verdict": "right",
+					"curve": [
+						0.129,
+						0.347,
+						0.414,
+						0.438,
+						0.465,
+						0.457,
+						0.455,
+						0.446,
+						0.453,
+						0.434
+					],
+					"control": [
+						0.01,
+						0.007,
+						0.005,
+						0.01,
+						0.007,
+						0.004,
+						0.008,
+						0.004,
+						0.011,
+						0.003
+					],
+					"halfwayHands": 20,
+					"readsAtHalfway": 6.5,
+					"reads": [
+						1.3,
+						4.2,
+						6.5,
+						8.3,
+						9.9,
+						11,
+						11.8,
+						12.6,
+						13.1,
+						13.6
+					],
+					"boots": {
+						"mean": -144.63541666666666,
+						"ci": 16.800312448742307,
+						"n": 96
+					}
+				},
+				"station": {
+					"effect": 0.001,
+					"lo": -0.002,
+					"hi": 0.005,
+					"verdict": "none",
+					"curve": [
+						0.003,
+						0.004,
+						0.002,
+						0.003,
+						0.003,
+						0.002,
+						0.005,
+						0.001,
+						0.001,
+						0.003
+					],
+					"control": [
+						0.012,
+						0.011,
+						0.01,
+						0.007,
+						0.007,
+						0.007,
+						0.01,
+						0.007,
+						0.009,
+						0.009
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.4,
+						14,
+						20.6,
+						25.9,
+						30.1,
+						33.2,
+						35.3,
+						37.2,
+						37.8,
+						38.7
+					],
+					"boots": {
+						"mean": 673.3854166666666,
+						"ci": 692.9066824935754,
+						"n": 96
+					}
+				},
+				"station-value": {
+					"effect": -0.001,
+					"lo": -0.02,
+					"hi": 0.017,
+					"verdict": "none",
+					"curve": [
+						0.196,
+						0.206,
+						0.174,
+						0.213,
+						0.193,
+						0.205,
+						0.205,
+						0.208,
+						0.198,
+						0.21
+					],
+					"control": [
+						0.24,
+						0.261,
+						0.248,
+						0.254,
+						0.266,
+						0.244,
+						0.25,
+						0.254,
+						0.258,
+						0.255
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.4,
+						14,
+						20.6,
+						25.9,
+						30.1,
+						33.2,
+						35.3,
+						37.2,
+						37.8,
+						38.7
+					],
+					"boots": {
+						"mean": 673.3854166666666,
+						"ci": 692.9066824935754,
+						"n": 96
+					}
+				},
+				"maniac": {
+					"effect": 0.03,
+					"lo": -0.02,
+					"hi": 0.092,
+					"verdict": "none",
+					"curve": [
+						0.054,
+						0.028,
+						0.038,
+						0.039,
+						0.006,
+						0.045,
+						0.039,
+						0.044,
+						0.036,
+						0.03
+					],
+					"control": [
+						0.043,
+						0.108,
+						0.04,
+						0.057,
+						0.051,
+						0.061,
+						0.073,
+						0.049,
+						0.05,
+						0.059
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						8.3,
+						22.9,
+						32.6,
+						40.2,
+						46,
+						49.2,
+						52.9,
+						55.6,
+						58.5,
+						55.9
+					],
+					"boots": {
+						"mean": 5.705729166666667,
+						"ci": 583.6788525166597,
+						"n": 96
+					}
+				},
+				"value": {
+					"effect": 0.005,
+					"lo": -0.045,
+					"hi": 0.056,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.126,
+						0.171,
+						0.139,
+						0.105,
+						0.181,
+						0.196,
+						0.085,
+						0.112,
+						0.117,
+						0.104
+					],
+					"control": [
+						0.128,
+						0.146,
+						0.168,
+						0.128,
+						0.141,
+						0.119,
+						0.174,
+						0.073,
+						0.096,
+						0.116
+					],
+					"halfwayHands": 60,
+					"readsAtHalfway": 6.8,
+					"reads": [
+						1.2,
+						3.3,
+						4.8,
+						5.9,
+						6.8,
+						7.4,
+						7.7,
+						8.2,
+						8.5,
+						8.7
+					],
+					"boots": {
+						"mean": -292.828125,
+						"ci": 63.75870984004758,
+						"n": 96
+					}
+				},
+				"switch-a": {
+					"effect": -0.063,
+					"lo": -0.193,
+					"hi": 0.052,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.077,
+						0,
+						0.091,
+						0.111,
+						0.214,
+						0.109,
+						0.046,
+						0.048,
+						0.043,
+						0.04
+					],
+					"control": [
+						0.104,
+						0.079,
+						0.156,
+						0.032,
+						0.111,
+						0.082,
+						0.071,
+						0.031,
+						0.111,
+						0.053
+					],
+					"halfwayHands": 20,
+					"readsAtHalfway": 39.9,
+					"reads": [
+						5.6,
+						12.4,
+						17,
+						21.1,
+						23.8,
+						31.4,
+						39.9,
+						44.6,
+						49.4,
+						52.7
+					],
+					"boots": {
+						"mean": -0.2916666666666667,
+						"ci": 301.8010623143889,
+						"n": 96
+					}
+				},
+				"switch-b": {
+					"effect": 0.004,
+					"lo": -0.063,
+					"hi": 0.07,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.044,
+						0.05,
+						0.044,
+						0.013,
+						0.029,
+						0.082,
+						0.09,
+						0.09,
+						0.078,
+						0.088
+					],
+					"control": [
+						0.077,
+						0.071,
+						0.053,
+						0.039,
+						0.058,
+						0.114,
+						0.149,
+						0.109,
+						0.113,
+						0.108
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 44.3,
+					"reads": [
+						8.5,
+						23.1,
+						32.9,
+						39.3,
+						47.2,
+						43.3,
+						44.2,
+						44.3,
+						45.7,
+						46.5
+					],
+					"boots": {
+						"mean": 38.744791666666664,
+						"ci": 340.2660353625663,
+						"n": 96
+					}
+				},
+				"deceptive": {
+					"effect": 0.034,
+					"lo": -0.011,
+					"hi": 0.09,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.072,
+						0.058,
+						0.046,
+						0.041,
+						0.089,
+						0.114,
+						0.108,
+						0.07,
+						0.068,
+						0.061
+					],
+					"control": [
+						0.09,
+						0.077,
+						0.069,
+						0.082,
+						0.109,
+						0.111,
+						0.134,
+						0.078,
+						0.062,
+						0.082
+					],
+					"halfwayHands": 20,
+					"readsAtHalfway": 6.8,
+					"reads": [
+						1.1,
+						3.2,
+						4.6,
+						5.8,
+						6.8,
+						7.4,
+						8,
+						8.4,
+						8.7,
+						8.8
+					],
+					"boots": {
+						"mean": 27.736979166666668,
+						"ci": 138.43063408080846,
+						"n": 96
+					}
+				},
+				"blind-heavy": {
+					"effect": -0.009,
+					"lo": -0.024,
+					"hi": 0.006,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.081,
+						0.079,
+						0.06,
+						0.046,
+						0.051,
+						0.067,
+						0.044,
+						0.063,
+						0.028,
+						0.052
+					],
+					"control": [
+						0.078,
+						0.047,
+						0.045,
+						0.046,
+						0.064,
+						0.066,
+						0.042,
+						0.038,
+						0.025,
+						0.05
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 25.7,
+					"reads": [
+						5.4,
+						13.7,
+						20.4,
+						25.7,
+						29.4,
+						31.9,
+						33.9,
+						36,
+						37.1,
+						38
+					],
+					"boots": {
+						"mean": 226.078125,
+						"ci": 144.28344391285282,
+						"n": 96
+					}
+				}
+			},
+			"events": null,
+			"night": {
+				"mean": 1.771316675903786,
+				"ci": 0.32997763399747826,
+				"n": 60
+			},
+			"perf": {
+				"mean": 0.1404649060388448,
+				"p99": 0.6142500001005828,
+				"n": 1756
+			},
+			"identity": 0.7291666666666666
+		},
+		{
+			"key": "ms-dhoni@7-blindcost",
+			"change": "tp-dna@3 plus a base factor: looking gets more attractive as the blind stake climbs",
+			"gates": {
+				"regression": {
+					"pass": true,
+					"detail": "bands 4/10 (champion 4), violation 7.00 (7.00)"
+				},
+				"personality": {
+					"pass": true,
+					"detail": "identified 73% (champion 73%)",
+					"nearestOther": 2.2191298366005556
+				},
+				"strength": {
+					"pass": true,
+					"paired": {
+						"mean": -78.16854166666667,
+						"ci": 169.27169075765218,
+						"n": 240
+					}
+				},
+				"counter": {
+					"pass": false,
+					"worse": [
+						"value-then-bluff"
+					]
+				},
+				"variety": {
+					"pass": true,
+					"detail": "1.54 ± 0.31 (champion 1.77)"
+				},
+				"badActions": {
+					"pass": true,
+					"detail": "1.14% (champion 1.22%)"
+				},
+				"performance": {
+					"pass": true,
+					"detail": "0.113 ms mean, p99 0.379 (champion 0.140)"
+				},
+				"exploit": {
+					"pass": true,
+					"detail": "always-raise: 1153 ± 45 boots/100 vs champion"
+				}
+			},
+			"pass": false,
+			"bands": {
+				"results": [
+					{
+						"key": "bluffIndex",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": true,
+						"min": 0.1,
+						"max": 0.4
+					},
+					{
+						"key": "bluffGrowth",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": 0.05,
+						"max": 0.4
+					},
+					{
+						"key": "bluffVsCallerLate",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": 0,
+						"max": 0.02
+					},
+					{
+						"key": "valueGrowthVsCaller",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": 0,
+						"max": 0.5
+					},
+					{
+						"key": "callIndex",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": -0.03,
+						"max": 0.3
+					},
+					{
+						"key": "blindFoldVsManiacLate",
+						"value": null,
+						"pass": false,
+						"miss": 1,
+						"core": false,
+						"min": 0,
+						"max": 0.05
+					},
+					{
+						"key": "aggression",
+						"value": 0.6541511122080647,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.5,
+						"max": 1.2
+					},
+					{
+						"key": "blindRounds",
+						"value": 0.972375,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.7,
+						"max": 1.2
+					},
+					{
+						"key": "showRate",
+						"value": 0.23500789619702078,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0.15,
+						"max": 0.5
+					},
+					{
+						"key": "badActionRate",
+						"value": 0.011419043528787611,
+						"pass": true,
+						"miss": 0,
+						"core": false,
+						"min": 0,
+						"max": 0.02
+					}
+				],
+				"passed": 4,
+				"violation": 7
+			},
+			"m": {
+				"hands": 48000,
+				"bootsPer100": 485.71583333333336,
+				"blindRounds": 0.972375,
+				"blindRaiseRate": 0.031430775163902816,
+				"lookAtOnce": 0.09606968699203934,
+				"neverLooked": 0.023819447338807153,
+				"seenRaiseRate": 0.2509141687277375,
+				"aggression": 0.6541511122080647,
+				"chaalRate": 0.42244016066005596,
+				"packRate": 0.16927539702408811,
+				"showRate": 0.23500789619702078,
+				"stayAfterSeeing": 0.45340819332664434,
+				"seenFoldToRaise": 0.04179733967773332,
+				"blindFoldToRaise": 0.002134756504336224,
+				"seeUnderPressure": 0.6827803342213611,
+				"continueWeak": 0.019850664724093973,
+				"continueMid": 0.34244540187193584,
+				"continueBorder": 0.8752239496041149,
+				"thinRaise": 0.0651022893932238,
+				"valueRaise": 0.4478288110270374,
+				"entropy": 0.3225753007177397,
+				"strongPackRate": 0.004019961186581647,
+				"weakCallRate": 0.019118363370677058,
+				"weakRaiseRate": 0.0006749708535313248,
+				"monsterNoRaiseRate": 0.03361898483849703,
+				"bigOverrideRate": 0.03951916364441266,
+				"badActionRate": 0.011419043528787611,
+				"stateOverrideRate": 0.008553120725567985,
+				"memoryOverrideRate": 0.10211529402416668,
+				"lossAggressionDelta": -0.03798774635235369,
+				"lossSeenRaiseDelta": -0.0365090181858532,
+				"lossPackDelta": 0.07162506982281086,
+				"winSeenRaiseDelta": 0.02878104204233528,
+				"blindWinBlindRaiseDelta": 0.004487401428946894,
+				"blindWinBlindRoundsDelta": -0.05813079304677182,
+				"caughtBluffFoldDelta": -0.015067038364529405,
+				"caughtBluffPackDelta": -0.03397637531297942,
+				"bluffedOffFoldDelta": -0.0008007460114739795,
+				"pressuredPackDelta": 0.0293928153290291,
+				"events": {
+					"bigLoss": 5933,
+					"bigWin": 7157,
+					"blindWin": 761,
+					"caughtBluff": 454,
+					"bluffedOff": 1562,
+					"pressured": 17865
+				},
+				"lossAggressionDeltaX": -0.03769521151193178,
+				"lossSeenRaiseDeltaX": -0.0033749112420319305,
+				"lossPackDeltaX": -0.008836269062573898,
+				"winSeenRaiseDeltaX": 0.008138770946473917,
+				"blindWinBlindRaiseDeltaX": 0.011292518474444325,
+				"blindWinBlindRoundsDeltaX": 0.03805793391964496,
+				"caughtBluffFoldDeltaX": -0.009319406231035422,
+				"caughtBluffPackDeltaX": -0.05278341947684634,
+				"bluffedOffFoldDeltaX": -0.011919444268900556,
+				"pressuredPackDeltaX": -0.029550563466614332
+			},
+			"scenarioPaired": {
+				"human-very-conservative": {
+					"mean": 0.036458333333333336,
+					"ci": 4.380079294571747,
+					"n": 96
+				},
+				"human-station": {
+					"mean": 0,
+					"ci": 0,
+					"n": 96
+				},
+				"human-maniac": {
+					"mean": 18.372395833333332,
+					"ci": 711.9485883947758,
+					"n": 96
+				},
+				"human-value": {
+					"mean": 81.375,
+					"ci": 60.98327877233694,
+					"n": 96
+				},
+				"human-switch": {
+					"mean": -161.78385416666666,
+					"ci": 265.84160701292257,
+					"n": 96
+				},
+				"human-switch-reverse": {
+					"mean": -171.09635416666666,
+					"ci": 368.25886087953273,
+					"n": 96
+				},
+				"human-deceptive": {
+					"mean": 63.104166666666664,
+					"ci": 98.46430812710172,
+					"n": 96
+				},
+				"human-blind-heavy": {
+					"mean": 82.74479166666667,
+					"ci": 144.5002935313885,
+					"n": 96
+				}
+			},
+			"xPaired": {
+				"always-raise": {
+					"mean": 1153.4921875,
+					"ci": 44.52734108294701,
+					"n": 64
+				},
+				"raise-often": {
+					"mean": -919.40234375,
+					"ci": 1171.0923779775812,
+					"n": 64
+				},
+				"never-raise": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"call-everything": {
+					"mean": 0,
+					"ci": 0,
+					"n": 64
+				},
+				"fold-a-lot": {
+					"mean": -0.5390625000000004,
+					"ci": 3.5593194394380796,
+					"n": 64
+				},
+				"bluff-a-lot": {
+					"mean": 4.9765625,
+					"ci": 685.5577536037545,
+					"n": 64
+				},
+				"never-bluff": {
+					"mean": 59.2734375,
+					"ci": 66.62248761817935,
+					"n": 64
+				},
+				"stay-blind": {
+					"mean": 113.6796875,
+					"ci": 265.6133282401561,
+					"n": 64
+				},
+				"pressure-weakness": {
+					"mean": -166.49609375,
+					"ci": 199.35345520549214,
+					"n": 64
+				},
+				"pressure-after-loss": {
+					"mean": 120.21484375,
+					"ci": 142.56753391113224,
+					"n": 64
+				},
+				"attack-short": {
+					"mean": 251.4140625,
+					"ci": 84.05898836950927,
+					"n": 64
+				},
+				"alternate": {
+					"mean": -408.98046875,
+					"ci": 371.44305433921227,
+					"n": 64
+				},
+				"sudden-change": {
+					"mean": -288.984375,
+					"ci": 538.1518487743765,
+					"n": 64
+				},
+				"loose-then-value": {
+					"mean": -35.2734375,
+					"ci": 209.1940493700792,
+					"n": 64
+				},
+				"value-then-bluff": {
+					"mean": -801.94921875,
+					"ci": 510.16288661435567,
+					"n": 64
+				},
+				"search": {
+					"mean": 1153.4921875,
+					"ci": 44.52734108294701,
+					"n": 64
+				}
+			},
+			"adapt": {
+				"rock": {
+					"effect": 0.211,
+					"lo": 0.186,
+					"hi": 0.239,
+					"verdict": "right",
+					"curve": [
+						0.129,
+						0.343,
+						0.411,
+						0.437,
+						0.464,
+						0.454,
+						0.455,
+						0.444,
+						0.453,
+						0.43
+					],
+					"control": [
+						0.01,
+						0.007,
+						0.005,
+						0.01,
+						0.007,
+						0.004,
+						0.008,
+						0.004,
+						0.011,
+						0.003
+					],
+					"halfwayHands": 20,
+					"readsAtHalfway": 6.4,
+					"reads": [
+						1.3,
+						4.1,
+						6.4,
+						8.3,
+						9.8,
+						10.9,
+						11.8,
+						12.6,
+						13.1,
+						13.6
+					],
+					"boots": {
+						"mean": -144.59895833333334,
+						"ci": 16.71044457533207,
+						"n": 96
+					}
+				},
+				"station": {
+					"effect": 0.001,
+					"lo": -0.002,
+					"hi": 0.005,
+					"verdict": "none",
+					"curve": [
+						0.003,
+						0.004,
+						0.002,
+						0.003,
+						0.003,
+						0.002,
+						0.005,
+						0.001,
+						0.001,
+						0.003
+					],
+					"control": [
+						0.012,
+						0.011,
+						0.01,
+						0.007,
+						0.007,
+						0.007,
+						0.01,
+						0.007,
+						0.009,
+						0.009
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.4,
+						14,
+						20.6,
+						25.9,
+						30.1,
+						33.2,
+						35.3,
+						37.2,
+						37.8,
+						38.7
+					],
+					"boots": {
+						"mean": 673.3854166666666,
+						"ci": 692.9066824935754,
+						"n": 96
+					}
+				},
+				"station-value": {
+					"effect": -0.001,
+					"lo": -0.02,
+					"hi": 0.017,
+					"verdict": "none",
+					"curve": [
+						0.196,
+						0.206,
+						0.174,
+						0.213,
+						0.193,
+						0.205,
+						0.205,
+						0.208,
+						0.198,
+						0.21
+					],
+					"control": [
+						0.24,
+						0.261,
+						0.248,
+						0.254,
+						0.266,
+						0.244,
+						0.25,
+						0.254,
+						0.258,
+						0.255
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.4,
+						14,
+						20.6,
+						25.9,
+						30.1,
+						33.2,
+						35.3,
+						37.2,
+						37.8,
+						38.7
+					],
+					"boots": {
+						"mean": 673.3854166666666,
+						"ci": 692.9066824935754,
+						"n": 96
+					}
+				},
+				"maniac": {
+					"effect": -0.02,
+					"lo": -0.096,
+					"hi": 0.051,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.143,
+						0.066,
+						0.12,
+						0.065,
+						0.062,
+						0.079,
+						0.068,
+						0.062,
+						0.049,
+						0.04
+					],
+					"control": [
+						0.043,
+						0.108,
+						0.04,
+						0.057,
+						0.051,
+						0.061,
+						0.073,
+						0.049,
+						0.05,
+						0.059
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 33,
+					"reads": [
+						5.6,
+						17.2,
+						25.7,
+						33,
+						36.1,
+						40.4,
+						42,
+						44.8,
+						43.7,
+						46.5
+					],
+					"boots": {
+						"mean": 24.07812500000001,
+						"ci": 422.6636847643543,
+						"n": 96
+					}
+				},
+				"value": {
+					"effect": 0.044,
+					"lo": -0.001,
+					"hi": 0.089,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.112,
+						0.149,
+						0.169,
+						0.117,
+						0.162,
+						0.202,
+						0.082,
+						0.126,
+						0.172,
+						0.097
+					],
+					"control": [
+						0.128,
+						0.146,
+						0.168,
+						0.128,
+						0.141,
+						0.119,
+						0.174,
+						0.073,
+						0.096,
+						0.116
+					],
+					"halfwayHands": 60,
+					"readsAtHalfway": 6.7,
+					"reads": [
+						1.2,
+						3.3,
+						4.9,
+						5.9,
+						6.7,
+						7.3,
+						7.8,
+						8.3,
+						8.5,
+						8.7
+					],
+					"boots": {
+						"mean": -211.453125,
+						"ci": 79.63243241501176,
+						"n": 96
+					}
+				},
+				"switch-a": {
+					"effect": -0.057,
+					"lo": -0.202,
+					"hi": 0.059,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.071,
+						0,
+						0.077,
+						0.1,
+						0.231,
+						0.13,
+						0.087,
+						0.093,
+						0.08,
+						0.061
+					],
+					"control": [
+						0.104,
+						0.079,
+						0.156,
+						0.032,
+						0.111,
+						0.082,
+						0.071,
+						0.031,
+						0.111,
+						0.053
+					],
+					"halfwayHands": 20,
+					"readsAtHalfway": 35.7,
+					"reads": [
+						5.6,
+						12.4,
+						17,
+						21,
+						23.7,
+						29.5,
+						35.7,
+						40.3,
+						42.5,
+						45
+					],
+					"boots": {
+						"mean": -162.07552083333334,
+						"ci": 177.87132885743344,
+						"n": 96
+					}
+				},
+				"switch-b": {
+					"effect": -0.005,
+					"lo": -0.094,
+					"hi": 0.077,
+					"verdict": "none",
+					"curve": [
+						0.135,
+						0.063,
+						0.064,
+						0.075,
+						0.04,
+						0.123,
+						0.088,
+						0.089,
+						0.101,
+						0.135
+					],
+					"control": [
+						0.077,
+						0.071,
+						0.053,
+						0.039,
+						0.058,
+						0.114,
+						0.149,
+						0.109,
+						0.113,
+						0.108
+					],
+					"halfwayHands": null,
+					"readsAtHalfway": null,
+					"reads": [
+						5.7,
+						18.2,
+						27.1,
+						34.2,
+						38.9,
+						41.8,
+						44.2,
+						44.4,
+						45.1,
+						45.7
+					],
+					"boots": {
+						"mean": -132.3515625,
+						"ci": 218.22047586205616,
+						"n": 96
+					}
+				},
+				"deceptive": {
+					"effect": 0.001,
+					"lo": -0.043,
+					"hi": 0.056,
+					"verdict": "right (unclear)",
+					"curve": [
+						0.077,
+						0.054,
+						0.05,
+						0.078,
+						0.091,
+						0.124,
+						0.091,
+						0.085,
+						0.063,
+						0.063
+					],
+					"control": [
+						0.09,
+						0.077,
+						0.069,
+						0.082,
+						0.109,
+						0.111,
+						0.134,
+						0.078,
+						0.062,
+						0.082
+					],
+					"halfwayHands": 40,
+					"readsAtHalfway": 7.5,
+					"reads": [
+						1.1,
+						3.3,
+						4.6,
+						5.7,
+						6.6,
+						7.5,
+						8,
+						8.4,
+						8.6,
+						8.9
+					],
+					"boots": {
+						"mean": 90.84114583333333,
+						"ci": 142.79714298079813,
+						"n": 96
+					}
+				},
+				"blind-heavy": {
+					"effect": 0,
+					"lo": -0.015,
+					"hi": 0.016,
+					"verdict": "none",
+					"curve": [
+						0.078,
+						0.061,
+						0.041,
+						0.052,
+						0.057,
+						0.062,
+						0.029,
+						0.049,
+						0.038,
+						0.048
+					],
+					"control": [
+						0.078,
+						0.047,
+						0.045,
+						0.046,
+						0.064,
+						0.066,
+						0.042,
+						0.038,
+						0.025,
+						0.05
+					],
+					"halfwayHands": 20,
+					"readsAtHalfway": 20.3,
+					"reads": [
+						5.3,
+						13.6,
+						20.3,
+						25.3,
+						29.1,
+						31.7,
+						33.8,
+						35,
+						36.3,
+						37.3
+					],
+					"boots": {
+						"mean": 308.8229166666667,
+						"ci": 141.4207596556359,
+						"n": 96
+					}
+				}
+			},
+			"events": null,
+			"night": {
+				"mean": 1.540084787021353,
+				"ci": 0.30978779665737455,
+				"n": 60
+			},
+			"perf": {
+				"mean": 0.1129584337191587,
+				"p99": 0.37945799995213747,
+				"n": 1803
+			},
+			"identity": 0.725
+		}
+	],
+	"totals": {
+		"hands": 1230400,
+		"decisions": 25340830,
+		"seconds": 1479.5544177079998,
+		"maxRssMb": 189.45417022705078
+	}
+}

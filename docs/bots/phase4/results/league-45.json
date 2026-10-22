@@ -1,0 +1,2113 @@
+{
+	"seed": 45,
+	"matchTables": 64,
+	"popTables": 1500,
+	"roster": [
+		{
+			"key": "rohit-sharma@3",
+			"group": "champion",
+			"character": "rohit-sharma"
+		},
+		{
+			"key": "virat-kohli@3",
+			"group": "champion",
+			"character": "virat-kohli"
+		},
+		{
+			"key": "gg@4",
+			"group": "champion",
+			"character": "gg"
+		},
+		{
+			"key": "samay-raina@3",
+			"group": "champion",
+			"character": "samay-raina"
+		},
+		{
+			"key": "ms-dhoni@3",
+			"group": "champion",
+			"character": "ms-dhoni"
+		},
+		{
+			"key": "rohit-sharma@1",
+			"character": "rohit-sharma",
+			"note": "Phase 1",
+			"group": "historical"
+		},
+		{
+			"key": "rohit-sharma@2",
+			"character": "rohit-sharma",
+			"note": "Phase 1.1 (stateless)",
+			"group": "historical"
+		},
+		{
+			"key": "virat-kohli@1",
+			"character": "virat-kohli",
+			"note": "Phase 1",
+			"group": "historical"
+		},
+		{
+			"key": "virat-kohli@2",
+			"character": "virat-kohli",
+			"note": "Phase 1.1 (stateless)",
+			"group": "historical"
+		},
+		{
+			"key": "gg@1",
+			"character": "gg",
+			"note": "Phase 1",
+			"group": "historical"
+		},
+		{
+			"key": "gg@2",
+			"character": "gg",
+			"note": "Phase 1.1 (stateless)",
+			"group": "historical"
+		},
+		{
+			"key": "samay-raina@1",
+			"character": "samay-raina",
+			"note": "Phase 1",
+			"group": "historical"
+		},
+		{
+			"key": "samay-raina@2",
+			"character": "samay-raina",
+			"note": "Phase 1.1 (stateless)",
+			"group": "historical"
+		},
+		{
+			"key": "ms-dhoni@1",
+			"character": "ms-dhoni",
+			"note": "Phase 1",
+			"group": "historical"
+		},
+		{
+			"key": "ms-dhoni@2",
+			"character": "ms-dhoni",
+			"note": "Phase 1.1 (stateless)",
+			"group": "historical"
+		},
+		{
+			"key": "gg@3",
+			"character": "gg",
+			"note": "Phase 2 GG (ancestor of c034)",
+			"group": "historical"
+		},
+		{
+			"key": "rohit-sharma@4-c026",
+			"character": "rohit-sharma",
+			"note": "Phase 3 best finalist (not chosen)",
+			"group": "historical"
+		},
+		{
+			"key": "virat-kohli@4-c024",
+			"character": "virat-kohli",
+			"note": "Phase 3 chosen (not adopted)",
+			"group": "historical"
+		},
+		{
+			"key": "samay-raina@4-c008",
+			"character": "samay-raina",
+			"note": "Phase 3 chosen (not adopted)",
+			"group": "historical"
+		},
+		{
+			"key": "ms-dhoni@4-c039",
+			"character": "ms-dhoni",
+			"note": "Phase 3 chosen (not adopted)",
+			"group": "historical"
+		},
+		{
+			"key": "rohit-sharma@5-c004",
+			"character": "rohit-sharma",
+			"note": "Phase 3.1 best finalist",
+			"group": "historical"
+		},
+		{
+			"key": "samay-raina@5-c046",
+			"character": "samay-raina",
+			"note": "Phase 3.1 chosen (rejected: less like Samay)",
+			"group": "historical"
+		},
+		{
+			"key": "ms-dhoni@5-c039",
+			"character": "ms-dhoni",
+			"note": "Phase 3.1 chosen (bluffIndex fixed, aggression out)",
+			"group": "historical"
+		},
+		{
+			"key": "legacy-easy",
+			"group": "baseline"
+		},
+		{
+			"key": "legacy-normal",
+			"group": "baseline"
+		},
+		{
+			"key": "legacy-hard",
+			"group": "baseline"
+		},
+		{
+			"key": "baseline-aggressive",
+			"group": "baseline"
+		},
+		{
+			"key": "baseline-rock",
+			"group": "baseline"
+		},
+		{
+			"key": "baseline-station",
+			"group": "baseline"
+		},
+		{
+			"key": "baseline-random",
+			"group": "baseline"
+		},
+		{
+			"key": "human-balanced",
+			"group": "baseline"
+		},
+		{
+			"key": "human-beginner",
+			"group": "human"
+		},
+		{
+			"key": "human-conservative",
+			"group": "human"
+		},
+		{
+			"key": "human-very-conservative",
+			"group": "human"
+		},
+		{
+			"key": "human-aggressive",
+			"group": "human"
+		},
+		{
+			"key": "human-maniac",
+			"group": "human"
+		},
+		{
+			"key": "human-bluffer",
+			"group": "human"
+		},
+		{
+			"key": "human-station",
+			"group": "human"
+		},
+		{
+			"key": "human-unpredictable",
+			"group": "human"
+		},
+		{
+			"key": "human-short-desperate",
+			"group": "human"
+		},
+		{
+			"key": "human-rich-bully",
+			"group": "human"
+		},
+		{
+			"key": "human-expert",
+			"group": "human"
+		},
+		{
+			"key": "human-switch",
+			"group": "human"
+		},
+		{
+			"key": "human-drift",
+			"group": "human"
+		},
+		{
+			"key": "human-loose-passive",
+			"group": "human"
+		},
+		{
+			"key": "human-value",
+			"group": "human"
+		},
+		{
+			"key": "human-blind-heavy",
+			"group": "human"
+		},
+		{
+			"key": "human-pressure-bully",
+			"group": "human"
+		}
+	],
+	"matrix": {
+		"rohit-sharma": {
+			"rohit-sharma@3": {
+				"mean": 231.0640625,
+				"ci": 480.57636812864524,
+				"n": 64
+			},
+			"virat-kohli@3": {
+				"mean": -280.96875,
+				"ci": 471.52510551920335,
+				"n": 64
+			},
+			"gg@4": {
+				"mean": -334.0859375,
+				"ci": 192.84009770351838,
+				"n": 64
+			},
+			"samay-raina@3": {
+				"mean": 4.015625,
+				"ci": 508.6193916436397,
+				"n": 64
+			},
+			"ms-dhoni@3": {
+				"mean": 2.085937499999993,
+				"ci": 383.1763209260374,
+				"n": 64
+			},
+			"rohit-sharma@1": {
+				"mean": -8.4453125,
+				"ci": 526.5050538894233,
+				"n": 64
+			},
+			"rohit-sharma@2": {
+				"mean": 205.478125,
+				"ci": 437.9677346261925,
+				"n": 64
+			},
+			"virat-kohli@1": {
+				"mean": -256.78281250000003,
+				"ci": 561.158248574483,
+				"n": 64
+			},
+			"virat-kohli@2": {
+				"mean": 81.421875,
+				"ci": 472.11301731775706,
+				"n": 64
+			},
+			"gg@1": {
+				"mean": -330.296875,
+				"ci": 68.2913009806281,
+				"n": 64
+			},
+			"gg@2": {
+				"mean": -107.7578125,
+				"ci": 160.8118783674141,
+				"n": 64
+			},
+			"samay-raina@1": {
+				"mean": 1240.609375,
+				"ci": 831.1078287833498,
+				"n": 64
+			},
+			"samay-raina@2": {
+				"mean": 433.4609375,
+				"ci": 457.91249853654693,
+				"n": 64
+			},
+			"ms-dhoni@1": {
+				"mean": 85.6015625,
+				"ci": 246.6423489325992,
+				"n": 64
+			},
+			"ms-dhoni@2": {
+				"mean": 143.0390625,
+				"ci": 288.30132051213127,
+				"n": 64
+			},
+			"gg@3": {
+				"mean": -263.015625,
+				"ci": 167.17442938224588,
+				"n": 64
+			},
+			"rohit-sharma@4-c026": {
+				"mean": 352.7109375,
+				"ci": 545.2653248623399,
+				"n": 64
+			},
+			"virat-kohli@4-c024": {
+				"mean": 164.71875,
+				"ci": 553.8347787122841,
+				"n": 64
+			},
+			"samay-raina@4-c008": {
+				"mean": -8.03125,
+				"ci": 509.77160145789935,
+				"n": 64
+			},
+			"ms-dhoni@4-c039": {
+				"mean": -224.1796875,
+				"ci": 378.4382605193667,
+				"n": 64
+			},
+			"rohit-sharma@5-c004": {
+				"mean": 255.8828125,
+				"ci": 543.5439856607874,
+				"n": 64
+			},
+			"samay-raina@5-c046": {
+				"mean": -164.125,
+				"ci": 532.0303522957021,
+				"n": 64
+			},
+			"ms-dhoni@5-c039": {
+				"mean": 38.125,
+				"ci": 393.38918284110065,
+				"n": 64
+			},
+			"legacy-easy": {
+				"mean": 1260.5859375,
+				"ci": 270.1519495484023,
+				"n": 64
+			},
+			"legacy-normal": {
+				"mean": 307.1796875,
+				"ci": 307.2284597660214,
+				"n": 64
+			},
+			"legacy-hard": {
+				"mean": 14.6796875,
+				"ci": 327.09282676869447,
+				"n": 64
+			},
+			"baseline-aggressive": {
+				"mean": -449.765625,
+				"ci": 662.3325462944925,
+				"n": 64
+			},
+			"baseline-rock": {
+				"mean": -342.2421875,
+				"ci": 157.75987944200511,
+				"n": 64
+			},
+			"baseline-station": {
+				"mean": 3324.890625,
+				"ci": 387.21629013450547,
+				"n": 64
+			},
+			"baseline-random": {
+				"mean": 1609.340625,
+				"ci": 339.7133786729084,
+				"n": 64
+			},
+			"human-balanced": {
+				"mean": 194.3671875,
+				"ci": 422.4145159987835,
+				"n": 64
+			},
+			"human-beginner": {
+				"mean": 175.2265625,
+				"ci": 162.6508833355578,
+				"n": 64
+			},
+			"human-conservative": {
+				"mean": -367.4140625,
+				"ci": 97.19750522817083,
+				"n": 64
+			},
+			"human-very-conservative": {
+				"mean": -377.828125,
+				"ci": 50.40572736735669,
+				"n": 64
+			},
+			"human-aggressive": {
+				"mean": 162.77499999999998,
+				"ci": 472.2040800669064,
+				"n": 64
+			},
+			"human-maniac": {
+				"mean": -189.8515625,
+				"ci": 683.2425056955059,
+				"n": 64
+			},
+			"human-bluffer": {
+				"mean": 749.140625,
+				"ci": 312.57886030697483,
+				"n": 64
+			},
+			"human-station": {
+				"mean": -241.6875,
+				"ci": 746.7318035878633,
+				"n": 64
+			},
+			"human-unpredictable": {
+				"mean": 1001.1171875,
+				"ci": 562.0827517016638,
+				"n": 64
+			},
+			"human-short-desperate": {
+				"mean": 258.9296875,
+				"ci": 270.23915317025035,
+				"n": 64
+			},
+			"human-rich-bully": {
+				"mean": -902.3125,
+				"ci": 208.5354038570083,
+				"n": 64
+			},
+			"human-expert": {
+				"mean": -79.1875,
+				"ci": 393.8305114292681,
+				"n": 64
+			},
+			"human-switch": {
+				"mean": -377.828125,
+				"ci": 50.40572736735669,
+				"n": 64
+			},
+			"human-drift": {
+				"mean": -258.1875,
+				"ci": 78.40495361954711,
+				"n": 64
+			},
+			"human-loose-passive": {
+				"mean": -266.3828125,
+				"ci": 495.10820223065366,
+				"n": 64
+			},
+			"human-value": {
+				"mean": -312.578125,
+				"ci": 149.1201262733023,
+				"n": 64
+			},
+			"human-blind-heavy": {
+				"mean": -82.6875,
+				"ci": 226.81999381392725,
+				"n": 64
+			},
+			"human-pressure-bully": {
+				"mean": 115.3671875,
+				"ci": 407.1836309248607,
+				"n": 64
+			}
+		},
+		"virat-kohli": {
+			"rohit-sharma@3": {
+				"mean": 735.421875,
+				"ci": 608.5068704122676,
+				"n": 64
+			},
+			"virat-kohli@3": {
+				"mean": -50.8828125,
+				"ci": 560.8548978575404,
+				"n": 64
+			},
+			"gg@4": {
+				"mean": -279.2578125,
+				"ci": 188.07708711870242,
+				"n": 64
+			},
+			"samay-raina@3": {
+				"mean": -830.3984375,
+				"ci": 470.193870147719,
+				"n": 64
+			},
+			"ms-dhoni@3": {
+				"mean": -10.421875,
+				"ci": 435.7854804131641,
+				"n": 64
+			},
+			"rohit-sharma@1": {
+				"mean": 402.4375,
+				"ci": 646.1625439098767,
+				"n": 64
+			},
+			"rohit-sharma@2": {
+				"mean": 786.5546875,
+				"ci": 526.6537204529536,
+				"n": 64
+			},
+			"virat-kohli@1": {
+				"mean": -377.234375,
+				"ci": 625.7378839221665,
+				"n": 64
+			},
+			"virat-kohli@2": {
+				"mean": -9.0078125,
+				"ci": 510.760753983186,
+				"n": 64
+			},
+			"gg@1": {
+				"mean": -237.796875,
+				"ci": 54.09490834700786,
+				"n": 64
+			},
+			"gg@2": {
+				"mean": -113.9375,
+				"ci": 161.90795056528262,
+				"n": 64
+			},
+			"samay-raina@1": {
+				"mean": 606.6875,
+				"ci": 884.2724698905026,
+				"n": 64
+			},
+			"samay-raina@2": {
+				"mean": 503.2890625,
+				"ci": 508.75938136724074,
+				"n": 64
+			},
+			"ms-dhoni@1": {
+				"mean": 21.8125,
+				"ci": 240.0093633488887,
+				"n": 64
+			},
+			"ms-dhoni@2": {
+				"mean": 77.265625,
+				"ci": 280.8671960402313,
+				"n": 64
+			},
+			"gg@3": {
+				"mean": -94.2265625,
+				"ci": 206.66087068446086,
+				"n": 64
+			},
+			"rohit-sharma@4-c026": {
+				"mean": 683.0546875,
+				"ci": 611.5268281547826,
+				"n": 64
+			},
+			"virat-kohli@4-c024": {
+				"mean": 521.8828125,
+				"ci": 665.0901189548283,
+				"n": 64
+			},
+			"samay-raina@4-c008": {
+				"mean": -700.625,
+				"ci": 440.064740518054,
+				"n": 64
+			},
+			"ms-dhoni@4-c039": {
+				"mean": -230.375,
+				"ci": 414.780653977363,
+				"n": 64
+			},
+			"rohit-sharma@5-c004": {
+				"mean": 1066.546875,
+				"ci": 639.193226171923,
+				"n": 64
+			},
+			"samay-raina@5-c046": {
+				"mean": -720.84375,
+				"ci": 509.1993022766846,
+				"n": 64
+			},
+			"ms-dhoni@5-c039": {
+				"mean": -382.28125,
+				"ci": 385.2683452678813,
+				"n": 64
+			},
+			"legacy-easy": {
+				"mean": 1516.0390625,
+				"ci": 245.1963115079307,
+				"n": 64
+			},
+			"legacy-normal": {
+				"mean": 108.734375,
+				"ci": 309.2998030706733,
+				"n": 64
+			},
+			"legacy-hard": {
+				"mean": 111.703125,
+				"ci": 370.5739075866934,
+				"n": 64
+			},
+			"baseline-aggressive": {
+				"mean": -1035.234375,
+				"ci": 527.3737679323541,
+				"n": 64
+			},
+			"baseline-rock": {
+				"mean": -153.921875,
+				"ci": 151.26078509771372,
+				"n": 64
+			},
+			"baseline-station": {
+				"mean": 3338.515625,
+				"ci": 383.6677376637261,
+				"n": 64
+			},
+			"baseline-random": {
+				"mean": 1656.99375,
+				"ci": 366.91699296269275,
+				"n": 64
+			},
+			"human-balanced": {
+				"mean": -59.578125,
+				"ci": 422.88444407957104,
+				"n": 64
+			},
+			"human-beginner": {
+				"mean": 157.6015625,
+				"ci": 157.20008793481077,
+				"n": 64
+			},
+			"human-conservative": {
+				"mean": -214.21875,
+				"ci": 88.41890470875464,
+				"n": 64
+			},
+			"human-very-conservative": {
+				"mean": -129.46875,
+				"ci": 29.46645628518883,
+				"n": 64
+			},
+			"human-aggressive": {
+				"mean": 248.5390625,
+				"ci": 482.8733034708711,
+				"n": 64
+			},
+			"human-maniac": {
+				"mean": 213.125,
+				"ci": 868.2839486836473,
+				"n": 64
+			},
+			"human-bluffer": {
+				"mean": 759.890625,
+				"ci": 303.11569629887487,
+				"n": 64
+			},
+			"human-station": {
+				"mean": -779.40625,
+				"ci": 704.1205926131122,
+				"n": 64
+			},
+			"human-unpredictable": {
+				"mean": 449.1171875,
+				"ci": 586.3524149379534,
+				"n": 64
+			},
+			"human-short-desperate": {
+				"mean": 632.1953125,
+				"ci": 343.417107925979,
+				"n": 64
+			},
+			"human-rich-bully": {
+				"mean": -1140.921875,
+				"ci": 169.40335926188143,
+				"n": 64
+			},
+			"human-expert": {
+				"mean": -80.84375,
+				"ci": 436.2038564009522,
+				"n": 64
+			},
+			"human-switch": {
+				"mean": -129.46875,
+				"ci": 29.46645628518883,
+				"n": 64
+			},
+			"human-drift": {
+				"mean": 31.015625,
+				"ci": 70.26113102089283,
+				"n": 64
+			},
+			"human-loose-passive": {
+				"mean": -254.171875,
+				"ci": 565.2402006092327,
+				"n": 64
+			},
+			"human-value": {
+				"mean": -204.625,
+				"ci": 143.21322231980614,
+				"n": 64
+			},
+			"human-blind-heavy": {
+				"mean": 129.015625,
+				"ci": 223.86620927365811,
+				"n": 64
+			},
+			"human-pressure-bully": {
+				"mean": 157.828125,
+				"ci": 454.411903491497,
+				"n": 64
+			}
+		},
+		"gg": {
+			"rohit-sharma@3": {
+				"mean": 270.3125,
+				"ci": 294.9003328303856,
+				"n": 64
+			},
+			"virat-kohli@3": {
+				"mean": 246.453125,
+				"ci": 330.88920136910224,
+				"n": 64
+			},
+			"gg@4": {
+				"mean": 66.21875,
+				"ci": 113.65857949679454,
+				"n": 64
+			},
+			"samay-raina@3": {
+				"mean": 434.5546875,
+				"ci": 377.9268284984309,
+				"n": 64
+			},
+			"ms-dhoni@3": {
+				"mean": 95.96875,
+				"ci": 212.24162685069385,
+				"n": 64
+			},
+			"rohit-sharma@1": {
+				"mean": 280.9140625,
+				"ci": 338.9707503918168,
+				"n": 64
+			},
+			"rohit-sharma@2": {
+				"mean": 467.0546875,
+				"ci": 294.2263062824339,
+				"n": 64
+			},
+			"virat-kohli@1": {
+				"mean": 137.234375,
+				"ci": 390.78967568935417,
+				"n": 64
+			},
+			"virat-kohli@2": {
+				"mean": 153.109375,
+				"ci": 272.997017914068,
+				"n": 64
+			},
+			"gg@1": {
+				"mean": 18.28125,
+				"ci": 34.458701431427706,
+				"n": 64
+			},
+			"gg@2": {
+				"mean": 84.5625,
+				"ci": 81.568641377983,
+				"n": 64
+			},
+			"samay-raina@1": {
+				"mean": 498.8125,
+				"ci": 691.9983749704949,
+				"n": 64
+			},
+			"samay-raina@2": {
+				"mean": 599.578125,
+				"ci": 400.7083329347878,
+				"n": 64
+			},
+			"ms-dhoni@1": {
+				"mean": 207.7890625,
+				"ci": 158.0409418386042,
+				"n": 64
+			},
+			"ms-dhoni@2": {
+				"mean": 375.40625,
+				"ci": 191.37554709307457,
+				"n": 64
+			},
+			"gg@3": {
+				"mean": 124.453125,
+				"ci": 98.83286300851589,
+				"n": 64
+			},
+			"rohit-sharma@4-c026": {
+				"mean": 322.5515625,
+				"ci": 314.57468441314376,
+				"n": 64
+			},
+			"virat-kohli@4-c024": {
+				"mean": 282.640625,
+				"ci": 355.4465286161221,
+				"n": 64
+			},
+			"samay-raina@4-c008": {
+				"mean": 262.328125,
+				"ci": 368.657163151754,
+				"n": 64
+			},
+			"ms-dhoni@4-c039": {
+				"mean": 236.0625,
+				"ci": 262.98608216368706,
+				"n": 64
+			},
+			"rohit-sharma@5-c004": {
+				"mean": 206.9375,
+				"ci": 299.95301222881375,
+				"n": 64
+			},
+			"samay-raina@5-c046": {
+				"mean": 58.15625,
+				"ci": 389.2504482551565,
+				"n": 64
+			},
+			"ms-dhoni@5-c039": {
+				"mean": 235.0625,
+				"ci": 268.3425209930709,
+				"n": 64
+			},
+			"legacy-easy": {
+				"mean": 953.3359375,
+				"ci": 188.05002073457675,
+				"n": 64
+			},
+			"legacy-normal": {
+				"mean": 505.234375,
+				"ci": 212.46911232145814,
+				"n": 64
+			},
+			"legacy-hard": {
+				"mean": 364.65625,
+				"ci": 258.7969302613028,
+				"n": 64
+			},
+			"baseline-aggressive": {
+				"mean": -216.67187500000003,
+				"ci": 345.7008913124322,
+				"n": 64
+			},
+			"baseline-rock": {
+				"mean": -50.140625,
+				"ci": 68.00252125413,
+				"n": 64
+			},
+			"baseline-station": {
+				"mean": 2298.359375,
+				"ci": 379.0988817866895,
+				"n": 64
+			},
+			"baseline-random": {
+				"mean": 517.6640625,
+				"ci": 216.40079177354963,
+				"n": 64
+			},
+			"human-balanced": {
+				"mean": 274.7890625,
+				"ci": 230.40326077941828,
+				"n": 64
+			},
+			"human-beginner": {
+				"mean": 167.78125,
+				"ci": 100.14603097979942,
+				"n": 64
+			},
+			"human-conservative": {
+				"mean": -55.515625,
+				"ci": 57.620477772437454,
+				"n": 64
+			},
+			"human-very-conservative": {
+				"mean": 23.640625,
+				"ci": 22.7937323189844,
+				"n": 64
+			},
+			"human-aggressive": {
+				"mean": 278.109375,
+				"ci": 276.99560186485627,
+				"n": 64
+			},
+			"human-maniac": {
+				"mean": -185.375,
+				"ci": 285.69914016613114,
+				"n": 64
+			},
+			"human-bluffer": {
+				"mean": 383.671875,
+				"ci": 200.9746483149583,
+				"n": 64
+			},
+			"human-station": {
+				"mean": 318.328125,
+				"ci": 699.4020997003948,
+				"n": 64
+			},
+			"human-unpredictable": {
+				"mean": 708.28125,
+				"ci": 350.30975304230753,
+				"n": 64
+			},
+			"human-short-desperate": {
+				"mean": 410.90625,
+				"ci": 170.17681484237457,
+				"n": 64
+			},
+			"human-rich-bully": {
+				"mean": -7.812499999999999,
+				"ci": 206.09890272936923,
+				"n": 64
+			},
+			"human-expert": {
+				"mean": 118.015625,
+				"ci": 245.34425727287672,
+				"n": 64
+			},
+			"human-switch": {
+				"mean": 23.640625,
+				"ci": 22.7937323189844,
+				"n": 64
+			},
+			"human-drift": {
+				"mean": 85.703125,
+				"ci": 39.87414332989993,
+				"n": 64
+			},
+			"human-loose-passive": {
+				"mean": -92.87500000000001,
+				"ci": 351.4939906669814,
+				"n": 64
+			},
+			"human-value": {
+				"mean": -14.328125,
+				"ci": 65.80441287793752,
+				"n": 64
+			},
+			"human-blind-heavy": {
+				"mean": 282.6640625,
+				"ci": 152.2760918472586,
+				"n": 64
+			},
+			"human-pressure-bully": {
+				"mean": -138.734375,
+				"ci": 202.15652696570316,
+				"n": 64
+			}
+		},
+		"samay-raina": {
+			"rohit-sharma@3": {
+				"mean": 141.8453125,
+				"ci": 386.929389186902,
+				"n": 64
+			},
+			"virat-kohli@3": {
+				"mean": 474.328125,
+				"ci": 535.2022030231907,
+				"n": 64
+			},
+			"gg@4": {
+				"mean": -286.890625,
+				"ci": 128.01899924523602,
+				"n": 64
+			},
+			"samay-raina@3": {
+				"mean": -301.515625,
+				"ci": 363.03764577765145,
+				"n": 64
+			},
+			"ms-dhoni@3": {
+				"mean": -172.390625,
+				"ci": 238.8381788261122,
+				"n": 64
+			},
+			"rohit-sharma@1": {
+				"mean": 680.9484375,
+				"ci": 529.5609153584651,
+				"n": 64
+			},
+			"rohit-sharma@2": {
+				"mean": -24.39375000000001,
+				"ci": 355.53120370870755,
+				"n": 64
+			},
+			"virat-kohli@1": {
+				"mean": 1774.953125,
+				"ci": 889.0803310174659,
+				"n": 64
+			},
+			"virat-kohli@2": {
+				"mean": 155.171875,
+				"ci": 431.2894960416689,
+				"n": 64
+			},
+			"gg@1": {
+				"mean": -135.703125,
+				"ci": 45.559349883958596,
+				"n": 64
+			},
+			"gg@2": {
+				"mean": -20.8046875,
+				"ci": 155.8718640364191,
+				"n": 64
+			},
+			"samay-raina@1": {
+				"mean": 2416.0234375,
+				"ci": 950.7882568101227,
+				"n": 64
+			},
+			"samay-raina@2": {
+				"mean": 792.0078125,
+				"ci": 476.9104621688848,
+				"n": 64
+			},
+			"ms-dhoni@1": {
+				"mean": -189.859375,
+				"ci": 183.93524001436109,
+				"n": 64
+			},
+			"ms-dhoni@2": {
+				"mean": 31.03125,
+				"ci": 234.5937509502242,
+				"n": 64
+			},
+			"gg@3": {
+				"mean": -257.5234375,
+				"ci": 127.09723131318057,
+				"n": 64
+			},
+			"rohit-sharma@4-c026": {
+				"mean": 584.1015625,
+				"ci": 469.74743547527873,
+				"n": 64
+			},
+			"virat-kohli@4-c024": {
+				"mean": 311.2421875,
+				"ci": 519.1795307078279,
+				"n": 64
+			},
+			"samay-raina@4-c008": {
+				"mean": -34.96875,
+				"ci": 378.6665472603337,
+				"n": 64
+			},
+			"ms-dhoni@4-c039": {
+				"mean": -308.296875,
+				"ci": 239.5368979363306,
+				"n": 64
+			},
+			"rohit-sharma@5-c004": {
+				"mean": 116.421875,
+				"ci": 408.79489526301444,
+				"n": 64
+			},
+			"samay-raina@5-c046": {
+				"mean": -239.7265625,
+				"ci": 435.54655538071233,
+				"n": 64
+			},
+			"ms-dhoni@5-c039": {
+				"mean": -286.296875,
+				"ci": 247.5844100070027,
+				"n": 64
+			},
+			"legacy-easy": {
+				"mean": 1135.0546875,
+				"ci": 174.21669399612063,
+				"n": 64
+			},
+			"legacy-normal": {
+				"mean": 97.6484375,
+				"ci": 235.3104090909991,
+				"n": 64
+			},
+			"legacy-hard": {
+				"mean": -11.21875,
+				"ci": 300.4085397747842,
+				"n": 64
+			},
+			"baseline-aggressive": {
+				"mean": -107.1875,
+				"ci": 704.9998213519277,
+				"n": 64
+			},
+			"baseline-rock": {
+				"mean": -87.21875,
+				"ci": 98.30833616685736,
+				"n": 64
+			},
+			"baseline-station": {
+				"mean": 4398.875,
+				"ci": 373.79771854796905,
+				"n": 64
+			},
+			"baseline-random": {
+				"mean": 2008.7265625,
+				"ci": 208.13664684756586,
+				"n": 64
+			},
+			"human-balanced": {
+				"mean": -242.6875,
+				"ci": 229.69822271267384,
+				"n": 64
+			},
+			"human-beginner": {
+				"mean": -40.640625,
+				"ci": 99.94357922084819,
+				"n": 64
+			},
+			"human-conservative": {
+				"mean": -147.359375,
+				"ci": 72.59767531269367,
+				"n": 64
+			},
+			"human-very-conservative": {
+				"mean": -38.078125,
+				"ci": 27.283732282545675,
+				"n": 64
+			},
+			"human-aggressive": {
+				"mean": 618.203125,
+				"ci": 417.0840628690444,
+				"n": 64
+			},
+			"human-maniac": {
+				"mean": 847.5234375,
+				"ci": 889.4754939010583,
+				"n": 64
+			},
+			"human-bluffer": {
+				"mean": 493.55625,
+				"ci": 229.51372933408635,
+				"n": 64
+			},
+			"human-station": {
+				"mean": 1571.703125,
+				"ci": 1054.401890146818,
+				"n": 64
+			},
+			"human-unpredictable": {
+				"mean": 1742.203125,
+				"ci": 538.5356384195572,
+				"n": 64
+			},
+			"human-short-desperate": {
+				"mean": 413.1296875,
+				"ci": 282.20755159133154,
+				"n": 64
+			},
+			"human-rich-bully": {
+				"mean": -277.265625,
+				"ci": 287.4682128013878,
+				"n": 64
+			},
+			"human-expert": {
+				"mean": -312.234375,
+				"ci": 223.6574959939405,
+				"n": 64
+			},
+			"human-switch": {
+				"mean": -38.078125,
+				"ci": 27.283732282545675,
+				"n": 64
+			},
+			"human-drift": {
+				"mean": 28.015625,
+				"ci": 44.655048540034606,
+				"n": 64
+			},
+			"human-loose-passive": {
+				"mean": -284.515625,
+				"ci": 478.64098710318666,
+				"n": 64
+			},
+			"human-value": {
+				"mean": -113.21875,
+				"ci": 91.53956957941588,
+				"n": 64
+			},
+			"human-blind-heavy": {
+				"mean": 84.84375,
+				"ci": 173.91950635010005,
+				"n": 64
+			},
+			"human-pressure-bully": {
+				"mean": 742.8359375,
+				"ci": 510.91699846908955,
+				"n": 64
+			}
+		},
+		"ms-dhoni": {
+			"rohit-sharma@3": {
+				"mean": 453.265625,
+				"ci": 436.66825358535,
+				"n": 64
+			},
+			"virat-kohli@3": {
+				"mean": -175.46875,
+				"ci": 362.29603401646904,
+				"n": 64
+			},
+			"gg@4": {
+				"mean": -165.25,
+				"ci": 171.17603568159495,
+				"n": 64
+			},
+			"samay-raina@3": {
+				"mean": 158.71875,
+				"ci": 386.594730557231,
+				"n": 64
+			},
+			"ms-dhoni@3": {
+				"mean": -119.4375,
+				"ci": 274.128889941747,
+				"n": 64
+			},
+			"rohit-sharma@1": {
+				"mean": 436.6484375,
+				"ci": 399.92946700903263,
+				"n": 64
+			},
+			"rohit-sharma@2": {
+				"mean": 148.3125,
+				"ci": 363.82724854336965,
+				"n": 64
+			},
+			"virat-kohli@1": {
+				"mean": 386.3359375,
+				"ci": 684.5602822968001,
+				"n": 64
+			},
+			"virat-kohli@2": {
+				"mean": 475.96875,
+				"ci": 446.30413516819357,
+				"n": 64
+			},
+			"gg@1": {
+				"mean": -172.5,
+				"ci": 47.54264722915159,
+				"n": 64
+			},
+			"gg@2": {
+				"mean": -66.4140625,
+				"ci": 134.29486162430564,
+				"n": 64
+			},
+			"samay-raina@1": {
+				"mean": 1254.640625,
+				"ci": 861.8608771881189,
+				"n": 64
+			},
+			"samay-raina@2": {
+				"mean": 1084.7765625,
+				"ci": 439.752752929073,
+				"n": 64
+			},
+			"ms-dhoni@1": {
+				"mean": 76.484375,
+				"ci": 206.1491944539239,
+				"n": 64
+			},
+			"ms-dhoni@2": {
+				"mean": 53.1640625,
+				"ci": 214.6057436574677,
+				"n": 64
+			},
+			"gg@3": {
+				"mean": -206.1703125,
+				"ci": 135.16089945960556,
+				"n": 64
+			},
+			"rohit-sharma@4-c026": {
+				"mean": 384.828125,
+				"ci": 410.88431831374936,
+				"n": 64
+			},
+			"virat-kohli@4-c024": {
+				"mean": 39.9609375,
+				"ci": 451.8130713772809,
+				"n": 64
+			},
+			"samay-raina@4-c008": {
+				"mean": 320.8046875,
+				"ci": 452.9993452054001,
+				"n": 64
+			},
+			"ms-dhoni@4-c039": {
+				"mean": -87.59375,
+				"ci": 296.4449595674573,
+				"n": 64
+			},
+			"rohit-sharma@5-c004": {
+				"mean": 56.93750000000001,
+				"ci": 367.0764098145795,
+				"n": 64
+			},
+			"samay-raina@5-c046": {
+				"mean": -179.984375,
+				"ci": 429.18348418065455,
+				"n": 64
+			},
+			"ms-dhoni@5-c039": {
+				"mean": 313.390625,
+				"ci": 334.75076474641145,
+				"n": 64
+			},
+			"legacy-easy": {
+				"mean": 1181.0390625,
+				"ci": 195.2661043348133,
+				"n": 64
+			},
+			"legacy-normal": {
+				"mean": 410.453125,
+				"ci": 266.55571943448865,
+				"n": 64
+			},
+			"legacy-hard": {
+				"mean": 380.75,
+				"ci": 306.21282307680497,
+				"n": 64
+			},
+			"baseline-aggressive": {
+				"mean": -929.171875,
+				"ci": 314.49795480926434,
+				"n": 64
+			},
+			"baseline-rock": {
+				"mean": -196,
+				"ci": 117.48745193045559,
+				"n": 64
+			},
+			"baseline-station": {
+				"mean": 2891.328125,
+				"ci": 398.6187611250589,
+				"n": 64
+			},
+			"baseline-random": {
+				"mean": 1450.8828125,
+				"ci": 318.468622406881,
+				"n": 64
+			},
+			"human-balanced": {
+				"mean": 197.1328125,
+				"ci": 327.03225310499727,
+				"n": 64
+			},
+			"human-beginner": {
+				"mean": 150.109375,
+				"ci": 125.63853410114696,
+				"n": 64
+			},
+			"human-conservative": {
+				"mean": -192.8125,
+				"ci": 74.7557238750541,
+				"n": 64
+			},
+			"human-very-conservative": {
+				"mean": -131.671875,
+				"ci": 23.961341754052793,
+				"n": 64
+			},
+			"human-aggressive": {
+				"mean": 497.60468750000007,
+				"ci": 384.4519146217828,
+				"n": 64
+			},
+			"human-maniac": {
+				"mean": -168.75000000000003,
+				"ci": 622.5516138307999,
+				"n": 64
+			},
+			"human-bluffer": {
+				"mean": 441.2109375,
+				"ci": 242.4532375216571,
+				"n": 64
+			},
+			"human-station": {
+				"mean": 341.09375,
+				"ci": 806.6638923730918,
+				"n": 64
+			},
+			"human-unpredictable": {
+				"mean": 1105.78125,
+				"ci": 441.0904435130135,
+				"n": 64
+			},
+			"human-short-desperate": {
+				"mean": 83.6171875,
+				"ci": 186.07207140338838,
+				"n": 64
+			},
+			"human-rich-bully": {
+				"mean": -505.4375,
+				"ci": 197.76834756329606,
+				"n": 64
+			},
+			"human-expert": {
+				"mean": 176.5,
+				"ci": 327.83071102154065,
+				"n": 64
+			},
+			"human-switch": {
+				"mean": -131.671875,
+				"ci": 23.961341754052793,
+				"n": 64
+			},
+			"human-drift": {
+				"mean": 76.6015625,
+				"ci": 66.19426875611425,
+				"n": 64
+			},
+			"human-loose-passive": {
+				"mean": -381.078125,
+				"ci": 370.3345819774015,
+				"n": 64
+			},
+			"human-value": {
+				"mean": -234.4921875,
+				"ci": 97.18510658232104,
+				"n": 64
+			},
+			"human-blind-heavy": {
+				"mean": 291.390625,
+				"ci": 195.59604645083238,
+				"n": 64
+			},
+			"human-pressure-bully": {
+				"mean": -36.29375,
+				"ci": 342.4015906606617,
+				"n": 64
+			}
+		}
+	},
+	"members": {
+		"rohit-sharma@3": {
+			"group": "champion",
+			"tables": 129,
+			"hands": 12900,
+			"decisions": 52216,
+			"boots": {
+				"mean": 8.275193798449612,
+				"ci": 270.6670276818455,
+				"n": 129
+			},
+			"badActionRate": 0.0063327576280944155
+		},
+		"virat-kohli@3": {
+			"group": "champion",
+			"tables": 153,
+			"hands": 15300,
+			"decisions": 56768,
+			"boots": {
+				"mean": -34.290849673202615,
+				"ci": 260.4078704538208,
+				"n": 153
+			},
+			"badActionRate": 0.016119746689694875
+		},
+		"gg@4": {
+			"group": "champion",
+			"tables": 157,
+			"hands": 15700,
+			"decisions": 46739,
+			"boots": {
+				"mean": 247.4968152866242,
+				"ci": 175.68040120131104,
+				"n": 157
+			},
+			"badActionRate": 0.024751427966998096
+		},
+		"samay-raina@3": {
+			"group": "champion",
+			"tables": 147,
+			"hands": 14700,
+			"decisions": 56683,
+			"boots": {
+				"mean": 227.56734693877553,
+				"ci": 240.07164363099926,
+				"n": 147
+			},
+			"badActionRate": 0.016350172300021996
+		},
+		"ms-dhoni@3": {
+			"group": "champion",
+			"tables": 143,
+			"hands": 14300,
+			"decisions": 55728,
+			"boots": {
+				"mean": 482.9755244755245,
+				"ci": 273.8191203497092,
+				"n": 143
+			},
+			"badActionRate": 0.011024978466838932
+		},
+		"rohit-sharma@1": {
+			"group": "historical",
+			"tables": 130,
+			"hands": 13000,
+			"decisions": 66263,
+			"boots": {
+				"mean": -65.89538461538463,
+				"ci": 316.54792994798106,
+				"n": 130
+			},
+			"badActionRate": 0.07437524791749306
+		},
+		"rohit-sharma@2": {
+			"group": "historical",
+			"tables": 150,
+			"hands": 15000,
+			"decisions": 61987,
+			"boots": {
+				"mean": -33.07333333333333,
+				"ci": 248.39571735513428,
+				"n": 150
+			},
+			"badActionRate": 0.031950011789672245
+		},
+		"virat-kohli@1": {
+			"group": "historical",
+			"tables": 152,
+			"hands": 15200,
+			"decisions": 64462,
+			"boots": {
+				"mean": -732.8223684210526,
+				"ci": 302.40183856972584,
+				"n": 152
+			},
+			"badActionRate": 0.37560068206479613
+		},
+		"virat-kohli@2": {
+			"group": "historical",
+			"tables": 150,
+			"hands": 15000,
+			"decisions": 57772,
+			"boots": {
+				"mean": 15.896666666666679,
+				"ci": 250.0985869247477,
+				"n": 150
+			},
+			"badActionRate": 0.09621852186038882
+		},
+		"gg@1": {
+			"group": "historical",
+			"tables": 126,
+			"hands": 12600,
+			"decisions": 31021,
+			"boots": {
+				"mean": 94.02380952380952,
+				"ci": 91.1941051350238,
+				"n": 126
+			},
+			"badActionRate": 0.1035203612342169
+		},
+		"gg@2": {
+			"group": "historical",
+			"tables": 144,
+			"hands": 14400,
+			"decisions": 38603,
+			"boots": {
+				"mean": 235.77430555555554,
+				"ci": 164.60365998553348,
+				"n": 144
+			},
+			"badActionRate": 0.021310344827586206
+		},
+		"samay-raina@1": {
+			"group": "historical",
+			"tables": 142,
+			"hands": 14200,
+			"decisions": 67254,
+			"boots": {
+				"mean": -415.8732394366197,
+				"ci": 206.14989913809526,
+				"n": 142
+			},
+			"badActionRate": 0.413869736167303
+		},
+		"samay-raina@2": {
+			"group": "historical",
+			"tables": 144,
+			"hands": 14400,
+			"decisions": 54298,
+			"boots": {
+				"mean": 102.46527777777777,
+				"ci": 226.91871914083222,
+				"n": 144
+			},
+			"badActionRate": 0.08033365897647854
+		},
+		"ms-dhoni@1": {
+			"group": "historical",
+			"tables": 143,
+			"hands": 14300,
+			"decisions": 52662,
+			"boots": {
+				"mean": 172.93356643356643,
+				"ci": 196.7068478734534,
+				"n": 143
+			},
+			"badActionRate": 0.012772081309588056
+		},
+		"ms-dhoni@2": {
+			"group": "historical",
+			"tables": 133,
+			"hands": 13300,
+			"decisions": 46843,
+			"boots": {
+				"mean": 179.0300751879699,
+				"ci": 180.25707765612745,
+				"n": 133
+			},
+			"badActionRate": 0.01535789377456806
+		},
+		"gg@3": {
+			"group": "historical",
+			"tables": 143,
+			"hands": 14300,
+			"decisions": 43206,
+			"boots": {
+				"mean": 220.13636363636363,
+				"ci": 155.728238970285,
+				"n": 143
+			},
+			"badActionRate": 0.022798322531452534
+		},
+		"rohit-sharma@4-c026": {
+			"group": "historical",
+			"tables": 139,
+			"hands": 13900,
+			"decisions": 57226,
+			"boots": {
+				"mean": 162.26618705035972,
+				"ci": 291.15990806978914,
+				"n": 139
+			},
+			"badActionRate": 0.005612960836841434
+		},
+		"virat-kohli@4-c024": {
+			"group": "historical",
+			"tables": 152,
+			"hands": 15200,
+			"decisions": 57300,
+			"boots": {
+				"mean": 115.09539473684211,
+				"ci": 285.36694347807605,
+				"n": 152
+			},
+			"badActionRate": 0.01571553297880784
+		},
+		"samay-raina@4-c008": {
+			"group": "historical",
+			"tables": 151,
+			"hands": 15100,
+			"decisions": 59649,
+			"boots": {
+				"mean": 25.59933774834437,
+				"ci": 192.4108565563514,
+				"n": 151
+			},
+			"badActionRate": 0.016509596202792874
+		},
+		"ms-dhoni@4-c039": {
+			"group": "historical",
+			"tables": 151,
+			"hands": 15100,
+			"decisions": 58576,
+			"boots": {
+				"mean": 506.49668874172187,
+				"ci": 258.44943934764086,
+				"n": 151
+			},
+			"badActionRate": 0.0044771076195303265
+		},
+		"rohit-sharma@5-c004": {
+			"group": "historical",
+			"tables": 144,
+			"hands": 14400,
+			"decisions": 58957,
+			"boots": {
+				"mean": 228.72916666666666,
+				"ci": 291.9135583035504,
+				"n": 144
+			},
+			"badActionRate": 0.006369426751592357
+		},
+		"samay-raina@5-c046": {
+			"group": "historical",
+			"tables": 128,
+			"hands": 12800,
+			"decisions": 51768,
+			"boots": {
+				"mean": 548.76171875,
+				"ci": 295.7628932158743,
+				"n": 128
+			},
+			"badActionRate": 0.024281860022218694
+		},
+		"ms-dhoni@5-c039": {
+			"group": "historical",
+			"tables": 126,
+			"hands": 12600,
+			"decisions": 49812,
+			"boots": {
+				"mean": 185.46269841269842,
+				"ci": 250.88045695116563,
+				"n": 126
+			},
+			"badActionRate": 0.00818677986658581
+		},
+		"legacy-easy": {
+			"group": "baseline",
+			"tables": 192,
+			"hands": 19200,
+			"decisions": 62529,
+			"boots": {
+				"mean": -578.4088541666666,
+				"ci": 71.60272900544093,
+				"n": 192
+			},
+			"badActionRate": 0.15798423249343022
+		},
+		"legacy-normal": {
+			"group": "baseline",
+			"tables": 163,
+			"hands": 16300,
+			"decisions": 61635,
+			"boots": {
+				"mean": -169.67914110429447,
+				"ci": 140.0820267830433,
+				"n": 163
+			},
+			"badActionRate": 0.033370796230656176
+		},
+		"legacy-hard": {
+			"group": "baseline",
+			"tables": 177,
+			"hands": 17700,
+			"decisions": 72196,
+			"boots": {
+				"mean": 108.24632768361582,
+				"ci": 188.08938140958173,
+				"n": 177
+			},
+			"badActionRate": 0.018922138902515942
+		},
+		"baseline-aggressive": {
+			"group": "baseline",
+			"tables": 169,
+			"hands": 16900,
+			"decisions": 70472,
+			"boots": {
+				"mean": -418.81065088757396,
+				"ci": 462.95635577913123,
+				"n": 169
+			},
+			"badActionRate": 0.6161424993042026
+		},
+		"baseline-rock": {
+			"group": "baseline",
+			"tables": 149,
+			"hands": 14900,
+			"decisions": 37700,
+			"boots": {
+				"mean": 254.05704697986576,
+				"ci": 137.27247000930848,
+				"n": 149
+			},
+			"badActionRate": 0.025581541162455326
+		},
+		"baseline-station": {
+			"group": "baseline",
+			"tables": 164,
+			"hands": 16400,
+			"decisions": 78494,
+			"boots": {
+				"mean": -1260.158536585366,
+				"ci": 110.51593557556379,
+				"n": 164
+			},
+			"badActionRate": 0.677973212844925
+		},
+		"baseline-random": {
+			"group": "baseline",
+			"tables": 166,
+			"hands": 16600,
+			"decisions": 44066,
+			"boots": {
+				"mean": -600.2530120481928,
+				"ci": 61.377208506343756,
+				"n": 166
+			},
+			"badActionRate": 0.3535526128435142
+		},
+		"human-balanced": {
+			"group": "baseline",
+			"tables": 158,
+			"hands": 15800,
+			"decisions": 59431,
+			"boots": {
+				"mean": 137.56962025316454,
+				"ci": 213.4574727935236,
+				"n": 158
+			},
+			"badActionRate": 0.006743956959915132
+		},
+		"human-beginner": {
+			"group": "human",
+			"tables": 179,
+			"hands": 17900,
+			"decisions": 54521,
+			"boots": {
+				"mean": 49.04301675977654,
+				"ci": 111.31294564980541,
+				"n": 179
+			},
+			"badActionRate": 0.06298935956635214
+		},
+		"human-conservative": {
+			"group": "human",
+			"tables": 173,
+			"hands": 17300,
+			"decisions": 48730,
+			"boots": {
+				"mean": 264.8421965317919,
+				"ci": 107.23609299405234,
+				"n": 173
+			},
+			"badActionRate": 0.036950845725962085
+		},
+		"human-very-conservative": {
+			"group": "human",
+			"tables": 186,
+			"hands": 18600,
+			"decisions": 42469,
+			"boots": {
+				"mean": -20.408602150537636,
+				"ci": 33.68643612380381,
+				"n": 186
+			},
+			"badActionRate": 0.13505877034358046
+		},
+		"human-aggressive": {
+			"group": "human",
+			"tables": 147,
+			"hands": 14700,
+			"decisions": 47430,
+			"boots": {
+				"mean": -195.31972789115648,
+				"ci": 217.3410504960943,
+				"n": 147
+			},
+			"badActionRate": 0.004917202979246511
+		},
+		"human-maniac": {
+			"group": "human",
+			"tables": 168,
+			"hands": 16800,
+			"decisions": 67445,
+			"boots": {
+				"mean": -638.514880952381,
+				"ci": 372.06654468850456,
+				"n": 168
+			},
+			"badActionRate": 0.1692040017398869
+		},
+		"human-bluffer": {
+			"group": "human",
+			"tables": 183,
+			"hands": 18300,
+			"decisions": 58459,
+			"boots": {
+				"mean": -281.3333333333333,
+				"ci": 112.81529367130426,
+				"n": 183
+			},
+			"badActionRate": 0.01435108153078203
+		},
+		"human-station": {
+			"group": "human",
+			"tables": 162,
+			"hands": 16200,
+			"decisions": 76983,
+			"boots": {
+				"mean": -545.9320987654321,
+				"ci": 217.56366350088027,
+				"n": 162
+			},
+			"badActionRate": 0.3936196726759159
+		},
+		"human-unpredictable": {
+			"group": "human",
+			"tables": 154,
+			"hands": 15400,
+			"decisions": 55118,
+			"boots": {
+				"mean": -296.5681818181818,
+				"ci": 207.3798031194515,
+				"n": 154
+			},
+			"badActionRate": 0.16986535063669042
+		},
+		"human-short-desperate": {
+			"group": "human",
+			"tables": 174,
+			"hands": 17400,
+			"decisions": 52558,
+			"boots": {
+				"mean": -247.64367816091954,
+				"ci": 153.76945567857766,
+				"n": 174
+			},
+			"badActionRate": 0.022135559705591563
+		},
+		"human-rich-bully": {
+			"group": "human",
+			"tables": 172,
+			"hands": 17200,
+			"decisions": 66065,
+			"boots": {
+				"mean": 1622.0494186046512,
+				"ci": 261.3438542846865,
+				"n": 172
+			},
+			"badActionRate": 0.009496258096975033
+		},
+		"human-expert": {
+			"group": "human",
+			"tables": 173,
+			"hands": 17300,
+			"decisions": 67448,
+			"boots": {
+				"mean": 285.5433526011561,
+				"ci": 207.86220316644034,
+				"n": 173
+			},
+			"badActionRate": 0.0037225705329153604
+		},
+		"human-switch": {
+			"group": "human",
+			"tables": 156,
+			"hands": 15600,
+			"decisions": 35541,
+			"boots": {
+				"mean": -8.189102564102564,
+				"ci": 39.648245645216385,
+				"n": 156
+			},
+			"badActionRate": 0.14188545776084888
+		},
+		"human-drift": {
+			"group": "human",
+			"tables": 173,
+			"hands": 17300,
+			"decisions": 42579,
+			"boots": {
+				"mean": -105.34393063583815,
+				"ci": 42.95931809871354,
+				"n": 173
+			},
+			"badActionRate": 0.11460190593298494
+		},
+		"human-loose-passive": {
+			"group": "human",
+			"tables": 180,
+			"hands": 18000,
+			"decisions": 68526,
+			"boots": {
+				"mean": 541.2005555555556,
+				"ci": 222.45974402666877,
+				"n": 180
+			},
+			"badActionRate": 0.02629879912193862
+		},
+		"human-value": {
+			"group": "human",
+			"tables": 169,
+			"hands": 16900,
+			"decisions": 42272,
+			"boots": {
+				"mean": 111.14497041420118,
+				"ci": 114.95306499983575,
+				"n": 169
+			},
+			"badActionRate": 0.025488132818893956
+		},
+		"human-blind-heavy": {
+			"group": "human",
+			"tables": 163,
+			"hands": 16300,
+			"decisions": 71330,
+			"boots": {
+				"mean": -173.26503067484663,
+				"ci": 135.63472757436568,
+				"n": 163
+			},
+			"badActionRate": 0.018880208333333332
+		},
+		"human-pressure-bully": {
+			"group": "human",
+			"tables": 173,
+			"hands": 17300,
+			"decisions": 57893,
+			"boots": {
+				"mean": 63.26300578034682,
+				"ci": 240.81171039791553,
+				"n": 173
+			},
+			"badActionRate": 0.0088930183169631
+		}
+	},
+	"champions": {
+		"rohit-sharma": {
+			"worstMatchup": {
+				"member": "human-rich-bully",
+				"mean": -902.3125,
+				"ci": 208.5354038570083,
+				"n": 64
+			},
+			"worstDecile": -1426,
+			"sessions": 129,
+			"badActions": {
+				"strongPacked": 0.0021697857336588013,
+				"monsterNotRaised": 0.011811023622047244,
+				"weakCalled": 0.010974393082806785
+			}
+		},
+		"virat-kohli": {
+			"worstMatchup": {
+				"member": "human-rich-bully",
+				"mean": -1140.921875,
+				"ci": 169.40335926188143,
+				"n": 64
+			},
+			"worstDecile": -1706.6666666666667,
+			"sessions": 153,
+			"badActions": {
+				"strongPacked": 0.0021712158808933004,
+				"monsterNotRaised": 0.004219409282700422,
+				"weakCalled": 0.0343708229902616
+			}
+		},
+		"gg": {
+			"worstMatchup": {
+				"member": "baseline-aggressive",
+				"mean": -216.67187500000003,
+				"ci": 345.7008913124322,
+				"n": 64
+			},
+			"worstDecile": -681.625,
+			"sessions": 157,
+			"badActions": {
+				"strongPacked": 0.045517051705170515,
+				"monsterNotRaised": 0.018121911037891267,
+				"weakCalled": 0.0014281180577594415
+			}
+		},
+		"samay-raina": {
+			"worstMatchup": {
+				"member": "human-expert",
+				"mean": -312.234375,
+				"ci": 223.6574959939405,
+				"n": 64
+			},
+			"worstDecile": -1159.0333333333333,
+			"sessions": 147,
+			"badActions": {
+				"strongPacked": 0.0011689829848032212,
+				"monsterNotRaised": 0.06136363636363636,
+				"weakCalled": 0.034
+			}
+		},
+		"ms-dhoni": {
+			"worstMatchup": {
+				"member": "baseline-aggressive",
+				"mean": -929.171875,
+				"ci": 314.49795480926434,
+				"n": 64
+			},
+			"worstDecile": -1158,
+			"sessions": 143,
+			"badActions": {
+				"strongPacked": 0.005876894525208784,
+				"monsterNotRaised": 0.030303030303030304,
+				"weakCalled": 0.016232379325074753
+			}
+		}
+	},
+	"totals": {
+		"hands": 1686000,
+		"decisions": 37137783,
+		"seconds": 2276.491624417,
+		"maxRssMb": 194.53648376464844
+	}
+}
