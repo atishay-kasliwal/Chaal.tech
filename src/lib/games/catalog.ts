@@ -1,7 +1,7 @@
 import { VARIANT_CATALOG } from '#lib/variant-catalog.js';
 import { HOW_TO_PLAY } from '#lib/teen-patti/how-to-play.js';
 
-export type GameCategory = 'Teen Patti' | 'Poker' | 'Blackjack' | 'Rummy';
+export type GameCategory = 'Teen Patti' | 'Poker' | 'Blackjack' | 'Rummy' | 'Tricks';
 export interface GameGuide {
 	id: string;
 	name: string;
@@ -110,6 +110,20 @@ const otherGames: GameGuide[] = [
 		],
 		cards: [card('5', 'hearts'), card('6', 'hearts'), card('7', 'hearts')],
 		example: '5♥ 6♥ 7♥ · one pure sequence, not a complete declaration'
+	},
+	{
+		id: 'three-two-five',
+		name: '3 2 5',
+		category: 'Tricks',
+		win: 'Take more tricks than your target: 5, 3 or 2, depending on your seat this round.',
+		rules: [
+			'Three players, 30 cards (8 to A in every suit, plus 7♥ and 7♠), ten cards each. Targets rotate every round.',
+			'The player whose target is 5 picks trump after seeing their first five cards.',
+			'Follow suit if you can; otherwise trump or throw any card. The highest trump wins the trick, otherwise the highest card of the suit led.',
+			'Your score is tricks taken minus your target. Next round, each extra trick lets you pull a face-down card from a player who fell short, then give back any card except the one you took.'
+		],
+		cards: [card('A', 'hearts'), card('K', 'hearts'), card('7', 'spades')],
+		example: 'A♥ K♥ 7♠ · trump decides who takes the trick'
 	}
 ];
 // Start the carousel with the four game families and two familiar Teen Patti variants.
@@ -120,7 +134,14 @@ export const GAME_GUIDES = [
 	variants[2],
 	...variants.slice(3)
 ];
-export const GAME_CATEGORIES = ['All', 'Teen Patti', 'Poker', 'Blackjack', 'Rummy'] as const;
+export const GAME_CATEGORIES = [
+	'All',
+	'Teen Patti',
+	'Poker',
+	'Blackjack',
+	'Rummy',
+	'Tricks'
+] as const;
 
 const POSTER_COLORS = ['#293b21', '#34283f', '#4b3023', '#203b48', '#452a33', '#203e33'];
 export function gameColor(id: string) {
