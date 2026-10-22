@@ -4,7 +4,7 @@ The canonical current-state summary. Last verified **2026-10-22**. Phase reports
 are historical evidence and are not rewritten; when they disagree with this page, this page is
 current.
 
-Roadmap: **3 2 5** (done) → **10 Pakad** (planned, awaiting rule decisions) → 29 → cross-game
+Roadmap: **3 2 5** (done) → **10 Pakad** (planned, rules locked; awaiting plan review) → 29 → cross-game
 character evaluation → Phase 5 (long-term memory).
 
 ## Production
@@ -34,29 +34,22 @@ Source of truth: [bots/CANONICAL.md](bots/CANONICAL.md) (`CANONICAL_STYLES` in
 | Samay     | `samay-raina@3`  | `tp-dna@3` / `mind@1` | `7d7e81874eb7ddf7` | `43686ccfe4328696` | Phase 2                 |
 | Dhoni     | `ms-dhoni@4`     | `tp-dna@8` / `mind@1` | `04254a1a0abbb72a` | `98d41082047cd70a` | Phase 4.1 C1 (approved) |
 
-**Publication to the production database: verified plan, not published (owner approval needed).**
-Production tables seat what the bot directory has published, and every character is still on its
-`@2` version (main's earlier line). The read-only plan, run 2026-10-22 against Atlas, matches the
-source exactly:
+**Published to production 2026-10-22** (owner-approved; `npm run bots:publish-dna -- --publish
+--descriptions`). Each bot got its next immutable directory version, exactly the reference; the `@2`
+versions are kept. A rerun of the plan reports every bot "already on" its reference.
 
-| Bot   | Production now   | Would publish                   | Directory hash (plan = source) |
-| ----- | ---------------- | ------------------------------- | ------------------------------ |
-| Rohit | `rohit-sharma@2` | next version = `rohit-sharma@3` | `13657c11ca64694c` ✓           |
-| Virat | `virat-kohli@2`  | next version = `virat-kohli@3`  | `35d9023fb9525120` ✓           |
-| GG    | `gg@2`           | next version = `gg@4`           | `1c634dd3cf3e50f9` ✓           |
-| Samay | `samay-raina@2`  | next version = `samay-raina@3`  | `43686ccfe4328696` ✓           |
-| Dhoni | `ms-dhoni@2`     | next version = `ms-dhoni@4`     | `98d41082047cd70a` ✓           |
+| Bot   | Directory version (live) | Reference        | Policy     | Directory hash     | Previous         |
+| ----- | ------------------------ | ---------------- | ---------- | ------------------ | ---------------- |
+| Rohit | `rohit-sharma@3`         | `rohit-sharma@3` | `tp-dna@3` | `13657c11ca64694c` | `rohit-sharma@2` |
+| Virat | `virat-kohli@3`          | `virat-kohli@3`  | `tp-dna@3` | `35d9023fb9525120` | `virat-kohli@2`  |
+| GG    | `gg@3`                   | `gg@4`           | `tp-dna@4` | `1c634dd3cf3e50f9` | `gg@2`           |
+| Samay | `samay-raina@3`          | `samay-raina@3`  | `tp-dna@3` | `43686ccfe4328696` | `samay-raina@2`  |
+| Dhoni | `ms-dhoni@3`             | `ms-dhoni@4`     | `tp-dna@8` | `98d41082047cd70a` | `ms-dhoni@2`     |
 
-To publish (Atlas must allow the machine; a VPN can block it):
-
-```sh
-MONGODB_ADMIN_URI='<connection string>' npm run bots:publish-dna                              # plan
-MONGODB_ADMIN_URI='<connection string>' npm run bots:publish-dna -- --publish --descriptions  # publish
-```
-
-The script publishes each bot's next immutable directory version, refuses unless the drafted hash and
-genes equal the reference exactly, skips bots already on their reference, and never edits an earlier
-version.
+Directory versions number each bot's database history; reference ids number the code family. They are
+told apart by policy and hash, which every recorded seat carries. Player-facing copy was updated
+(`CANONICAL_COPY`), with the old text kept in each bot's `identityHistory`. Atlas must allow the
+machine running the script (a VPN can block it).
 
 **Known, intentional weaknesses (kept; they are the characters):**
 
@@ -146,11 +139,6 @@ its stand-in bust is not usable art. It needs one base model, from:
 3. **a properly licensed base head**, restyled per character.
 
 No engineering work is waiting on it, and it does not block the game roadmap.
-
-## ATO
-
-Conference follow-ups are separate from Chaal and need the owner's contact and meeting details. No
-contacts are invented.
 
 ## Branches, worktrees and archives
 
