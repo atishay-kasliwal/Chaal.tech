@@ -2,6 +2,7 @@ import { CANONICAL_STYLES } from '../bots/dna-styles.mjs';
 import { styleConfigHash } from '../bots/identity.mjs';
 import { CHARACTER_POLICY_V6 } from '../bots/character-v6.mjs';
 import { CHARACTER_POLICY_V7 } from '../bots/character-v7.mjs';
+import { CHARACTER_POLICY_V8, CHARACTER_POLICY_V9 } from '../bots/character-v8.mjs';
 
 /**
  * Phase 4 challengers (brief §12): a champion plus the smallest stated change, never a broad
@@ -101,8 +102,24 @@ export const DHONI_CHALLENGERS = Object.freeze([
 	})
 ]);
 
+/** Dhoni Phase 4.1: only repeated BLIND raises add pressure to look; seen aggression adds none. */
+export const DHONI41_CHALLENGERS = Object.freeze([
+	challenger('ms-dhoni', 'ms-dhoni@8-blindraises', {
+		policy: CHARACTER_POLICY_V8,
+		change: 'tp-dna@3 plus: from the second blind raiser still in, +0.2 to look each (cap 0.6)',
+		target: { kind: 'exploit', x: 'always-raise' }
+	}),
+	challenger('ms-dhoni', 'ms-dhoni@9-blindcost', {
+		policy: CHARACTER_POLICY_V9,
+		change:
+			'tp-dna@3 plus: each blind raiser still in adds pressure to look, by the stake (cap 0.6)',
+		target: { kind: 'exploit', x: 'always-raise' }
+	})
+]);
+
 /** Challenger sets by name (scripts/sim/phase4.mjs gates --set <name>). */
 export const CHALLENGER_SETS = {
 	samay: SAMAY_CHALLENGERS,
-	dhoni: DHONI_CHALLENGERS
+	dhoni: DHONI_CHALLENGERS,
+	dhoni41: DHONI41_CHALLENGERS
 };

@@ -6,6 +6,12 @@ import { decideCharacterV4, CHARACTER_POLICY_V4 } from './character-v4.mjs';
 import { decideCharacterV5, CHARACTER_POLICY_V5 } from './character-v5.mjs';
 import { decideCharacterV6, CHARACTER_POLICY_V6 } from './character-v6.mjs';
 import { decideCharacterV7, CHARACTER_POLICY_V7 } from './character-v7.mjs';
+import {
+	decideCharacterV8,
+	CHARACTER_POLICY_V8,
+	decideCharacterV9,
+	CHARACTER_POLICY_V9
+} from './character-v8.mjs';
 import { LEGACY_POLICY } from './identity.mjs';
 export { DNA_POLICIES } from './dna-policies.mjs';
 
@@ -26,7 +32,9 @@ export const POLICIES = Object.freeze({
 	[CHARACTER_POLICY_V5]: decideCharacterV5,
 	// Phase 4 challengers only (offline) until a reviewer approves one.
 	[CHARACTER_POLICY_V6]: decideCharacterV6,
-	[CHARACTER_POLICY_V7]: decideCharacterV7
+	[CHARACTER_POLICY_V7]: decideCharacterV7,
+	[CHARACTER_POLICY_V8]: decideCharacterV8,
+	[CHARACTER_POLICY_V9]: decideCharacterV9
 });
 
 /** Policies that read a mind: bots on these styles keep one (server/bots/mind.mjs). */
@@ -36,7 +44,9 @@ export const MIND_POLICIES = Object.freeze(
 		CHARACTER_POLICY_V4,
 		CHARACTER_POLICY_V5,
 		CHARACTER_POLICY_V6,
-		CHARACTER_POLICY_V7
+		CHARACTER_POLICY_V7,
+		CHARACTER_POLICY_V8,
+		CHARACTER_POLICY_V9
 	])
 );
 /** Which mind rules (server/bots/mind.mjs MIND_VERSIONS) a mind-keeping policy's bots follow. */
@@ -45,7 +55,9 @@ export const MIND_RULES = Object.freeze({
 	[CHARACTER_POLICY_V4]: 2,
 	[CHARACTER_POLICY_V5]: 3,
 	[CHARACTER_POLICY_V6]: 4,
-	[CHARACTER_POLICY_V7]: 1
+	[CHARACTER_POLICY_V7]: 1,
+	[CHARACTER_POLICY_V8]: 1,
+	[CHARACTER_POLICY_V9]: 1
 });
 
 /** A decider for one style, or null when this code cannot play it. `mind` is ignored by policies
