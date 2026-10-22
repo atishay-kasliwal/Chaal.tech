@@ -6,11 +6,11 @@ current.
 
 ## Production
 
-| Part | State | How verified |
-|---|---|---|
-| Pages (chaal.tech) | build `1792632850685`, from `origin/main` `9262e929` (PR #22) | page source; `/`, `/club`, `/stats`, `/bots`, `/games` return 200; Google sign-in configured |
-| Worker (chaal-game) | `ENGINE_BUILD a090679aa7eb` | `/health` |
-| Worker vs main | nothing to deploy: `a090679a..9262e929` changes no `server/`, `shared/`, `wrangler` or package files (PRs #19 to #22 were frontend only) | `git diff --stat` |
+| Part                | State                                                                                                                                    | How verified                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Pages (chaal.tech)  | build `1792632850685`, from `origin/main` `9262e929` (PR #22)                                                                            | page source; `/`, `/club`, `/stats`, `/bots`, `/games` return 200; Google sign-in configured |
+| Worker (chaal-game) | `ENGINE_BUILD a090679aa7eb`                                                                                                              | `/health`                                                                                    |
+| Worker vs main      | nothing to deploy: `a090679a..9262e929` changes no `server/`, `shared/`, `wrangler` or package files (PRs #19 to #22 were frontend only) | `git diff --stat`                                                                            |
 
 Deploys are manual from the owner's Mac: Worker (`npm run deploy:backend`, which stamps and checks
 `ENGINE_BUILD`), then Pages. Deploy only `origin/main`. No redeploy is needed today.
@@ -19,13 +19,13 @@ Deploys are manual from the owner's Mac: Worker (`npm run deploy:backend`, which
 
 Source: [bots/CANONICAL.md](bots/CANONICAL.md), frozen in [bots/phase4/champions.json](bots/phase4/champions.json) (on the `phase4` branch).
 
-| Character | Reference | Policy | Reference hash |
-|---|---|---|---|
-| Rohit | `rohit-sharma@3` | `tp-dna@3` / `mind@1` | `f2015fc5daf490a9` |
-| Virat | `virat-kohli@3` | `tp-dna@3` / `mind@1` | `ecd01fe38fca321d` |
-| GG | `gg@4` | `tp-dna@4` / `mind@2` | `862f1cd78b2c4597` |
-| Samay | `samay-raina@3` | `tp-dna@3` / `mind@1` | `7d7e81874eb7ddf7` |
-| Dhoni | `ms-dhoni@3` | `tp-dna@3` / `mind@1` | `2db238f3b5d01784` |
+| Character | Reference        | Policy                | Reference hash     |
+| --------- | ---------------- | --------------------- | ------------------ |
+| Rohit     | `rohit-sharma@3` | `tp-dna@3` / `mind@1` | `f2015fc5daf490a9` |
+| Virat     | `virat-kohli@3`  | `tp-dna@3` / `mind@1` | `ecd01fe38fca321d` |
+| GG        | `gg@4`           | `tp-dna@4` / `mind@2` | `862f1cd78b2c4597` |
+| Samay     | `samay-raina@3`  | `tp-dna@3` / `mind@1` | `7d7e81874eb7ddf7` |
+| Dhoni     | `ms-dhoni@3`     | `tp-dna@3` / `mind@1` | `2db238f3b5d01784` |
 
 **Publication to the production database: unverified.** The read-only plan
 (`npm run bots:publish-dna`, which prints what would be published) could not reach Atlas from the
@@ -54,13 +54,13 @@ which is Phase 5, not a tuning change.
 
 ## Bot phases
 
-| Phase | State | Where |
-|---|---|---|
-| 1, 1.1, 2, 3 | done, on main | [bots/](bots/) reports |
-| 3.1 | done; baseline `a090679a` | branch `phase3.1` (report and results) |
-| 4 (exploit search, league, gates) | **closed**: every champion kept | branch `phase4`, `docs/bots/PHASE4_REPORT.md` |
-| 4.1 (Dhoni blind raises) | **candidate awaiting approval**: `ms-dhoni@8-blindraises` passes all 8 gates (exploit +1,227 ± 33 boots/100, strength -1 ± 140, no counter-exploit regression); `ms-dhoni@9` fails personality | branch `phase4`, `docs/bots/PHASE41_REPORT.md` |
-| 5 (long-term memory) | **direction only, not started** | below |
+| Phase                             | State                                                                                                                                                                                          | Where                                          |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| 1, 1.1, 2, 3                      | done, on main                                                                                                                                                                                  | [bots/](bots/) reports                         |
+| 3.1                               | done; baseline `a090679a`                                                                                                                                                                      | branch `phase3.1` (report and results)         |
+| 4 (exploit search, league, gates) | **closed**: every champion kept                                                                                                                                                                | branch `phase4`, `docs/bots/PHASE4_REPORT.md`  |
+| 4.1 (Dhoni blind raises)          | **candidate awaiting approval**: `ms-dhoni@8-blindraises` passes all 8 gates (exploit +1,227 ± 33 boots/100, strength -1 ± 140, no counter-exploit regression); `ms-dhoni@9` fails personality | branch `phase4`, `docs/bots/PHASE41_REPORT.md` |
+| 5 (long-term memory)              | **direction only, not started**                                                                                                                                                                | below                                          |
 
 `phase4` is not merged. Adopting C1 would mean: merge `phase4`, add `ms-dhoni@4` as canonical with its
 hash, update `CANONICAL.md` and the digest lock, deploy the Worker, then publish. Until then
@@ -77,13 +77,13 @@ Note the name clash: [ANALYTICS_PHASE5.md](ANALYTICS_PHASE5.md) is the analytics
 
 ## Games
 
-| Game | State | Waiting on |
-|---|---|---|
-| Teen Patti (26 variants), Hold'em, Blackjack, Rummy | live | |
-| Rummy "Game service unavailable" | **fixed in PR #23** (open, not merged): rule errors in Rummy, Blackjack and Hold'em are `GameError`s, so players see the reason; a dropped player shows Away at once | review and merge; then Worker deploy only |
-| 3 2 5 | Phase 2 built on branch `phase2-325` (engine, bots, UI, Worker test); not merged, not deployed | rule 2 of [games/325_RULE_LOCK.md](https://github.com/atishay-kasliwal/teenpatti/blob/phase2-325/docs/games/325_RULE_LOCK.md) (return-card restriction), then Phase 2 approval |
-| 10 Pakad | not started | 3 2 5 approval; then one pinned written ruleset (decision R4 in `TRICK_GAMES_PHASE1.md`: trump selection, 2-2 tens tie-break, early stop, Kot scoring) |
-| 29 | not started | 10 Pakad review |
+| Game                                                | State                                                                                                                                                                | Waiting on                                                                                                                                                                     |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Teen Patti (26 variants), Hold'em, Blackjack, Rummy | live                                                                                                                                                                 |                                                                                                                                                                                |
+| Rummy "Game service unavailable"                    | **fixed in PR #23** (open, not merged): rule errors in Rummy, Blackjack and Hold'em are `GameError`s, so players see the reason; a dropped player shows Away at once | review and merge; then Worker deploy only                                                                                                                                      |
+| 3 2 5                                               | Phase 2 built on branch `phase2-325` (engine, bots, UI, Worker test); not merged, not deployed                                                                       | rule 2 of [games/325_RULE_LOCK.md](https://github.com/atishay-kasliwal/teenpatti/blob/phase2-325/docs/games/325_RULE_LOCK.md) (return-card restriction), then Phase 2 approval |
+| 10 Pakad                                            | not started                                                                                                                                                          | 3 2 5 approval; then one pinned written ruleset (decision R4 in `TRICK_GAMES_PHASE1.md`: trump selection, 2-2 tens tie-break, early stop, Kot scoring)                         |
+| 29                                                  | not started                                                                                                                                                          | 10 Pakad review                                                                                                                                                                |
 
 ## Analytics
 
@@ -123,15 +123,15 @@ Owner decision and an outside art source. No code work is waiting on it.
 
 ## Branches and worktrees
 
-| Branch | State |
-|---|---|
-| `main` | production |
-| `phase4` | Phase 4 + 4.1, unmerged (decision pending) |
-| `shared-room-fixes` | PR #23, open |
-| `phase2-325` | 3 2 5 Phase 2 + rule lock, unmerged |
-| `phase3.1`, `blender-pilot`, `trick-games-plan` | pushed; records |
-| `mascot-rollout` (local only) | one unpushed commit; keep |
-| `private-club` | the older parallel bot line; do not deploy |
+| Branch                                          | State                                      |
+| ----------------------------------------------- | ------------------------------------------ |
+| `main`                                          | production                                 |
+| `phase4`                                        | Phase 4 + 4.1, unmerged (decision pending) |
+| `shared-room-fixes`                             | PR #23, open                               |
+| `phase2-325`                                    | 3 2 5 Phase 2 + rule lock, unmerged        |
+| `phase3.1`, `blender-pilot`, `trick-games-plan` | pushed; records                            |
+| `mascot-rollout` (local only)                   | one unpushed commit; keep                  |
+| `private-club`                                  | the older parallel bot line; do not deploy |
 
 Removed worktrees on 2026-10-21 (branches kept): `bots-memory-fix`, `phase31`, `blender-pilot`,
 `bots-phase3`, `navbar`. Their uncommitted work and simulation outputs (including the Phase 3 trial
