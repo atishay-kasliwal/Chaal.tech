@@ -9,13 +9,13 @@ Roadmap: **3 2 5** (done) → **10 Pakad** (done) → **29** (done) → **cross-
 
 ## Production
 
-| Part                | State                                                                                                                           | How verified                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| main                | deployed from `304b78ea` (PRs #23, #25, #26); later merges change nothing deployed: #27 (validation script) and #24 (this page) | GitHub                                                            |
-| Worker (chaal-game) | `ENGINE_BUILD 304b78eaf992` (deployed 2026-10-22)                                                                               | `/health`                                                         |
-| Pages (chaal.tech)  | build `1792675886163`, from `304b78ea` (deployed 2026-10-22)                                                                    | page source; `/`, `/club`, `/stats`, `/bots`, `/games` return 200 |
-| Sign-in             | Google client configured in the build                                                                                           | sign-in page source                                               |
-| 3 2 5               | live: create-room option and `/games` guide                                                                                     | production page source; `/test-325` returns the 404 page          |
+| Part                | State                                                                                                   | How verified                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| main                | deployed from `f24b477e` (PRs #28 10 Pakad, #29 29 and the cross-game evaluation, on top of #23 to #27) | GitHub                                                                            |
+| Worker (chaal-game) | `ENGINE_BUILD f24b477e9776` (deployed 2026-10-22)                                                       | `/health`                                                                         |
+| Pages (chaal.tech)  | build `1792691440071`, from `f24b477e` (deployed 2026-10-22)                                            | page source; `/`, `/club`, `/stats`, `/bots`, `/games`, `/create-room` return 200 |
+| Sign-in             | Google client configured in the build                                                                   | sign-in page source                                                               |
+| 3 2 5, 10 Pakad, 29 | live: create-room options and `/games` guides                                                           | production bundles; `/test-325`, `/test-pakad`, `/test-29` return 404             |
 
 Deploys are manual from the owner's Mac: Worker (`npm run deploy:backend`, which stamps and checks
 `ENGINE_BUILD`), then Pages. Deploy only `origin/main`.
