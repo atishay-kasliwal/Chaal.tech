@@ -1,5 +1,5 @@
 /**
- * Hand recorder v2 (docs/ANALYTICS_SPEC.md §10.3, §15).
+ * Hand recorder v2 (docs/archive/ANALYTICS_SPEC.md §10.3, §15).
  *
  * A hand is recorded as its pre-deal snapshot plus every input to `transition()`, in order, with
  * the context each input ran under (clock, turn length, connected players, deck, every random

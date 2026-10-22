@@ -1,5 +1,5 @@
 /**
- * Owner-only intelligence (docs/ANALYTICS_PHASE5.md). Club analytics, variant health, bot
+ * Owner-only intelligence (docs/archive/ANALYTICS_PHASE5.md). Club analytics, variant health, bot
  * intelligence and data quality are read from the club's public hand history and the bots' derived
  * caches. Nothing here reads a private card. The Worker authorises the owner before calling.
  */

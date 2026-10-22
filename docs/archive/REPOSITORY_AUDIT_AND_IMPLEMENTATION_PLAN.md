@@ -7,25 +7,25 @@ Status: Preservation-first plan with Phase 0–9 implementation updates; Phase 9
 
 Visual baseline: [VISUAL_PRESERVATION_PLAN.md](VISUAL_PRESERVATION_PLAN.md).
 
-Phase 5 update: the extracted original player panels now form a six-person table with the viewer anchored at bottom center. The pot/header, game actions, cards, turn and winner cues, LiveKit media ownership and styling are reused. A server-owned cumulative per-hand contribution is added for the seat bet display; existing chip, turn and winner calculations are unchanged. Two-through-six-player layouts and six real LiveKit participants passed browser checks. See the [Phase 5 implementation and screenshots](docs/phase5/IMPLEMENTATION.md).
+Phase 5 update: the extracted original player panels now form a six-person table with the viewer anchored at bottom center. The pot/header, game actions, cards, turn and winner cues, LiveKit media ownership and styling are reused. A server-owned cumulative per-hand contribution is added for the seat bet display; existing chip, turn and winner calculations are unchanged. Two-through-six-player layouts and six real LiveKit participants passed browser checks. See the [Phase 5 implementation and screenshots](docs/archive/phase5/IMPLEMENTATION.md).
 
-Phase 6 update: the table now puts the center first and the local seat directly below it on phones, with friends in a compact two-column layout. A fixed safe-area-aware action bar reuses the existing controls and stays reachable while scrolling. Two-through-six-player portrait rooms and six-player short-landscape/narrow widths passed browser checks. See the [Phase 6 implementation and screenshots](docs/phase6/IMPLEMENTATION.md). Hands-on iOS/Android media checks and production deployment remain future work.
+Phase 6 update: the table now puts the center first and the local seat directly below it on phones, with friends in a compact two-column layout. A fixed safe-area-aware action bar reuses the existing controls and stays reachable while scrolling. Two-through-six-player portrait rooms and six-player short-landscape/narrow widths passed browser checks. See the [Phase 6 implementation and screenshots](docs/archive/phase6/IMPLEMENTATION.md). Hands-on iOS/Android media checks and production deployment remain future work.
 
-Phase 7 update: all requested Teen Patti variants now have separate server rule files: Classic, Muflis, AK47, Joker, Lowest Joker, 999, 2 Card and 4 Card. The shared engine supports declared hand sizes and a public Joker rank marker while retaining private player cards and shared room/betting infrastructure. See [variant rules and verification](docs/phase7/IMPLEMENTATION.md).
+Phase 7 update: all requested Teen Patti variants now have separate server rule files: Classic, Muflis, AK47, Joker, Lowest Joker, 999, 2 Card and 4 Card. The shared engine supports declared hand sizes and a public Joker rank marker while retaining private player cards and shared room/betting infrastructure. See [variant rules and verification](docs/archive/phase7/IMPLEMENTATION.md).
 
-Phase 8 update: the existing room waiting screen now includes a server-backed readiness lobby, host start gate, seat/host/connection status, starting-chip display, optional media preview and copy-invite button. Existing create-room settings and game controls remain in place. See [Phase 8 implementation](docs/phase8/IMPLEMENTATION.md).
+Phase 8 update: the existing room waiting screen now includes a server-backed readiness lobby, host start gate, seat/host/connection status, starting-chip display, optional media preview and copy-invite button. Existing create-room settings and game controls remain in place. See [Phase 8 implementation](docs/archive/phase8/IMPLEMENTATION.md).
 
-Phase 9 update: the service now exposes separate liveness and SQLite-backed readiness probes, checkpoints committed WAL state on shutdown, waits for LiveKit cleanup and supports repeatable close. Multiplayer, race, restart and media-failure checks are automated; production deployment, backup restoration and WAN load tests remain outstanding. See [Phase 9 implementation](docs/phase9/IMPLEMENTATION.md).
+Phase 9 update: the service now exposes separate liveness and SQLite-backed readiness probes, checkpoints committed WAL state on shutdown, waits for LiveKit cleanup and supports repeatable close. Multiplayer, race, restart and media-failure checks are automated; production deployment, backup restoration and WAN load tests remain outstanding. See [Phase 9 implementation](docs/archive/phase9/IMPLEMENTATION.md).
 
-Phase 4 update: optional LiveKit media is integrated into the existing player grid, with server-owned media identities, separate device controls and six real local media connections verified. See [setup, verification and production admission limitations](docs/phase4/IMPLEMENTATION.md).
+Phase 4 update: optional LiveKit media is integrated into the existing player grid, with server-owned media identities, separate device controls and six real local media connections verified. See [setup, verification and production admission limitations](docs/archive/phase4/IMPLEMENTATION.md).
 
-Phase 3 update: Muflis is registered using the exact reverse of the existing Classic ranking. The existing create-room form and Game Settings offer variant selection; only the host can choose new rules at the next hand's start. The theme, cards, player presentation and action controls are retained. See [rules, implementation and verification](docs/phase3/IMPLEMENTATION.md).
+Phase 3 update: Muflis is registered using the exact reverse of the existing Classic ranking. The existing create-room form and Game Settings offer variant selection; only the host can choose new rules at the next hand's start. The theme, cards, player presentation and action controls are retained. See [rules, implementation and verification](docs/archive/phase3/IMPLEMENTATION.md).
 
-Phase 2 update: Classic was moved behind a minimal versioned registry, reusing the evaluator/comparer unchanged and preserving all Phase 1 frontend/static files. See the [historical Phase 2 report](docs/phase2/IMPLEMENTATION.md).
+Phase 2 update: Classic was moved behind a minimal versioned registry, reusing the evaluator/comparer unchanged and preserving all Phase 1 frontend/static files. See the [historical Phase 2 report](docs/archive/phase2/IMPLEMENTATION.md).
 
-Phase 1 update: the owned local Classic service now supplies authoritative settlement, private recipient views, durable sessions/receipts and refresh recovery behind the preserved UI. See [implementation and rule defaults](docs/phase1/IMPLEMENTATION.md) and [visual evidence](visual-baselines/phase1/README.md). Earlier unverified/missing-runtime entries below are historical audit findings.
+Phase 1 update: the owned local Classic service now supplies authoritative settlement, private recipient views, durable sessions/receipts and refresh recovery behind the preserved UI. See [implementation and rule defaults](docs/archive/phase1/IMPLEMENTATION.md) and [visual evidence](visual-baselines/phase1/README.md). Earlier unverified/missing-runtime entries below are historical audit findings.
 
-Phase 0 progress: the original frontend is imported unchanged, runs locally, and has 20 real UI captures and a completed six-player smoke path. Card/deck disclosure and refresh failure are confirmed. See [current results](docs/phase0/RESULTS.md) and [setup](docs/phase0/SETUP.md). The audit tables below describe the initial inspection; current runtime findings supersede their earlier unverified entries. Backend source, complete rule verification and restart testing remain unresolved; Phase 1 subsequently delivered the local foundation described above.
+Phase 0 progress: the original frontend is imported unchanged, runs locally, and has 20 real UI captures and a completed six-player smoke path. Card/deck disclosure and refresh failure are confirmed. See [current results](docs/archive/phase0/RESULTS.md) and [setup](docs/archive/phase0/SETUP.md). The audit tables below describe the initial inspection; current runtime findings supersede their earlier unverified entries. Backend source, complete rule verification and restart testing remain unresolved; Phase 1 subsequently delivered the local foundation described above.
 
 **Recommendation: evolve the original Teen Patti application in place, preserving its appearance, components, interactions, and Socket.IO model wherever safe.** The existing room page is the product baseline. Add variants, media, and reliability through the smallest useful changes.
 
@@ -433,7 +433,7 @@ Estimates are effort ranges, not delivery promises. They assume social browser p
 
 ### Phase 5 — Evolve panels into the six-person table
 
-**Status: Complete.** Implementation details, verification and screenshots: [Phase 5 report](docs/phase5/IMPLEMENTATION.md).
+**Status: Complete.** Implementation details, verification and screenshots: [Phase 5 report](docs/archive/phase5/IMPLEMENTATION.md).
 
 - **Goal:** Place richer versions of the original player panels around the central game content.
 - **Existing code reused:** Player markup/classes, PlayingCard/fan, pot/stake header animations, controls, status/packed/turn cues and Phase 4 media.
@@ -447,7 +447,7 @@ Estimates are effort ranges, not delivery promises. They assume social browser p
 
 ### Phase 6 — Mobile evolution in the same visual language
 
-**Status: Mobile implementation and browser viewport verification complete. Physical iOS/Android validation remains outstanding.** See [Phase 6 report](docs/phase6/IMPLEMENTATION.md).
+**Status: Mobile implementation and browser viewport verification complete. Physical iOS/Android validation remains outstanding.** See [Phase 6 report](docs/archive/phase6/IMPLEMENTATION.md).
 
 - **Goal:** Improve responsive play without shrinking the desktop table wholesale.
 - **Existing code reused:** Same card, seat, form, control and theme components.
@@ -481,7 +481,7 @@ Estimates are effort ranges, not delivery promises. They assume social browser p
 - **New modules required:** Invite copy/code helper, ready state, local preview and host controls only where needed.
 - **Dependencies:** Existing application and media modules.
 - **Tests required:** Home → existing create/join → waiting/lobby and preview → variant/settings → ready → start → same room table; full room, concurrent join, host leave/transfer, settings reset readiness and late resume.
-- **Definition of done:** Familiar flows gain a copyable room invite, validated starting chips at room creation, optional camera/audio preview, server-backed readiness and host-only start/variant controls without a new screen system. See [implementation and verification](docs/phase8/IMPLEMENTATION.md).
+- **Definition of done:** Familiar flows gain a copyable room invite, validated starting chips at room creation, optional camera/audio preview, server-backed readiness and host-only start/variant controls without a new screen system. See [implementation and verification](docs/archive/phase8/IMPLEMENTATION.md).
 - **Risks:** Extra friction, confusing current `table` meaning with both starting chips and boot, settings changing mid-hand.
 - **Complexity:** Medium; approximately 1–2 engineer-weeks. Minimum identity/lobby admission exists in Phase 1; variant selection exists by Phase 3.
 
@@ -495,7 +495,7 @@ Estimates are effort ranges, not delivery promises. They assume social browser p
 - **New modules required:** Failure/race harness, operational runbooks, monitoring and recovery verification.
 - **Dependencies:** Selected structured logging/monitoring and load-test tooling; no infrastructure platform migration without need.
 - **Tests required:** Six real simultaneous users, multiple rooms, refresh/duplicate connections, host and player departure mid-hand, game/media interruption independently, server restart, database failure, malformed/concurrent actions and race conditions.
-- **Definition of done:** Automated local multiplayer, race, privacy, media-failure and restart checks pass; committed state recovers on orderly shutdown. Backup restoration, deployment rollback, WAN/load targets and production visual validation still need an actual target environment. See [current status](docs/phase9/IMPLEMENTATION.md).
+- **Definition of done:** Automated local multiplayer, race, privacy, media-failure and restart checks pass; committed state recovers on orderly shutdown. Backup restoration, deployment rollback, WAN/load targets and production visual validation still need an actual target environment. See [current status](docs/archive/phase9/IMPLEMENTATION.md).
 - **Risks:** Cross-process room ownership, incompatible snapshots, downtime deadlines, diagnostics leaking cards.
 - **Complexity:** High; approximately 2–4 engineer-weeks, after foundational durability in Phase 1.
 
@@ -583,7 +583,7 @@ Phase 0 should check any owner-provided server repository/deployment reference a
 
 ## RECOMMENDED FIRST MOVE
 
-Phase 0 was authorized under the preservation constraint. Its local frontend baseline and six-player smoke path are delivered; see [current results](docs/phase0/RESULTS.md). The original first-move checklist remains below for traceability. The next implementation decision concerns recovering or replacing only the backend boundary, with no frontend redesign.
+Phase 0 was authorized under the preservation constraint. Its local frontend baseline and six-player smoke path are delivered; see [current results](docs/archive/phase0/RESULTS.md). The original first-move checklist remains below for traceability. The next implementation decision concerns recovering or replacing only the backend boundary, with no frontend redesign.
 
 1. Import the pinned original frontend into this workspace with a reviewed file inventory, preserving current history and unrelated workspace changes.
 2. Run it without appearance changes; capture original screens/interactions and record the existing theme from the visual preservation document.

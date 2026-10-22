@@ -18,4 +18,4 @@ The [no-media report](no-media/browser-report.json) separately runs the existing
 
 The six-video table and permission-failure captures were visually inspected. Videos use the existing player grid and styling. These references do not claim the future six-seat perimeter layout or dedicated mobile design is implemented. Screenshots supplement deterministic source-preservation tests and are not automated pixel-difference tests.
 
-See the [implementation and local setup guide](../../docs/phase4/IMPLEMENTATION.md), including the exact test boundaries and self-hosted token-replay limitation. Original through Phase 3 capture directories remain unchanged.
+See the [implementation and local setup guide](../../docs/archive/phase4/IMPLEMENTATION.md), including the exact test boundaries and self-hosted token-replay limitation. Original through Phase 3 capture directories remain unchanged.

@@ -19,7 +19,7 @@ import { finishCapture } from '../../server/analytics/recorder.mjs';
 import { runTable } from '../../server/sim/table.mjs';
 import { teenPattiTable, dealTeenPatti, playTeenPatti } from './helpers/drivers.mjs';
 
-/* Phase 5: long-term memory as a returning-player prior (docs/bots/PHASE5_REPORT.md). */
+/* Phase 5: long-term memory as a returning-player prior (docs/archive/bots/PHASE5_REPORT.md). */
 
 const NOW = 1_800_000_000_000;
 const counter = (action, n, k, hands, ago = 0) => ({

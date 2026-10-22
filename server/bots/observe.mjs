@@ -1,5 +1,5 @@
 /**
- * Observation stream obs@1 (docs/BOT_BRAIN.md §5.3): what one bot saw happen between two of its
+ * Observation stream obs@1 (docs/archive/BOT_BRAIN.md §5.3): what one bot saw happen between two of its
  * own projections. This is the only input to a bot's mind, so a mind can hold nothing the bot
  * could not have seen on screen: hidden cards appear only when the projection itself reveals them
  * (a show, or a hand the player chose to show).

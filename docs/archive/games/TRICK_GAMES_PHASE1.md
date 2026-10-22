@@ -49,7 +49,7 @@ not touched.
   move from the next. Disciplined characters have a smaller reach. Opponent reads are capped but not
   shrunk by clarity, since they are evidence about a move's value.
 - **Character = data.** DNA (19 traits in [0, 1]), quirks and tempo per style
-  (`server/bots/dna-styles.mjs`, `docs/bots/CANONICAL.md`); published styles are immutable versions.
+  (`server/bots/dna-styles.mjs`, `docs/archive/bots/CANONICAL.md`); published styles are immutable versions.
 - **Mind** (`server/bots/mind.mjs`): mood (5 dimensions with night form and decay), relationships
   (rivalry, annoyance, respect, fear), opponent models (counts with decay and confidence), and session
   self. Session scope only; no per-person learning across sessions (approved principle).

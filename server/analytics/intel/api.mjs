@@ -1,5 +1,5 @@
 /**
- * Member-facing intelligence routes (docs/ANALYTICS_PHASE5.md). Same contract as analytics/api.mjs:
+ * Member-facing intelligence routes (docs/archive/ANALYTICS_PHASE5.md). Same contract as analytics/api.mjs:
  * the viewer is the signed-in member, responses are purpose-built, and every number is computed by the
  * canonical modules (compute/*, intel/*). This file only loads, composes and authorises; it does not
  * define a metric.

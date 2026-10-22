@@ -1,10 +1,10 @@
 /**
- * Names of the DNA character policies (docs/BOT_BRAIN.md): personality as data on a shared base
+ * Names of the DNA character policies (docs/archive/BOT_BRAIN.md): personality as data on a shared base
  * brain, with a per-session mind from `tp-dna@3`. A leaf module, so the engine's style validation
  * can know them without loading the deciders.
  *
  * These were built as `tp-character@1` to `@4` on the private-club line. They were renamed when the
- * line became canonical on main (docs/bots/CANONICAL.md), because main had already published a
+ * line became canonical on main (docs/archive/bots/CANONICAL.md), because main had already published a
  * different policy as `tp-character@1`. Only the names changed: decisions, traces and minds are
  * byte-identical (tests/server/bot-baseline.test.mjs, and the golden digests).
  */

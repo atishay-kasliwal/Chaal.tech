@@ -19,4 +19,4 @@ The existing six-browser capture sequence passed against the Classic registry in
 
 All Phase 1 frontend/static file hashes are unchanged, including theme, components, socket store and card renderer. These functional captures supplement source-preservation tests; they are not automated pixel-difference tests. Random hands and generated room identifiers naturally differ between runs. The six-player blind capture was also visually inspected.
 
-Read the [Phase 2 implementation report](../../docs/phase2/IMPLEMENTATION.md) for the registry boundary, deterministic parity evidence and separately tested seat-recovery correction. Earlier capture directories remain unchanged.
+Read the [Phase 2 implementation report](../../docs/archive/phase2/IMPLEMENTATION.md) for the registry boundary, deterministic parity evidence and separately tested seat-recovery correction. Earlier capture directories remain unchanged.

@@ -1,5 +1,5 @@
 /**
- * Data quality (docs/ANALYTICS_PHASE5.md, "Data quality"): problems must be visible before anyone
+ * Data quality (docs/archive/ANALYTICS_PHASE5.md, "Data quality"): problems must be visible before anyone
  * trusts a number. `recordProblems` is a pure per-hand check; `dataQuality` runs it over the history
  * plus the operational checks (recorder, replay, memory, stale caches). Output carries ids and counts
  * only, never hand contents.

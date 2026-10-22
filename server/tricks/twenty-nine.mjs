@@ -3,7 +3,7 @@ import { castMember } from '../../src/lib/bots/cast.js';
 import { GameError } from '../engine.mjs';
 
 /**
- * 29, Chaal V1 rules (docs/games/29_RULES.md, locked 2026-10-22; pagat.com standard rules with the
+ * 29, Chaal V1 rules (docs/archive/games/29_RULES.md, locked 2026-10-22; pagat.com standard rules with the
  * owner's choices: 28 points, minimum bid 15, a player who cannot follow before trump is known must ask
  * for it and may then play any card, no doubles or single hand).
  *

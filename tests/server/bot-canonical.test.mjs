@@ -26,7 +26,7 @@ import { member } from '../../server/sim/population.mjs';
 import { DNA_POLICIES, FORMER_NAMES } from '../../server/bots/dna-policies.mjs';
 import { canonicalJson } from '../../server/analytics/hash.mjs';
 
-/* The canonical characters (docs/bots/CANONICAL.md): Phase 2 for Rohit, Virat and Samay, Phase 3
+/* The canonical characters (docs/archive/bots/CANONICAL.md): Phase 2 for Rohit, Virat and Samay, Phase 3
  * c034 for GG, Phase 4.1 C1 for Dhoni. */
 
 const league = JSON.parse(

@@ -469,7 +469,7 @@ else if (action === 'lineup') {
 			try {
 				const result = await withClubDatabase(env, async (db) => {
 					const member = await signedInMember(request, env, db);
-					// Opponent-level stats wait while this member is in a live hand (see docs/ANALYTICS_PHASE5.md).
+					// Opponent-level stats wait while this member is in a live hand (see docs/archive/ANALYTICS_PHASE5.md).
 					const live = OPPONENT_ROUTES.includes(analyticsRoute[1]) && (await memberInLiveHand(env, member));
 					return analyticsResponse(db, member, analyticsRoute[1], url.searchParams, Date.now(), { live });
 				});

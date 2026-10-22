@@ -1,5 +1,5 @@
 /**
- * Phase 5 gates (docs/bots/PHASE5_REPORT.md): what long-term memory does to each canonical character,
+ * Phase 5 gates (docs/archive/bots/PHASE5_REPORT.md): what long-term memory does to each canonical character,
  * on matched tables. Night 1 builds what the character remembers (its last session mind, turned into
  * priors with the memory model's own rates and confidence: server/bots/memory/prior.mjs
  * priorFromSession). Night 2 is played twice on the same cards and draws, with and without those priors.

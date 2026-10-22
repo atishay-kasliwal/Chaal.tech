@@ -13,7 +13,7 @@ import { GameError } from '../../server/engine.mjs';
 import { runTablePakad, randomPakad } from '../../server/sim/tricks/table-pakad.mjs';
 import { stream, shuffle } from '../../server/sim/seeds.mjs';
 
-/* 10 Pakad, Chaal V1 (docs/games/10PAKAD_PLAN.md §1, locked 2026-10-22). */
+/* 10 Pakad, Chaal V1 (docs/archive/games/10PAKAD_PLAN.md §1, locked 2026-10-22). */
 
 const IDS = ['a', 'b', 'c', 'd'];
 const ctx = (extra = {}) => ({ now: 1000, turnMs: 60000, connected: new Set(IDS), ...extra });

@@ -22,7 +22,7 @@ The Teen Patti server has a solid authoritative foundation: it owns dealing, tur
 
 If `VITE_SERVER_URL` is missing at build time, the browser bundle targets `http://127.0.0.1:8080`, which means visitors try to connect to their own machine. Cloudflare Pages configuration must inject the public API URL before building; the repository does not fail the production build when it is absent. The live Pages build setting was not inspected.
 
-**Evidence:** [`src/lib/config.ts`](../src/lib/config.ts) line 2; [`docs/cloudflare-deployment.md`](cloudflare-deployment.md) lines 16–20.
+**Evidence:** [`src/lib/config.ts`](../src/lib/config.ts) line 2; [`docs/archive/cloudflare-deployment.md`](cloudflare-deployment.md) lines 16–20.
 
 **Resolution:** Localhost remains the development-only default. Production Vite builds now require a public HTTPS origin and reject missing values, HTTP, localhost (including trailing-dot and subdomain forms), IP literals, credentials, and URL paths. Missing runtime configuration also produces a visible connection error. Positive and negative build-configuration tests pass. The live Pages build setting still needs verification.
 
@@ -54,7 +54,7 @@ The disconnect handler updates local presence but leaves `hostId` unchanged. Hos
 
 Presence and room publication use process-local maps. SQLite revision checks prevent some conflicting writes, but sockets connected to other processes will not receive updates and each process sees an incomplete connected-player set. The project documents single-process operation as a current limit.
 
-**Evidence:** [`server/index.mjs`](../server/index.mjs) lines 58 and 194–212; [`docs/phase9/IMPLEMENTATION.md`](phase9/IMPLEMENTATION.md) lines 23–28.
+**Evidence:** [`server/index.mjs`](../server/index.mjs) lines 58 and 194–212; [`docs/archive/phase9/IMPLEMENTATION.md`](phase9/IMPLEMENTATION.md) lines 23–28.
 
 **Resolution:** The supported launch shape is one game-server process, documented in the deployment guide. Six-player rooms work within that shape. Multi-replica support still requires shared presence/broadcast and transactional room ownership; it is not needed for the current launch target and remains future work.
 
@@ -62,7 +62,7 @@ Presence and room publication use process-local maps. SQLite revision checks pre
 
 The project notes that a removed participant may reconnect using a previously issued self-hosted LiveKit token. The short token lifetime mitigates exposure but does not provide a complete revocation guarantee.
 
-**Evidence:** [`server/media.mjs`](../server/media.mjs) lines 28–43; [`docs/phase4/IMPLEMENTATION.md`](phase4/IMPLEMENTATION.md) line 84.
+**Evidence:** [`server/media.mjs`](../server/media.mjs) lines 28–43; [`docs/archive/phase4/IMPLEMENTATION.md`](phase4/IMPLEMENTATION.md) line 84.
 
 **Resolution:** LiveKit Cloud URLs automatically pass the token revocation cutoff when a participant is removed; other compatible providers can enable it with `LIVEKIT_REVOKE_TOKENS=true`. Tokens expire after 60 seconds. Self-hosted LiveKit still has no immediate revocation guarantee. The actual production provider and its credentials were not available for an end-to-end check.
 

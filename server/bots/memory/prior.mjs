@@ -1,5 +1,5 @@
 /**
- * Phase 5, long-term memory for the characters (docs/bots/PHASE5_REPORT.md): what a character
+ * Phase 5, long-term memory for the characters (docs/archive/bots/PHASE5_REPORT.md): what a character
  * remembers about a returning player, turned into a small prior for its session mind.
  *
  * public observations only (bot_memory: observer-filtered, no cards)

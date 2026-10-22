@@ -1,5 +1,5 @@
 /**
- * Cross-game character evaluation (docs/bots/CROSS_GAME_EVAL.md): does each character keep its
+ * Cross-game character evaluation (docs/archive/bots/CROSS_GAME_EVAL.md): does each character keep its
  * identity across Teen Patti, 3 2 5, 10 Pakad and 29? Character identity is DNA; strategy is per game.
  *   node scripts/sim/cross-game-eval.mjs > docs/bots/cross-game/eval-81.json
  *

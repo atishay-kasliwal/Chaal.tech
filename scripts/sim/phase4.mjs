@@ -1,5 +1,5 @@
 /**
- * Phase 4 driver (docs/bots/PHASE4_REPORT.md): measurement calibration, the fixed exploit suite,
+ * Phase 4 driver (docs/archive/bots/PHASE4_REPORT.md): measurement calibration, the fixed exploit suite,
  * exploit search, character studies, challengers and the league. Every stage writes its result to
  * .sim/phase4/<stage>-<seed>.json; scripts/sim/phase4-report.mjs reads them.
  *

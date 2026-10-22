@@ -2,7 +2,7 @@
  * Data access for analytics: the boundary between raw hand history (MongoDB) and computation.
  * Loaders project only what each use needs; nothing here computes metrics.
  *
- * Layers (docs/ANALYTICS_PHASE2.md, "Performance"):
+ * Layers (docs/archive/ANALYTICS_PHASE2.md, "Performance"):
  *   raw      hand_records / hand_private (Phase 1, permanent)
  *   derived  compute/*.mjs, recomputed per request from raw
  *   cached   in-isolate memo for club-wide priors; pre-aggregation is a later, measured step

@@ -1,7 +1,7 @@
 # 3 2 5: Phase 2 report (stopped for review)
 
 Branch `phase2-325` (from `trick-games-plan`). **Not merged, not deployed.** 10 Pakad has not been started.
-Written 2026-10-21. Rules: [docs/games/325_RULES.md](325_RULES.md). Plan: [TRICK_GAMES_PHASE1.md](TRICK_GAMES_PHASE1.md).
+Written 2026-10-21. Rules: [docs/archive/games/325_RULES.md](325_RULES.md). Plan: [TRICK_GAMES_PHASE1.md](TRICK_GAMES_PHASE1.md).
 
 ## 1. Summary
 

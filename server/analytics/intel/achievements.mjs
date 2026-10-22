@@ -1,6 +1,6 @@
 /**
  * Achievements: a short, restrained list that comes out of real card-game moments and history
- * (docs/ANALYTICS_PHASE5.md, "Achievements"). They are derived on demand, never stored, so they can
+ * (docs/archive/ANALYTICS_PHASE5.md, "Achievements"). They are derived on demand, never stored, so they can
  * never drift from the hand history. None rewards a bigger bet, a bigger pot, losing, or speed, so
  * nothing here nudges anyone to gamble more.
  */

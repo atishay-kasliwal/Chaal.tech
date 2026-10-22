@@ -1,5 +1,5 @@
 /**
- * Insight ranking (docs/ANALYTICS_PHASE5.md, "Ranking"). Many analytics can produce something to say;
+ * Insight ranking (docs/archive/ANALYTICS_PHASE5.md, "Ranking"). Many analytics can produce something to say;
  * this decides what is worth saying now. Each candidate carries plain components and the score is a
  * fixed, documented weighted sum, so "why am I seeing this" always has an answer:
  *

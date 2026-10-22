@@ -1,5 +1,5 @@
 /**
- * Owner analytics and variant health (docs/ANALYTICS_PHASE5.md, "Owner analytics"). Built from the
+ * Owner analytics and variant health (docs/archive/ANALYTICS_PHASE5.md, "Owner analytics"). Built from the
  * club's public hand summaries only: no private cards, no per-player strategy. Everything is a count
  * or a duration with its sample size. Popularity is reported as popularity; nothing here turns it
  * into a quality score.

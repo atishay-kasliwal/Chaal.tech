@@ -28,7 +28,7 @@ See "Phase 1 as built" below. Grounded in the code as of `private-club` @ 050661
   - the runtime never administers schema;
   - per-room status feeds `npm run analytics:health`.
 - Operations, versioning rules, storage estimate and the production validation plan:
-  docs/ANALYTICS_OPERATIONS.md.
+  docs/archive/ANALYTICS_OPERATIONS.md.
 
 Contents
 

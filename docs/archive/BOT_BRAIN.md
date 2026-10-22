@@ -6,7 +6,7 @@ Written against `private-club` at `e4561b4a`.
 The characters are the five bots with art in `design/mascots/bots/`: **Rohit** (blind king), **Virat**
 (maniac), **GG** (rock), **Samay** (calls to see it) and **Dhoni** (the adaptive shark). Ids and
 names live in `src/lib/bots/cast.js`; an earlier draft used placeholder names.
-Extends `docs/ANALYTICS_SPEC.md` §15 (bots); where the two disagree, this document says so and why.
+Extends `docs/archive/ANALYTICS_SPEC.md` §15 (bots); where the two disagree, this document says so and why.
 
 The product test: **after enough hands, can a player tell which bot they are playing from how it
 plays, and when they meet it again, does it feel like the same character who remembers the
@@ -899,7 +899,7 @@ LangGraph, neural networks and external data stay out of Phase 1.
 
 ## 26. Phase 1 as built
 
-Measured results: `docs/bots/PHASE1_REPORT.md` (regenerate with `npm run sim:phase1`).
+Measured results: `docs/archive/bots/PHASE1_REPORT.md` (regenerate with `npm run sim:phase1`).
 
 | Piece                                                                                  | Where                                                                               |
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
@@ -939,7 +939,7 @@ Measured results: `docs/bots/PHASE1_REPORT.md` (regenerate with `npm run sim:pha
 
 ## 27. Phase 1.1: behavioural foundation correction
 
-Measured results: `docs/bots/PHASE1_1_REPORT.md` (`npm run sim:phase11`). Review that prompted it:
+Measured results: `docs/archive/bots/PHASE1_1_REPORT.md` (`npm run sim:phase11`). Review that prompted it:
 the Phase 1 behaviour review (personality overpowered hand strength, quirks double-counted traits,
 Rohit had no blind-aggression path, explanations compared against trivial alternatives).
 
@@ -1000,7 +1000,7 @@ variation; and (phase 2) a mind, which is the first thing that can make sessions
 
 ## 28. Phase 2: the mind (as built)
 
-Measured results: `docs/bots/PHASE2_REPORT.md` (`npm run sim:phase2`). Published: policy
+Measured results: `docs/archive/bots/PHASE2_REPORT.md` (`npm run sim:phase2`). Published: policy
 `tp-character@3` (`server/bots/character-v3.mjs`) and styles `@3` (`CHARACTER_DNA_V3`, parent `@2`).
 `tp-character@1/@2` and their styles are unchanged and still replay (golden digests).
 
@@ -1078,4 +1078,4 @@ the trace. The Node server keeps minds in memory. Inspector for recorded hands: 
 
 Not built (phase 3+): showing cues as table talk, long-term memory across nights, persistent bot↔bot memory.
 
-Open data sources are in `docs/BOT_DATASETS.md`.
+Open data sources are in `docs/archive/BOT_DATASETS.md`.

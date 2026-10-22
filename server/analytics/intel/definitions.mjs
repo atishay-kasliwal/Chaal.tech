@@ -2,7 +2,7 @@
  * The metric registry: one place that says what each number means and which function is its single
  * definition. Surfaces (player page, rivalry page, bot page, recap, records, insights, owner views)
  * must call these functions rather than recompute; a test imports every entry to prove it still exists.
- * Documented in docs/ANALYTICS_METRICS.md.
+ * Documented in docs/archive/ANALYTICS_METRICS.md.
  */
 export const METRICS = Object.freeze([
 	{ id: 'units', label: 'Boots, big blinds, bets', module: 'compute/facts.mjs', fn: 'handFacts', meaning: 'A hand’s net chips divided by that game’s stake unit, so stakes compare fairly.' },

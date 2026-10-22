@@ -1,5 +1,5 @@
 /**
- * Phase 2 report (docs/BOT_BRAIN.md §28): character styles @2 (tp-dna@2, stateless) against
+ * Phase 2 report (docs/archive/BOT_BRAIN.md §28): character styles @2 (tp-dna@2, stateless) against
  * @3 (tp-dna@3, with a mind), measured the same way. Measurement only.
  *
  *   node scripts/sim/phase2-report.mjs [--seed 21] [--hands 200] [--scale 1]
@@ -15,7 +15,7 @@
  *  - adaptation: Dhoni (and, for contrast, every character) against four copies of one opponent
  *    type, early hands vs late hands.
  *
- * Writes docs/bots/PHASE2_REPORT.md and .sim/phase2-<seed>.json.
+ * Writes docs/archive/bots/PHASE2_REPORT.md and .sim/phase2-<seed>.json.
  */
 import { availableParallelism } from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -719,7 +719,7 @@ mkdirSync(new URL('../../docs/bots/', import.meta.url), { recursive: true });
 // --md <path>: write elsewhere (a trial run must not overwrite the reviewed report).
 const mdPath = process.argv.includes('--md')
 	? process.argv[process.argv.indexOf('--md') + 1]
-	: new URL('../../docs/bots/PHASE2_REPORT.md', import.meta.url);
+	: new URL('../../docs/archive/bots/PHASE2_REPORT.md', import.meta.url);
 writeFileSync(mdPath, md);
 console.log(
 	`Phase 2 report: ${totalHands} hands in ${(wallMs / 1000).toFixed(0)} s. Wrote ${mdPath}`

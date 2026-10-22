@@ -1,5 +1,5 @@
 /**
- * 10 Pakad character evaluation (docs/games/10PAKAD_REPORT.md): strength and identity of the five
+ * 10 Pakad character evaluation (docs/archive/games/10PAKAD_REPORT.md): strength and identity of the five
  * characters on matched tables.
  *   node scripts/sim/pakad-eval.mjs [tables] > docs/games/10pakad/results/eval-<seed>.json
  *

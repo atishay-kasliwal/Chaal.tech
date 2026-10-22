@@ -1,6 +1,6 @@
 /**
  * Phase 3.1 final study: the final candidate of each searched character (league from
- * scripts/sim/phase31.mjs, on tp-dna@5) against its canonical version (docs/bots/CANONICAL.md), on
+ * scripts/sim/phase31.mjs, on tp-dna@5) against its canonical version (docs/archive/bots/CANONICAL.md), on
  * matched tables; GG (c034) and Virat are controls on their canonical versions.
  * Measurement only: nothing is published.
  *
@@ -17,7 +17,7 @@
  * In process: decision traces (§19), deterministic reproduction, mind size. Timing runs in a
  * fresh process (scripts/sim/bench.mjs).
  *
- * Writes docs/bots/PHASE31_REPORT.md (never a reviewed report) and .sim/phase31/final-<seed>.json.
+ * Writes docs/archive/bots/PHASE31_REPORT.md (never a reviewed report) and .sim/phase31/final-<seed>.json.
  */
 import { availableParallelism } from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -998,7 +998,7 @@ ${CHARACTER_IDS.map(
 			.join('\n\n')}`
 ).join('\n\n')}
 `;
-const mdPath = opt('md', new URL('../../docs/bots/PHASE31_REPORT.md', import.meta.url).pathname);
+const mdPath = opt('md', new URL('../../docs/archive/bots/PHASE31_REPORT.md', import.meta.url).pathname);
 mkdirSync(new URL('../../docs/bots/', import.meta.url), { recursive: true });
 writeFileSync(mdPath, md);
 console.log(

@@ -27,4 +27,4 @@ All images below are real UI captures from the original frontend and original ho
 | 15-six-player-game-mobile | 390×844 | [Screenshot](15-six-player-game-mobile.png) |
 | 16-refresh-during-hand | 390×844 | [Screenshot](16-refresh-during-hand.png) |
 
-These references preserve original visuals, including existing toast overlap and mobile scrolling. They are evidence captures with random hands/room codes, not deterministic golden-image assertions. See [Phase 0 findings](../../docs/phase0/RESULTS.md) for limits and security findings.
+These references preserve original visuals, including existing toast overlap and mobile scrolling. They are evidence captures with random hands/room codes, not deterministic golden-image assertions. See [Phase 0 findings](../../docs/archive/phase0/RESULTS.md) for limits and security findings.

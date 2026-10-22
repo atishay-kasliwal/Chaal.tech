@@ -16,7 +16,7 @@ import { ancestorGenome, candidateStyle, mutate, REGIONS } from '../../server/si
 import { opponents } from '../../server/sim/evaluate.mjs';
 import { seeded, shuffled } from './helpers/table-sim.mjs';
 
-/* Phase 3 (docs/BOT_BRAIN.md §29): policy tp-dna@4, mind@2, and the offline machinery. */
+/* Phase 3 (docs/archive/BOT_BRAIN.md §29): policy tp-dna@4, mind@2, and the offline machinery. */
 
 const humans = new Set(['host']);
 const ctx = { now: 1000, turnMs: 60000, connected: humans };

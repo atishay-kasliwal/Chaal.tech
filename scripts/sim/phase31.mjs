@@ -1,5 +1,5 @@
 /**
- * Phase 3.1 search (docs/bots/PHASE3_REPORT.md "next"): the Phase 3 search (scripts/sim/phase3.mjs,
+ * Phase 3.1 search (docs/archive/bots/PHASE3_REPORT.md "next"): the Phase 3 search (scripts/sim/phase3.mjs,
  * unchanged and still reproducible) with two new hard gates and the event policy.
  *
  *   node scripts/sim/phase31.mjs [--seed 43] [--generations 4] [--children 12] [--scale 1] [--only a,b]

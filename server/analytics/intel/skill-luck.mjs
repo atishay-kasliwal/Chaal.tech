@@ -1,5 +1,5 @@
 /**
- * Skill versus luck (docs/ANALYTICS_PHASE5.md, "Skill and luck"). There is no universal skill score:
+ * Skill versus luck (docs/archive/ANALYTICS_PHASE5.md, "Skill and luck"). There is no universal skill score:
  * every game gets the method it can defend, and each result says whether it is exact, estimated, or
  * outcome-only. Three things are always kept apart:
  *

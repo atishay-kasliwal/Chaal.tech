@@ -1,7 +1,7 @@
 /**
  * A small cache for club-wide computations only, keyed by the head of the hand history. A new hand
  * changes the head, so nothing is ever stale by more than one request; per-player analytics are not
- * cached at all (measured cheap, see scripts/analytics-benchmark.mjs and docs/ANALYTICS_PHASE5.md).
+ * cached at all (measured cheap, see scripts/analytics-benchmark.mjs and docs/archive/ANALYTICS_PHASE5.md).
  */
 import { COLLECTIONS } from '../store.mjs';
 

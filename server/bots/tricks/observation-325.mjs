@@ -1,7 +1,7 @@
 import { buildDeck, cardKey, SUITS } from '../../tricks/cards.mjs';
 
 /**
- * BotObservation for 3 2 5 (docs/games/TRICK_GAMES_PHASE1.md §4): the only input a 3 2 5 bot gets,
+ * BotObservation for 3 2 5 (docs/archive/games/TRICK_GAMES_PHASE1.md §4): the only input a 3 2 5 bot gets,
  * built from its seat's projection (never the room), deep-frozen so nothing downstream can add to it.
  * Holds: its own cards, trump once chosen, quotas, tricks won, the current and completed tricks,
  * the cards everyone has played, which suits each player has shown they lack, the number of cards

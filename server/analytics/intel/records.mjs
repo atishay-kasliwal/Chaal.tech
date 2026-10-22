@@ -1,5 +1,5 @@
 /**
- * Personal and club records (docs/ANALYTICS_PHASE5.md, "Records"). Every record derives from
+ * Personal and club records (docs/archive/ANALYTICS_PHASE5.md, "Records"). Every record derives from
  * authoritative hand history through canonical facts, carries the ids needed to open its evidence,
  * and is a pure function of the slice of history it is given. That last property is what lets a
  * night recap say "record broken": compute the records before the night and after it.

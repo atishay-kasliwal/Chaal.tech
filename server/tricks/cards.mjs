@@ -1,5 +1,5 @@
 /**
- * Shared trick-taking primitives (docs/games/TRICK_GAMES_PHASE1.md §3): decks, card identity, legal
+ * Shared trick-taking primitives (docs/archive/games/TRICK_GAMES_PHASE1.md §3): decks, card identity, legal
  * plays and trick resolution. Pure functions over plain cards { rank, suit }, ranks 2..14 (A = 14),
  * the same shape every Chaal game uses. Each game passes its own rank order; nothing here knows
  * which game it is.

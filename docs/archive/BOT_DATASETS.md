@@ -1,7 +1,7 @@
 # Open data for bot behaviour (research notes)
 
 Status: notes, 2026-10-19. Nothing here is a dependency of the game, and nothing here is loaded in
-production. Companion to `docs/BOT_BRAIN.md`.
+production. Companion to `docs/archive/BOT_BRAIN.md`.
 
 ## Finding
 

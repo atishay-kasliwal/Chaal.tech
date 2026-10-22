@@ -1,5 +1,5 @@
 /**
- * Statistics shared by every analytic (docs/ANALYTICS_PHASE2.md, "Statistical methodology").
+ * Statistics shared by every analytic (docs/archive/ANALYTICS_PHASE2.md, "Statistical methodology").
  * Friend groups produce small samples, so everything here reports uncertainty and refuses to
  * claim more than the data supports.
  */

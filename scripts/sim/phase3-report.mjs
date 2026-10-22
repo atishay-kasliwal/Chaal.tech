@@ -16,7 +16,7 @@
  * In process: decision traces (§19), deterministic reproduction, mind size. Timing runs in a
  * fresh process (scripts/sim/bench.mjs).
  *
- * Writes docs/bots/PHASE3_REPORT.md (never a reviewed report) and .sim/phase3/final-<seed>.json.
+ * Writes docs/archive/bots/PHASE3_REPORT.md (never a reviewed report) and .sim/phase3/final-<seed>.json.
  */
 import { availableParallelism } from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -917,7 +917,7 @@ ${CHARACTER_IDS.map(
 			.join('\n\n')}`
 ).join('\n\n')}
 `;
-const mdPath = opt('md', new URL('../../docs/bots/PHASE3_REPORT.md', import.meta.url).pathname);
+const mdPath = opt('md', new URL('../../docs/archive/bots/PHASE3_REPORT.md', import.meta.url).pathname);
 mkdirSync(new URL('../../docs/bots/', import.meta.url), { recursive: true });
 writeFileSync(mdPath, md);
 console.log(

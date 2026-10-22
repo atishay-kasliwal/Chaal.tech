@@ -3,7 +3,7 @@ import { compare } from './strategy.mjs';
 import { OBSERVATION_VERSION } from './observe.mjs';
 
 /**
- * A bot's mind, mind@1 (docs/BOT_BRAIN.md §5.2, §7, §9, §11): session state built only from its
+ * A bot's mind, mind@1 (docs/archive/BOT_BRAIN.md §5.2, §7, §9, §11): session state built only from its
  * own observations (./observe.mjs). Pure functions over plain JSON, so a mind can be stored in the
  * room's durable storage, snapshotted into a hand capture, and folded again during replay.
  *

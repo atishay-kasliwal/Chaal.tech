@@ -1,5 +1,5 @@
 /**
- * The engine build that recorded hands name (docs/ANALYTICS_OPERATIONS.md). Set at deploy time by
+ * The engine build that recorded hands name (docs/archive/ANALYTICS_OPERATIONS.md). Set at deploy time by
  * scripts/deploy-backend.mjs as ENGINE_BUILD: a git commit, `-dirty-…` only when explicitly
  * allowed. `dev` and `test` exist for local wrangler and the test suite. Anything else is invalid:
  * the Worker then refuses game traffic and /health reports 503, so it cannot run unidentified.

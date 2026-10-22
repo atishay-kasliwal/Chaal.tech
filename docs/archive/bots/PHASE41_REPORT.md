@@ -79,7 +79,7 @@ C1 per strategy against the champion: always-raise +1,227 ± 33, attack-short +2
 **C1 `ms-dhoni@8-blindraises` is a candidate for adoption, awaiting your approval.** It fixes the one
 real logic flaw Phase 4 found, without the first fix's regression, and keeps Dhoni Dhoni. Adopting it
 would mean (only on approval): making tp-dna@8 a published policy, adding `ms-dhoni@4` as a canonical
-reference with its configuration hash, updating `docs/bots/CANONICAL.md` and the baseline digest lock,
+reference with its configuration hash, updating `docs/archive/bots/CANONICAL.md` and the baseline digest lock,
 deploying the Worker, then publishing through `npm run bots:publish-dna`. Until then **current Dhoni
 (`ms-dhoni@3`) stays canonical.**
 

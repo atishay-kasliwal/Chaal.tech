@@ -5,7 +5,7 @@ import { cleanMascotId } from './mascots.mjs';
 
 /**
  * The club's guest list lives in MongoDB, collection `members`. The owner adds people
- * there directly (see docs/PRIVATE_CLUB.md); nobody can sign up on their own.
+ * there directly (see docs/archive/PRIVATE_CLUB.md); nobody can sign up on their own.
  *
  * { email, nickname?, characterId?, mascotId?, role: 'owner'|'member', status: 'invited'|'active'|'suspended',
  *   googleSub?, playerId?, sessionVersion?, reducedMotion?, onboardedAt?, createdAt, claimedAt?, updatedAt }

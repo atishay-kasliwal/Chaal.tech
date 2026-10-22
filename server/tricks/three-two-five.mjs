@@ -12,7 +12,7 @@ import { castMember } from '../../src/lib/bots/cast.js';
 import { GameError } from '../engine.mjs';
 
 /**
- * 3 2 5 (Teen Do Paanch), Chaal V1 rules (docs/games/325_RULES.md): three players, 30 cards, quotas
+ * 3 2 5 (Teen Do Paanch), Chaal V1 rules (docs/archive/games/325_RULES.md): three players, 30 cards, quotas
  * of 5, 3 and 2 tricks, trump chosen by the 5-player from their first five cards, and pulling between
  * rounds as its own phase with the pulled card unknown to the puller.
  *

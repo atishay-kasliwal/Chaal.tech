@@ -1,5 +1,5 @@
 /**
- * The fairness center (docs/ANALYTICS_PHASE5.md, "Fairness"). It answers two different questions and
+ * The fairness center (docs/archive/ANALYTICS_PHASE5.md, "Fairness"). It answers two different questions and
  * is careful to keep them apart:
  *
  *   Are the cards I was dealt consistent with a fair shuffle?   (statistics, on my own cards)

@@ -1,5 +1,5 @@
 /**
- * Decision digests that pin the Phase 3.1 baseline (docs/bots/CANONICAL.md): every decision, trace,
+ * Decision digests that pin the Phase 3.1 baseline (docs/archive/bots/CANONICAL.md): every decision, trace,
  * random draw and mind of the DNA line on fixed seeds, and every decision of main's own live bot
  * styles. Recorded 2026-10-21; identical before and after the DNA line was merged onto main.
  */
