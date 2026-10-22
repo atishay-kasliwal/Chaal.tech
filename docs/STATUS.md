@@ -4,8 +4,8 @@ The canonical current-state summary. Last verified **2026-10-22**. Phase reports
 are historical evidence and are not rewritten; when they disagree with this page, this page is
 current.
 
-Roadmap: **3 2 5** (done) → **10 Pakad** (planned, rules locked; awaiting plan review) → 29 → cross-game
-character evaluation → Phase 5 (long-term memory).
+Roadmap: **3 2 5** (done) → **10 Pakad** (done) → **29** (done) → **cross-game character evaluation**
+(done) → Phase 5 (long-term memory, not started).
 
 ## Production
 
@@ -79,7 +79,8 @@ breaking his identity. His passivity needs memory across nights, which is Phase 
 
 ### Phase 5 direction: long-term cross-session memory (not started)
 
-Deliberately after 10 Pakad and 29, so the memory architecture is not Teen-Patti-specific.
+Deliberately after 10 Pakad and 29 (now done), so the memory architecture is not
+Teen-Patti-specific.
 
 publicly observable information only → bounded summary → confidence → decay → returning-player prior
 → new evidence overrides stale memory.
@@ -90,15 +91,17 @@ same eight gates. Name clash: [ANALYTICS_PHASE5.md](ANALYTICS_PHASE5.md) is the 
 
 ## Games
 
-| Game                                                | State                                                                                                                         |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Teen Patti (26 variants), Hold'em, Blackjack, Rummy | live; rule errors reach players as messages and a dropped player shows Away at once (PR #23)                                  |
-| 3 2 5                                               | **Phase 2 approved and live**; rules locked in [games/325_RULE_LOCK.md](games/325_RULE_LOCK.md) (canonical)                   |
-| 10 Pakad                                            | **planned, not implemented**: [games/10PAKAD_PLAN.md](games/10PAKAD_PLAN.md); ruleset locked 2026-10-22 (trump by first void) |
-| 29                                                  | not started; after 10 Pakad is implemented and reviewed                                                                       |
+| Game                                                | State                                                                                                                                  |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Teen Patti (26 variants), Hold'em, Blackjack, Rummy | live; rule errors reach players as messages and a dropped player shows Away at once (PR #23)                                           |
+| 3 2 5                                               | **Phase 2 approved and live**; rules locked in [games/325_RULE_LOCK.md](games/325_RULE_LOCK.md) (canonical)                            |
+| 10 Pakad                                            | **live**: rules locked 2026-10-22 ([games/10PAKAD_PLAN.md](games/10PAKAD_PLAN.md)); [games/10PAKAD_REPORT.md](games/10PAKAD_REPORT.md) |
+| 29                                                  | **live**: rules locked 2026-10-22 ([games/29_RULES.md](games/29_RULES.md)); [games/29_REPORT.md](games/29_REPORT.md)                   |
 
-3 2 5 known limits, for the cross-game character evaluation (not blockers): faint Rohit and Dhoni
-identities and weak adaptation.
+Cross-game character evaluation ([bots/CROSS_GAME_EVAL.md](bots/CROSS_GAME_EVAL.md)): identity carries
+across all four games (boldness agrees with the DNA at 0.8 to 1.0 in the trick games; patience at 0.8
+to 0.9 in three of four). Known limits carried to Phase 5: faint Rohit and Dhoni in 3 2 5, weak
+in-session adaptation in trick games, 29 card play close to the brain.
 
 ## Analytics
 
