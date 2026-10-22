@@ -115,10 +115,15 @@ try {
 				flowGaps.push(`${record._id}: ${p.p} flows ${inflow - outflow} vs net ${p.net}`);
 		}
 
-		// Leaderboard archive (club_hands): human nets must agree hand by hand.
+		// Leaderboard archive (club_hands): human nets must agree hand by hand. The archive keeps only
+		// hands that reached a result; a hand cut off with no result (e.g. the night ended) and no chips
+		// moved is recorded but correctly not archived. One with chips moved must be archived.
 		const club = await db.collection('club_hands').findOne({ _id: record._id });
-		if (!club) leaderboardGaps.push(`${record._id}: not in club_hands`);
-		else
+		const noResult =
+			record.outcome.pot === null && !record.outcome.winners?.length && players.every((p) => p.net === 0);
+		if (!club) {
+			if (!noResult) leaderboardGaps.push(`${record._id}: not in club_hands`);
+		} else
 			for (const entry of club.players.filter((p) => !p.bot)) {
 				const mine = players.find((p) => p.p === entry.playerId);
 				if (!mine || mine.net !== entry.net) leaderboardGaps.push(`${record._id}: ${entry.playerId} club ${entry.net} vs recorder ${mine?.net}`);
