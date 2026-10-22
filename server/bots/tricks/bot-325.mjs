@@ -27,6 +27,12 @@ const BETA = 5;
 const TAU = 0.35;
 const CLARITY = 0.12;
 const PERSONA_CAP = 0.35;
+/**
+ * Personality strength, chosen by simulation (docs/games/325_PHASE2_REPORT.md): at 1x characters were
+ * identified blind 43% of the time, at 2x 51%, at 3x 56%; strength against the baseline held at 2x
+ * except Virat (whose early aggression costs most), and fell away at 3x. 2x is the middle ground.
+ */
+export const PERSONA_SCALE = 2;
 const SAMPLES = 40;
 const PRIOR = { beat: 0.8, ruff: 0.8 };
 const NEUTRAL = Object.freeze({
@@ -260,7 +266,7 @@ export function opponentModels(obs, memory, dna, adaptive) {
 export function decide325(
 	view,
 	random,
-	{ dna = NEUTRAL, memory = {}, adaptive = true, personaScale = 1 } = {}
+	{ dna = NEUTRAL, memory = {}, adaptive = true, personaScale = PERSONA_SCALE } = {}
 ) {
 	const obs = observation325(view);
 	const models = opponentModels(obs, memory, dna, adaptive);
@@ -329,7 +335,7 @@ export function decide325(
  */
 export function bot325(
 	characterId,
-	{ personality: persona = true, adaptive = true, personaScale = 1 } = {}
+	{ personality: persona = true, adaptive = true, personaScale = PERSONA_SCALE } = {}
 ) {
 	const dna =
 		characterId && persona ? (CANONICAL_STYLES[characterId]?.tendencies.dna ?? NEUTRAL) : NEUTRAL;

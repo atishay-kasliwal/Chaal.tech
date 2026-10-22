@@ -20,7 +20,9 @@ import {
 	blackjackTable,
 	playBlackjack,
 	rummyTable,
-	playRummy
+	playRummy,
+	threeTwoFiveTable,
+	playThreeTwoFive
 } from '../tests/server/helpers/drivers.mjs';
 
 export const CORPUS = new URL('../tests/fixtures/replay-corpus.json.gz', import.meta.url);
@@ -48,6 +50,11 @@ function sample(game, rulesVersion, seed) {
 	if (game === 'blackjack') {
 		const sim = blackjackTable({ seed, players: ['a', 'b', 'c'] });
 		playBlackjack(sim, { timeoutBias: 0.2 });
+		return sim.captures();
+	}
+	if (game === 'three-two-five') {
+		const sim = threeTwoFiveTable({ seed });
+		playThreeTwoFive(sim);
 		return sim.captures();
 	}
 	const sim = rummyTable({ seed });
