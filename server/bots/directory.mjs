@@ -1,6 +1,8 @@
 /** Permanent global characters, immutable publications, club availability. */
 import { ClubError } from '../club/members.mjs';
 import { BOT_CHARACTERS } from '../../shared/bot-characters.mjs';
+
+const TRICK_GAMES = new Set(['three-two-five']);
 import { CHARACTER_SEEDS } from './characters.mjs';
 import { LEGACY_BOTS } from './identity.mjs';
 import { CHARACTER_POLICY, characterHash, configErrors, runtimeStyle } from './config.mjs';
@@ -176,12 +178,17 @@ export async function botSeat(db, room, requestedId) {
 			.collection('bot_styles')
 			.findOne({ _id: bot.currentStyle, botId: id, status: 'published' }));
 	if (!style || configErrors(style).length) throw fail('That bot has no playable published style');
-	if (!style.supportedGames.includes(room.gameType ?? 'teen-patti'))
+	const characterId = BOT_CHARACTERS.find((art) => art.mascotId === bot.avatar?.mascotId)?.id;
+	// Trick games (3 2 5): the character plays with its canonical personality and that game's brain
+	// (server/bots/tricks/), not its Teen Patti style, so any of the five characters may sit down.
+	if (TRICK_GAMES.has(room.gameType)) {
+		if (!characterId) throw fail('Only the Chaal characters play this game');
+	} else if (!style.supportedGames.includes(room.gameType ?? 'teen-patti'))
 		throw fail('This bot plays Teen Patti only');
 	return {
 		name: bot.name,
 		level: 'normal',
-		characterId: BOT_CHARACTERS.find((art) => art.mascotId === bot.avatar?.mascotId)?.id,
+		characterId,
 		mascotId: bot.avatar?.mascotId,
 		style: runtimeStyle(style),
 		identity: identityForStyle(style)

@@ -64,10 +64,10 @@ export async function createSession({
 	return { ...session.body, clubToken: signIn.body.clubToken, email };
 }
 
-export async function createRoom(session, commandId) {
+export async function createRoom(session, commandId, gameType = 'teen-patti') {
 	const body = {
 		event: 'createRoom',
-		args: ['', 50, 'classic-1', 'teen-patti'],
+		args: ['', 50, 'classic-1', gameType],
 		meta: { commandId }
 	};
 	const response = await fetch(`${baseURL}/rooms`, {

@@ -14,6 +14,7 @@ import {
 } from '../engine.mjs';
 import { shuffledDeck } from '../classic.mjs';
 import { freshRummyDeck } from '../rummy/rummy.mjs';
+import { fresh325Deck } from '../tricks/three-two-five.mjs';
 import { getVariant, listVariants } from '../variants/index.mjs';
 import { secureRandomInt, toHex } from '../random.mjs';
 import { inviteEmails, planInvites, inviteMessage, sendWithResend } from './invites.mjs';
@@ -46,7 +47,7 @@ const ROOM_RETENTION_MS = 365 * DAY_MS;
 const UUID_PATTERN = /^[a-f0-9-]{36}$/;
 const knownEvents = new Set([
 	'joinRoom', 'ready', 'start', 'seeCards', 'discardCard', 'play', 'show', 'pokerAction',
-	'blackjackBet', 'blackjackAction', 'rummyAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit',
+	'blackjackBet', 'blackjackAction', 'rummyAction', 'trickAction', 'leaveRoom', 'addBot', 'removeBot', 'setPotLimit',
 	'setBalanceHidden', 'showCards', 'chooseNext', 'openPick', 'tableAction', 'prepareStart', 'cutDeck', 'endNight', 'requestChips', 'cancelChipRequest', 'answerChipRequest'
 ]);
 
@@ -89,7 +90,11 @@ const shuffle = (cards) => {
 	return deck;
 };
 const productionDeck = (gameType) =>
-	gameType === 'rummy' ? shuffle(freshRummyDeck()) : shuffledDeck();
+	gameType === 'rummy'
+		? shuffle(freshRummyDeck())
+		: gameType === 'three-two-five'
+			? shuffle(fresh325Deck())
+			: shuffledDeck();
 
 function safeDecode(value) {
 	try {
@@ -735,6 +740,11 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 					throw new GameError('Invalid Rummy action', 'INVALID_ACTION');
 				action = args[0];
 				payload = { index: args[1] };
+			} else if (event === 'trickAction') {
+				if (before.gameType !== 'three-two-five' || !['chooseTrump', 'pull', 'give', 'play'].includes(args[0]))
+					throw new GameError('Invalid card game action', 'INVALID_ACTION');
+				action = args[0];
+				payload = args[1] && typeof args[1] === 'object' ? args[1] : {};
 			} else if (event === 'leaveRoom') {
 				action = 'leave';
 				payload = {};
