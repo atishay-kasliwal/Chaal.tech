@@ -4,6 +4,7 @@ export type Card = { rank: number; suit: Suit | '' };
 export type TrickUser = {
 	id: string;
 	username: string;
+	seatNumber?: number | null;
 	connected: boolean;
 	ready: boolean;
 	isBot: boolean;
@@ -15,6 +16,7 @@ export type TrickUser = {
 };
 export type Play = { id: string; card: Card };
 export type TrickRoom = {
+	name: string;
 	stage: string;
 	round: number;
 	hostId: string;
@@ -59,6 +61,7 @@ export type TrickRoom = {
 
 /** The 29 seat view a client receives (server/tricks/twenty-nine.mjs projection). */
 export type TwentyNineRoom = {
+	name: string;
 	stage: string;
 	hand: number;
 	hostId: string;
@@ -112,6 +115,7 @@ export type TwentyNineRoom = {
 export type Pile = { count: number; tens: number };
 export type PakadUser = TrickUser & { seatNumber: number; team: 0 | 1 };
 export type PakadRoom = {
+	name: string;
 	stage: string;
 	hand: number;
 	hostId: string;
