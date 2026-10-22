@@ -5,17 +5,17 @@ are historical evidence and are not rewritten; when they disagree with this page
 current.
 
 Roadmap: **3 2 5** (done) → **10 Pakad** (done) → **29** (done) → **cross-game character evaluation**
-(done) → Phase 5 (long-term memory, not started).
+(done) → **Phase 5** (long-term memory, live for Teen Patti).
 
 ## Production
 
-| Part                | State                                                                                                   | How verified                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| main                | deployed from `f24b477e` (PRs #28 10 Pakad, #29 29 and the cross-game evaluation, on top of #23 to #27) | GitHub                                                                            |
-| Worker (chaal-game) | `ENGINE_BUILD f24b477e9776` (deployed 2026-10-22)                                                       | `/health`                                                                         |
-| Pages (chaal.tech)  | build `1792691440071`, from `f24b477e` (deployed 2026-10-22)                                            | page source; `/`, `/club`, `/stats`, `/bots`, `/games`, `/create-room` return 200 |
-| Sign-in             | Google client configured in the build                                                                   | sign-in page source                                                               |
-| 3 2 5, 10 Pakad, 29 | live: create-room options and `/games` guides                                                           | production bundles; `/test-325`, `/test-pakad`, `/test-29` return 404             |
+| Part                | State                                                                   | How verified                                                                      |
+| ------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| main                | `f02a66c4` and later (PRs up to #32; the admin redesign #33 follows)    | GitHub                                                                            |
+| Worker (chaal-game) | `ENGINE_BUILD f02a66c40c9c` (deployed 2026-10-22: Phase 5, faster bots) | `/health`                                                                         |
+| Pages (chaal.tech)  | build `1792699113521`, from `f02a66c4` (deployed 2026-10-22)            | page source; `/`, `/club`, `/stats`, `/bots`, `/games`, `/create-room` return 200 |
+| Sign-in             | Google client configured in the build                                   | sign-in page source                                                               |
+| 3 2 5, 10 Pakad, 29 | live: create-room options and `/games` guides                           | production bundles; `/test-325`, `/test-pakad`, `/test-29` return 404             |
 
 Deploys are manual from the owner's Mac: Worker (`npm run deploy:backend`, which stamps and checks
 `ENGINE_BUILD`), then Pages. Deploy only `origin/main`.
@@ -77,17 +77,14 @@ breaking his identity. His passivity needs memory across nights, which is Phase 
 | 4.1          | **closed**: C1 `ms-dhoni@8-blindraises` adopted as `ms-dhoni@4`, checked identical to the measured C1; C2 rejected | [bots/PHASE41_REPORT.md](bots/PHASE41_REPORT.md), `phase41-canonical` |
 | 5            | **not started** (direction below)                                                                                  |                                                                       |
 
-### Phase 5 direction: long-term cross-session memory (not started)
+### Phase 5: long-term cross-session memory (live, Teen Patti)
 
-Deliberately after 10 Pakad and 29 (now done), so the memory architecture is not
-Teen-Patti-specific.
-
-publicly observable information only → bounded summary → confidence → decay → returning-player prior
-→ new evidence overrides stale memory.
-
-No live retraining, no hidden cards, no automatic DNA changes, no neural or RL system. Gated by the
-same eight gates. Name clash: [ANALYTICS_PHASE5.md](ANALYTICS_PHASE5.md) is the analytics
-"intelligence layer", not this.
+[bots/PHASE5_REPORT.md](bots/PHASE5_REPORT.md). The characters seed their session minds with a capped,
+confidence-weighted prior from `bot_memory` (public observations only, 14-day decay) for each returning
+person; the night's own play then overrides it. Seeded hands replay exactly. Gates: style unchanged,
+strength within noise, stale memory costs little; no measurable gain yet (by design, it grows with real
+play). Not yet for the trick games (needs a trick-game extractor). Name clash:
+[ANALYTICS_PHASE5.md](ANALYTICS_PHASE5.md) is the analytics intelligence layer, not this.
 
 ## Games
 
