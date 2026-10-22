@@ -124,6 +124,20 @@ const otherGames: GameGuide[] = [
 		],
 		cards: [card('A', 'hearts'), card('K', 'hearts'), card('7', 'spades')],
 		example: 'A♥ K♥ 7♠ · trump decides who takes the trick'
+	},
+	{
+		id: 'ten-pakad',
+		name: '10 Pakad',
+		category: 'Tricks',
+		win: 'Capture the tens with your partner. All four tens is a Kot.',
+		rules: [
+			'Four players in two teams; partners sit across. Five cards each to start, thirteen in all.',
+			'There is no trump at first. The first player who cannot follow suit sets trump with the card they play.',
+			'Follow suit if you can. Tricks pile up in the centre: win two tricks in a row yourself to collect the whole pile. The last trick takes what is left.',
+			'The dealing team needs three tens to win the hand; the other team wins with two. Seven hands in a row is also a Kot.'
+		],
+		cards: [card('10', 'hearts'), card('10', 'spades'), card('10', 'clubs')],
+		example: '10♥ 10♠ 10♣ · three tens win any hand'
 	}
 ];
 // Start the carousel with the four game families and two familiar Teen Patti variants.

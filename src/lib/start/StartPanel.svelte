@@ -66,23 +66,37 @@
 	let botOptions = $state<ClubBot[]>([]);
 	let botPickerOpen = $state(false);
 	onMount(() => {
-		void club.request('/bots').then(({response, body}) => {
-			if (!response.ok) return;
-			botOptions = body.bots;
-			const requested = page.url.searchParams.get('bot');
-			pickedBots = requested && botOptions.some(bot => bot.botId === requested) ? [requested] : botOptions.slice(0, 3).map(bot => bot.botId);
-		}).catch(() => {});
+		void club
+			.request('/bots')
+			.then(({ response, body }) => {
+				if (!response.ok) return;
+				botOptions = body.bots;
+				const requested = page.url.searchParams.get('bot');
+				pickedBots =
+					requested && botOptions.some((bot) => bot.botId === requested)
+						? [requested]
+						: botOptions.slice(0, 3).map((bot) => bot.botId);
+			})
+			.catch(() => {});
 	});
 	const BOOTS = [5, 10, 20, 50, 100];
 	const LIMITS = [0, 64, 128, 256, 512];
 	// Every Teen Patti room opens with Classic. Variant choice belongs between hands.
 	let rulesVersion: RulesVersion = 'classic-1';
-	let gameType = $state<'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy' | 'three-two-five'>('teen-patti');
+	let gameType = $state<
+		'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy' | 'three-two-five' | 'ten-pakad'
+	>('teen-patti');
 	const minimumBuyIn = $derived(gameType === 'teen-patti' ? 1000 : 50);
 	const summary = $derived(
 		gameType === 'teen-patti'
 			? `₹${table.toLocaleString('en-IN')} chips · boot ₹${boot} · ${potLimit ? `limit ₹${(potLimit * boot).toLocaleString('en-IN')}` : 'no limit'}`
-			: { 'texas-holdem': 'Texas Hold’em', blackjack: 'Blackjack', rummy: 'Indian Rummy', 'three-two-five': '3 2 5' }[gameType]
+			: {
+					'texas-holdem': 'Texas Hold’em',
+					blackjack: 'Blackjack',
+					rummy: 'Indian Rummy',
+					'three-two-five': '3 2 5',
+					'ten-pakad': '10 Pakad'
+				}[gameType]
 	);
 
 	onMount(() => {
@@ -91,7 +105,14 @@
 		if (code) joinCode = code;
 		// From the Games page: open with that game chosen (Teen Patti variants start on Classic).
 		const game = query.get('game');
-		if (game === 'texas-holdem' || game === 'blackjack' || game === 'rummy' || game === 'three-two-five') gameType = game;
+		if (
+			game === 'texas-holdem' ||
+			game === 'blackjack' ||
+			game === 'rummy' ||
+			game === 'three-two-five' ||
+			game === 'ten-pakad'
+		)
+			gameType = game;
 		// Connect early so tapping Start is instant. The room page owns the socket afterwards.
 		socket.connect();
 	});
@@ -137,8 +158,7 @@
 			return;
 		}
 		onclose?.();
-		const practice =
-			withBots && gameType === 'teen-patti' ? `?bots=${pickedBots.join(',')}` : '';
+		const practice = withBots && gameType === 'teen-patti' ? `?bots=${pickedBots.join(',')}` : '';
 		await goto(`/${result.roomName}${practice}`);
 	}
 
@@ -308,11 +328,26 @@
 					<span class="emoji" aria-hidden="true">🤖</span>
 					<span>
 						{busy === 'bots' ? 'Getting your table ready…' : 'Chaal'}
-						<small>{pickedBots.length ? botOptions.filter(bot => pickedBots.includes(bot.botId)).map(bot => bot.name).join(', ') : 'Pick your company'}</small>
+						<small
+							>{pickedBots.length
+								? botOptions
+										.filter((bot) => pickedBots.includes(bot.botId))
+										.map((bot) => bot.name)
+										.join(', ')
+								: 'Pick your company'}</small
+						>
 					</span>
 				</button>
-				<button class="text-btn" onclick={() => botPickerOpen = !botPickerOpen}>{botPickerOpen ? 'Done choosing' : 'Choose your opponents'}</button>
-				{#if botPickerOpen}<BotPicker selected={pickedBots} onpick={id => pickedBots = pickedBots.includes(id) ? pickedBots.filter(bot => bot !== id) : [...pickedBots, id]} />{/if}
+				<button class="text-btn" onclick={() => (botPickerOpen = !botPickerOpen)}
+					>{botPickerOpen ? 'Done choosing' : 'Choose your opponents'}</button
+				>
+				{#if botPickerOpen}<BotPicker
+						selected={pickedBots}
+						onpick={(id) =>
+							(pickedBots = pickedBots.includes(id)
+								? pickedBots.filter((bot) => bot !== id)
+								: [...pickedBots, id])}
+					/>{/if}
 			{/if}
 		</div>
 	{/if}
@@ -369,6 +404,7 @@
 						<option value="blackjack">Blackjack</option>
 						<option value="rummy">13-card Indian Rummy</option>
 						<option value="three-two-five">3 2 5 (three players)</option>
+						<option value="ten-pakad">10 Pakad (four players, two teams)</option>
 					</select>
 				</label>
 				<p class="hint">
@@ -380,7 +416,9 @@
 								? '13-card Points Rummy: two sequences, one of them pure.'
 								: gameType === 'three-two-five'
 									? 'Three players, tricks to make: 5, 3 and 2. Chaal characters fill empty seats.'
-									: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
+									: gameType === 'ten-pakad'
+										? 'Two teams of two capture tens. Chaal characters fill empty seats.'
+										: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
 				</p>
 				<label class="row">
 					<span>Starting chips per player</span>
@@ -424,7 +462,6 @@
 							{/each}
 						</div>
 					</div>
-
 				{/if}
 			</div>
 		{/if}

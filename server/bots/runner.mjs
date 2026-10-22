@@ -1,4 +1,5 @@
 import { bot325, observe325 } from './tricks/bot-325.mjs';
+import { botPakad, observePakad } from './tricks/bot-pakad.mjs';
 import { projection, playing } from '../engine.mjs';
 import { decide } from './strategy.mjs';
 import { ADAPTIVE_POLICY, adaptiveDecision } from './memory/adaptive.mjs';
@@ -158,7 +159,9 @@ export function nextBotMove(
 		const current = room.players.find((p) => p.id === room.currentPlayerId);
 		if (!playing(room) || !current?.bot) return null;
 		const view = projection(room, current.id, connected);
-		const decide = deciderOf ? deciderOf(current) : bot325(current.bot.characterId);
+		const decide = deciderOf
+			? deciderOf(current)
+			: TRICK_GAMES.get(room.gameType).bot(current.bot.characterId);
 		const move = decide(view, current.id, random, minds?.[current.id] ?? {});
 		return move ? { botId: current.id, ...move } : null;
 	}
@@ -228,16 +231,21 @@ export function updateMinds(
 }
 
 /**
- * Trick-game session memory (3 2 5): each seated bot folds its own projection after every commit,
- * so what it learns about the table is exactly what a person in its seat could have seen.
+ * Trick games: each game's bot and its session memory. After every commit each seated bot folds its
+ * own projection into its mind, so what it learns about the table is exactly what a person in its
+ * seat could have seen.
  */
-const TRICK_GAMES = new Set(['three-two-five']);
+const TRICK_GAMES = new Map([
+	['three-two-five', { bot: bot325, observe: observe325 }],
+	['ten-pakad', { bot: botPakad, observe: observePakad }]
+]);
 function updateTrickMinds(minds, after) {
+	const { observe: fold } = TRICK_GAMES.get(after.gameType);
 	const next = {};
 	for (const p of after.players) {
 		if (!p.bot || p.departed || p.seatNumber === null) continue;
 		const mind = structuredClone(minds?.[p.id] ?? {});
-		observe325(projection(after, p.id, NOBODY), p.id, mind);
+		fold(projection(after, p.id, NOBODY), p.id, mind);
 		next[p.id] = mind;
 	}
 	return next;

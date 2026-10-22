@@ -1,0 +1,122 @@
+{
+	"seed": 61,
+	"tables": 80,
+	"hands": 4,
+	"personaScale": 2,
+	"baseline": {
+		"won": {
+			"mean": 0.565625,
+			"ci": 0.054394806863474914,
+			"n": 320
+		},
+		"tens": {
+			"mean": 1.984375,
+			"ci": 0.13839210014889103,
+			"n": 320
+		},
+		"style": {
+			"contest": 0.782,
+			"trumpEarly": 0.298,
+			"feedTen": 0.898,
+			"pressStreak": 0.572,
+			"decisions": 4160
+		}
+	},
+	"characters": {
+		"rohit-sharma": {
+			"wonVsBaseline": {
+				"mean": -0.0125,
+				"ci": 0.05753123044476837,
+				"n": 320
+			},
+			"tensVsBaseline": {
+				"mean": 0.009375,
+				"ci": 0.14162433596393578,
+				"n": 320
+			},
+			"style": {
+				"contest": 0.795,
+				"trumpEarly": 0.325,
+				"feedTen": 0.89,
+				"pressStreak": 0.608,
+				"decisions": 4160
+			}
+		},
+		"virat-kohli": {
+			"wonVsBaseline": {
+				"mean": -0.05,
+				"ci": 0.0629207094205174,
+				"n": 320
+			},
+			"tensVsBaseline": {
+				"mean": -0.021875,
+				"ci": 0.16147465744828407,
+				"n": 320
+			},
+			"style": {
+				"contest": 0.782,
+				"trumpEarly": 0.446,
+				"feedTen": 0.943,
+				"pressStreak": 0.621,
+				"decisions": 4160
+			}
+		},
+		"gg": {
+			"wonVsBaseline": {
+				"mean": -0.03125,
+				"ci": 0.06598252921373965,
+				"n": 320
+			},
+			"tensVsBaseline": {
+				"mean": 0.0125,
+				"ci": 0.1643738928351095,
+				"n": 320
+			},
+			"style": {
+				"contest": 0.799,
+				"trumpEarly": 0.304,
+				"feedTen": 0.845,
+				"pressStreak": 0.488,
+				"decisions": 4160
+			}
+		},
+		"samay-raina": {
+			"wonVsBaseline": {
+				"mean": -0.028125,
+				"ci": 0.06218276818768005,
+				"n": 320
+			},
+			"tensVsBaseline": {
+				"mean": 0,
+				"ci": 0.15446509989198046,
+				"n": 320
+			},
+			"style": {
+				"contest": 0.787,
+				"trumpEarly": 0.412,
+				"feedTen": 0.918,
+				"pressStreak": 0.585,
+				"decisions": 4160
+			}
+		},
+		"ms-dhoni": {
+			"wonVsBaseline": {
+				"mean": -0.034375,
+				"ci": 0.062144931457663984,
+				"n": 320
+			},
+			"tensVsBaseline": {
+				"mean": -0.05,
+				"ci": 0.15412363233419848,
+				"n": 320
+			},
+			"style": {
+				"contest": 0.772,
+				"trumpEarly": 0.259,
+				"feedTen": 0.917,
+				"pressStreak": 0.509,
+				"decisions": 4160
+			}
+		}
+	}
+}

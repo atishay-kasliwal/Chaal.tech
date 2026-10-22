@@ -1,6 +1,6 @@
 # 10 Pakad (Dehla Pakad): plan
 
-Status: **planning only, not implemented. Ruleset locked 2026-10-22** (the owner answered all six
+Status: **implemented 2026-10-22** (see [10PAKAD_REPORT.md](10PAKAD_REPORT.md)); **ruleset locked 2026-10-22** (the owner answered all six
 questions in §15). Written 2026-10-22, after 3 2 5 Phase 2 was approved and its rules locked
 ([325_RULE_LOCK.md](325_RULE_LOCK.md)). Nothing here is built; implementation starts only after this
 plan is reviewed.

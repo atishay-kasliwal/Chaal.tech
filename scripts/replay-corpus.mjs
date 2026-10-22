@@ -22,7 +22,9 @@ import {
 	rummyTable,
 	playRummy,
 	threeTwoFiveTable,
-	playThreeTwoFive
+	playThreeTwoFive,
+	tenPakadTable,
+	playTenPakad
 } from '../tests/server/helpers/drivers.mjs';
 
 export const CORPUS = new URL('../tests/fixtures/replay-corpus.json.gz', import.meta.url);
@@ -55,6 +57,11 @@ function sample(game, rulesVersion, seed) {
 	if (game === 'three-two-five') {
 		const sim = threeTwoFiveTable({ seed });
 		playThreeTwoFive(sim);
+		return sim.captures();
+	}
+	if (game === 'ten-pakad') {
+		const sim = tenPakadTable({ seed });
+		playTenPakad(sim);
 		return sim.captures();
 	}
 	const sim = rummyTable({ seed });

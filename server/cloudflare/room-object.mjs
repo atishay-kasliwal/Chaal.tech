@@ -741,7 +741,8 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 				action = args[0];
 				payload = { index: args[1] };
 			} else if (event === 'trickAction') {
-				if (before.gameType !== 'three-two-five' || !['chooseTrump', 'pull', 'give', 'play'].includes(args[0]))
+				const trickActions = { 'three-two-five': ['chooseTrump', 'pull', 'give', 'play'], 'ten-pakad': ['play'] };
+				if (!trickActions[before.gameType]?.includes(args[0]))
 					throw new GameError('Invalid card game action', 'INVALID_ACTION');
 				action = args[0];
 				payload = args[1] && typeof args[1] === 'object' ? args[1] : {};
