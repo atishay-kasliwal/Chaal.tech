@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { runTable } from '../../server/sim/table.mjs';
-import { CANONICAL_STYLES, STYLES } from '../../server/bots/dna-styles.mjs';
+import { PHASE4_CHAMPIONS as CANONICAL_STYLES, STYLES } from '../../server/bots/dna-styles.mjs';
 import { MIND_RULES, POLICIES } from '../../server/bots/policies.mjs';
 import { MIND_VERSIONS, emptyMind } from '../../server/bots/mind.mjs';
 import { CHARACTER_POLICY_V6, recallSuspects } from '../../server/bots/character-v6.mjs';

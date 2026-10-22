@@ -1,0 +1,7 @@
+always-raise      dhoni@3 -1471 ± 191 | canonical vs dhoni@3 1072 ± 191 | c1 vs dhoni@3 1072 ± 191 | canonical vs c1 0 ± 0
+value-then-bluff  dhoni@3 42 ± 134 | canonical vs dhoni@3 0 ± 0 | c1 vs dhoni@3 0 ± 0 | canonical vs c1 0 ± 0
+raise-often       dhoni@3 81 ± 402 | canonical vs dhoni@3 -35 ± 522 | c1 vs dhoni@3 -35 ± 522 | canonical vs c1 0 ± 0
+bluff-a-lot       dhoni@3 1668 ± 357 | canonical vs dhoni@3 0 ± 0 | c1 vs dhoni@3 0 ± 0 | canonical vs c1 0 ± 0
+loose-then-value  dhoni@3 -281 ± 160 | canonical vs dhoni@3 -74 ± 184 | c1 vs dhoni@3 -74 ± 184 | canonical vs c1 0 ± 0
+sudden-change     dhoni@3 -206 ± 148 | canonical vs dhoni@3 -71 ± 140 | c1 vs dhoni@3 -71 ± 140 | canonical vs c1 0 ± 0
+PORT IDENTICAL TO C1 ON EVERY STRATEGY

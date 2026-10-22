@@ -7,7 +7,7 @@
  */
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { CANONICAL_STYLES } from '../../server/bots/dna-styles.mjs';
+import { PHASE4_CHAMPIONS } from '../../server/bots/dna-styles.mjs';
 import { MIND_RULES } from '../../server/bots/policies.mjs';
 import { MIND_VERSIONS } from '../../server/bots/mind.mjs';
 import { SIM_VERSION } from '../../server/sim/table.mjs';
@@ -31,7 +31,7 @@ const record = {
 		adversary: ADVERSARY_VERSION
 	},
 	champions: Object.fromEntries(
-		Object.entries(CANONICAL_STYLES).map(([c, s]) => [
+		Object.entries(PHASE4_CHAMPIONS).map(([c, s]) => [
 			c,
 			{
 				style: s._id,

@@ -33,6 +33,7 @@ export const POLICIES = Object.freeze({
 	// Phase 4 challengers only (offline) until a reviewer approves one.
 	[CHARACTER_POLICY_V6]: decideCharacterV6,
 	[CHARACTER_POLICY_V7]: decideCharacterV7,
+	// Phase 4.1 C1, approved 2026-10-22: a canonical published policy.
 	[CHARACTER_POLICY_V8]: decideCharacterV8,
 	[CHARACTER_POLICY_V9]: decideCharacterV9
 });

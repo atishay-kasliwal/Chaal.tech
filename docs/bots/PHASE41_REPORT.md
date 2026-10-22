@@ -87,3 +87,9 @@ The same flaw lives in the shared base brain, so every tp-dna@3 character has it
 meant to keep him blind longer. Whether to offer the factor to other characters is a separate decision.
 
 Results: `docs/bots/phase4/results/gates-dhoni41-49.json`; screen: `node scripts/sim/phase41-screen.mjs 160`.
+
+## Decision (2026-10-22)
+
+**C1 approved and adopted** as canonical Dhoni `ms-dhoni@4` (tp-dna@8, reference hash
+`04254a1a0abbb72a`), checked identical to the challenger measured above. C2 not used. The results above
+are unchanged. See [CANONICAL.md](CANONICAL.md).

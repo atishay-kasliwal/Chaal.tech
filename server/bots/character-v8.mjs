@@ -2,7 +2,8 @@ import { characterPolicy, TRAITS, MOODS, countPressure } from './character-v3.mj
 import { DNA_POLICY_V8, DNA_POLICY_V9 } from './dna-policies.mjs';
 
 /**
- * Policies tp-dna@8 (C1) and tp-dna@9 (C2) (Phase 4.1 challengers, offline only): tp-dna@3 exactly, plus one base factor for
+ * Policies tp-dna@8 (C1, approved 2026-10-22: canonical Dhoni ms-dhoni@4) and tp-dna@9 (C2, rejected,
+ * offline only) (Phase 4.1): tp-dna@3 exactly, plus one base factor for
  * repeated BLIND raises, and nothing for seen aggression.
  *
  * Phase 4 found that four players who raise every blind bet beat Dhoni (he keeps paying an escalating

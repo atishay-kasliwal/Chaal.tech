@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { CANONICAL_STYLES, CHARACTER_STYLES_V3 } from '../bots/dna-styles.mjs';
+import { PHASE4_CHAMPIONS, CHARACTER_STYLES_V3 } from '../bots/dna-styles.mjs';
 import { CHARACTER_POLICY_V4 } from '../bots/character-v4.mjs';
 import { CHARACTER_POLICY_V5 } from '../bots/character-v5.mjs';
 import { candidateStyle } from './candidates.mjs';
@@ -25,7 +25,7 @@ export const SHORT = Object.freeze({
 
 /** Champions: the canonical lineup, as sim members (the frozen references the publish script copies). */
 export const CHAMPIONS = Object.freeze(
-	Object.fromEntries(CHARACTER_IDS.map((c) => [c, CANONICAL_STYLES[c]._id]))
+	Object.fromEntries(CHARACTER_IDS.map((c) => [c, PHASE4_CHAMPIONS[c]._id]))
 );
 
 const LEAGUES = {

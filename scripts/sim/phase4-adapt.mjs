@@ -1,7 +1,7 @@
 /** Phase 4 adaptation suite (brief §7, §8): every champion against one opponent type at a time. */
 import { metrics } from '../../server/sim/fingerprint.mjs';
 import { addCounters } from '../../server/sim/summary.mjs';
-import { CANONICAL_STYLES } from '../../server/bots/dna-styles.mjs';
+import { PHASE4_CHAMPIONS } from '../../server/bots/dna-styles.mjs';
 import { CHAMPIONS, leagueMember } from '../../server/sim/league.mjs';
 import { bootstrap, ci, mean } from '../../server/sim/p4stats.mjs';
 import { CHARACTER_IDS } from '../../src/lib/bots/cast.js';
@@ -12,7 +12,7 @@ const r3 = (x) => (Number.isFinite(x) ? Math.round(x * 1000) / 1000 : null);
 
 /** A champion with its opponent reads switched off (adaptability 0): the no-learning control. */
 export function noReads(c) {
-	const s = CANONICAL_STYLES[c];
+	const s = PHASE4_CHAMPIONS[c];
 	return {
 		id: `${s._id}-noreads`,
 		style: {

@@ -18,8 +18,9 @@ export const DNA_POLICY_V5 = 'tp-dna@5';
 export const DNA_POLICY_V6 = 'tp-dna@6';
 /** Phase 4: tp-dna@3 plus the cost of staying blind as a base-brain factor. Challengers only. */
 export const DNA_POLICY_V7 = 'tp-dna@7';
-/** Phase 4.1: tp-dna@3 plus pressure to look from repeated blind raises (C1) or blind raises by cost (C2). */
+/** Phase 4.1 C1: tp-dna@3 plus pressure to look from repeated blind raises. Published (approved 2026-10-22). */
 export const DNA_POLICY_V8 = 'tp-dna@8';
+/** Phase 4.1 C2: blind raises by cost. Rejected (personality gate); offline only. */
 export const DNA_POLICY_V9 = 'tp-dna@9';
 export const DNA_POLICIES = Object.freeze(
 	new Set([
@@ -28,7 +29,8 @@ export const DNA_POLICIES = Object.freeze(
 		DNA_POLICY_V3,
 		DNA_POLICY_V4,
 		DNA_POLICY_V5,
-		DNA_POLICY_V6
+		DNA_POLICY_V6,
+		DNA_POLICY_V8
 	])
 );
 /** The names these policies had before the rename, for reading older reports and league files. */

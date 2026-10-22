@@ -45,7 +45,7 @@ import { runTable, reproduceHand, SIM_VERSION } from '../../server/sim/table.mjs
 import { judgeDecision, JUDGE_VERSION } from '../../server/sim/judge.mjs';
 import { explainDecision } from '../../server/sim/explain.mjs';
 import { castMember } from '../../src/lib/bots/cast.js';
-import { CANONICAL_STYLES } from '../../server/bots/dna-styles.mjs';
+import { PHASE4_CHAMPIONS } from '../../server/bots/dna-styles.mjs';
 import { CHARACTER_POLICY_V5 } from '../../server/bots/character-v5.mjs';
 
 const argv = process.argv;
@@ -78,13 +78,13 @@ for (const c of CHARACTER_IDS) {
 	if (!cand) {
 		// A control (or a character with no finalist): its canonical version.
 		FINAL[c] = {
-			id: CANONICAL_STYLES[c]._id,
+			id: PHASE4_CHAMPIONS[c]._id,
 			chosen: false,
 			control: !f,
 			reason: f ? (f.reason ?? 'no finalist') : 'control: canonical, not searched',
-			genome: { ...CANONICAL_STYLES[c].tendencies },
-			style: CANONICAL_STYLES[c],
-			member: CANONICAL_STYLES[c]._id
+			genome: { ...PHASE4_CHAMPIONS[c].tendencies },
+			style: PHASE4_CHAMPIONS[c],
+			member: PHASE4_CHAMPIONS[c]._id
 		};
 		continue;
 	}
@@ -98,7 +98,7 @@ for (const c of CHARACTER_IDS) {
 		parent: cand.parent,
 		generation: cand.generation,
 		policy: CHARACTER_POLICY_V5,
-		ancestor: CANONICAL_STYLES[c]._id
+		ancestor: PHASE4_CHAMPIONS[c]._id
 	});
 	FINAL[c] = {
 		id,
@@ -113,7 +113,7 @@ for (const c of CHARACTER_IDS) {
 const VERSIONS = {
 	final: (c) => FINAL[c].member,
 	// The canonical version of each character (GG: c034 on tp-dna@4; the others Phase 2).
-	'@3': (c) => CANONICAL_STYLES[c]._id,
+	'@3': (c) => PHASE4_CHAMPIONS[c]._id,
 	'@2': (c) => `${c}@2`
 };
 const pick = (list, n, ...key) => shuffle(list, stream(SEED, 'popvar', ...key).random).slice(0, n);

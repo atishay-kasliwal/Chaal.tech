@@ -1,4 +1,4 @@
-import { CANONICAL_STYLES } from '../bots/dna-styles.mjs';
+import { PHASE4_CHAMPIONS } from '../bots/dna-styles.mjs';
 import { styleConfigHash } from '../bots/identity.mjs';
 import { CHARACTER_POLICY_V6 } from '../bots/character-v6.mjs';
 import { CHARACTER_POLICY_V7 } from '../bots/character-v7.mjs';
@@ -14,7 +14,7 @@ export function challenger(
 	id,
 	{ policy = CHARACTER_POLICY_V6, dna = {}, addQuirks = [], change, target = null }
 ) {
-	const champion = CANONICAL_STYLES[character];
+	const champion = PHASE4_CHAMPIONS[character];
 	const quirks = [
 		...champion.tendencies.quirks.filter((q) => !addQuirks.some((a) => a.id === q.id)),
 		...addQuirks
