@@ -29,13 +29,13 @@ main's `tp-character@1` and `tp-adaptive@1` are untouched.
 
 ## Canonical characters
 
-| Character | Reference        | Policy     | Reference hash     | Directory hash     | Source                        |
-| --------- | ---------------- | ---------- | ------------------ | ------------------ | ----------------------------- |
-| Rohit     | `rohit-sharma@3` | `tp-dna@3` | `f2015fc5daf490a9` | `13657c11ca64694c` | Phase 2                       |
-| Virat     | `virat-kohli@3`  | `tp-dna@3` | `ecd01fe38fca321d` | `35d9023fb9525120` | Phase 2                       |
-| GG        | `gg@4`           | `tp-dna@4` | `862f1cd78b2c4597` | `1c634dd3cf3e50f9` | Phase 3 candidate `gg@4-c034` |
-| Samay     | `samay-raina@3`  | `tp-dna@3` | `7d7e81874eb7ddf7` | `43686ccfe4328696` | Phase 2                       |
-| Dhoni     | `ms-dhoni@3`     | `tp-dna@3` | `2db238f3b5d01784` | `2eef980bf3d3c5ba` | Phase 2                       |
+| Character | Reference        | Policy     | Reference hash     | Directory hash     | Source                                          |
+| --------- | ---------------- | ---------- | ------------------ | ------------------ | ----------------------------------------------- |
+| Rohit     | `rohit-sharma@3` | `tp-dna@3` | `f2015fc5daf490a9` | `13657c11ca64694c` | Phase 2                                         |
+| Virat     | `virat-kohli@3`  | `tp-dna@3` | `ecd01fe38fca321d` | `35d9023fb9525120` | Phase 2                                         |
+| GG        | `gg@4`           | `tp-dna@4` | `862f1cd78b2c4597` | `1c634dd3cf3e50f9` | Phase 3 candidate `gg@4-c034`                   |
+| Samay     | `samay-raina@3`  | `tp-dna@3` | `7d7e81874eb7ddf7` | `43686ccfe4328696` | Phase 2                                         |
+| Dhoni     | `ms-dhoni@4`     | `tp-dna@8` | `04254a1a0abbb72a` | `98d41082047cd70a` | Phase 4.1 candidate C1 `ms-dhoni@8-blindraises` |
 
 - **Reference hash**: `styleConfigHash` over policy, tendencies and games (the simulator's identity).
 - **Directory hash**: `characterHash`, which also covers supported variants: the hash the published
@@ -49,6 +49,18 @@ generation 2 of the search. Measured under the former policy name as `af244057d0
 that hash from the ported configuration gives the same value
 (`tests/server/bot-canonical.test.mjs`). Not adopted: Virat `c024`, Samay `c008`, Dhoni `c039`,
 any Rohit candidate (reasons in `docs/bots/PHASE3_REPORT.md`).
+
+**Dhoni C1 (Phase 4.1, approved 2026-10-22).** Dhoni's Phase 2 DNA, quirks and tempo, unchanged, on
+`tp-dna@8`: tp-dna@3 plus one base factor (from the second distinct opponent still in the hand who
+has raised only while blind, +0.2 to look each, at most +0.6). It fixes the repeated-blind-raise
+exploit Phase 4 found (+1,227 ± 33 boots/100 against it) at neutral strength (-1 ± 140) and passes
+all eight gates ([PHASE41_REPORT.md](PHASE41_REPORT.md)). The canonical reference `ms-dhoni@4` is
+exactly the measured challenger: same configuration and hash, and the same decisions, traces, random
+draws and minds on fixed tables (`tests/server/bot-canonical.test.mjs`;
+`node scripts/sim/phase41-canonical.mjs` replays the 4.1 screen and requires 0 ± 0 against C1 on every
+strategy). `ms-dhoni@3` stays in code as history; the Phase 3.1, 4 and 4.1 harnesses use the frozen
+`PHASE4_CHAMPIONS` (the lineup before 4.1), so their recorded results still reproduce. C2
+(`tp-dna@9`) was rejected and stays offline.
 
 **Historical versions.** The DNA references v1 to v3 stay in code with golden digests
 (`tests/server/bot-legacy-golden.test.mjs`); main's published database versions are never edited.

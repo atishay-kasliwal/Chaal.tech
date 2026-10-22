@@ -4,6 +4,8 @@ import { deciderFor } from '../bots/policies.mjs';
 import { CHARACTER_IDS, castMember } from '../../src/lib/bots/cast.js';
 import { BASELINES } from './baselines.mjs';
 import { ARCHETYPES, ARCHETYPE_STYLES, ARCHETYPE_STACKS, ARCHETYPE_IDS } from './archetypes.mjs';
+import { adversary } from './adversary.mjs';
+import { P4_ARCHETYPES, p4Decider } from './archetypes-p4.mjs';
 
 /**
  * Who can sit at a simulated table. A member is either a published style (played by the real
@@ -22,6 +24,21 @@ export const versioned = (version) => CHARACTER_IDS.map((id) => `${id}@${version
 
 /** `id` is a member id, or { id, style } for an unpublished style under test (decided in the sim). */
 export function member(id) {
+	// Phase 4 adversary: { id, adversary: genome, target: seat index or null }, its own memory per seat.
+	if (typeof id === 'object' && id.adversary)
+		return {
+			id: id.id,
+			styleId: null,
+			seat: (room, botId) => ({ botId, name: id.id.slice(0, 24), level: 'normal' }),
+			decide: adversary(id.adversary, id.target == null ? null : `bot-seat-${id.target}`)
+		};
+	if (typeof id === 'string' && P4_ARCHETYPES[id])
+		return {
+			id,
+			styleId: null,
+			seat: (room, botId) => ({ botId, name: id.slice(0, 24), level: 'normal' }),
+			decide: p4Decider(id)
+		};
 	if (typeof id === 'object')
 		return {
 			id: id.id,
