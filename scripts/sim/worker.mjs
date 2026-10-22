@@ -7,6 +7,7 @@ import { eventStudy } from '../../server/sim/events-study.mjs';
 import { sequenceStudy } from '../../server/sim/sequences.mjs';
 import { STYLES } from '../../server/bots/dna-styles.mjs';
 import { seatSummarizer, addCounters } from '../../server/sim/summary.mjs';
+import { priorFromSession } from '../../server/bots/memory/prior.mjs';
 
 process.on('message', (spec) => {
 	if (spec === null) return process.disconnect();
@@ -63,7 +64,7 @@ function summarize(spec) {
 						: (STYLES[spec.seats[studied]] ?? null)
 				);
 	const seq = spec.summary.sequences ? sequenceStudy(watch[0]) : null;
-	runTable(
+	const played = runTable(
 		spec,
 		(hand) => {
 			decisions += hand.decisions.length;
@@ -90,6 +91,10 @@ function summarize(spec) {
 		...(study ? { events: study.result() } : {}),
 		...(seq ? { sequences: seq.result() } : {}),
 		seats: watch.map((seat) => ({ seat, ...sums[seat].result() })),
+		// Phase 5: the next night's priors from a watched seat's last mind (spec.summary.priorsOf).
+		...(spec.summary.priorsOf !== undefined
+			? { priors: sessionPriors(played.minds, `bot-seat-${spec.summary.priorsOf}`) }
+			: {}),
 		decisions,
 		ms: performance.now() - started,
 		rssMb: process.memoryUsage().rss / 2 ** 20
@@ -140,4 +145,16 @@ function bins(spec) {
 		ms: performance.now() - started,
 		rssMb: process.memoryUsage().rss / 2 ** 20
 	});
+}
+
+/** What one seated character would remember about every other seat, as next night's priors. */
+function sessionPriors(minds, botId) {
+	const mind = minds?.[botId];
+	if (!mind) return {};
+	const byPlayer = {};
+	for (const [id, s] of Object.entries(mind.others ?? {})) {
+		const prior = priorFromSession(s.model);
+		if (prior) byPlayer[id] = prior;
+	}
+	return { [botId]: byPlayer };
 }

@@ -7,6 +7,8 @@ import { member } from './population.mjs';
 import { styleForSeat } from '../bots/dna-styles.mjs';
 import { stream, shuffle } from './seeds.mjs';
 import { handPercentile } from './judge.mjs';
+import { seedMinds } from '../bots/memory/prior.mjs';
+import { seedPrior } from '../bots/mind.mjs';
 
 /**
  * A headless table on the real engine (`transition`, `projection`) with the real production
@@ -50,7 +52,10 @@ export function runTable(spec, onHand = null, hooks = {}) {
 		nightKey = decisionSeed,
 		// Matched (duplicate) play: each seat's k-th decision of a hand draws from its own stream,
 		// so when one seat changes policy the others keep their draws (classic variant only).
-		matched = false
+		matched = false,
+		// Phase 5: long-term priors { [botSeatId]: { [playerId]: prior } }, folded into the minds at
+		// sit-down, as the room does at the deal (server/bots/memory/prior.mjs).
+		priors = null
 	} = spec;
 	if (matched && rulesVersion !== 'classic-1') throw new Error('matched play needs classic-1');
 	const variant = getVariant(rulesVersion);
@@ -88,6 +93,7 @@ export function runTable(spec, onHand = null, hooks = {}) {
 		mutate: true
 	};
 	let minds = updateMinds({}, null, room, mindOptions);
+	if (priors) minds = seedMinds(minds, priors, seedPrior, () => 'human');
 	let mindMs = 0;
 	const advance = (before, after) => {
 		const t0 = performance.now();
@@ -204,6 +210,8 @@ export function runTable(spec, onHand = null, hooks = {}) {
 		if (onHand) onHand(hand);
 		else out.push(hand);
 	}
+	// The session's last minds (Phase 5 studies build the next night's priors from them).
+	out.minds = minds;
 	return out;
 }
 
