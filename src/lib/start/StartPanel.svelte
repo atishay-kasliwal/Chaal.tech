@@ -84,7 +84,13 @@
 	// Every Teen Patti room opens with Classic. Variant choice belongs between hands.
 	let rulesVersion: RulesVersion = 'classic-1';
 	let gameType = $state<
-		'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy' | 'three-two-five' | 'ten-pakad'
+		| 'teen-patti'
+		| 'texas-holdem'
+		| 'blackjack'
+		| 'rummy'
+		| 'three-two-five'
+		| 'ten-pakad'
+		| 'twenty-nine'
 	>('teen-patti');
 	const minimumBuyIn = $derived(gameType === 'teen-patti' ? 1000 : 50);
 	const summary = $derived(
@@ -95,7 +101,8 @@
 					blackjack: 'Blackjack',
 					rummy: 'Indian Rummy',
 					'three-two-five': '3 2 5',
-					'ten-pakad': '10 Pakad'
+					'ten-pakad': '10 Pakad',
+					'twenty-nine': '29'
 				}[gameType]
 	);
 
@@ -110,7 +117,8 @@
 			game === 'blackjack' ||
 			game === 'rummy' ||
 			game === 'three-two-five' ||
-			game === 'ten-pakad'
+			game === 'ten-pakad' ||
+			game === 'twenty-nine'
 		)
 			gameType = game;
 		// Connect early so tapping Start is instant. The room page owns the socket afterwards.
@@ -405,6 +413,7 @@
 						<option value="rummy">13-card Indian Rummy</option>
 						<option value="three-two-five">3 2 5 (three players)</option>
 						<option value="ten-pakad">10 Pakad (four players, two teams)</option>
+						<option value="twenty-nine">29 (four players, two teams)</option>
 					</select>
 				</label>
 				<p class="hint">
@@ -418,7 +427,9 @@
 									? 'Three players, tricks to make: 5, 3 and 2. Chaal characters fill empty seats.'
 									: gameType === 'ten-pakad'
 										? 'Two teams of two capture tens. Chaal characters fill empty seats.'
-										: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
+										: gameType === 'twenty-nine'
+											? 'Bid on four cards with a secret trump; first to six game points. Chaal characters fill empty seats.'
+											: 'Start with Classic Teen Patti. Choose the next variant or let the table pick one at random between hands.'}
 				</p>
 				<label class="row">
 					<span>Starting chips per player</span>

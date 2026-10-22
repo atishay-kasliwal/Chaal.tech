@@ -32,11 +32,13 @@
 				? '10 cards'
 				: id === 'ten-pakad'
 					? '13 cards'
-					: id === 'blackjack'
-						? 'to 21'
-						: id === 'texas-holdem'
-							? '2 + 5'
-							: `${cards} cards`;
+					: id === 'twenty-nine'
+						? '8 cards'
+						: id === 'blackjack'
+							? 'to 21'
+							: id === 'texas-holdem'
+								? '2 + 5'
+								: `${cards} cards`;
 	const playHref = (id: string, c: string) =>
 		`/create-room${c === 'Teen Patti' ? '' : `?game=${id === 'rummy' ? 'rummy' : id}`}`;
 	async function syncHash() {
@@ -70,7 +72,7 @@
 	<title>All Games & Rules · Chaal</title>
 	<meta
 		name="description"
-		content="Every game on Chaal. Explore Teen Patti variants, Texas Hold’em, Blackjack, Indian Rummy, 3 2 5 and 10 Pakad with simple rules and card examples."
+		content="Every game on Chaal. Explore Teen Patti variants, Texas Hold’em, Blackjack, Indian Rummy, 3 2 5, 10 Pakad and 29 with simple rules and card examples."
 	/>
 </svelte:head>
 

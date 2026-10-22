@@ -57,6 +57,57 @@ export type TrickRoom = {
 	};
 };
 
+/** The 29 seat view a client receives (server/tricks/twenty-nine.mjs projection). */
+export type TwentyNineRoom = {
+	stage: string;
+	hand: number;
+	hostId: string;
+	isStarted: boolean;
+	gameShow: boolean;
+	dealerId: string | null;
+	order: string[];
+	teams: Record<string, 0 | 1>;
+	bids: { id: string; bid: number | null; forced?: boolean }[];
+	high: { id: string; bid: number } | null;
+	bidderId: string | null;
+	bid: number | null;
+	target: number | null;
+	trump: Suit | null;
+	revealed: boolean;
+	revealedAt: { by: string; trick: number; forced?: boolean } | null;
+	indicator: Card | null;
+	indicatorDown: boolean;
+	pair: { id: string; team: 0 | 1 } | null;
+	trick: { leader: string; plays: Play[] } | null;
+	lastTrick: { plays: Play[]; winner: string; points: number; n: number } | null;
+	tricksPlayed: number;
+	points: [number, number];
+	match: { gamePoints: [number, number]; games: [number, number] };
+	currentPlayerId: string | null;
+	result: {
+		reason: string;
+		bidTeam?: 0 | 1;
+		bid?: number;
+		target?: number;
+		trump?: Suit;
+		points?: [number, number];
+		made?: boolean | null;
+		gameOver?: 0 | 1 | null;
+	} | null;
+	usersList: (TrickUser & { seatNumber: number; team: 0 | 1 })[];
+	legalActions: {
+		start: boolean;
+		ready: boolean;
+		addBot: boolean;
+		bid: number[];
+		pass: boolean;
+		chooseTrump: Card[];
+		reveal: boolean;
+		pair: boolean;
+		play: Card[];
+	};
+};
+
 /** The 10 Pakad seat view a client receives (server/tricks/ten-pakad.mjs projection). */
 export type Pile = { count: number; tens: number };
 export type PakadUser = TrickUser & { seatNumber: number; team: 0 | 1 };

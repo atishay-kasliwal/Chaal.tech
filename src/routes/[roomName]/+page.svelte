@@ -19,7 +19,8 @@
 	import TeenPattiTable from '#lib/teen-patti/TeenPattiTable.svelte';
 	import ThreeTwoFiveTable from '#lib/tricks/ThreeTwoFiveTable.svelte';
 	import TenPakadTable from '#lib/tricks/TenPakadTable.svelte';
-	import type { TrickRoom, PakadRoom } from '#lib/tricks/types.js';
+	import TwentyNineTable from '#lib/tricks/TwentyNineTable.svelte';
+	import type { TrickRoom, PakadRoom, TwentyNineRoom } from '#lib/tricks/types.js';
 	import { clearPendingJoinName, takeInviteFriends } from '#lib/start/player-name.js';
 	import ClubGate from '#lib/club/ClubGate.svelte';
 	import { club } from '#lib/club/club.svelte.js';
@@ -382,6 +383,16 @@
 	{:else if roomData?.gameType === 'three-two-five'}
 		<ThreeTwoFiveTable
 			room={roomData as unknown as TrickRoom}
+			selfId={socket.playerId}
+			connected={socket.connected}
+			seated={usernameCreated}
+			send={sendAction}
+			onLeave={leaveRoomHandler}
+			onInvite={copyInviteLink}
+		/>
+	{:else if roomData?.gameType === 'twenty-nine'}
+		<TwentyNineTable
+			room={roomData as unknown as TwentyNineRoom}
 			selfId={socket.playerId}
 			connected={socket.connected}
 			seated={usernameCreated}

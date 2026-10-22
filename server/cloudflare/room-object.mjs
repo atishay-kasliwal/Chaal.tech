@@ -15,6 +15,7 @@ import {
 import { shuffledDeck } from '../classic.mjs';
 import { freshRummyDeck } from '../rummy/rummy.mjs';
 import { fresh325Deck } from '../tricks/three-two-five.mjs';
+import { fresh29Deck } from '../tricks/twenty-nine.mjs';
 import { getVariant, listVariants } from '../variants/index.mjs';
 import { secureRandomInt, toHex } from '../random.mjs';
 import { inviteEmails, planInvites, inviteMessage, sendWithResend } from './invites.mjs';
@@ -94,7 +95,9 @@ const productionDeck = (gameType) =>
 		? shuffle(freshRummyDeck())
 		: gameType === 'three-two-five'
 			? shuffle(fresh325Deck())
-			: shuffledDeck();
+			: gameType === 'twenty-nine'
+				? shuffle(fresh29Deck())
+				: shuffledDeck();
 
 function safeDecode(value) {
 	try {
@@ -741,7 +744,11 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 				action = args[0];
 				payload = { index: args[1] };
 			} else if (event === 'trickAction') {
-				const trickActions = { 'three-two-five': ['chooseTrump', 'pull', 'give', 'play'], 'ten-pakad': ['play'] };
+				const trickActions = {
+					'three-two-five': ['chooseTrump', 'pull', 'give', 'play'],
+					'ten-pakad': ['play'],
+					'twenty-nine': ['bid', 'pass', 'chooseTrump', 'reveal', 'pair', 'play']
+				};
 				if (!trickActions[before.gameType]?.includes(args[0]))
 					throw new GameError('Invalid card game action', 'INVALID_ACTION');
 				action = args[0];

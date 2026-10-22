@@ -1,5 +1,6 @@
 import { bot325, observe325 } from './tricks/bot-325.mjs';
 import { botPakad, observePakad } from './tricks/bot-pakad.mjs';
+import { bot29, observe29 } from './tricks/bot-29.mjs';
 import { projection, playing } from '../engine.mjs';
 import { decide } from './strategy.mjs';
 import { ADAPTIVE_POLICY, adaptiveDecision } from './memory/adaptive.mjs';
@@ -237,7 +238,8 @@ export function updateMinds(
  */
 const TRICK_GAMES = new Map([
 	['three-two-five', { bot: bot325, observe: observe325 }],
-	['ten-pakad', { bot: botPakad, observe: observePakad }]
+	['ten-pakad', { bot: botPakad, observe: observePakad }],
+	['twenty-nine', { bot: bot29, observe: observe29 }]
 ]);
 function updateTrickMinds(minds, after) {
 	const { observe: fold } = TRICK_GAMES.get(after.gameType);
