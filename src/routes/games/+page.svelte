@@ -6,6 +6,7 @@
 	let category = $state<string>('All');
 	let selectedId = $state('classic-1');
 	let replay = $state(0);
+	const PIP: Record<string, string> = { spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣' };
 	const SUIT: Record<string, string> = {
 		'Teen Patti': '♠',
 		Poker: '♦',
@@ -114,7 +115,15 @@
 								choose(game.id);
 							}}
 						>
-							<span class="swatch" aria-hidden="true">{SUIT[game.category] ?? '♠'}</span>
+							<span class="minis" aria-hidden="true"
+								>{#each game.cards.slice(0, 3) as c, i (i)}<span
+										class="mini"
+										class:red={c.suit === 'hearts' || c.suit === 'diamonds'}
+										class:wild={c.wild}
+										style:--i={i - (Math.min(game.cards.length, 3) - 1) / 2}
+										>{c.rank}<em>{PIP[c.suit] ?? ''}</em></span
+									>{/each}</span
+							>
 							<strong>{game.name}</strong>
 							<small>{dealt(game.id, game.cards.length)}</small>
 						</a>
@@ -302,13 +311,14 @@
 		align-content: end;
 		gap: 2px;
 		min-height: 92px;
-		padding: 10px 12px;
+		/* Room above the title for the miniature cards. */
+		padding: 46px 12px 10px;
 		border-radius: 14px;
-		background: linear-gradient(
-			160deg,
-			var(--poster) 0%,
-			color-mix(in srgb, var(--poster) 55%, #000) 100%
-		);
+		/* A lit poster: a soft sheen from the top left, a faint felt weave, the family colour. */
+		background:
+			radial-gradient(120% 90% at 0% 0%, #ffffff26, transparent 55%),
+			repeating-linear-gradient(135deg, #ffffff06 0 2px, transparent 2px 7px),
+			linear-gradient(160deg, var(--poster) 0%, color-mix(in srgb, var(--poster) 45%, #000) 100%);
 		border: 1px solid #ffffff14;
 		overflow: hidden;
 		transition:
@@ -326,13 +336,51 @@
 	.game.chosen {
 		outline-color: var(--butter);
 	}
-	.swatch {
+	/* The game's own example cards in miniature, fanned in the corner. */
+	.minis {
 		position: absolute;
-		top: 6px;
-		right: 10px;
-		font-size: 34px;
-		opacity: 0.22;
-		line-height: 1;
+		top: 10px;
+		right: 14px;
+		display: flex;
+	}
+	.mini {
+		display: grid;
+		place-items: center;
+		align-content: center;
+		width: 22px;
+		height: 31px;
+		margin-left: -9px;
+		border-radius: 4px;
+		background: var(--paper);
+		color: var(--night);
+		font-family: var(--font-display);
+		font-size: 10px;
+		font-weight: 800;
+		line-height: 0.95;
+		box-shadow: 0 2px 5px #0006;
+		rotate: calc(var(--i) * 9deg);
+		translate: 0 calc(var(--i) * var(--i) * 2px);
+		transition:
+			rotate 0.25s,
+			translate 0.25s;
+	}
+	.mini em {
+		font-style: normal;
+		font-size: 11px;
+	}
+	.mini.red {
+		color: #b8322a;
+	}
+	.mini.wild {
+		box-shadow:
+			0 0 0 2px var(--butter),
+			0 2px 5px #0006;
+	}
+	.game:hover .mini,
+	.game:focus-visible .mini,
+	.game.chosen .mini {
+		rotate: calc(var(--i) * 15deg);
+		translate: calc(var(--i) * 3px) calc(var(--i) * var(--i) * 3px - 2px);
 	}
 	.game strong {
 		font-family: var(--font-display);
@@ -576,6 +624,11 @@
 		.rules {
 			order: 3;
 			overflow: visible;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.mini {
+			transition: none;
 		}
 	}
 </style>

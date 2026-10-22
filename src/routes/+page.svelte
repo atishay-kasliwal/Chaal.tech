@@ -89,9 +89,6 @@
 				<ShuffleHand />
 			</div>
 			<h1 id="home-title">Good cards.<br /><span>Better company.</span></h1>
-			<button class="club-cta" onclick={openStart}
-				>Pull up a chair <span aria-hidden="true">→</span></button
-			>
 		</div>
 		<div class="invitation-bottom">
 			<span>Teen Patti & friends</span><span>Video on. Cards out.</span><a href="#games"
@@ -214,7 +211,8 @@
 		font-weight: 800;
 		line-height: 0.9;
 		letter-spacing: -0.065em;
-		margin: clamp(18px, 2.4dvh, 28px) 0 clamp(16px, 2.4dvh, 28px);
+		/* The headline closes the hero: the way in is the header's Let's play and the page's end. */
+		margin: clamp(18px, 2.4dvh, 28px) 0 0;
 	}
 	h1 span {
 		color: var(--night);
@@ -579,8 +577,8 @@
 			padding-top: 18px;
 		}
 		.hero {
-			min-height: max(520px, calc(100dvh - var(--header-h, 56px) - 66px));
-			padding-top: 80px;
+			min-height: max(480px, calc(100dvh - var(--header-h, 56px) - 66px));
+			padding-top: 36px;
 			--cw: clamp(78px, min(25vw, 17dvh), 118px);
 		}
 		h1 {
