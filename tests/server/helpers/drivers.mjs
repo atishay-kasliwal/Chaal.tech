@@ -7,6 +7,7 @@ import { freshDeck } from '../../../server/classic.mjs';
 import { freshRummyDeck } from '../../../server/rummy/rummy.mjs';
 import { fresh325Deck } from '../../../server/tricks/three-two-five.mjs';
 import { freshPakadDeck } from '../../../server/tricks/ten-pakad.mjs';
+import { fresh29Deck } from '../../../server/tricks/twenty-nine.mjs';
 import { getVariant } from '../../../server/variants/index.mjs';
 import { TableSim, shuffled } from './table-sim.mjs';
 
@@ -293,6 +294,51 @@ export function playTenPakad(sim, { timeoutBias = 0.1 } = {}) {
 			continue;
 		}
 		sim.act('a', 'play', { card: pick(random, sim.view('a').legalActions.play) });
+	}
+}
+
+/** A 29 table: one person and three Chaal characters (bots move through the real runner). */
+export function twentyNineTable({ seed = 1 } = {}) {
+	const sim = new TableSim({ seed });
+	sim.connected = new Set(['a']);
+	sim.create({ gameType: 'twenty-nine', host: 'a', table: 0 });
+	sim.act('a', 'join', { username: 'A' });
+	sim.act('a', 'addBot', { botId: 'bot-rohit-test2', characterId: 'rohit-sharma' });
+	sim.act('a', 'addBot', { botId: 'bot-dhoni-test2', characterId: 'ms-dhoni' });
+	sim.act('a', 'addBot', { botId: 'bot-gg-test2', characterId: 'gg' });
+	return sim;
+}
+
+/** One hand: bots through the runner, the person at random (sometimes letting the turn run out). */
+export function playTwentyNine(sim, { timeoutBias = 0.1 } = {}) {
+	const random = sim.random;
+	attempt(sim, 'a', 'ready', { ready: true });
+	sim.tick(1000);
+	sim.act(
+		'a',
+		'start',
+		{},
+		{ ctx: { deck: shuffled(fresh29Deck(), random), handId: `t${sim.room.revision}` } }
+	);
+	for (let n = 0; n < 120 && sim.playing(); n++) {
+		sim.tick(400);
+		if (sim.botMove()) continue;
+		if (random() < timeoutBias) {
+			sim.timeout();
+			continue;
+		}
+		const l = sim.view('a').legalActions;
+		if (l.pass)
+			sim.act(
+				'a',
+				l.bid.length && random() < 0.4 ? 'bid' : 'pass',
+				l.bid.length ? { value: l.bid[0] } : {}
+			);
+		else if (l.chooseTrump.length)
+			sim.act('a', 'chooseTrump', { card: pick(random, l.chooseTrump) });
+		else if (l.reveal) sim.act('a', 'reveal');
+		else if (l.pair) sim.act('a', 'pair');
+		else sim.act('a', 'play', { card: pick(random, l.play) });
 	}
 }
 

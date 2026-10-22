@@ -138,6 +138,20 @@ const otherGames: GameGuide[] = [
 		],
 		cards: [card('10', 'hearts'), card('10', 'spades'), card('10', 'clubs')],
 		example: '10♥ 10♠ 10♣ · three tens win any hand'
+	},
+	{
+		id: 'twenty-nine',
+		name: '29',
+		category: 'Tricks',
+		win: 'Bid for your team, then take at least that many points. First to six game points wins.',
+		rules: [
+			'Four players in two teams; 32 cards, 7 to A. Jacks rank highest, then 9, A, 10, K, Q, 8, 7.',
+			'Points: J 3, 9 2, A 1, 10 1, 28 in all. Bid on your first four cards, 15 to 28; three passes in a row end it.',
+			'The winning bidder sets one card face down: its suit is trump, secret until someone cannot follow suit and must ask for it.',
+			'Holding K and Q of trump (the Pair) moves the target by 4 once your side wins a trick. Make the bid for +1, miss it for -1.'
+		],
+		cards: [card('J', 'spades'), card('9', 'spades'), card('A', 'spades')],
+		example: 'J♠ 9♠ A♠ · 6 points'
 	}
 ];
 // Start the carousel with the four game families and two familiar Teen Patti variants.

@@ -1,0 +1,134 @@
+{
+	"seed": 71,
+	"tables": 60,
+	"hands": 6,
+	"personaScale": 2,
+	"baseline": {
+		"won": {
+			"mean": 0.5083333333333333,
+			"ci": 0.05171523760036191,
+			"n": 360
+		},
+		"points": {
+			"mean": 13.955555555555556,
+			"ci": 0.5714824112428276,
+			"n": 360
+		},
+		"style": {
+			"bidRate": 0.283,
+			"bidsWon": 91,
+			"meanWinningBid": 15.93,
+			"makeRate": 0.648,
+			"contest": 0.921,
+			"trumpWhileFollowing": 0.61,
+			"giftToPartner": 0.96
+		}
+	},
+	"characters": {
+		"rohit-sharma": {
+			"wonVsBaseline": {
+				"mean": -0.008333333333333333,
+				"ci": 0.03224307535560927,
+				"n": 360
+			},
+			"pointsVsBaseline": {
+				"mean": 0.18611111111111112,
+				"ci": 0.19812159882725533,
+				"n": 360
+			},
+			"style": {
+				"bidRate": 0.348,
+				"bidsWon": 107,
+				"meanWinningBid": 16.1,
+				"makeRate": 0.607,
+				"contest": 0.92,
+				"trumpWhileFollowing": 0.61,
+				"giftToPartner": 0.965
+			}
+		},
+		"virat-kohli": {
+			"wonVsBaseline": {
+				"mean": -0.013888888888888888,
+				"ci": 0.036545044156709276,
+				"n": 360
+			},
+			"pointsVsBaseline": {
+				"mean": 0.03611111111111111,
+				"ci": 0.22535592025514598,
+				"n": 360
+			},
+			"style": {
+				"bidRate": 0.374,
+				"bidsWon": 111,
+				"meanWinningBid": 16.1,
+				"makeRate": 0.613,
+				"contest": 0.921,
+				"trumpWhileFollowing": 0.633,
+				"giftToPartner": 0.969
+			}
+		},
+		"gg": {
+			"wonVsBaseline": {
+				"mean": 0.019444444444444445,
+				"ci": 0.02718580045692452,
+				"n": 360
+			},
+			"pointsVsBaseline": {
+				"mean": -0.027777777777777776,
+				"ci": 0.1690761781414661,
+				"n": 360
+			},
+			"style": {
+				"bidRate": 0.255,
+				"bidsWon": 86,
+				"meanWinningBid": 15.84,
+				"makeRate": 0.651,
+				"contest": 0.919,
+				"trumpWhileFollowing": 0.606,
+				"giftToPartner": 0.954
+			}
+		},
+		"samay-raina": {
+			"wonVsBaseline": {
+				"mean": -0.002777777777777778,
+				"ci": 0.022477425810543135,
+				"n": 360
+			},
+			"pointsVsBaseline": {
+				"mean": -0.08888888888888889,
+				"ci": 0.15041609425175312,
+				"n": 360
+			},
+			"style": {
+				"bidRate": 0.288,
+				"bidsWon": 91,
+				"meanWinningBid": 15.89,
+				"makeRate": 0.67,
+				"contest": 0.913,
+				"trumpWhileFollowing": 0.609,
+				"giftToPartner": 0.963
+			}
+		},
+		"ms-dhoni": {
+			"wonVsBaseline": {
+				"mean": -0.011111111111111112,
+				"ci": 0.027776195560014493,
+				"n": 360
+			},
+			"pointsVsBaseline": {
+				"mean": -0.10833333333333334,
+				"ci": 0.1648977539764593,
+				"n": 360
+			},
+			"style": {
+				"bidRate": 0.261,
+				"bidsWon": 86,
+				"meanWinningBid": 15.81,
+				"makeRate": 0.674,
+				"contest": 0.919,
+				"trumpWhileFollowing": 0.586,
+				"giftToPartner": 0.969
+			}
+		}
+	}
+}
