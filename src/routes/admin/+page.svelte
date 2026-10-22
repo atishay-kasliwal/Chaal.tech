@@ -343,7 +343,8 @@
 							class:on={tab === id}
 							aria-current={tab === id ? 'page' : undefined}
 							onclick={() => (tab = id)}
-							><span class="tab-name">{label}</span><span class="meta">{sectionMeta(id)}</span
+							><span class="tab-name">{label}</span><span class="meta" aria-hidden="true"
+								>{sectionMeta(id)}</span
 							></button
 						>
 					{/each}
