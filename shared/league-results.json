@@ -1,0 +1,210 @@
+{
+  "reports": [
+    {
+      "id": "daily-20261022",
+      "schema": "chaal-league@1",
+      "game": "teen-patti",
+      "variant": "classic-1",
+      "kind": "daily",
+      "seed": 20261022,
+      "startedAt": "2026-10-23T02:32:33.816Z",
+      "completedAt": "2026-10-23T03:12:07.768Z",
+      "hands": 1000000,
+      "participations": 5000000,
+      "durationSeconds": 2373.952,
+      "blockHands": 100,
+      "rotations": 5,
+      "blocks": 2000,
+      "standings": [
+        {
+          "id": "ms-dhoni",
+          "name": "Dhoni",
+          "style": "ms-dhoni@4",
+          "hash": "04254a1a0abbb72a",
+          "hands": 1000000,
+          "wins": 218297,
+          "net": 2229671.0999999996,
+          "profit100": 222.96710999999996,
+          "interval95": 27.128153575870414,
+          "decisions": 3920269,
+          "raises": 523401,
+          "folds": 679125
+        },
+        {
+          "id": "gg",
+          "name": "GG",
+          "style": "gg@4",
+          "hash": "862f1cd78b2c4597",
+          "hands": 1000000,
+          "wins": 123339,
+          "net": 1047779.1000000001,
+          "profit100": 104.77791,
+          "interval95": 20.094979038560975,
+          "decisions": 3025265,
+          "raises": 417545,
+          "folds": 838667
+        },
+        {
+          "id": "rohit-sharma",
+          "name": "Rohit",
+          "style": "rohit-sharma@3",
+          "hash": "f2015fc5daf490a9",
+          "hands": 1000000,
+          "wins": 241334,
+          "net": -257090.90000000002,
+          "profit100": -25.70909,
+          "interval95": 30.55798973760379,
+          "decisions": 4239015,
+          "raises": 1071488,
+          "folds": 626067
+        },
+        {
+          "id": "samay-raina",
+          "name": "Samay",
+          "style": "samay-raina@3",
+          "hash": "7d7e81874eb7ddf7",
+          "hands": 1000000,
+          "wins": 203447,
+          "net": -1187792.5999999999,
+          "profit100": -118.77926,
+          "interval95": 22.79414588691742,
+          "decisions": 3812331,
+          "raises": 197009,
+          "folds": 675792
+        },
+        {
+          "id": "virat-kohli",
+          "name": "Virat",
+          "style": "virat-kohli@3",
+          "hash": "ecd01fe38fca321d",
+          "hands": 1000000,
+          "wins": 213583,
+          "net": -1832566.7,
+          "profit100": -183.25666999999999,
+          "interval95": 31.534426287945784,
+          "decisions": 3848439,
+          "raises": 1042718,
+          "folds": 687418
+        }
+      ],
+      "gaps": {
+        "rohit-sharma": {
+          "rohit-sharma": {
+            "mean": 0,
+            "interval95": 0
+          },
+          "virat-kohli": {
+            "mean": 157.54757999999967,
+            "interval95": 51.82132101832207
+          },
+          "gg": {
+            "mean": -130.48700000000005,
+            "interval95": 40.15033423253207
+          },
+          "samay-raina": {
+            "mean": 93.07016999999995,
+            "interval95": 42.44372456981485
+          },
+          "ms-dhoni": {
+            "mean": -248.67620000000022,
+            "interval95": 46.44904779879594
+          }
+        },
+        "virat-kohli": {
+          "rohit-sharma": {
+            "mean": -157.54757999999967,
+            "interval95": 51.82132101832207
+          },
+          "virat-kohli": {
+            "mean": 0,
+            "interval95": 0
+          },
+          "gg": {
+            "mean": -288.0345800000005,
+            "interval95": 40.02627442668587
+          },
+          "samay-raina": {
+            "mean": -64.47741000000005,
+            "interval95": 43.93831248935855
+          },
+          "ms-dhoni": {
+            "mean": -406.22377999999975,
+            "interval95": 48.38906601078627
+          }
+        },
+        "gg": {
+          "rohit-sharma": {
+            "mean": 130.48700000000005,
+            "interval95": 40.15033423253207
+          },
+          "virat-kohli": {
+            "mean": 288.0345800000005,
+            "interval95": 40.02627442668587
+          },
+          "gg": {
+            "mean": 0,
+            "interval95": 0
+          },
+          "samay-raina": {
+            "mean": 223.55717000000013,
+            "interval95": 32.23018954017221
+          },
+          "ms-dhoni": {
+            "mean": -118.18920000000001,
+            "interval95": 36.79174602223816
+          }
+        },
+        "samay-raina": {
+          "rohit-sharma": {
+            "mean": -93.07016999999995,
+            "interval95": 42.44372456981485
+          },
+          "virat-kohli": {
+            "mean": 64.47741000000005,
+            "interval95": 43.93831248935855
+          },
+          "gg": {
+            "mean": -223.55717000000013,
+            "interval95": 32.23018954017221
+          },
+          "samay-raina": {
+            "mean": 0,
+            "interval95": 0
+          },
+          "ms-dhoni": {
+            "mean": -341.7463700000006,
+            "interval95": 37.61069023333385
+          }
+        },
+        "ms-dhoni": {
+          "rohit-sharma": {
+            "mean": 248.67620000000022,
+            "interval95": 46.44904779879594
+          },
+          "virat-kohli": {
+            "mean": 406.22377999999975,
+            "interval95": 48.38906601078627
+          },
+          "gg": {
+            "mean": 118.18920000000001,
+            "interval95": 36.79174602223816
+          },
+          "samay-raina": {
+            "mean": 341.7463700000006,
+            "interval95": 37.61069023333385
+          },
+          "ms-dhoni": {
+            "mean": 0,
+            "interval95": 0
+          }
+        }
+      },
+      "leader": "ms-dhoni",
+      "winner": "ms-dhoni",
+      "decisive": true,
+      "leadGap95": 36.79174602223816,
+      "method": "Five seat rotations per shuffled-deck block. Equal starting stacks of 100 bets; automatic rebuys are excluded from profit. Fresh session memory per table; no production player memories. Intervals use independent five-rotation blocks.",
+      "commit": "9aaa5141faff3e7f95c6755dfcf71a913cd9ef03"
+    }
+  ]
+}

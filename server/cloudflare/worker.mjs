@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+import { leagueHistory, saveLeagueReport, validateLeagueReport } from '../league/store.mjs';
 import { clubHistory } from '../club/history.mjs';
 import { analyticsResponse, adminAnalytics } from '../analytics/api.mjs';
 import { roomName } from '../engine.mjs';
@@ -319,6 +321,49 @@ export default {
 								(slots) => ({ saved: slots })
 							)
 				);
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) {
+				return clubFailure(error, origin, env);
+			}
+		}
+		if (url.pathname === '/admin/bots/league' && request.method === 'POST') {
+			const key = bearer(request);
+			const expected = env.LEAGUE_PUBLISH_KEY;
+			if (
+				!expected ||
+				typeof key !== 'string' ||
+				Buffer.byteLength(key) !== Buffer.byteLength(expected) ||
+				!timingSafeEqual(Buffer.from(key), Buffer.from(expected))
+			)
+				return response(
+					{ ok: false, error: 'League publishing is not authorised' },
+					403,
+					origin,
+					env
+				);
+			try {
+				const report = validateLeagueReport(await jsonBody(request, 32_000));
+				// Validate before opening a database connection. The credential can append league results only.
+				const result = await withClubDatabase(env, (db) => saveLeagueReport(db, report));
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) {
+				return response(
+					{
+						ok: false,
+						error: error instanceof ClubError ? error.message : 'League result rejected'
+					},
+					400,
+					origin,
+					env
+				);
+			}
+		}
+		if (url.pathname === '/bots/league' && request.method === 'GET') {
+			try {
+				const result = await withClubDatabase(env, async (db) => {
+					await signedInMember(request, env, db);
+					return leagueHistory(db);
+				});
 				return response({ ok: true, ...result }, 200, origin, env);
 			} catch (error) {
 				return clubFailure(error, origin, env);

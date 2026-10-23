@@ -1,5 +1,6 @@
 <script lang="ts">
-	import Bots from '#lib/bots/Bots.svelte';
+	import ClubGate from '#lib/club/ClubGate.svelte';
+	import League from '#lib/bots/League.svelte';
 </script>
 
-<Bots />
+<ClubGate><League /></ClubGate>

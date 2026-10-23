@@ -11,7 +11,7 @@
 	import { profileModal } from '#lib/club/profile-modal.svelte.js';
 	import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation';
 	/** One-screen pages that lay out their own width (content lines up with the header). */
-	const FULL_BLEED = new Set(['/stats', '/games', '/bots', '/bots/[botId]']);
+	const FULL_BLEED = new Set(['/stats', '/games', '/bots', '/bots/[botId]', '/test-league']);
 	import { identify, trackPage } from '#lib/analytics.js';
 	import { openStart } from '#lib/start/start-modal.svelte.js';
 	let { children } = $props();

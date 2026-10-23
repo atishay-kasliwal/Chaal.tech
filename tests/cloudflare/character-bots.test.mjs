@@ -153,21 +153,21 @@ test('character UI, live picker, bot seats, owner validation and mobile layout w
 	const output = process.env.CHAAL_BROWSER_OUTPUT || '/tmp/chaal-phase3-browser';
 	await mkdir(output, { recursive: true });
 	await page.goto(`${url}/bots`);
-	await page.getByRole('heading', { name: 'Rohit Sharma', exact: true }).waitFor();
-	assert.equal(await page.locator('.character').count(), 5);
+	await page.getByRole('heading', { name: 'THE CHAAL LEAGUE.' }).waitFor();
+	assert.equal(await page.locator('.competitor').count(), 5);
 	await page.screenshot({
 		path: `${output}/bots-desktop.png`,
 		fullPage: true,
 		animations: 'disabled'
 	});
-	await page.getByRole('heading', { name: 'Rohit Sharma', exact: true }).click();
-	await page.getByText('Every rivalry starts with a first hand.').waitFor();
+	await page.locator('.player-tabs').getByRole('button', { name: /Rohit/ }).click();
+	await page.locator('.dossier-copy').getByRole('heading', { name: 'Rohit.' }).waitFor();
 	await page.screenshot({
 		path: `${output}/bot-profile.png`,
 		fullPage: true,
 		animations: 'disabled'
 	});
-	await page.getByRole('link', { name: 'Pull up a table' }).click();
+	await page.getByRole('link', { name: 'Take on Rohit' }).click();
 	await page.getByTestId('play-bots').waitFor();
 	await page.getByTestId('play-bots').click();
 	await page.getByTestId('bot-avatar').waitFor({ timeout: 30000 });
@@ -235,7 +235,7 @@ test('character UI, live picker, bot seats, owner validation and mobile layout w
 	page.on('pageerror', (e) => errors.push(e.message));
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto(`${url}/bots`);
-	await page.getByRole('heading', { name: 'Rohit Sharma', exact: true }).waitFor();
+	await page.getByRole('heading', { name: 'THE CHAAL LEAGUE.' }).waitFor();
 	assert.ok(
 		await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
 		'mobile directory fits viewport'

@@ -52,7 +52,11 @@
 		"bots:publish-dna": "node --env-file-if-exists=.env scripts/bots-publish-dna.mjs",
 		"bots:tune-ai": "node --env-file-if-exists=.env --max-old-space-size=8192 scripts/tuning/tune-ai.mjs",
 		"sim:phase31": "node --max-old-space-size=8192 scripts/sim/phase31.mjs --seed 43",
-		"sim:phase31:report": "node --max-old-space-size=8192 scripts/sim/phase31-report.mjs --league .sim/phase31/league-43.json --seed 53"
+		"sim:phase31:report": "node --max-old-space-size=8192 scripts/sim/phase31-report.mjs --league .sim/phase31/league-43.json --seed 53",
+		"league:run": "node --env-file-if-exists=.env scripts/league/run.mjs",
+		"league:publish": "node --env-file-if-exists=.env scripts/league/publish.mjs",
+		"league:schedule": "node --env-file-if-exists=.env scripts/league/scheduled.mjs",
+		"league:install": "node scripts/league/install-schedule.mjs --install"
 	},
 	"devDependencies": {
 		"@anthropic-ai/sdk": "^1.1.0",

@@ -52,6 +52,7 @@ await writeFile(varsFile, [
 	'MONGODB_DB=chaal-cf-test',
 	`GOOGLE_CLIENT_ID=${clientId}`,
 	'ALLOW_TEST_SIGN_IN=true',
+	'LEAGUE_PUBLISH_KEY=league-integration-test-key-0123456789abcdef',
 	'ENGINE_BUILD=test',
 	// Table talk: every moment speaks (still one line per hand per bot, with the cooldowns), so a
 	// test can wait for a line instead of hoping for one.

@@ -23,3 +23,6 @@ beta-email-preview/
 
 # Local simulation output (scripts/sim)
 /.sim/
+
+# Pinned checkout for the daily Chaal League runner.
+/.league-runner/
