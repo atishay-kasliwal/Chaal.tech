@@ -7,6 +7,8 @@
 		LogOut,
 		Volume2,
 		VolumeX,
+		MessageCircle,
+		MessageCircleOff,
 		BookOpen,
 		Trophy,
 		Settings,
@@ -60,7 +62,8 @@
 	import ClassicCard from '#lib/components/ClassicCard.svelte';
 	import { describeChange, type FeedEvent } from './feed.js';
 	import { reactToEvents } from '#lib/mascots/table-reactions.js';
-	import { talkToEvents, recalls } from '#lib/mascots/table-talk.js';
+	import { talkToEvents, recalls, hushBotTalk } from '#lib/mascots/table-talk.js';
+	import { botChat } from '#lib/mascots/talk-prefs.svelte.js';
 	import { reactions } from '#lib/mascots/mascots.svelte.js';
 	import { MASCOT_SIZE } from '#lib/mascots/size.js';
 	import BotPicker from '#lib/bots/BotPicker.svelte';
@@ -1063,6 +1066,24 @@
 				aria-label={sound ? 'Mute table sounds' : 'Turn table sounds on'}
 				>{#if sound}<Volume2 class="h-4 w-4" />{:else}<VolumeX class="h-4 w-4" />{/if}</button
 			>
+			{#if room.usersList.some((user) => user.bot && !user.hasLeft)}
+				<button
+					class="tool"
+					data-testid="bot-chat-toggle"
+					aria-pressed={botChat.on}
+					onclick={() => {
+						botChat.set(!botChat.on);
+						if (!botChat.on) hushBotTalk();
+					}}
+					title={botChat.on
+						? 'Bot chat on: tap to hide what bots say'
+						: 'Bot chat off: tap to show it'}
+					aria-label="Bot chat"
+					>{#if botChat.on}<MessageCircle class="h-4 w-4" />{:else}<MessageCircleOff
+							class="h-4 w-4"
+						/>{/if}</button
+				>
+			{/if}
 			<button
 				class="tool"
 				onclick={() => (panel = 'rules')}
@@ -1151,6 +1172,7 @@
 				<TpSeat
 					user={entry.user}
 					{presencePreview}
+					talkSide={point.top - seatH / 2 < 64 ? 'below' : 'above'}
 					publicFeed={feed}
 					publicTurn={presenceTurn}
 					publicHandKey={room.handId}

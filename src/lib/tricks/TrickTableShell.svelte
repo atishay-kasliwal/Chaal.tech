@@ -5,6 +5,9 @@
 	import BotAvatar from '#lib/teen-patti/BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import DeckCard from '#lib/components/DeckCard.svelte';
+	import TalkBubble from '#lib/mascots/TalkBubble.svelte';
+	import { botChat } from '#lib/mascots/talk-prefs.svelte.js';
+	import { hushBotTalk } from '#lib/mascots/table-talk.js';
 
 	/**
 	 * The card-room table every trick game sits at (3 2 5, 10 Pakad, 29), in the Teen Patti table's
@@ -72,6 +75,18 @@
 				>{/each}
 		</div>
 		<div class="tools">
+			{#if seats.some((s) => s.isBot)}
+				<button
+					class="tool"
+					data-testid="bot-chat-toggle"
+					aria-pressed={botChat.on}
+					title={botChat.on ? 'Hide what bots say' : 'Show what bots say'}
+					onclick={() => {
+						botChat.set(!botChat.on);
+						if (!botChat.on) hushBotTalk();
+					}}>Bot chat {botChat.on ? 'on' : 'off'}</button
+				>
+			{/if}
 			<button class="tool" onclick={onInvite}>Invite</button>
 			<button class="tool" onclick={onLeave}>Leave</button>
 		</div>
@@ -123,6 +138,12 @@
 						{#if s.away}<span class="away-icon">Away</span>{/if}
 					</div>
 				</div>
+				{#if s.isBot}<TalkBubble
+						playerId={s.id}
+						name={s.name}
+						side={entry.position === 'top' ? 'below' : 'above'}
+						phoneSide="below"
+					/>{/if}
 			</div>
 		{/each}
 
@@ -598,7 +619,9 @@
 			--rail: 0.8rem;
 		}
 		.seat-slot {
-			position: static;
+			/* Relative, not static: a talk bubble positions against its own seat. */
+			position: relative;
+			inset: auto;
 			grid-row: 1;
 			width: auto;
 			translate: none;

@@ -2,6 +2,7 @@ import { browser } from '$app/env';
 import { serverConfigError, serverURL } from '#lib/config.js';
 import { GameSocket, SignInRequired } from './game-socket.js';
 import { club } from '#lib/club/club.svelte.js';
+import { hearBotTalk } from '#lib/mascots/table-talk.js';
 
 interface Reply {
 	ok: boolean;
@@ -63,6 +64,8 @@ class SocketStore {
 			this.roomData = snapshot;
 			this.playerId = snapshot.selfId;
 		});
+		// A character's table talk: shown on its seat for a few seconds (unless Bot chat is off).
+		this.socket.on('botTalk', (value: unknown) => hearBotTalk(value, this.roomName));
 		this.socket.on('disconnect', () => {
 			this.connected = false;
 		});
