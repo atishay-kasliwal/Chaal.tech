@@ -249,7 +249,7 @@
 					<span>Shared table hands</span><strong>{run ? fmt(run.hands) : 'Pending'}</strong>
 				</div>
 				<div>
-					<span>Hands per character</span><strong>{run ? fmt(run.hands) : 'Pending'}</strong>
+					<span>Per character · same table</span><strong>{run ? fmt(run.hands) : 'Pending'}</strong>
 				</div>
 				<div><span>Seat rotations</span><strong>{run ? 'All five' : '5 planned'}</strong></div>
 				<div>
@@ -259,6 +259,10 @@
 				</div>
 			</div>
 		</section>
+		{#if run}<p class="participation-note">
+				One shared hand seats all five players: {fmt(run.participations)} total player participations.
+				Seat rotations are already included in the hand count.
+			</p>{/if}
 		<section id="standings" class="standings-section" aria-labelledby="standings-title">
 			<div class="section-heading">
 				<div>
@@ -289,6 +293,7 @@
 						memory; club-player memories are never used.
 					</p>
 				</div>{/if}
+			<p class="scroll-hint">Swipe for all stats <ArrowRight size={12} /></p>
 			<!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users need to scroll wide standings.) -->
 			<div class="scoreboard" role="region" aria-label="Championship standings" tabindex="0">
 				<table>
@@ -2412,6 +2417,87 @@
 		.matrix button:hover,
 		.league-footer a:hover {
 			translate: none;
+		}
+	}
+	.scroll-hint {
+		display: none;
+	}
+	.participation-note {
+		color: var(--muted);
+		font:
+			11px/1.7 ui-monospace,
+			monospace;
+		margin: 13px 0 0;
+		max-width: 780px;
+	}
+	.league
+		:is(
+			.overline,
+			.match-label,
+			.match-status,
+			.match-strip span,
+			.scoreboard-foot,
+			.fine-print,
+			.journal-date,
+			.matrix caption,
+			.matrix-key,
+			.research-number p,
+			.research-stamp,
+			.rivalry-unit,
+			.rivalry-disclaimer,
+			.style-tags span,
+			.player-stats dt,
+			.history-date small,
+			.history-hands,
+			.history-view,
+			.schedule small
+		) {
+		font-size: clamp(11px, 0.85vw, 13px);
+	}
+	.workshop-section {
+		--muted: #4a6155;
+		--gold: #6f5613;
+		--line: #b3bda8;
+		background: #e8e9db;
+		color: #193126;
+		padding: 45px clamp(20px, 3vw, 40px);
+		border-radius: 4px;
+	}
+	.workshop-intro h2 span {
+		color: #546b59;
+	}
+	@media (max-width: 650px) {
+		.scroll-hint {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: 7px;
+			font:
+				11px ui-monospace,
+				monospace;
+			color: var(--gold);
+			margin: 0 0 12px;
+		}
+		.scoreboard :is(th, td):nth-child(1) {
+			position: sticky;
+			left: 0;
+			z-index: 2;
+			background: var(--ground);
+			min-width: 42px;
+		}
+		.scoreboard :is(th, td):nth-child(2) {
+			position: sticky;
+			left: 42px;
+			z-index: 2;
+			background: var(--ground);
+			min-width: 100px;
+			box-shadow: 7px 0 8px #0002;
+		}
+		.matrix th {
+			font-size: 10px;
+		}
+		.workshop-section {
+			padding: 30px 20px;
 		}
 	}
 </style>
