@@ -25,6 +25,14 @@
 	let error = $state('');
 	let retry = $state(0);
 	let methodOpen = $state(false);
+	const TABS = [
+		{ id: 'standings', label: 'Standings' },
+		{ id: 'players', label: 'The players' },
+		{ id: 'rivalries', label: 'Rivalries' },
+		{ id: 'history', label: 'Trophy room' },
+		{ id: 'workshop', label: 'The workshop' }
+	];
+	let tab = $state('standings');
 	const accents: Record<string, string> = {
 		'rohit-sharma': '#8ab0ed',
 		'virat-kohli': '#ed8a72',
@@ -87,6 +95,22 @@
 		selectedBot = id;
 		if (rival === id) rival = CAST.find((c) => c.id !== id)!.id;
 	}
+	/** Picking a player from the table or standings opens their dossier. */
+	function showBot(id: string) {
+		pickBot(id);
+		tab = 'players';
+	}
+	function tabKey(e: KeyboardEvent) {
+		const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+		if (!step) return;
+		const i = (TABS.findIndex((t) => t.id === tab) + step + TABS.length) % TABS.length;
+		tab = TABS[i].id;
+		document.getElementById(`tab-${tab}`)?.focus();
+	}
+	$effect(() => {
+		const hash = location.hash.slice(1);
+		if (TABS.some((t) => t.id === hash)) tab = hash;
+	});
 	function chooseRun(id: string) {
 		selectedRun = id;
 	}
@@ -130,25 +154,14 @@
 
 <div class="league" data-testid="chaal-league">
 	<div class="league-inner">
-		<div class="edition">
-			<span><span class="edition-dot"></span> The club’s daily championship</span><span
-				>Teen Patti / Classic <span class="edition-year">/ Est. 2026</span></span
-			>
-		</div>
 		<header class="masthead">
 			<h1>THE CHAAL <span>LEAGUE<span class="title-period">.</span></span></h1>
-			<div class="masthead-note">
-				<span class="tiny-suit" aria-hidden="true">♠</span>
-				<p>Five personalities.<br />One table.<br /><strong>No easy opponents.</strong></p>
-			</div>
+			<p class="masthead-note">
+				The club’s daily championship · Teen Patti / Classic<span class="edition-year"
+					>&nbsp;· Est. 2026</span
+				>
+			</p>
 		</header>
-		<nav class="section-nav" aria-label="League sections">
-			<a href="#championship">The table <ArrowRight size={14} /></a><a href="#standings"
-				>Standings</a
-			><a href="#players">The players</a><a href="#rivalries">Rivalries</a><a href="#history"
-				>Trophy room</a
-			><a href="#workshop">The workshop</a>
-		</nav>
 		{#if error}<div class="load-notice" role="alert">
 				<span>{error} {reports.length ? 'Showing the last available results.' : ''}</span><button
 					onclick={() => retry++}><RefreshCw size={14} /> Retry</button
@@ -224,7 +237,7 @@
 						class:crowned={run?.winner === c.id}
 						class:chosen={selectedBot === c.id}
 						style:--player-accent={accents[c.id]}
-						onclick={() => pickBot(c.id)}
+						onclick={() => showBot(c.id)}
 						aria-pressed={selectedBot === c.id}
 					>
 						{#if run?.winner === c.id}<span class="winner-badge"><Trophy size={15} /> Champion</span
@@ -259,316 +272,351 @@
 				</div>
 			</div>
 		</section>
-		{#if run}<p class="participation-note">
-				One shared hand seats all five players: {fmt(run.participations)} total player participations.
-				Seat rotations are already included in the hand count.
-			</p>{/if}
-		<section id="standings" class="standings-section" aria-labelledby="standings-title">
-			<div class="section-heading">
-				<div>
-					<p class="overline">The score settles it</p>
-					<h2 id="standings-title">Chips talk.</h2>
-				</div>
-				<div class="section-aside">
-					<span>{run ? fullDate(run.completedAt) : 'First result coming soon'}</span><button
-						class="text-button"
-						onclick={() => (methodOpen = !methodOpen)}
-						aria-expanded={methodOpen}
-						aria-controls="league-method"
-						><Info size={14} /> How we score <ChevronDown size={14} /></button
-					>
-				</div>
-			</div>
-			{#if methodOpen}<div id="league-method" class="method">
-					<strong>The fairest table we can deal.</strong>
-					<p>
-						Each 100-hand deck block is replayed through all five seat positions. Every character
-						starts with 100 starting bets. Rebuys keep them playing and never count as winnings. Net
-						profit decides rank; hand wins are a supporting statistic.
-					</p>
-					<p>
-						A trophy is awarded only when the leader’s paired 95% margin stays above zero against
-						every rival. Otherwise we show the leader and keep the trophy unclaimed. These are
-						simulated chips, with one starting bet as the unit. Each table starts with fresh session
-						memory; club-player memories are never used.
-					</p>
-				</div>{/if}
-			<p class="scroll-hint">Swipe for all stats <ArrowRight size={12} /></p>
-			<!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users need to scroll wide standings.) -->
-			<div class="scoreboard" role="region" aria-label="Championship standings" tabindex="0">
-				<table>
-					<thead
-						><tr
-							><th scope="col">Rank</th><th scope="col">Player</th><th scope="col"
-								>Net profit <small>starting bets</small></th
-							><th scope="col">Per 100 hands <small>± 95% interval</small></th><th scope="col"
-								>Hands won</th
-							><th scope="col">Move</th></tr
-						></thead
-					><tbody>
-						{#each run?.standings ?? [] as s, i (s.id)}{@const move = movement(s.id, i)}<tr
-								class:selected-row={selectedBot === s.id}
-								><td class="rank">{String(i + 1).padStart(2, '0')}</td><th scope="row"
-									><button class="player-link" onclick={() => pickBot(s.id)}
-										><span class="player-dot" style:background={accents[s.id]}
-										></span>{s.name}{#if run?.winner === s.id}<Trophy size={16} />{/if}</button
-									></th
-								><td class:negative={s.net < 0} class="score">{signed(s.net)}</td><td class="rate"
-									>{signed(s.profit100, 1)} <span>± {fmt(s.interval95, 1)}</span></td
-								><td
-									>{fmt(s.wins)}
-									<span class="win-share">/ {fmt((s.wins / s.hands) * 100, 1)}%</span></td
-								><td class="movement"
-									>{move === null
-										? 'First run'
-										: move === 0
-											? '·'
-											: move > 0
-												? `↑ ${move}`
-												: `↓ ${Math.abs(move)}`}</td
-								></tr
-							>{/each}
-					</tbody>
-				</table>
-				{#if !run}<div class="empty-state">
-						<Trophy size={25} />
-						<p>The first trophy is still on the table.</p>
-						<span>Results appear after the first championship finishes.</span>
-					</div>{/if}
-			</div>
-			<div class="scoreboard-foot">
-				<span>Profit beats pot count. Small wins can hide big losses.</span><span
-					>{run
-						? `${fmt(run.blocks)} independent deck blocks · 5 rotations each`
-						: 'Classic Teen Patti · equal starting stacks'}</span
-				>
-			</div>
-		</section>
-		<section id="players" class="players-section" aria-labelledby="players-title">
-			<div class="section-heading">
-				<div>
-					<p class="overline">A familiar kind of trouble</p>
-					<h2 id="players-title">Pick your rival.</h2>
-				</div>
-				<p class="section-copy">Same rules.<br />Very different ideas about winning.</p>
-			</div>
-			<div class="player-tabs" role="group" aria-label="Select a character">
-				{#each CAST as c (c.id)}<button
-						class:active={selectedBot === c.id}
-						style:--player-accent={accents[c.id]}
-						onclick={() => pickBot(c.id)}
-						aria-pressed={selectedBot === c.id}
-						><span>{c.name}</span><span class="tab-tagline">{c.tagline}</span><ArrowUpRight
-							size={17}
-						/></button
-					>{/each}
-			</div>
-			<div class="player-dossier" style:--player-accent={accents[selectedBot]}>
-				<div class="dossier-art">
-					<span class="dossier-number">0{CAST.findIndex((c) => c.id === selectedBot) + 1}</span
-					><BotPortrait mascotId={`bot-${selectedBot}`} name={selected.name} size={410} /><span
-						class="dossier-signature">{selected.name}.</span
-					>
-				</div>
-				<div class="dossier-copy">
-					<p class="overline">{selected.tagline}</p>
-					<h3>{selected.name}<span>.</span></h3>
-					<p class="player-description">{profile?.description ?? descriptions[selectedBot]}</p>
-					<dl class="player-stats">
-						<div>
-							<dt>League hands</dt>
-							<dd>{short(career(selectedBot))}</dd>
-						</div>
-						<div>
-							<dt>Daily titles <small>last 90 runs</small></dt>
-							<dd>{titles(selectedBot)}</dd>
-						</div>
-						<div>
-							<dt>This competition</dt>
-							<dd class:negative={(record?.net ?? 0) < 0}>
-								{record ? signed(record.net) : 'Pending'}
-							</dd>
-						</div>
-					</dl>
-					<div class="style-tags">
-						<span>{record?.style ?? profile?.style?.styleId ?? 'Canonical character'}</span><span
-							>Teen Patti · Classic</span
+		<div class="section-nav" role="tablist" aria-label="League sections">
+			{#each TABS as t (t.id)}<button
+					role="tab"
+					id="tab-{t.id}"
+					aria-selected={tab === t.id}
+					aria-controls={t.id}
+					tabindex={tab === t.id ? 0 : -1}
+					onclick={() => (tab = t.id)}
+					onkeydown={tabKey}>{t.label}</button
+				>{/each}
+		</div>
+		{#if tab === 'standings'}<div
+				id="standings"
+				class="standings-section"
+				role="tabpanel"
+				aria-labelledby="tab-standings"
+			>
+				<div class="section-heading">
+					<div>
+						<p class="overline">The score settles it</p>
+						<h2 id="standings-title">Chips talk.</h2>
+					</div>
+					<div class="section-aside">
+						<span>{run ? fullDate(run.completedAt) : 'First result coming soon'}</span><button
+							class="text-button"
+							onclick={() => (methodOpen = !methodOpen)}
+							aria-expanded={methodOpen}
+							aria-controls="league-method"
+							><Info size={14} /> How we score <ChevronDown size={14} /></button
 						>
 					</div>
-					<div class="dossier-actions">
-						{#if preview || profile?.available}<a
-								class="primary-button"
-								href={`/create-room?bot=${encodeURIComponent(selectedBot)}`}
-								>Take on {selected.name}<ArrowUpRight size={18} /></a
-							>{:else}<span class="availability"
-								>{bots.length
-									? 'Sitting out of new tables'
-									: 'Sign in to see table availability'}</span
-							>{/if}<span>Keep the personality.<br />Earn the improvement.</span>
+				</div>
+				{#if methodOpen}<div id="league-method" class="method">
+						<strong>The fairest table we can deal.</strong>
+						<p>
+							Each 100-hand deck block is replayed through all five seat positions. Every character
+							starts with 100 starting bets. Rebuys keep them playing and never count as winnings.
+							Net profit decides rank; hand wins are a supporting statistic.
+						</p>
+						<p>
+							A trophy is awarded only when the leader’s paired 95% margin stays above zero against
+							every rival. Otherwise we show the leader and keep the trophy unclaimed. These are
+							simulated chips, with one starting bet as the unit. Each table starts with fresh
+							session memory; club-player memories are never used.
+						</p>
+					</div>{/if}
+				<p class="scroll-hint">Swipe for all stats <ArrowRight size={12} /></p>
+				<!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users need to scroll wide standings.) -->
+				<div class="scoreboard" role="region" aria-label="Championship standings" tabindex="0">
+					<table>
+						<thead
+							><tr
+								><th scope="col">Rank</th><th scope="col">Player</th><th scope="col"
+									>Net profit <small>starting bets</small></th
+								><th scope="col">Per 100 hands <small>± 95% interval</small></th><th scope="col"
+									>Hands won</th
+								><th scope="col">Move</th></tr
+							></thead
+						><tbody>
+							{#each run?.standings ?? [] as s, i (s.id)}{@const move = movement(s.id, i)}<tr
+									class:selected-row={selectedBot === s.id}
+									><td class="rank">{String(i + 1).padStart(2, '0')}</td><th scope="row"
+										><button class="player-link" onclick={() => showBot(s.id)}
+											><span class="player-dot" style:background={accents[s.id]}
+											></span>{s.name}{#if run?.winner === s.id}<Trophy size={16} />{/if}</button
+										></th
+									><td class:negative={s.net < 0} class="score">{signed(s.net)}</td><td class="rate"
+										>{signed(s.profit100, 1)} <span>± {fmt(s.interval95, 1)}</span></td
+									><td
+										>{fmt(s.wins)}
+										<span class="win-share">/ {fmt((s.wins / s.hands) * 100, 1)}%</span></td
+									><td class="movement"
+										>{move === null
+											? 'First run'
+											: move === 0
+												? '·'
+												: move > 0
+													? `↑ ${move}`
+													: `↓ ${Math.abs(move)}`}</td
+									></tr
+								>{/each}
+						</tbody>
+					</table>
+					{#if !run}<div class="empty-state">
+							<Trophy size={25} />
+							<p>The first trophy is still on the table.</p>
+							<span>Results appear after the first championship finishes.</span>
+						</div>{/if}
+				</div>
+				<div class="scoreboard-foot">
+					<span>Profit beats pot count. Small wins can hide big losses.</span><span
+						>{run
+							? `${fmt(run.blocks)} independent deck blocks · 5 rotations each`
+							: 'Classic Teen Patti · equal starting stacks'}</span
+					>
+				</div>
+				{#if run}<p class="participation-note">
+						One shared hand seats all five players: {fmt(run.participations)} total player participations.
+						Seat rotations are already included in the hand count.
+					</p>{/if}
+			</div>{/if}
+		{#if tab === 'players'}<div
+				id="players"
+				class="players-section"
+				role="tabpanel"
+				aria-labelledby="tab-players"
+			>
+				<div class="section-heading">
+					<div>
+						<p class="overline">A familiar kind of trouble</p>
+						<h2 id="players-title">Pick your rival.</h2>
 					</div>
-					{#if profile?.record?.hands}<p class="personal-record">
-							At your tables: {fmt(profile.record.hands)} recorded hands together. League simulations
-							are counted separately.
+					<p class="section-copy">Same rules.<br />Very different ideas about winning.</p>
+				</div>
+				<div class="player-tabs" role="group" aria-label="Select a character">
+					{#each CAST as c (c.id)}<button
+							class:active={selectedBot === c.id}
+							style:--player-accent={accents[c.id]}
+							onclick={() => pickBot(c.id)}
+							aria-pressed={selectedBot === c.id}
+							><span>{c.name}</span><span class="tab-tagline">{c.tagline}</span><ArrowUpRight
+								size={17}
+							/></button
+						>{/each}
+				</div>
+				<div class="player-dossier" style:--player-accent={accents[selectedBot]}>
+					<div class="dossier-art">
+						<span class="dossier-number">0{CAST.findIndex((c) => c.id === selectedBot) + 1}</span
+						><BotPortrait mascotId={`bot-${selectedBot}`} name={selected.name} size={300} /><span
+							class="dossier-signature">{selected.name}.</span
+						>
+					</div>
+					<div class="dossier-copy">
+						<p class="overline">{selected.tagline}</p>
+						<h3>{selected.name}<span>.</span></h3>
+						<p class="player-description">{profile?.description ?? descriptions[selectedBot]}</p>
+						<dl class="player-stats">
+							<div>
+								<dt>League hands</dt>
+								<dd>{short(career(selectedBot))}</dd>
+							</div>
+							<div>
+								<dt>Daily titles <small>last 90 runs</small></dt>
+								<dd>{titles(selectedBot)}</dd>
+							</div>
+							<div>
+								<dt>This competition</dt>
+								<dd class:negative={(record?.net ?? 0) < 0}>
+									{record ? signed(record.net) : 'Pending'}
+								</dd>
+							</div>
+						</dl>
+						<div class="style-tags">
+							<span>{record?.style ?? profile?.style?.styleId ?? 'Canonical character'}</span><span
+								>Teen Patti · Classic</span
+							>
+						</div>
+						<div class="dossier-actions">
+							{#if preview || profile?.available}<a
+									class="primary-button"
+									href={`/create-room?bot=${encodeURIComponent(selectedBot)}`}
+									>Take on {selected.name}<ArrowUpRight size={18} /></a
+								>{:else}<span class="availability"
+									>{bots.length
+										? 'Sitting out of new tables'
+										: 'Sign in to see table availability'}</span
+								>{/if}<span>Keep the personality.<br />Earn the improvement.</span>
+						</div>
+						{#if profile?.record?.hands}<p class="personal-record">
+								At your tables: {fmt(profile.record.hands)} recorded hands together. League simulations
+								are counted separately.
+							</p>{/if}
+					</div>
+				</div>
+			</div>{/if}
+		{#if tab === 'rivalries'}<div
+				id="rivalries"
+				class="rivalry-section"
+				role="tabpanel"
+				aria-labelledby="tab-rivalries"
+			>
+				<div class="section-heading">
+					<div>
+						<p class="overline">Everybody has a difficult opponent</p>
+						<h2 id="rivalries-title">Bad company.<br /><span>Good competition.</span></h2>
+					</div>
+					<p class="section-copy">Who finishes ahead when<br />all five share a table?</p>
+				</div>
+				<div class="rivalry-layout">
+					<div class="matrix-wrap">
+						<table class="matrix">
+							<caption>Relative profit per 100 hands at the same five-player tables</caption><thead
+								><tr
+									><th scope="col"><span class="sr-only">Player</span></th
+									>{#each CAST as c (c.id)}<th scope="col">{c.name}</th>{/each}</tr
+								></thead
+							><tbody
+								>{#each CAST as a (a.id)}<tr
+										><th scope="row">{a.name}</th>{#each CAST as b (b.id)}{@const g =
+												run?.gaps[a.id]?.[b.id]}<td
+												>{#if a.id === b.id}<span class="matrix-self" aria-label="Same player"
+														>·</span
+													>{:else}<button
+														class:positive={g && g.mean - g.interval95 > 0}
+														class:negative={g && g.mean + g.interval95 < 0}
+														class:matrix-selected={selectedBot === a.id && rival === b.id}
+														onclick={() => {
+															selectedBot = a.id;
+															rival = b.id;
+														}}
+														aria-label={`${a.name} compared with ${b.name}: ${g ? `${signed(g.mean)} starting bets per 100 hands` : 'no result yet'}`}
+														aria-pressed={selectedBot === a.id && rival === b.id}
+														>{g ? signed(g.mean) : '…'}</button
+													>{/if}</td
+											>{/each}</tr
+									>{/each}</tbody
+							>
+						</table>
+						<div class="matrix-key">
+							<span><i></i> Clear positive gap</span><span><i></i> Within the margin</span><span
+								><i></i> Clear negative gap</span
+							>
+						</div>
+					</div>
+					<div class="rivalry-note">
+						<span class="big-quote" aria-hidden="true">“</span>
+						<h3>{selected.name}<span>vs.</span>{CAST.find((c) => c.id === rival)?.name}</h3>
+						{#if gap}<p>
+								{Math.abs(gap.mean) <= gap.interval95
+									? 'A rivalry still waiting for an answer.'
+									: gap.mean > 0
+										? `${selected.name} has the edge at this table.`
+										: `${CAST.find((c) => c.id === rival)?.name} has the edge at this table.`}
+							</p>
+							<strong class="gap-number"
+								>{signed(gap.mean, 1)}<small>± {fmt(gap.interval95, 1)}</small></strong
+							><span class="rivalry-unit">Relative starting bets per 100 hands</span>{:else}<p>
+								Their next chapter starts with the first completed competition.
+							</p>{/if}<small class="rivalry-disclaimer"
+							>Relative earnings in the five-player league. This is not a heads-up match record.</small
+						>
+					</div>
+				</div>
+			</div>{/if}
+		{#if tab === 'history'}<div
+				id="history"
+				class="history-section"
+				role="tabpanel"
+				aria-labelledby="tab-history"
+			>
+				<div class="section-heading">
+					<div>
+						<p class="overline">The table remembers</p>
+						<h2 id="history-title">The trophy room.</h2>
+					</div>
+					<div class="history-total">
+						<strong>{totals.titles}</strong><span>titles awarded<br />in the last 90 runs</span>
+					</div>
+				</div>
+				<div class="history-list">
+					{#each reports as r (r.id)}{@const winner = CAST.find((c) => c.id === r.winner)}<button
+							class:current={r.id === run?.id}
+							onclick={() => chooseRun(r.id)}
+							aria-pressed={r.id === run?.id}
+							><span class="history-date"
+								>{date(r.completedAt)}<small
+									>{r.kind === 'daily' ? 'Daily championship' : 'Exhibition'}</small
+								></span
+							><span class="history-winner"
+								>{#if winner}<Trophy size={20} />{winner.name}{:else}<span class="unclaimed-trophy"
+										><Trophy size={20} /></span
+									>No title awarded{/if}</span
+							><span class="history-hands">{short(r.hands)} hands</span><span class="history-view"
+								>{r.id === run?.id ? 'Selected' : 'View result'}<ArrowUpRight size={17} /></span
+							></button
+						>{/each}{#if !reports.length}<p class="history-empty">
+							An empty shelf. Five very interested players.
 						</p>{/if}
 				</div>
-			</div>
-		</section>
-		<section id="rivalries" class="rivalry-section" aria-labelledby="rivalries-title">
-			<div class="section-heading">
-				<div>
-					<p class="overline">Everybody has a difficult opponent</p>
-					<h2 id="rivalries-title">Bad company.<br /><span>Good competition.</span></h2>
-				</div>
-				<p class="section-copy">Who finishes ahead when<br />all five share a table?</p>
-			</div>
-			<div class="rivalry-layout">
-				<div class="matrix-wrap">
-					<table class="matrix">
-						<caption>Relative profit per 100 hands at the same five-player tables</caption><thead
-							><tr
-								><th scope="col"><span class="sr-only">Player</span></th>{#each CAST as c (c.id)}<th
-										scope="col">{c.name}</th
-									>{/each}</tr
-							></thead
-						><tbody
-							>{#each CAST as a (a.id)}<tr
-									><th scope="row">{a.name}</th>{#each CAST as b (b.id)}{@const g =
-											run?.gaps[a.id]?.[b.id]}<td
-											>{#if a.id === b.id}<span class="matrix-self" aria-label="Same player">·</span
-												>{:else}<button
-													class:positive={g && g.mean - g.interval95 > 0}
-													class:negative={g && g.mean + g.interval95 < 0}
-													class:matrix-selected={selectedBot === a.id && rival === b.id}
-													onclick={() => {
-														selectedBot = a.id;
-														rival = b.id;
-													}}
-													aria-label={`${a.name} compared with ${b.name}: ${g ? `${signed(g.mean)} starting bets per 100 hands` : 'no result yet'}`}
-													aria-pressed={selectedBot === a.id && rival === b.id}
-													>{g ? signed(g.mean) : '…'}</button
-												>{/if}</td
-										>{/each}</tr
-								>{/each}</tbody
-						>
-					</table>
-					<div class="matrix-key">
-						<span><i></i> Clear positive gap</span><span><i></i> Within the margin</span><span
-							><i></i> Clear negative gap</span
+				{#if !latest}<button
+						class="text-button back-latest"
+						onclick={() => chooseRun(reports[0].id)}
+						>Return to the latest result <ArrowRight size={15} /></button
+					>{/if}
+				<p class="fine-print">
+					Select a date to update the championship table, standings and rivalries. Ties stay
+					unclaimed.
+				</p>
+			</div>{/if}
+		{#if tab === 'workshop'}<div id="workshop" role="tabpanel" aria-labelledby="tab-workshop">
+				<section class="workshop-section" aria-labelledby="workshop-title">
+					<div class="workshop-intro">
+						<p class="overline">Behind the poker face</p>
+						<h2 id="workshop-title">Built to play.<br /><span>Tested to improve.</span></h2>
+						<p>
+							Personality is the point. A better bot should still feel like the same person across
+							the table.
+						</p>
+						<a class="text-button" href="#development-journal"
+							>Read the development notes <ArrowRight size={16} /></a
 						>
 					</div>
-				</div>
-				<div class="rivalry-note">
-					<span class="big-quote" aria-hidden="true">“</span>
-					<h3>{selected.name}<span>vs.</span>{CAST.find((c) => c.id === rival)?.name}</h3>
-					{#if gap}<p>
-							{Math.abs(gap.mean) <= gap.interval95
-								? 'A rivalry still waiting for an answer.'
-								: gap.mean > 0
-									? `${selected.name} has the edge at this table.`
-									: `${CAST.find((c) => c.id === rival)?.name} has the edge at this table.`}
+					<div class="research-number">
+						<strong>10.628<span>M</span></strong><span>simulated hands in the Phase 3 study</span>
+						<p>
+							8.504M search hands + 2.124M evaluation hands.<br />Across experimental candidates,
+							not per current bot.
 						</p>
-						<strong class="gap-number"
-							>{signed(gap.mean, 1)}<small>± {fmt(gap.interval95, 1)}</small></strong
-						><span class="rivalry-unit">Relative starting bets per 100 hands</span>{:else}<p>
-							Their next chapter starts with the first completed competition.
-						</p>{/if}<small class="rivalry-disclaimer"
-						>Relative earnings in the five-player league. This is not a heads-up match record.</small
-					>
+						<span class="research-stamp"><Check size={13} /> Recorded study · October 2026</span>
+					</div>
+				</section>
+				<div class="process-strip" aria-label="How bots improve">
+					<span>Compete</span><ArrowRight size={17} /><span>Find a weakness</span><ArrowRight
+						size={17}
+					/><span>Test a challenger</span><ArrowRight size={17} /><span>Validate</span><ArrowRight
+						size={17}
+					/><span>Approve a version</span>
 				</div>
-			</div>
-		</section>
-		<section id="history" class="history-section" aria-labelledby="history-title">
-			<div class="section-heading">
-				<div>
-					<p class="overline">The table remembers</p>
-					<h2 id="history-title">The trophy room.</h2>
+				<div class="journal" id="development-journal">
+					<article>
+						<span class="journal-date">Development note / 01</span>
+						<h3>Even Captain Cool<br />has a pressure point.</h3>
+						<p>
+							Repeated blind raises exposed a weakness in Dhoni’s decision logic. The first
+							correction created a different problem against players who changed their style. A
+							narrower correction passed all eight evaluation gates and became the canonical Dhoni.
+						</p>
+						<div class="journal-foot">
+							<span class="journal-badge">Adopted</span><span>Dhoni · blind-raise response</span>
+						</div>
+					</article>
+					<article>
+						<span class="journal-date">Development note / 02</span>
+						<h3>Winning isn’t permission<br />to become someone else.</h3>
+						<p>
+							GG’s selected challenger made him a more convincing patient player. Other candidates
+							stayed out when stronger-looking results came with weaker adaptation or less variety
+							between nights. Every improvement has to keep the character.
+						</p>
+						<div class="journal-foot">
+							<span class="journal-badge">Character preserved</span><span>Canonical selection</span>
+						</div>
+					</article>
 				</div>
-				<div class="history-total">
-					<strong>{totals.titles}</strong><span>titles awarded<br />in the last 90 runs</span>
-				</div>
-			</div>
-			<div class="history-list">
-				{#each reports as r (r.id)}{@const winner = CAST.find((c) => c.id === r.winner)}<button
-						class:current={r.id === run?.id}
-						onclick={() => chooseRun(r.id)}
-						aria-pressed={r.id === run?.id}
-						><span class="history-date"
-							>{date(r.completedAt)}<small
-								>{r.kind === 'daily' ? 'Daily championship' : 'Exhibition'}</small
-							></span
-						><span class="history-winner"
-							>{#if winner}<Trophy size={20} />{winner.name}{:else}<span class="unclaimed-trophy"
-									><Trophy size={20} /></span
-								>No title awarded{/if}</span
-						><span class="history-hands">{short(r.hands)} hands</span><span class="history-view"
-							>{r.id === run?.id ? 'Selected' : 'View result'}<ArrowUpRight size={17} /></span
-						></button
-					>{/each}{#if !reports.length}<p class="history-empty">
-						An empty shelf. Five very interested players.
-					</p>{/if}
-			</div>
-			{#if !latest}<button class="text-button back-latest" onclick={() => chooseRun(reports[0].id)}
-					>Return to the latest result <ArrowRight size={15} /></button
-				>{/if}
-			<p class="fine-print">
-				Select a date to update the championship table, standings and rivalries above. Ties stay
-				unclaimed.
-			</p>
-		</section>
-		<section id="workshop" class="workshop-section" aria-labelledby="workshop-title">
-			<div class="workshop-intro">
-				<p class="overline">Behind the poker face</p>
-				<h2 id="workshop-title">Built to play.<br /><span>Tested to improve.</span></h2>
-				<p>
-					Personality is the point. A better bot should still feel like the same person across the
-					table.
-				</p>
-				<a class="text-button" href="#development-journal"
-					>Read the development notes <ArrowRight size={16} /></a
-				>
-			</div>
-			<div class="research-number">
-				<strong>10.628<span>M</span></strong><span>simulated hands in the Phase 3 study</span>
-				<p>
-					8.504M search hands + 2.124M evaluation hands.<br />Across experimental candidates, not
-					per current bot.
-				</p>
-				<span class="research-stamp"><Check size={13} /> Recorded study · October 2026</span>
-			</div>
-		</section>
-		<div class="process-strip" aria-label="How bots improve">
-			<span>Compete</span><ArrowRight size={17} /><span>Find a weakness</span><ArrowRight
-				size={17}
-			/><span>Test a challenger</span><ArrowRight size={17} /><span>Validate</span><ArrowRight
-				size={17}
-			/><span>Approve a version</span>
-		</div>
-		<div class="journal" id="development-journal">
-			<article>
-				<span class="journal-date">Development note / 01</span>
-				<h3>Even Captain Cool<br />has a pressure point.</h3>
-				<p>
-					Repeated blind raises exposed a weakness in Dhoni’s decision logic. The first correction
-					created a different problem against players who changed their style. A narrower correction
-					passed all eight evaluation gates and became the canonical Dhoni.
-				</p>
-				<div class="journal-foot">
-					<span class="journal-badge">Adopted</span><span>Dhoni · blind-raise response</span>
-				</div>
-			</article>
-			<article>
-				<span class="journal-date">Development note / 02</span>
-				<h3>Winning isn’t permission<br />to become someone else.</h3>
-				<p>
-					GG’s selected challenger made him a more convincing patient player. Other candidates
-					stayed out when stronger-looking results came with weaker adaptation or less variety
-					between nights. Every improvement has to keep the character.
-				</p>
-				<div class="journal-foot">
-					<span class="journal-badge">Character preserved</span><span>Canonical selection</span>
-				</div>
-			</article>
-		</div>
+			</div>{/if}
 		<footer class="league-footer">
 			<span class="footer-mark">♠ CHAAL LEAGUE</span>
 			<p>
@@ -602,89 +650,53 @@
 	.league :is(section, div[id]) {
 		scroll-margin-top: 100px;
 	}
-	.edition {
-		display: flex;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 28px 0 20px;
-		border-bottom: 1px solid var(--line);
-		font:
-			10px/1.5 ui-monospace,
-			monospace;
-		text-transform: uppercase;
-		letter-spacing: 0.13em;
-		color: var(--muted);
-	}
-	.edition > span:first-child {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-	.edition-dot {
-		width: 6px;
-		height: 6px;
-		background: var(--gold);
-		border-radius: 50%;
-	}
 	.masthead {
 		display: flex;
 		justify-content: space-between;
-		align-items: center;
-		gap: 30px;
-		padding: 30px 0 35px;
+		align-items: baseline;
+		gap: 20px;
+		padding: 22px 0 14px;
+		border-bottom: 1px solid var(--line);
 	}
 	.masthead h1 {
 		font-weight: 800;
-		font-size: clamp(70px, 9.8vw, 150px);
-		line-height: 0.82;
-		letter-spacing: -0.065em;
+		font-size: clamp(30px, 3.4vw, 50px);
+		line-height: 1;
+		letter-spacing: -0.05em;
 		margin: 0;
-	}
-	.masthead h1 > span {
-		display: block;
 	}
 	.title-period {
 		color: var(--gold);
 	}
 	.masthead-note {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		align-self: stretch;
-		justify-content: space-between;
-		padding: 8px 0;
-	}
-	.tiny-suit {
-		color: var(--gold);
-		font-size: 40px;
-	}
-	.masthead-note p {
-		font-size: 14px;
-		line-height: 1.65;
+		margin: 0;
+		font:
+			11px/1.5 ui-monospace,
+			monospace;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
 		color: var(--muted);
 		text-align: right;
 	}
-	.masthead-note strong {
-		font-weight: 500;
-		color: var(--ink);
-	}
 	.section-nav {
 		display: flex;
-		justify-content: space-between;
-		border-block: 1px solid var(--line);
-		padding: 15px 0;
-		gap: 20px;
-		font-size: 12px;
+		gap: 6px;
+		border-bottom: 1px solid var(--line);
+		margin-top: 22px;
+		font-size: 13px;
 	}
-	.section-nav a {
-		display: flex;
-		align-items: center;
-		gap: 18px;
+	.section-nav button {
+		padding: 12px 14px;
+		background: none;
+		border: 0;
+		border-bottom: 2px solid transparent;
+		margin-bottom: -1px;
 		color: var(--muted);
 		white-space: nowrap;
 	}
-	.section-nav a:first-child {
+	.section-nav button[aria-selected='true'] {
 		color: var(--gold);
+		border-bottom-color: var(--gold);
 	}
 	a,
 	button {
@@ -703,13 +715,35 @@
 		outline: 2px solid var(--gold);
 		outline-offset: 5px;
 	}
-	.section-nav a:hover,
+	.section-nav button:hover {
+		color: var(--ink);
+	}
 	.text-button:hover {
 		color: var(--gold);
 		translate: 0 -2px;
 	}
 	.championship {
-		padding-top: 27px;
+		display: grid;
+		grid-template-columns: minmax(300px, 0.85fr) 1.15fr;
+		grid-template-areas:
+			'head head'
+			'copy arena'
+			'strip arena';
+		grid-template-rows: auto 1fr auto;
+		column-gap: 40px;
+		padding-top: 18px;
+	}
+	.match-heading {
+		grid-area: head;
+	}
+	.headline {
+		grid-area: copy;
+	}
+	.arena {
+		grid-area: arena;
+	}
+	.match-strip {
+		grid-area: strip;
 	}
 	.match-heading {
 		display: flex;
@@ -730,10 +764,7 @@
 		gap: 6px;
 	}
 	.headline {
-		display: flex;
-		justify-content: space-between;
-		gap: 24px;
-		padding-top: 42px;
+		padding-top: 24px;
 	}
 	.overline {
 		font:
@@ -759,13 +790,13 @@
 		max-width: 370px;
 		line-height: 1.65;
 		color: var(--muted);
-		margin: 17px 0 0;
+		margin: 14px 0 0;
 	}
 	.schedule {
 		display: flex;
 		align-items: flex-start;
 		gap: 12px;
-		padding-top: 24px;
+		padding-top: 18px;
 	}
 	.schedule > :global(svg) {
 		color: var(--gold);
@@ -782,7 +813,7 @@
 	.schedule span {
 		font-size: 12px;
 		color: var(--muted);
-		margin: 5px 0 17px;
+		margin: 4px 0 6px;
 	}
 	.schedule small {
 		font:
@@ -791,9 +822,8 @@
 		color: var(--muted);
 	}
 	.arena {
-		height: clamp(440px, 41vw, 590px);
+		height: clamp(340px, 30vw, 450px);
 		position: relative;
-		margin-top: -32px;
 	}
 	.arena-light {
 		position: absolute;
@@ -888,7 +918,7 @@
 		display: flex;
 		justify-content: center;
 		width: 100%;
-		height: clamp(150px, 18vw, 250px);
+		height: clamp(120px, 11vw, 175px);
 		overflow: visible;
 		filter: drop-shadow(0 8px 4px #0003);
 	}
@@ -986,20 +1016,11 @@
 	}
 	.match-strip {
 		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		border-block: 1px solid var(--line);
-		margin-top: 28px;
-		padding: 24px 0;
-	}
-	.match-strip > div {
-		border-right: 1px solid var(--line);
-		padding-left: 30px;
-	}
-	.match-strip > div:first-child {
-		padding-left: 0;
-	}
-	.match-strip > div:last-child {
-		border: 0;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px 24px;
+		border-top: 1px solid var(--line);
+		margin-top: 20px;
+		padding: 16px 0 4px;
 	}
 	.match-strip span {
 		display: block;
@@ -1008,10 +1029,10 @@
 			monospace;
 		letter-spacing: 0.03em;
 		color: var(--muted);
-		margin-bottom: 9px;
+		margin-bottom: 6px;
 	}
 	.match-strip strong {
-		font-size: 27px;
+		font-size: 22px;
 		letter-spacing: -0.04em;
 		font-weight: 500;
 	}
@@ -1020,10 +1041,10 @@
 		justify-content: space-between;
 		align-items: flex-end;
 		gap: 24px;
-		margin-bottom: 30px;
+		margin-bottom: 18px;
 	}
 	.section-heading h2 {
-		font-size: clamp(35px, 4.2vw, 62px);
+		font-size: clamp(26px, 2.5vw, 38px);
 		letter-spacing: -0.05em;
 		line-height: 1.06;
 		font-weight: 550;
@@ -1033,7 +1054,7 @@
 	.players-section,
 	.rivalry-section,
 	.history-section {
-		padding-top: 90px;
+		padding-top: 24px;
 	}
 	.section-aside {
 		text-align: right;
@@ -1097,7 +1118,7 @@
 	}
 	.scoreboard th,
 	.scoreboard td {
-		padding: 19px 15px;
+		padding: 12px 15px;
 		border-bottom: 1px solid var(--line);
 	}
 	.scoreboard th:first-child,
@@ -1233,8 +1254,8 @@
 	}
 	.player-dossier {
 		display: grid;
-		grid-template-columns: 42% 58%;
-		padding-top: 40px;
+		grid-template-columns: 38% 62%;
+		padding-top: 20px;
 		gap: 0;
 	}
 	.dossier-art {
@@ -1242,7 +1263,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 370px;
+		min-height: 280px;
 	}
 	.dossier-art:before {
 		content: '';
@@ -1264,7 +1285,7 @@
 		position: absolute;
 		top: 0;
 		left: 0;
-		font-size: 180px;
+		font-size: 130px;
 		font-weight: 700;
 		line-height: 1;
 		color: #36504466;
@@ -1285,10 +1306,10 @@
 		padding: 10px 0 0 35px;
 	}
 	.dossier-copy h3 {
-		font-size: 68px;
+		font-size: 48px;
 		letter-spacing: -0.06em;
 		line-height: 1;
-		margin: 0 0 20px;
+		margin: 0 0 12px;
 	}
 	.dossier-copy h3 > span {
 		color: var(--player-accent);
@@ -1302,8 +1323,8 @@
 	.player-stats {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		margin: 25px 0;
-		padding: 20px 0;
+		margin: 16px 0;
+		padding: 14px 0;
 		border-block: 1px solid var(--line);
 		gap: 10px;
 	}
@@ -1344,7 +1365,7 @@
 		display: flex;
 		align-items: center;
 		gap: 25px;
-		margin-top: 30px;
+		margin-top: 18px;
 	}
 	.primary-button {
 		display: inline-flex;
@@ -1418,7 +1439,7 @@
 		padding-right: 10px;
 	}
 	.matrix td {
-		height: 49px;
+		height: 40px;
 		text-align: center;
 	}
 	.matrix button {
@@ -1565,7 +1586,7 @@
 		grid-template-columns: 1fr 1.4fr 1fr 0.8fr;
 		align-items: center;
 		gap: 15px;
-		padding: 24px 15px;
+		padding: 14px 15px;
 		border: 0;
 		border-bottom: 1px solid var(--line);
 		background: none;
@@ -1632,12 +1653,10 @@
 		grid-template-columns: 1fr 1fr;
 		align-items: center;
 		gap: 60px;
-		padding: 55px 0;
-		margin-top: 100px;
-		border-block: 1px solid var(--line);
+		margin-top: 24px;
 	}
 	.workshop-intro h2 {
-		font-size: clamp(33px, 3.4vw, 50px);
+		font-size: clamp(26px, 2.5vw, 38px);
 		font-weight: 550;
 		letter-spacing: -0.05em;
 		line-height: 1.1;
@@ -1711,7 +1730,7 @@
 	.journal {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		padding: 40px 0 75px;
+		padding: 28px 0 8px;
 		gap: 60px;
 	}
 	.journal article + article {
@@ -1761,7 +1780,8 @@
 		align-items: center;
 		gap: 30px;
 		border-top: 1px solid var(--line);
-		padding: 30px 0 40px;
+		margin-top: 28px;
+		padding: 18px 0 26px;
 	}
 	.footer-mark {
 		font-size: 16px;
@@ -1836,9 +1856,13 @@
 		.league-inner {
 			padding-inline: 25px;
 		}
+		.championship {
+			grid-template-columns: 1fr;
+			grid-template-areas: 'head' 'copy' 'arena' 'strip';
+		}
 		.arena {
-			height: 440px;
-			margin-top: -5px;
+			height: 400px;
+			margin-top: 10px;
 		}
 		.nameplate {
 			min-width: 105px;
@@ -1852,14 +1876,10 @@
 			font-size: 8px;
 		}
 		.competitor-portrait {
-			height: 180px;
+			height: 165px;
 		}
-		.masthead-note {
-			padding-top: 0;
-		}
-		.section-nav {
-			gap: 15px;
-			font-size: 10px;
+		.match-strip {
+			grid-template-columns: repeat(4, 1fr);
 		}
 		.player-dossier {
 			grid-template-columns: 38% 62%;
@@ -1922,47 +1942,37 @@
 		.league-inner {
 			padding-inline: 20px;
 		}
-		.edition {
-			font-size: 8px;
-			letter-spacing: 0.05em;
-			padding: 20px 0 14px;
-		}
-		.edition-year {
-			display: none;
-		}
 		.masthead {
-			padding: 26px 0;
+			padding: 16px 0 12px;
 		}
 		.masthead h1 {
-			font-size: clamp(62px, 16vw, 100px);
+			font-size: 30px;
 		}
 		.masthead-note {
 			display: none;
 		}
 		.section-nav {
 			overflow-x: auto;
-			justify-content: flex-start;
-			gap: 25px;
-			font-size: 10px;
-			padding-block: 15px;
+			gap: 0;
+			margin-top: 16px;
+			font-size: 12px;
 			scrollbar-width: none;
 		}
-		.section-nav a:first-child {
-			gap: 6px;
+		.section-nav button {
+			padding: 10px 11px;
 		}
 		.match-heading {
 			font-size: 8px;
 			gap: 8px;
 		}
 		.championship {
-			padding-top: 20px;
+			padding-top: 14px;
 		}
 		.headline {
-			padding-top: 30px;
-			display: block;
+			padding-top: 16px;
 		}
 		.headline h2 {
-			font-size: 40px;
+			font-size: 32px;
 		}
 		.overline {
 			font-size: 8px;
@@ -1993,8 +2003,8 @@
 			display: none;
 		}
 		.arena {
-			height: 360px;
-			margin-top: 15px;
+			height: 320px;
+			margin-top: 6px;
 			margin-inline: -10px;
 		}
 		.table-oval {
@@ -2030,7 +2040,7 @@
 			width: 30%;
 		}
 		.competitor-portrait {
-			height: 116px;
+			height: 104px;
 		}
 		.spot-0 {
 			left: 35%;
@@ -2083,42 +2093,30 @@
 		}
 		.match-strip {
 			grid-template-columns: 1fr 1fr;
+			gap: 12px 18px;
 			margin-top: 8px;
-			padding: 0;
-		}
-		.match-strip > div {
-			padding: 18px 0 18px 18px;
-			border-bottom: 1px solid var(--line);
-		}
-		.match-strip > div:nth-child(odd) {
-			padding-left: 0;
-		}
-		.match-strip > div:nth-child(even) {
-			border-right: 0;
-		}
-		.match-strip > div:nth-child(n + 3) {
-			border-bottom: 0;
+			padding: 12px 0 0;
 		}
 		.match-strip span {
 			font-size: 8px;
 			margin-bottom: 7px;
 		}
 		.match-strip strong {
-			font-size: 23px;
+			font-size: 20px;
 		}
 		.standings-section,
 		.players-section,
 		.rivalry-section,
 		.history-section {
-			padding-top: 60px;
+			padding-top: 18px;
 		}
 		.section-heading {
 			align-items: flex-start;
 			gap: 15px;
-			margin-bottom: 22px;
+			margin-bottom: 14px;
 		}
 		.section-heading h2 {
-			font-size: 35px;
+			font-size: 26px;
 		}
 		.section-aside {
 			font-size: 8px;
@@ -2138,7 +2136,7 @@
 		}
 		.scoreboard th,
 		.scoreboard td {
-			padding: 15px 12px;
+			padding: 11px 12px;
 		}
 		.scoreboard .rank {
 			font-size: 16px;
@@ -2178,15 +2176,15 @@
 			padding-top: 20px;
 		}
 		.dossier-art {
-			min-height: 240px;
-			height: 240px;
+			min-height: 200px;
+			height: 200px;
 		}
 		.dossier-art :global(.portrait) {
-			width: 290px;
-			height: 290px;
+			width: 230px;
+			height: 230px;
 		}
 		.dossier-number {
-			font-size: 140px;
+			font-size: 110px;
 			top: 15px;
 		}
 		.dossier-signature {
@@ -2202,7 +2200,7 @@
 			padding: 20px 0 0;
 		}
 		.dossier-copy h3 {
-			font-size: 53px;
+			font-size: 40px;
 			margin-bottom: 12px;
 		}
 		.player-description {
@@ -2323,12 +2321,11 @@
 		}
 		.workshop-section {
 			grid-template-columns: 1fr;
-			gap: 30px;
-			margin-top: 60px;
-			padding: 35px 0;
+			gap: 24px;
+			margin-top: 18px;
 		}
 		.workshop-intro h2 {
-			font-size: 35px;
+			font-size: 28px;
 		}
 		.workshop-intro > p:not(.overline) {
 			font-size: 12px;
@@ -2341,7 +2338,7 @@
 			padding: 25px 0 0;
 		}
 		.research-number > strong {
-			font-size: 76px;
+			font-size: 60px;
 		}
 		.research-number > span:not(.research-stamp) {
 			font-size: 12px;
@@ -2363,7 +2360,7 @@
 		.journal {
 			grid-template-columns: 1fr;
 			gap: 30px;
-			padding: 30px 0 45px;
+			padding: 24px 0 8px;
 		}
 		.journal article + article {
 			padding: 30px 0 0;
@@ -2410,7 +2407,6 @@
 			transition: none;
 		}
 		.competitor:hover,
-		.section-nav a:hover,
 		.text-button:hover,
 		.primary-button:hover,
 		.player-link:hover,
@@ -2460,7 +2456,7 @@
 		--line: #b3bda8;
 		background: #e8e9db;
 		color: #193126;
-		padding: 45px clamp(20px, 3vw, 40px);
+		padding: 30px clamp(20px, 3vw, 40px);
 		border-radius: 4px;
 	}
 	.workshop-intro h2 span {

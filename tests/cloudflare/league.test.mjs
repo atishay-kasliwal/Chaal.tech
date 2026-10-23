@@ -104,10 +104,13 @@ test('league page switches players and competition history inline on desktop and
 		page.on('pageerror', (e) => errors.push(e.message));
 		await page.goto(`${process.env.CHAAL_BROWSER_URL}/bots`);
 		await page.getByRole('heading', { name: 'Dhoni takes the table.' }).waitFor();
+		await page.getByRole('tab', { name: 'The players' }).click();
 		await page.locator('.player-tabs').getByRole('button', { name: /Virat/ }).click();
 		assert.equal(await page.locator('.dossier-copy h3').innerText(), 'Virat.');
+		await page.getByRole('tab', { name: 'Standings' }).click();
 		await page.getByRole('button', { name: 'How we score' }).click();
 		assert.equal(await page.locator('#league-method').isVisible(), true);
+		await page.getByRole('tab', { name: 'Trophy room' }).click();
 		await page.locator('.history-list button').filter({ hasText: 'Oct 24' }).click();
 		await page.getByRole('heading', { name: 'Rohit takes the table.' }).waitFor();
 		await page.getByRole('button', { name: 'Return to the latest result' }).click();
