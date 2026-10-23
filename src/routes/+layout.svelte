@@ -117,13 +117,13 @@
 						: undefined}>{link.label}</a
 				>
 			{/each}
+			{#if club.member?.role === 'owner'}<a
+					href="/admin"
+					aria-current={page.route.id === '/admin' ? 'page' : undefined}>Admin</a
+				>{/if}
 			{#if club.member}
 				<div class="sheet-only sheet-account">
 					<button onclick={() => (profileModal.open = true)}>Your profile</button>
-					{#if club.member.role === 'owner'}<a
-							href="/admin"
-							aria-current={page.route.id === '/admin' ? 'page' : undefined}>Admin</a
-						>{/if}
 					<button onclick={signOut}>Sign out</button>
 				</div>
 			{/if}
@@ -156,11 +156,6 @@
 							<button role="menuitem" onclick={() => ((profileModal.open = true), (meOpen = false))}
 								>Your profile</button
 							>
-							{#if club.member.role === 'owner'}<a
-									role="menuitem"
-									href="/admin"
-									aria-current={page.route.id === '/admin' ? 'page' : undefined}>Admin</a
-								>{/if}
 							<button role="menuitem" class="me-out" onclick={signOut}>Sign out</button>
 						</div>
 					{/if}
@@ -348,7 +343,7 @@
 		color: var(--red);
 	}
 
-	/* Account: avatar with a small menu (profile, admin, sign out). */
+	/* Account: avatar with a small menu (profile, sign out). */
 	.me {
 		position: relative;
 	}
@@ -403,7 +398,6 @@
 		font-size: 12px;
 		color: var(--muted);
 	}
-	.me-menu > a,
 	.me-menu > button {
 		text-align: left;
 		padding: 10px 12px;
@@ -411,9 +405,7 @@
 		font-size: 13px;
 		cursor: pointer;
 	}
-	.me-menu > a:hover,
 	.me-menu > button:hover,
-	.me-menu > a:focus-visible,
 	.me-menu > button:focus-visible {
 		background: #ffffff12;
 	}
@@ -583,17 +575,12 @@
 			padding-top: 10px;
 			border-top: 1px solid var(--edge);
 		}
-		.sheet-account > a,
 		.sheet-account > button {
 			text-align: left;
 			font-size: 15px;
 			padding: 11px 14px;
 			border-radius: 12px;
 			cursor: pointer;
-		}
-		.sheet-account > a[aria-current] {
-			background: var(--pill-on);
-			color: var(--pill-on-ink);
 		}
 		.site-footer {
 			flex-wrap: wrap;
