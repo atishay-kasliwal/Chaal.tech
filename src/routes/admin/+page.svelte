@@ -6,6 +6,7 @@
 	import LineupEditor from '#lib/club/LineupEditor.svelte';
 	import { MASCOT_NAMES } from '#lib/mascots/catalog.js';
 	import Mascot from '#lib/mascots/Mascot.svelte';
+	import BotInspector from '#lib/admin/BotInspector.svelte';
 	import { MASCOT_SIZE } from '#lib/mascots/size.js';
 	import { club, DEFAULT_CLUB_SETTINGS, type ClubSettings } from '#lib/club/club.svelte.js';
 	import {
@@ -81,7 +82,8 @@
 		['lineup', 'Lineup'],
 		['defaults', 'Table defaults'],
 		['look', 'Look'],
-		['beta', 'Game night']
+		['beta', 'Game night'],
+		['bots', 'Bots']
 	] as const;
 	const BOOTS = [5, 10, 20, 50, 100];
 	const LIMITS = [0, 64, 128, 256, 512];
@@ -291,7 +293,9 @@
 							? `₹${draft.table.boot} boot`
 							: id === 'look'
 								? (FELTS.find(([felt]) => felt === draft.look.felt)?.[1] ?? '')
-								: poll
+								: id === 'bots'
+									? 'decisions'
+									: poll
 									? `${answered.length} of ${poll.people.length}`
 									: '';
 	const tabIndex = $derived(TABS.findIndex(([id]) => id === tab));
@@ -907,6 +911,8 @@
 								{/each}
 							</ul>
 						</section>
+					{:else if tab === 'bots'}
+						<BotInspector />
 					{/if}
 				</div>
 			</div>
