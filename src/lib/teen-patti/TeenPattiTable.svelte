@@ -33,9 +33,7 @@
 	import ChipStack from '#lib/components/ChipStack.svelte';
 	import FriendPicker from '#lib/club/FriendPicker.svelte';
 	import LineupEditor from '#lib/club/LineupEditor.svelte';
-	import { lineupNext, slotName, handsLabel, MYSTERY } from '#lib/club/lineup.js';
-	import GameDemo from '#lib/games/GameDemo.svelte';
-	import { GAME_GUIDES } from '#lib/games/catalog.js';
+	import { lineupNext, slotName, MYSTERY } from '#lib/club/lineup.js';
 	import { club } from '#lib/club/club.svelte.js';
 	import BotAvatar from './BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
@@ -1224,7 +1222,7 @@
 			</button>
 		{/if}
 
-		{#if opponents.length === 0}
+		{#if opponents.length === 0 && room.isStarted}
 			<div class="empty-seats" style:left="50%" style:top={portrait ? '18%' : '22%'}>
 				<button class="invite-big" onclick={openInvite}>
 					<UserPlus class="h-5 w-5" /> Invite friends
@@ -1387,16 +1385,9 @@
 				</div>
 			{:else if !room.isStarted}
 				<div class="lobby" in:fade>
-					<p class="lobby-eyebrow">
-						Waiting room · {room.usersList.length}/6 seated · boot {money(
-							boot
-						)}{#if lineup.length}&nbsp;· lineup: {handsLabel(lineupHands).toLowerCase()} each{/if}
-					</p>
 					<p class="lobby-title">
 						<Sparkles class="h-4 w-4" />
-						{eligible.length < 2
-							? 'Waiting for friends to join'
-							: `${room.usersList.length} at the table`}
+						{eligible.length < 2 ? 'Your table is ready' : `${room.usersList.length} at the table`}
 					</p>
 					<!-- Who's here: everyone seated, people first. -->
 					<ul class="here" aria-label="At the table">
@@ -1422,7 +1413,6 @@
 								><UserPlus class="h-3.5 w-3.5" /> {canAddBot ? 'Add company' : 'Invite'}</button
 							>
 							{#if !lineup.length}{@render variantChip()}{/if}
-							<div class="lobby-bots">{@render botAdder()}</div>
 						</div>
 
 						{#if !canDeal}
@@ -1440,37 +1430,6 @@
 						</p>
 					{/if}
 					{#if cutNote}<p class="cut-note">{cutNote}</p>{/if}
-					<!-- Tonight's lineup: each game deals itself in; tap one to see how it's played. -->
-					{#if lineup.length}
-						<div
-							class="night"
-							aria-label="Tonight’s lineup: tap a game for its rules"
-							title="Tonight’s lineup · {handsLabel(lineupHands)} each · tap a game for its rules"
-						>
-							{#each lineup as slot, index (`${slot}-${index}`)}
-								{@const guide = GAME_GUIDES.find((game) => game.id === slot)}
-								<button
-									class="night-game"
-									class:mystery={slot === MYSTERY}
-									style:--i={index}
-									onclick={() => {
-										if (slot === MYSTERY) return;
-										infoGame = slot;
-										panel = 'game';
-									}}
-								>
-									<span class="night-no">{index + 1}</span>
-									{#if guide}<GameDemo game={guide} compact />{:else}<span class="mystery-face"
-											>🎲</span
-										>{/if}
-									<strong>{nameOfVariant(slot)}</strong>
-									<small
-										>{slot === MYSTERY ? 'A surprise game' : (HOW_TO_PLAY[slot]?.win ?? '')}</small
-									>
-								</button>
-							{/each}
-						</div>
-					{/if}
 				</div>
 			{:else}
 				{#if tableCards}{@render tableCards()}{:else if mat}<TableMat {...mat} />{/if}
@@ -2993,23 +2952,6 @@
 		width: min(48rem, 84%);
 		translate: -50% calc(-50% + 0.6rem);
 	}
-	.night-game :global(.demo.compact) {
-		--card-w: 38px;
-		--card-h: 55px;
-		min-height: 76px;
-		padding: 12px 4px 4px;
-	}
-	.night-game :global(.demo.compact .scene-number) {
-		font-size: 72px;
-		top: 4px;
-	}
-	.lobby-eyebrow {
-		color: rgb(244 227 181 / 60%);
-		font-size: 0.7rem;
-		font-weight: 800;
-		letter-spacing: 0.22em;
-		text-transform: uppercase;
-	}
 	.here {
 		display: flex;
 		flex-wrap: wrap;
@@ -3052,86 +2994,10 @@
 		background: #6fe0a0;
 		box-shadow: 0 0 8px #6fe0a0;
 	}
-	.night {
-		display: flex;
-		max-width: 100%;
-		gap: 0.6rem;
-		overflow-x: auto;
-		padding: 0.6rem 0.2rem 0.5rem;
-		scroll-snap-type: x mandatory;
-	}
-	.night-game {
-		position: relative;
-		display: grid;
-		flex: 0 0 8.6rem;
-		justify-items: center;
-		gap: 0.1rem;
-		border: 1px solid rgb(242 220 145 / 25%);
-		border-radius: 1rem;
-		background:
-			radial-gradient(ellipse at 50% 0%, rgb(242 220 145 / 12%), transparent 70%),
-			rgb(24 20 34 / 78%);
-		padding: 0.2rem 0.6rem 0.65rem;
-		cursor: pointer;
-		scroll-snap-align: start;
-		animation: pop-in 460ms calc(var(--i) * 110ms) both cubic-bezier(0.2, 0.9, 0.3, 1.2);
-		transition:
-			transform 160ms ease,
-			border-color 160ms ease;
-	}
-	.night-game:hover {
-		transform: translateY(-3px);
-		border-color: #f2dc91;
-	}
-	.night-game :global(.demo) {
-		width: 100%;
-	}
-	.night-game strong {
-		color: #f2dc91;
-		font-size: 0.92rem;
-	}
-	.night-game small {
-		color: rgb(248 242 229 / 70%);
-		font-size: 0.72rem;
-		line-height: 1.3;
-		text-align: center;
-	}
-	.night-no {
-		position: absolute;
-		top: 0.4rem;
-		left: 0.5rem;
-		display: grid;
-		width: 1.35rem;
-		height: 1.35rem;
-		place-items: center;
-		border-radius: 999px;
-		background: #f2dc91;
-		color: #211c2e;
-		font-size: 0.72rem;
-		font-weight: 850;
-	}
-	.night-game.mystery {
-		border-color: rgb(196 155 255 / 40%);
-		background:
-			radial-gradient(ellipse at 50% 20%, rgb(196 155 255 / 22%), transparent 70%),
-			rgb(24 20 34 / 78%);
-	}
-	.mystery-face {
-		display: grid;
-		height: 76px;
-		place-items: center;
-		font-size: 2.6rem;
-		animation: wobble 2.4s ease-in-out infinite;
-	}
-	.lobby-bots {
-		width: 100%;
-		max-width: 620px;
-	}
 	.mobile-lobby-actions {
 		display: none;
 	}
 	@media (max-width: 640px) {
-		.lobby-bots,
 		.lobby .lobby-actions {
 			display: none;
 		}

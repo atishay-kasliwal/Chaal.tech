@@ -18,6 +18,7 @@
 	import { hasChips } from '#lib/teen-patti/format.js';
 	import TeenPattiTable from '#lib/teen-patti/TeenPattiTable.svelte';
 	import { CAST } from '#lib/bots/cast.js';
+	import TableSetup from '#lib/start/TableSetup.svelte';
 	import ThreeTwoFiveTable from '#lib/tricks/ThreeTwoFiveTable.svelte';
 	import TenPakadTable from '#lib/tricks/TenPakadTable.svelte';
 	import TwentyNineTable from '#lib/tricks/TwentyNineTable.svelte';
@@ -238,19 +239,55 @@
 		void goto('/club', { replaceState: true });
 	});
 
+	/**
+	 * "Setting up your table" covers the first load: the room arriving, your seat, and any practice
+	 * bots sitting down. At least a short beat the first time on a table (so it reads as a moment, not
+	 * a flicker); never on a table already in play; and never longer than SETUP_MAX_MS.
+	 */
+	const SETUP_MIN_MS = 2200;
+	const SETUP_MAX_MS = 8000;
+	let seatingBots = $state<string[]>([]);
+	let seatingDone = $state(false);
+	let setupBeat = $state(false);
+	let setupOver = $state(false);
+	onMount(() => {
+		const setupKey = `chaal-table-setup:${data.roomName}`;
+		let seen = false;
+		try {
+			seen = sessionStorage.getItem(setupKey) === '1';
+			sessionStorage.setItem(setupKey, '1');
+		} catch {
+			/* Private mode: show the short version every time. */
+		}
+		const beat = setTimeout(() => (setupBeat = true), seen ? 0 : SETUP_MIN_MS);
+		const cap = setTimeout(() => (setupOver = true), SETUP_MAX_MS);
+		return () => {
+			clearTimeout(beat);
+			clearTimeout(cap);
+		};
+	});
+	const tableReady = $derived(!!roomData && usernameCreated && seatingDone);
+	$effect(() => {
+		if (setupOver) return;
+		if (roomData?.isStarted && usernameCreated && !seatingBots.length) setupOver = true;
+		else if (tableReady && setupBeat) setTimeout(() => (setupOver = true), 450);
+	});
+
 	/** Practice tables from the create page: seat the requested bots; the host starts the game. */
 	let practiceDone = false;
 	$effect(() => {
 		const room = roomData;
-		if (practiceDone || !room || !usernameCreated || room.isStarted) return;
+		if (practiceDone || !room || !usernameCreated) return;
+		if (room.isStarted) return void (seatingDone = true);
 		const game = room.gameType ?? 'teen-patti';
 		// Trick games need a full table: one person and this many characters.
 		const trickSeats = (
 			{ 'three-two-five': 2, 'ten-pakad': 3, 'twenty-nine': 3 } as Record<string, number>
 		)[game];
-		if ((game !== 'teen-patti' && !trickSeats) || room.hostId !== socket.playerId) return;
+		if ((game !== 'teen-patti' && !trickSeats) || room.hostId !== socket.playerId)
+			return void (seatingDone = true);
 		const params = new URLSearchParams(window.location.search);
-		if (!params.has('bots')) return;
+		if (!params.has('bots')) return void (seatingDone = true);
 		const value = params.get('bots') ?? '';
 		// Numeric links from the previous UI still seat characters, never relabel legacy history.
 		let ids = /^\d+$/.test(value)
@@ -265,19 +302,24 @@
 			);
 		}
 		const wanted = ids.length;
-		if (!wanted) return;
+		if (!wanted) return void (seatingDone = true);
 		practiceDone = true;
+		seatingBots = ids.map((id) => CAST.find((c) => c.id === id)?.name ?? '').filter(Boolean);
 		replaceState(window.location.pathname, page.state);
 		void (async () => {
 			const seated = room.usersList.filter((u) => u.bot || (u as { isBot?: boolean }).isBot).length;
-			for (let i = seated; i < wanted; i++) {
-				const revision = socket.roomData?.revision;
-				if (!(await sendAction('addBot', [ids[i]]))) return;
-				// Wait for the new seat to arrive before the next command (revision-checked).
-				for (let tries = 0; tries < 50 && socket.roomData?.revision === revision; tries++)
-					await new Promise((resolve) => setTimeout(resolve, 40));
+			try {
+				for (let i = seated; i < wanted; i++) {
+					const revision = socket.roomData?.revision;
+					if (!(await sendAction('addBot', [ids[i]]))) return;
+					// Wait for the new seat to arrive before the next command (revision-checked).
+					for (let tries = 0; tries < 50 && socket.roomData?.revision === revision; tries++)
+						await new Promise((resolve) => setTimeout(resolve, 40));
+				}
+			} finally {
+				seatingDone = true;
 			}
-			// No dealing yet: the host starts the night from the waiting room when ready.
+			// No dealing yet: the host starts the night from the table when ready.
 		})();
 	});
 	onMount(() => {
@@ -310,6 +352,7 @@
 </script>
 
 <ClubGate invited>
+	{#if !setupOver && !roomProblem}<TableSetup ready={tableReady} bots={seatingBots} />{/if}
 	{#if roomProblem}
 		<div class="room-problem">
 			<h1>{roomProblem}</h1>

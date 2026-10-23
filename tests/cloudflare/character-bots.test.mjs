@@ -173,13 +173,23 @@ test('character UI, live picker, bot seats, owner validation and mobile layout w
 	await page.getByTestId('bot-avatar').waitFor({ timeout: 30000 });
 	assert.equal(await page.getByTestId('bot-avatar').count(), 1);
 	assert.ok(await page.getByTestId('bot-avatar').locator('.mascot').getAttribute('aria-label'));
-	// Add another distinct permanent opponent through the actual table picker.
-	const picker = page.getByTestId('bot-picker').first();
+	// Add another distinct permanent opponent through the table's Add company panel.
+	await page
+		.getByTestId('table-center')
+		.getByRole('button', { name: 'Add company', exact: true })
+		.click();
+	const picker = page
+		.getByRole('dialog', { name: 'invite', exact: true })
+		.getByTestId('bot-picker');
 	await picker.getByRole('button', { name: /Virat Kohli/ }).click();
 	await page.waitForFunction(
 		() => document.querySelectorAll('[data-testid="bot-avatar"]').length === 2
 	);
 	assert.equal(await picker.getByRole('button', { name: /Rohit Sharma/ }).isDisabled(), true);
+	await page
+		.getByRole('dialog', { name: 'invite', exact: true })
+		.getByRole('button', { name: 'Close', exact: true })
+		.click();
 	await page.screenshot({
 		path: `${output}/bot-seats-desktop.png`,
 		fullPage: true,
