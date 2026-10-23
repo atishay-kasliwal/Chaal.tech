@@ -52,9 +52,13 @@ test('opt-in Dhoni depth renderer follows real Worker hand events and preserves 
 	page.on('pageerror', (e) => errors.push(e.message));
 	const url = `${process.env.CHAAL_BROWSER_URL}/${created.body.roomName}`;
 	await page.goto(`${url}?botPresence=dhoni`);
-	const picker = page.getByTestId('bot-picker').first();
-	await picker.waitFor({ timeout: 30000 });
-	await picker.getByRole('button', { name: /MS Dhoni/ }).click();
+	await page
+		.getByTestId('table-center')
+		.getByRole('button', { name: 'Add company', exact: true })
+		.click({ timeout: 30000 });
+	const invite = page.getByRole('dialog', { name: 'invite', exact: true });
+	await invite.getByRole('button', { name: /MS Dhoni/ }).click();
+	await invite.getByRole('button', { name: 'Close', exact: true }).click();
 	const seat = page.locator('[data-testid="player-seat"][data-bot-id="ms-dhoni"]');
 	await seat.getByTestId('perspective-head').waitFor({ timeout: 20000 });
 	await page.waitForFunction(
