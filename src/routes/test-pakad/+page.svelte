@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import TenPakadTable from '#lib/tricks/TenPakadTable.svelte';
+	import { demoTalk } from '#lib/mascots/table-talk.js';
 	import type { PakadRoom } from '#lib/tricks/types.js';
 
 	/**
@@ -12,6 +13,8 @@
 	 */
 	const seed = page.url.searchParams.get('seed') ?? '7';
 	const bots = page.url.searchParams.get('bots') ?? 'rohit-sharma,ms-dhoni,gg';
+	// ?talk: every character says a line and holds it, to check where the bubbles sit.
+	const talkDemo = page.url.searchParams.has('talk');
 	const table = `${seed}:${bots}:${Math.random().toString(36).slice(2)}`;
 	let view = $state<PakadRoom | null>(null);
 	let message = $state('');
@@ -32,7 +35,9 @@
 		return body.ok;
 	}
 	onMount(() => {
-		void call('reset');
+		void call('reset').then(() => {
+			if (talkDemo && view) void demoTalk(view.usersList);
+		});
 		// Bots play one move at a time, at a human pace.
 		const timer = setInterval(() => {
 			const v = view;

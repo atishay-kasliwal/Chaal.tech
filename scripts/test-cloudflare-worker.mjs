@@ -53,6 +53,9 @@ await writeFile(varsFile, [
 	`GOOGLE_CLIENT_ID=${clientId}`,
 	'ALLOW_TEST_SIGN_IN=true',
 	'ENGINE_BUILD=test',
+	// Table talk: every moment speaks (still one line per hand per bot, with the cooldowns), so a
+	// test can wait for a line instead of hoping for one.
+	'BOT_TALK_CHANCE=1',
 	`ALLOWED_ORIGINS=http://localhost:5173,${browserURL}`,
 	`TEST_GOOGLE_JWKS='${JSON.stringify({ keys: [publicJwk] })}'`
 ].join('\n'), { mode: 0o600 });

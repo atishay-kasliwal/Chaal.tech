@@ -35,6 +35,7 @@ import { nextBotMove, botDue, botDelay, thinkingContext, humansPresent, botMoveT
 import { recordCommitSafely, stepRecorder, botRandom, abandonOpenHand } from '../analytics/recorder.mjs';
 import { archiveRecorderRow, isRecorderRow, writeRoomStatus } from '../analytics/store.mjs';
 import { engineBuild } from './build.mjs';
+import { tableTalk, talkChance } from '../bots/table-talk.mjs';
 
 
 const secureRandom = () => secureRandomInt(0x1_0000_0000) / 0x1_0000_0000;
@@ -183,8 +184,10 @@ export class RoomDurableObject {
 	commit(room, playerId, commandId, commandFingerprint, result, movement, expectedRevision, step) {
 		const now = Date.now();
 		const snapshot = JSON.stringify(room);
+		let talkBefore = null;
 		this.ctx.storage.transactionSync(() => {
 			const current = this.room();
+			talkBefore = current?.snapshot ?? null;
 			if (
 				expectedRevision === null
 					? !!current
@@ -263,8 +266,24 @@ export class RoomDurableObject {
 		// Hands and failures go out now; between-hand events ride along or go on the next alarm.
 		if (this.urgentHistory) this.ctx.waitUntil(this.flushHistory());
 		this.urgentHistory = false;
+		this.queueTalk(talkBefore, room, playerId);
 		const key = ltmRosterKey(JSON.parse(snapshot));
 		if (key && key !== this.getMeta('ltmPriors')?.key) this.ctx.waitUntil(this.refreshPriors(key));
+	}
+
+	/**
+	 * Phase 6 table talk (server/bots/table-talk.mjs): after a commit, maybe one character line, sent
+	 * with the next room update. Presentation only: it reads the committed snapshots and minds, writes
+	 * nothing durable (the cooldowns live in memory) and can never fail a commit.
+	 */
+	queueTalk(before, after, actorId) {
+		try {
+			const { talk, state } = tableTalk(this.talkState, before, after, { actorId, minds: this.getMeta('botMinds'), chance: talkChance(this.env) });
+			this.talkState = state;
+			if (talk) this.pendingTalk = talk;
+		} catch (error) {
+			console.error('Table talk failed:', error?.message ?? 'Error');
+		}
 	}
 
 	/**
@@ -870,12 +889,15 @@ payload = { cutAt, cardsToDeal: variant.cardsPerPlayer ?? 3, rulesVersion, ...(o
 		const room = this.room()?.snapshot;
 		if (!room || room.name !== name) return;
 		const connected = this.connectedRoom(name, closing);
+		const talk = this.pendingTalk?.roomName === name ? this.pendingTalk : null;
+		this.pendingTalk = null;
 		for (const socket of this.ctx.getWebSockets()) {
 			if (socket === closing) continue;
 			const attachment = socket.deserializeAttachment();
 			if (attachment?.roomName !== name || this.authExpired(socket, attachment)) continue;
 			this.sendEvent(socket, 'roomData', this.view(room, attachment.playerId, connected));
 			if (text) this.sendEvent(socket, 'message', { text });
+			if (talk) this.sendEvent(socket, 'botTalk', talk);
 		}
 		this.reportToLobby(room);
 	}

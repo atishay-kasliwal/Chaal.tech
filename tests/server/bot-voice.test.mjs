@@ -15,13 +15,13 @@ test('every character has lines for every situation, and no line is empty, long 
 });
 
 test('the same moment always gets the same line, different moments vary, and characters sound different', () => {
-	assert.equal(lineFor('bot-gg', 'raise', 'h1:4'), lineFor('bot-gg', 'raise', 'h1:4'));
-	const seen = new Set(Array.from({ length: 40 }, (_, i) => lineFor('bot-samay-raina', 'raise', `h${i}`)));
+	assert.equal(lineFor('bot-gg', 'back', 'h1:4'), lineFor('bot-gg', 'back', 'h1:4'));
+	const seen = new Set(Array.from({ length: 40 }, (_, i) => lineFor('bot-rohit-sharma', 'back', `h${i}`)));
 	assert.ok(seen.size >= 3, 'varied across moments');
 	const pool = new Map();
 	for (const { mascotId, text } of allLines()) pool.set(text, (pool.get(text) ?? new Set()).add(mascotId));
 	assert.ok([...pool.values()].every((owners) => owners.size === 1), 'no line is shared between characters');
-	assert.equal(lineFor('bot-nobody', 'raise', 'x'), null);
+	assert.equal(lineFor('bot-nobody', 'back', 'x'), null);
 });
 
 import { botDelay, thinkingContext, TEMPO } from '../../server/bots/runner.mjs';
