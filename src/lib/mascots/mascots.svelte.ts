@@ -138,14 +138,14 @@ export const reactions = new Reactions();
 
 /** What each character is saying right now, keyed by player. A line is a short speech bubble. */
 class Speech {
-	byPlayer = $state<Record<string, { text: string; key: number }>>({});
+	byPlayer = $state<Record<string, { text: string; key: number; ms: number }>>({});
 	private timers = new Map<string, ReturnType<typeof setTimeout>>();
 	private nextKey = 1;
 
 	say(playerId: string | undefined, text: string, ms = 3400) {
 		if (!playerId || !text) return;
 		clearTimeout(this.timers.get(playerId));
-		this.byPlayer[playerId] = { text, key: this.nextKey++ };
+		this.byPlayer[playerId] = { text, key: this.nextKey++, ms };
 		this.timers.set(
 			playerId,
 			setTimeout(() => {

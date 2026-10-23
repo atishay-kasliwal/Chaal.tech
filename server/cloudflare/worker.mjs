@@ -45,6 +45,7 @@ import { memoryHealth } from '../bots/memory/diagnostics.mjs';
 import { adminBotIntel, adminClubIntel, adminEvolve, adminExport, adminQuality } from '../analytics/intel/admin.mjs';
 import { useMomentBackend } from '../bots/memory/moments.mjs';
 import { OPPONENT_ROUTES, inLiveHand } from '../analytics/intel/api.mjs';
+import { inspectHand, inspectableHands } from '../analytics/intel/inspector.mjs';
 import { rebuildMemory } from '../bots/memory/store.mjs';
 import { botDirectory, adminBots, manageBot } from '../bots/directory.mjs';
 import { engineBuild } from './build.mjs';
@@ -356,6 +357,18 @@ export default {
 					if (intel[1] === 'bots') return adminBotIntel(db);
 					if (intel[1] === 'quality') return adminQuality(db);
 					return adminExport(db, { since: Number(url.searchParams.get('since')) || 0, limit: Number(url.searchParams.get('limit')) || 2000 });
+				});
+				return response({ ok: true, ...result }, 200, origin, env);
+			} catch (error) { return clubFailure(error, origin, env); }
+		}
+		// Owner decision inspector: bot traces from finished hands only (server/analytics/intel/inspector.mjs).
+		if ((url.pathname === '/admin/bots/hands' || url.pathname === '/admin/bots/inspect') && request.method === 'GET') {
+			try {
+				const result = await withClubDatabase(env, async (db) => {
+					await signedInOwner(request, env, db);
+					return url.pathname === '/admin/bots/hands'
+						? inspectableHands(db, { limit: Number(url.searchParams.get('limit')) || 30 })
+						: inspectHand(db, url.searchParams.get('hand'));
 				});
 				return response({ ok: true, ...result }, 200, origin, env);
 			} catch (error) { return clubFailure(error, origin, env); }
