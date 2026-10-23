@@ -6,15 +6,17 @@
 	let {
 		plays,
 		winner = null,
+		large = false,
 		placeOf
 	}: {
 		plays: Play[];
 		winner?: string | null;
+		large?: boolean;
 		placeOf: (id: string) => string;
 	} = $props();
 </script>
 
-<div class="trick">
+<div class="trick" class:large>
 	{#each plays as p (p.id + p.card.rank + p.card.suit)}
 		<div class="played at-{placeOf(p.id)}" class:won={winner === p.id}>
 			<DeckCard rank={p.card.rank} suit={p.card.suit as Suit} class="!h-24 !w-auto" />
@@ -60,6 +62,33 @@
 	.won {
 		filter: drop-shadow(0 0 14px #f2dc91);
 	}
+	.large .played :global(.deck-card) {
+		height: clamp(6rem, 15dvh, 8rem) !important;
+	}
+	.large .played {
+		animation: play-card 300ms ease-out;
+		--from-x: 0px;
+		--from-y: -5rem;
+	}
+	.large .at-bottom {
+		--from-y: 5rem;
+	}
+	.large .at-left,
+	.large .at-upper-left {
+		--from-x: -6rem;
+		--from-y: 0px;
+	}
+	.large .at-right,
+	.large .at-upper-right {
+		--from-x: 6rem;
+		--from-y: 0px;
+	}
+	@keyframes play-card {
+		from {
+			opacity: 0;
+			transform: translate(var(--from-x), var(--from-y)) scale(0.85);
+		}
+	}
 	@keyframes land {
 		from {
 			opacity: 0;
@@ -67,7 +96,8 @@
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
-		.played {
+		.played,
+		.large .played {
 			animation: none;
 		}
 	}
@@ -78,6 +108,18 @@
 		}
 		.played :global(*) {
 			height: 4.6rem !important;
+		}
+		.trick.large {
+			height: 8rem;
+		}
+		.large .played :global(.deck-card) {
+			height: 6rem !important;
+		}
+		.large .at-top {
+			translate: -50% -65%;
+		}
+		.large .at-bottom {
+			translate: -50% -35%;
 		}
 	}
 </style>

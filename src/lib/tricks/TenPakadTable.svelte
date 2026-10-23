@@ -131,6 +131,7 @@
 
 <TrickTableShell
 	title="10 Pakad"
+	focusedHand
 	{info}
 	{status}
 	seats={shellSeats}
@@ -142,7 +143,7 @@
 >
 	{#snippet center(placeOf)}
 		{#if playing}
-			<TrickPlay plays={shownTrick} winner={shownWinner} {placeOf} />
+			<TrickPlay large plays={shownTrick} winner={shownWinner} {placeOf} />
 			<div class="pile" aria-label="Centre pile">
 				<span><b>{room.centre.count}</b> in the centre</span>
 				{#if room.centre.tens}<span class="tens"
@@ -185,6 +186,8 @@
 	{#snippet hand()}
 		{#if me && me.cardsInHand.length}
 			<TrickHand
+				large
+				dealKey={room.hand}
 				cards={me.cardsInHand}
 				playable={legalPlay}
 				onpick={play}

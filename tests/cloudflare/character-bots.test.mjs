@@ -267,9 +267,14 @@ test('character UI, live picker, bot seats, owner validation and mobile layout w
 	await tablePage.bringToFront();
 	await tablePage.waitForFunction(
 		() =>
-			[...document.querySelectorAll('[data-bot-id] .mascot')].every(
-				(element) => element.getBoundingClientRect().width === 283.5
-			),
+			[...document.querySelectorAll('[data-bot-id] .mascot')].every((element) => {
+				const avatar = element.closest('.bot-avatar');
+				const expected = Math.min(
+					283.5,
+					avatar.getBoundingClientRect().width * 0.7 * (283.5 / 210)
+				);
+				return Math.abs(element.getBoundingClientRect().width - expected) < 1;
+			}),
 		{},
 		{ timeout: 20000 }
 	);

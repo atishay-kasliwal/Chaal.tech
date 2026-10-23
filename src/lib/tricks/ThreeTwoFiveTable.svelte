@@ -124,6 +124,7 @@
 
 <TrickTableShell
 	title="3 2 5"
+	focusedHand
 	{info}
 	{status}
 	seats={shellSeats}
@@ -173,7 +174,7 @@
 				</div>
 			</div>
 		{:else if playing}
-			<TrickPlay plays={shownTrick} winner={shownWinner} {placeOf} />
+			<TrickPlay large plays={shownTrick} winner={shownWinner} {placeOf} />
 		{:else}
 			<TrickLobby
 				users={room.usersList}
@@ -225,6 +226,8 @@
 	{#snippet hand()}
 		{#if me && me.cardsInHand.length}
 			<TrickHand
+				large
+				dealKey={room.round}
 				cards={me.cardsInHand}
 				playable={(c) => legalPlay(c) || legalGive(c)}
 				onpick={clickCard}

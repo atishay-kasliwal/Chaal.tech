@@ -64,18 +64,22 @@
 	const face = $derived(faces[seed % faces.length]);
 	const palette = $derived(palettes[seed % palettes.length]);
 	const backgrounds: Record<string, string> = {
-		'bot-samay-raina': '/mascots/bot-samay-raina/backgrounds/stage.webp',
-		'bot-ms-dhoni': '/mascots/bot-ms-dhoni/backgrounds/farm.webp',
-		'bot-virat-kohli': '/mascots/bot-virat-kohli/backgrounds/stadium.webp',
-		'bot-rohit-sharma': '/mascots/bot-rohit-sharma/backgrounds/trophies.webp',
-		'bot-gg': '/mascots/bot-gg/backgrounds/press.webp'
+		'bot-samay-raina': '/mascots/bot-samay-raina/backgrounds/stage-v2.webp',
+		'bot-ms-dhoni': '/mascots/bot-ms-dhoni/backgrounds/farm-v2.webp',
+		'bot-virat-kohli': '/mascots/bot-virat-kohli/backgrounds/stadium-v2.webp',
+		'bot-rohit-sharma': '/mascots/bot-rohit-sharma/backgrounds/trophies-v2.webp',
+		'bot-gg': '/mascots/bot-gg/backgrounds/press-v2.webp'
 	};
 	const background = $derived(mascotId ? backgrounds[mascotId] : undefined);
+	const seated = $derived(mascotId === 'bot-samay-raina' || mascotId === 'bot-gg');
 </script>
 
 <div
 	class="bot-avatar"
 	class:themed={!!background}
+	data-character={mascotId}
+	style:--portrait-size="{size}px"
+	style:--portrait-scale={size / 210}
 	style:--bot-background={background ? `url('${background}')` : undefined}
 	style:--from={palette[0]}
 	style:--to={palette[1]}
@@ -89,13 +93,11 @@
 				handKey={publicHandKey}
 				geometry={publicGeometry}
 			/>
-		</div>{:else if mascotId}<Mascot
-			id={mascotId}
-			label={name}
-			{size}
-			{reaction}
-			{watch}
-		/>{:else}<span class="face" class:thinking aria-hidden="true">{face}</span>{/if}
+		</div>{:else if mascotId}<div class="portrait">
+			<Mascot id={mascotId} label={name} {size} {reaction} {watch} />
+		</div>{:else}<span class="face" class:thinking aria-hidden="true">{face}</span>{/if}
+	{#if seated}<div class="desk-front" aria-hidden="true"></div>{/if}
+	{#if background}<span class="sponsor">Atriveo</span>{/if}
 	<span class="badge-bot">Bot{mascotId ? '' : ` · ${level}`}</span>
 	{#if thinking}
 		<span class="dots" aria-label="thinking"><i></i><i></i><i></i></span>
@@ -124,8 +126,67 @@
 			linear-gradient(150deg, var(--from), var(--to));
 	}
 	.themed {
+		container-type: inline-size;
 		/* Every seat stays 4:3; fit the complete desk artwork at every player count. */
 		background: #17202b var(--bot-background) center / 100% 100% no-repeat;
+	}
+	.portrait {
+		position: relative;
+	}
+	.themed .portrait {
+		position: absolute;
+		left: 50%;
+		bottom: 32.5%;
+		width: min(var(--portrait-size), calc(70% * var(--portrait-scale)));
+		aspect-ratio: 1;
+		/* Sprite cells include transparent space below the shoulders. */
+		transform: translate(-50%, 28%);
+	}
+	.themed .portrait :global(.mascot) {
+		width: 100%;
+		height: 100%;
+	}
+	.desk-front {
+		position: absolute;
+		inset: 0;
+		background: var(--bot-background) center / 100% 100% no-repeat;
+		clip-path: inset(67.5% 0 0);
+		pointer-events: none;
+	}
+	.sponsor {
+		position: absolute;
+		top: 84%;
+		left: 50%;
+		translate: -50% -50%;
+		color: #e8e0d2;
+		font-family: Arial, sans-serif;
+		font-size: 7cqw;
+		font-weight: 600;
+		line-height: 1;
+		letter-spacing: -0.035em;
+		pointer-events: none;
+	}
+	[data-character='bot-ms-dhoni'] .sponsor {
+		top: 81%;
+		font-size: 6cqw;
+	}
+	[data-character='bot-virat-kohli'] .sponsor {
+		top: 77.5%;
+		font-size: 4.5cqw;
+	}
+	[data-character='bot-rohit-sharma'] .sponsor {
+		top: 87%;
+		font-size: 4.5cqw;
+		color: #302618;
+	}
+	[data-character='bot-gg'] .desk-front {
+		clip-path: inset(72% 0 0);
+	}
+	[data-character='bot-gg'] .portrait {
+		bottom: 28%;
+	}
+	[data-character='bot-gg'] .sponsor {
+		top: 86%;
 	}
 	.face {
 		font-size: clamp(1.8rem, calc(var(--seat-w, 12rem) * 0.28), 5rem);
@@ -159,6 +220,10 @@
 		border-radius: 999px;
 		background: #f7f0dd;
 		animation: tp-dot 1s ease-in-out infinite;
+	}
+	.themed .dots {
+		right: 5%;
+		bottom: 7%;
 	}
 	.dots i:nth-child(2) {
 		animation-delay: 0.15s;

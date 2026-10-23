@@ -5,6 +5,7 @@
 	import BotAvatar from '#lib/teen-patti/BotAvatar.svelte';
 	import SeatVideo from '#lib/components/SeatVideo.svelte';
 	import DeckCard from '#lib/components/DeckCard.svelte';
+	import CharacterAvatar from '#lib/club/CharacterAvatar.svelte';
 
 	/**
 	 * The card-room table every trick game sits at (3 2 5, 10 Pakad, 29), in the Teen Patti table's
@@ -30,6 +31,7 @@
 		title,
 		info = [],
 		status = '',
+		focusedHand = false,
 		seats,
 		selfId,
 		connected,
@@ -43,6 +45,7 @@
 		title: string;
 		info?: { text: string; tone?: 'gold' | 'red' | 'plain' }[];
 		status?: string;
+		focusedHand?: boolean;
 		seats: ShellSeat[];
 		selfId: string;
 		connected: boolean;
@@ -61,7 +64,7 @@
 	const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 </script>
 
-<div class="trick-shell" data-testid="table-scene">
+<div class="trick-shell" class:focused-hand={focusedHand} data-testid="table-scene">
 	<h1 class="sr-only">{title} table</h1>
 	<header class="topbar">
 		<div class="brand">
@@ -77,7 +80,11 @@
 		</div>
 	</header>
 
-	{#if status}<p class="status-pill" aria-live="polite">{status}</p>{/if}
+	{#if status}<p class="status-pill" aria-live="polite">
+			{#if focusedHand && me?.active}<span class="turn-indicator"
+					><i aria-hidden="true"></i>Your turn</span
+				>{/if}{focusedHand && me?.active ? status.replace(/^Your turn:\s*/i, '') : status}
+		</p>{/if}
 	{#if !connected}<p class="banner" role="status">Reconnecting. Your seat is kept.</p>{/if}
 	{#if !seated}<p class="banner" role="status">Taking your seat…</p>{/if}
 
@@ -135,7 +142,9 @@
 		<div class="me">
 			<div class="tile mine" class:active={me?.active}>
 				<div class="frame">
-					<SeatVideo name={me?.name ?? 'You'} playerId={selfId} />
+					{#if focusedHand}<div class="self-portrait">
+							<CharacterAvatar playerId={selfId} size={104} label="Your profile photo" />
+						</div>{:else}<SeatVideo name={me?.name ?? 'You'} playerId={selfId} />{/if}
 				</div>
 			</div>
 			<div class="me-text">
@@ -237,6 +246,8 @@
 		background: rgb(255 255 255 / 10%);
 	}
 	.status-pill {
+		position: relative;
+		z-index: 5;
 		flex: none;
 		width: auto;
 		max-width: min(92vw, 40rem);
@@ -580,8 +591,97 @@
 		justify-items: end;
 		gap: 0.4rem;
 	}
+	.turn-indicator {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		margin-bottom: 0.2rem;
+		color: #f2dc91;
+		font-size: 0.72rem;
+		font-weight: 800;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+	.focused-hand .backs :global(.deck-card) {
+		animation: deal-back 300ms ease-out both;
+	}
+	.focused-hand .backs :global(.deck-card:nth-child(2)) {
+		animation-delay: 70ms;
+	}
+	.focused-hand .backs :global(.deck-card:nth-child(3)) {
+		animation-delay: 140ms;
+	}
+	.focused-hand .backs :global(.deck-card:nth-child(4)) {
+		animation-delay: 210ms;
+	}
+	.focused-hand .backs :global(.deck-card:nth-child(5)) {
+		animation-delay: 280ms;
+	}
+	@keyframes deal-back {
+		from {
+			opacity: 0;
+			transform: translateY(3rem) scale(0.7);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.focused-hand .backs :global(.deck-card) {
+			animation: none;
+		}
+	}
+	.turn-indicator i {
+		width: 0.4rem;
+		height: 0.4rem;
+		border-radius: 50%;
+		background: #f2dc91;
+	}
+	.focused-hand .seat-dock {
+		grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr) minmax(11rem, 16rem);
+		margin-top: 1.5rem;
+		overflow: visible;
+	}
+	.focused-hand .pos-top {
+		top: max(7rem, 18%);
+	}
+	.focused-hand .me {
+		align-self: stretch;
+		align-items: flex-start;
+		padding-top: 1rem;
+	}
+	.focused-hand .me-text {
+		padding-top: 1rem;
+	}
+	.focused-hand .tile.mine {
+		width: 6.5rem;
+		background: transparent;
+		box-shadow: none;
+	}
+	.focused-hand .mine .frame {
+		overflow: visible;
+		background: transparent;
+	}
+	.focused-hand .mine .frame::after {
+		display: none;
+	}
+	.self-portrait {
+		position: relative;
+		translate: 0 -2.5rem;
+	}
 
 	/* ------------------------------ phones ----------------------------- */
+	@media (min-width: 761px) and (max-width: 1100px) {
+		.focused-hand .seat-dock {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		}
+		.focused-hand .dock-hand {
+			grid-column: 1 / -1;
+			grid-row: 2;
+		}
+		.focused-hand .dock-actions {
+			grid-column: 2;
+			grid-row: 1;
+		}
+	}
 	@media (max-width: 760px) {
 		.arena {
 			display: grid;
@@ -630,11 +730,56 @@
 			gap: 0.5rem;
 			padding: 0.5rem;
 		}
+		.focused-hand .seat-dock {
+			grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+			gap: 0.3rem;
+			margin-top: 0.75rem;
+		}
+		.focused-hand .me {
+			grid-column: 1;
+			grid-row: 1;
+			gap: 0.75rem;
+			align-items: center;
+			padding-top: 0;
+		}
+		.focused-hand .dock-hand {
+			grid-column: 1 / -1;
+			grid-row: 2;
+		}
+		.focused-hand .center {
+			gap: 0.3rem;
+		}
+		.focused-hand .dock-actions {
+			grid-column: 2;
+			grid-row: 1;
+		}
+		.focused-hand .me-text {
+			padding-top: 0;
+		}
+		.focused-hand .tile.mine {
+			width: 4rem;
+		}
+		.self-portrait {
+			translate: 0 -0.75rem;
+		}
+		.self-portrait :global(.avatar-ring) {
+			width: 4rem;
+			height: 4rem;
+		}
 		.tile.mine {
 			width: 3.6rem;
 		}
 		.dock-actions {
 			justify-items: stretch;
+		}
+	}
+	@media (max-height: 700px) {
+		.focused-hand {
+			overflow-y: auto;
+		}
+		.focused-hand .arena {
+			flex: none;
+			min-height: 23rem;
 		}
 	}
 </style>
