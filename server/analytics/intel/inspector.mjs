@@ -9,6 +9,7 @@
  * recorder writes that last, when the hand is complete) and its sealed record replayed verified.
  * Responses are built field by field: no cards, decks, seeds or replay inputs ever leave this module.
  */
+import { castMember } from '../../../src/lib/bots/cast.js';
 import { COLLECTIONS, readSealed } from '../store.mjs';
 import { replayHand } from '../recorder.mjs';
 import { subjectNames } from '../data.mjs';
@@ -315,7 +316,7 @@ export function decisionView(t, before, { name = (id) => id, botName = null } = 
 
 const titleCase = (id) => String(id).split('-').map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w)).join(' ');
 const seatName = (names, seat) =>
-	(seat.bot?.botId ? (names[`bot:${seat.bot.botId}`]?.name ?? titleCase(seat.bot.botId)) : names[seat.p]?.name) ?? (seat.kind === 'bot' ? 'A bot' : 'A friend');
+	(seat.bot?.botId ? (castMember(seat.bot.botId)?.name ?? names[`bot:${seat.bot.botId}`]?.name ?? titleCase(seat.bot.botId)) : names[seat.p]?.name) ?? (seat.kind === 'bot' ? 'A bot' : 'A friend');
 
 /** Recent finished hands that had a bot at the table, newest first. Public records only. */
 export async function inspectableHands(db, { limit = 30 } = {}) {
@@ -370,7 +371,7 @@ export async function inspectHand(db, handId) {
 		const seat = seatsById.get(id);
 		return seat ? seatName(names, seat) : (names[id]?.name ?? usernames.get(id) ?? 'someone');
 	};
-	const decisions = (sealed.botTrace ?? []).map((t) => decisionView(t, states[t.i], { name, botName: t.botId ? (names[`bot:${t.botId}`]?.name ?? null) : null }));
+	const decisions = (sealed.botTrace ?? []).map((t) => decisionView(t, states[t.i], { name, botName: t.botId ? (castMember(t.botId)?.name ?? names[`bot:${t.botId}`]?.name ?? null) : null }));
 	const policies = [...new Set(decisions.map((d) => d.policy).filter((p) => GRAPHS[p]))];
 	return {
 		hand: {
