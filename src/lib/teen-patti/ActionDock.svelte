@@ -26,6 +26,10 @@
 		onsee,
 		ondiscard,
 		onjoker,
+		ondraw,
+		ontrade,
+		onpass,
+		onfaceoff,
 		onpack,
 		onbet,
 		onshow,
@@ -55,9 +59,16 @@
 		ondiscard: (index: number) => void;
 		/** Kiss-Miss-Bliss: turn two of your cards into one joker. */
 		onjoker?: (indexes: [number, number]) => void;
+		ondraw?: (index: number) => void;
+		/** Trade One: give your card at `index` to `target`, or keep your hand with index -1. */
+		ontrade?: (index: number, target?: string) => void;
+		/** Pass the Card: pick the card to pass to the next player. */
+		onpass?: (index: number) => void;
+		/** Faceoff: challenge one player; both hands are shown and the loser is out. */
+		onfaceoff?: (target: string) => void;
 		onpack: () => void;
 		onbet: (amount: number) => void;
-		onshow: () => void;
+		onshow: (declare?: 'high' | 'low') => void;
 		onsitout: (sitOut: boolean) => void;
 		onbalancehidden: (hidden: boolean) => void;
 		onaskchips: (to: string, amount: number) => void;
@@ -80,13 +91,46 @@
 	const seconds = $derived(Math.ceil(remaining / 1000));
 	const urgency = $derived(progress > 0.5 ? 'calm' : progress > 0.2 ? 'warn' : 'hurry');
 	const revealed = $derived(me.cardsInHand.some((card) => card.rank > 0));
+	/** Open-card games: your face-up cards, shown even while you play blind. */
+	const openAt = (index: number) => me.openCards?.find((open) => open.index === index)?.card;
 	const sittingOut = $derived(me.ready === false);
 	const discarding = $derived(!!legal.discard && revealed);
-	/** Folding Joker: the card you give up stays in hand, face down, as your joker. */
-	const folding = $derived(room.rulesVersion === 'folding-joker-1');
+	let skipDraw = $state(false);
 	let chosen = $state<number | null>(null);
+	/** Draw Teen Patti: once you have looked you may swap one card, or keep your hand. */
+	const drawing = $derived(
+		revealed && !skipDraw && !!ondraw && (legal.table ?? []).some((move) => move.kind === 'draw')
+	);
+	/** Trade One: swap a card with a rival's card in the same place. */
+	const tradeMoves = $derived(
+		(legal.table ?? []).flatMap((move) => (move.kind === 'trade' && move.target ? [move] : []))
+	);
+	const trading = $derived(
+		revealed && !skipDraw && !!ontrade && (legal.table ?? []).some((move) => move.kind === 'trade')
+	);
+	const tradeTargets = $derived(
+		chosen === null ? [] : tradeMoves.filter((move) => move.index === chosen)
+	);
+	/** Pass the Card: everyone picks a card; blind players pick without looking. */
+	const passing = $derived(
+		!!onpass && (legal.table ?? []).some((move) => move.kind === 'pass')
+	);
+	const picking = $derived(discarding || drawing || trading || (passing && revealed));
+	const nameOfUser = (id: string) => room.usersList.find((user) => user.id === id)?.username ?? 'Someone';
+	/** Short line under the hand: who traded with you, whether the cards were passed. */
+	const swapNote = $derived.by(() => {
+		const state = room.variantState;
+		if (room.rulesVersion === 'trade-one-1') {
+			const from = (state?.trades ?? []).filter((trade) => trade.to === me.id);
+			return from.length ? `${from.map((trade) => nameOfUser(trade.from)).join(' and ')} traded a card with you` : '';
+		}
+		if (room.rulesVersion === 'pass-the-card-1' && state?.done) return 'The cards were passed';
+		return '';
+	});
+	/** Folding Joker: the card you give up stays in hand, face down, as a shared joker. */
+	const folding = $derived(room.rulesVersion.startsWith('folding-joker-'));
 	$effect(() => {
-		if (!discarding) chosen = null;
+		if (!picking) chosen = null;
 	});
 	/** Kiss-Miss-Bliss: pairs the server allows as a joker, and the two cards picked so far. */
 	const jokerMoves = $derived((legal.table ?? []).filter((move) => move.kind === 'joker'));
@@ -95,6 +139,7 @@
 	$effect(() => {
 		void dealKey;
 		skipJoker = false;
+		skipDraw = false;
 		pair = [];
 	});
 	const pairing = $derived(revealed && jokerMoves.length > 0 && !skipJoker && !!onjoker);
@@ -172,27 +217,28 @@
 							>
 								<TpCard {card} faceUp />
 							</button>
-						{:else if discarding}
+						{:else if picking}
 							<button
 								class="pick"
 								class:chosen={chosen === index}
 								onclick={() => (chosen = index)}
-								aria-label="{folding ? 'Fold' : 'Throw away'} card {index + 1}"
+								aria-label="{passing ? 'Pass' : trading ? 'Trade' : drawing ? 'Swap' : folding ? 'Fold' : 'Throw away'} card {index + 1}"
 								aria-pressed={chosen === index}
 							>
-								<TpCard {card} faceUp wild={me.wildCards?.includes(index) ?? false} />
+								<TpCard {card} faceUp={revealed} wild={me.wildCards?.includes(index) ?? false} />
 							</button>
 						{:else if me.folded && index === me.cardsInHand.length - 1}
-							<!-- The folded card: set aside, its rank is your joker. -->
-							<span class="folded-card" title="Folded: its rank is your joker">
+							<!-- The folded card: set aside, its rank is a joker for everyone. -->
+							<span class="folded-card" title="Folded: its rank is a joker for everyone">
 								<TpCard {card} faceUp={revealed} dim />
 								<span class="folded-tag">Joker</span>
 							</span>
 						{:else}
+							{@const open = openAt(index)}
 							<TpCard
-								{card}
-								faceUp={revealed}
-								flip={revealed}
+								card={open ?? card}
+								faceUp={revealed || !!open}
+								flip={revealed || !!open}
 								deal={revealed ? -1 : index}
 								dim={me.isPacked}
 								wild={me.wildCards?.includes(index) ?? false}
@@ -231,17 +277,67 @@
 							? 'Kiss, Miss or Bliss'
 							: 'Kiss or Miss'}
 					{/if}
+				{:else if trading}
+					{#if chosen === null}
+						Tap a card to trade away
+						<button
+							class="after-btn"
+							onclick={() => {
+								skipDraw = true;
+								ontrade?.(-1);
+							}}>Keep my hand</button
+						>
+					{:else}
+						Trade it with:
+						{#each tradeTargets as move (move.target)}
+							<button class="throw" onclick={() => ontrade?.(move.index, move.target)}
+								>{nameOfUser(move.target ?? '')}</button
+							>
+						{/each}
+					{/if}
+				{:else if passing}
+					{#if revealed && chosen === null}
+						Tap the card to pass to the next player
+					{:else if revealed}
+						<button class="throw" onclick={() => chosen !== null && onpass?.(chosen)}
+							>Pass this card</button
+						>
+					{:else}
+						<button
+							class="throw"
+							onclick={() => onpass?.(Math.floor(Math.random() * me.cardsInHand.length))}
+							>Pass a card without looking</button
+						>
+					{/if}
+				{:else if drawing}
+					{#if chosen === null}
+						Tap a card to swap it for a new one
+						<button
+							class="after-btn"
+							onclick={() => {
+								skipDraw = true;
+								ondraw?.(-1);
+							}}>Keep my hand</button
+						>
+					{:else}
+						<button
+							class="throw"
+							onclick={() => {
+								if (chosen !== null) ondraw?.(chosen);
+							}}>Swap this card</button
+						>
+					{/if}
 				{:else if discarding}
 					{#if chosen === null}
 						{folding
-							? 'Tap the card to fold: its rank becomes your joker'
+							? 'Tap the card to fold: its rank becomes a joker for everyone'
 							: 'Tap the card you want to throw away'}
 						{#if !folding && handLabel?.startsWith('Best three')}<small class="best-keep"
 								>{handLabel}</small
 							>{/if}
 					{:else}
 						<button class="throw" onclick={() => chosen !== null && ondiscard(chosen)}
-							>{folding ? 'Fold this card as my joker' : 'Throw this card away'}</button
+							>{folding ? 'Make this rank a shared joker' : 'Throw this card away'}</button
 						>
 					{/if}
 				{:else if live && me.isPacked}
@@ -271,6 +367,7 @@
 						: 'Playing blind · bets cost half'}
 				{/if}
 			</p>
+			{#if swapNote}<small class="swap-note">{swapNote}</small>{/if}
 		{:else}
 			<div class="sit-msg">
 				{#if sittingOut}
@@ -337,13 +434,28 @@
 					<span>{confirmingPack ? 'Tap again' : 'Pack'}</span>
 					<kbd>P</kbd>
 				</button>
-				{#if legal.show}
-					<button class="act show" onclick={onshow} disabled={!connected}>
+				{#if legal.show && room.rulesVersion === 'high-low-1'}
+					<button class="act show" onclick={() => onshow('high')} disabled={!connected}>
+						<Gavel class="h-4 w-4" />
+						<span>Show high <small>{money(low)}</small></span>
+					</button>
+					<button class="act show" onclick={() => onshow('low')} disabled={!connected}>
+						<Gavel class="h-4 w-4" />
+						<span>Show low <small>{money(low)}</small></span>
+					</button>
+				{:else if legal.show}
+					<button class="act show" onclick={() => onshow()} disabled={!connected}>
 						<Gavel class="h-4 w-4" />
 						<span>Show <small>{money(low)}</small></span>
 						<kbd>W</kbd>
 					</button>
 				{/if}
+				{#each legal.faceoff ?? [] as target (target)}
+					<button class="act show" onclick={() => onfaceoff?.(target)} disabled={!connected}>
+						<Gavel class="h-4 w-4" />
+						<span>Faceoff {nameOfUser(target)} <small>{money(low)}</small></span>
+					</button>
+				{/each}
 				<button class="act chaal" onclick={() => onbet(low)} disabled={!canBet}>
 					<Coins class="h-4 w-4" />
 					<span>{me.isBlind ? 'Blind' : 'Chaal'} <small>{money(low)}</small></span>
@@ -592,6 +704,13 @@
 		cursor: pointer;
 	}
 	/* Before throwing away: the best three you could keep, under the prompt. */
+	.swap-note {
+		display: block;
+		color: #f2dc91;
+		font-size: 0.8rem;
+		font-weight: 700;
+		text-align: center;
+	}
 	.best-keep {
 		display: block;
 		color: #f2dc91;

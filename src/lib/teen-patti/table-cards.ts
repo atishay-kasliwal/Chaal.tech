@@ -64,6 +64,8 @@ export interface MatUi {
 	onopen: (index: number) => void;
 	onpreview: (line: number) => void;
 	onlock: (line: number) => void;
+	/** Send any other table move (buy, bid). */
+	onmove: (move: TableMove) => void;
 }
 
 const nameOf = (room: RoomData, id: string | null | undefined) =>
@@ -83,6 +85,22 @@ export function matFor(room: RoomData, selfId: string, ui: MatUi): Mat | null {
 		case 'kiss-miss-bliss-1':
 		case 'kissing-missing-1':
 			return pairJoker(room);
+		case 'community-1':
+			return community(room);
+		case 'hukum-1':
+			return hukum(room);
+		case 'progressive-joker-1':
+			return progressive(room);
+		case 'buying-joker-1':
+			return buying(room, ui);
+		case 'auction-1':
+			return auction(room, ui);
+		case 'knockout-1':
+		case 'sudden-death-1':
+		case 'survivor-1':
+			return laps(room);
+		case 'banko-1':
+			return banko(room);
 		default:
 			return null;
 	}
@@ -289,5 +307,162 @@ function pairJoker(room: RoomData): Mat | null {
 				...(bliss ? [{ icon: '✨', name: 'Bliss', text: 'Same rank, like K-K' }] : [])
 			]
 		}
+	};
+}
+
+const suitName = (suit: string | null | undefined) =>
+	({ spades: 'Spades', hearts: 'Hearts', diamonds: 'Diamonds', clubs: 'Clubs' })[suit ?? ''] ?? '';
+
+/** Community Teen Patti: three shared cards that open as the pot grows. */
+function community(room: RoomData): Mat {
+	const state = room.variantState!;
+	const board = state.community ?? [];
+	const opened = state.opened ?? 1;
+	const thresholds = state.thresholds ?? [100, 200];
+	const cards: MatCard[] = board.map((card, index) => {
+		const isOpen = index < opened;
+		return {
+			card,
+			open: isOpen,
+			tag: index === 0 ? 'open' : `${isOpen ? '✓ ' : ''}₹${thresholds[index - 1]}`,
+			tagTone: isOpen && index > 0 ? 'done' : ''
+		};
+	});
+	const next = thresholds[opened - 1];
+	const prev = opened > 1 ? thresholds[opened - 2] : 0;
+	return {
+		layout: 'row',
+		cards,
+		caption: 'Community cards',
+		prompt: 'Your hand is the <b>best three</b> of your two cards and the open ones here',
+		progress:
+			next !== undefined
+				? {
+						label: `₹${room.pot} of ₹${next} · next card soon`,
+						value: Math.max(0, Math.min(1, (room.pot - prev) / (next - prev)))
+					}
+				: undefined
+	};
+}
+
+/** Hukum: the open card names the trump suit. */
+function hukum(room: RoomData): Mat {
+	const state = room.variantState!;
+	const indicator = state.indicator;
+	return {
+		layout: 'none',
+		prompt: indicator?.suit
+			? `<b>${suitName(indicator.suit)}</b> is trump. More trump cards win inside a hand type`
+			: '',
+		tray: { title: 'Trump', cards: indicator?.rank ? [indicator] : [], note: 'more trump wins ties' }
+	};
+}
+
+/** Progressive Joker: the hidden indicator turns over at the first pot mark. */
+function progressive(room: RoomData): Mat {
+	const state = room.variantState!;
+	const stage = state.stage ?? 0;
+	const thresholds = state.thresholds ?? [100, 200, 400];
+	const ranks = state.wildRanks ?? [];
+	const next = thresholds[stage];
+	const prev = stage ? thresholds[stage - 1] : 0;
+	return {
+		layout: 'none',
+		prompt: stage
+			? `Jokers are <b>${uniqueRanks(ranks)}</b>${state.wildSuit ? ` and every ${suitName(state.wildSuit)} card` : ''}`
+			: `No jokers yet: they start at ₹${thresholds[0]}`,
+		progress:
+			next !== undefined
+				? {
+						label: `₹${room.pot} of ₹${next} · jokers grow`,
+						value: Math.max(0, Math.min(1, (room.pot - prev) / (next - prev)))
+					}
+				: undefined,
+		tray: {
+			title: 'Jokers',
+			cards: stage && state.indicator?.rank ? [state.indicator] : [],
+			ranks: ranks.length ? uniqueRanks(ranks) : undefined,
+			note: stage ? undefined : 'The hidden card turns over soon'
+		}
+	};
+}
+
+/** Buying Joker: pay to learn the hidden joker rank, for your hand only. */
+function buying(room: RoomData, ui: MatUi): Mat {
+	const state = room.variantState!;
+	const move = (room.legalActions.table ?? []).find((m) => m.kind === 'buy');
+	const bought = state.bought ?? [];
+	const mine = state.rank ? rankText(state.rank) : null;
+	return {
+		layout: 'none',
+		prompt: mine
+			? `Your joker is <b>${mine}</b>: every ${mine} in your hand is wild`
+			: `<b>One hidden joker.</b> Pay to learn its rank, for your hand only`,
+		caption: bought.length
+			? `Bought by ${bought.map((id) => nameOf(room, id)).join(', ')}`
+			: 'Nobody has bought the joker',
+		tray: { title: 'Joker', note: mine ? `wild ${mine}` : 'hidden until you buy' },
+		actions: move
+			? [
+					{
+						label: `Buy the joker ₹${move.price ?? ''}`,
+						primary: true,
+						onclick: () => ui.onmove({ kind: 'buy' })
+					}
+				]
+			: []
+	};
+}
+
+/** Auction: one sealed bid each; the top bid pays and wins the hidden joker. */
+function auction(room: RoomData, ui: MatUi): Mat {
+	const state = room.variantState!;
+	const bids = (room.legalActions.table ?? []).filter((m) => m.kind === 'bid');
+	const bid = state.bid ?? [];
+	const mine = state.rank ? rankText(state.rank) : null;
+	const prompt = state.done
+		? state.winner
+			? `<b>${nameOf(room, state.winner)}</b> won the joker for ₹${state.amount}${mine ? `: wild ${mine} for you` : ''}`
+			: 'Nobody bid: no joker this hand'
+		: bids.length
+			? '<b>Sealed bid for the hidden joker.</b> Highest bid pays it into the pot and wins'
+			: `Waiting for bids: ${bid.length} in`;
+	return {
+		layout: 'none',
+		prompt,
+		tray: {
+			title: 'Joker auction',
+			note: state.done ? (state.winner ? 'sold' : 'unsold') : `${bid.length} sealed bids in`
+		},
+		actions: bids.map((m) => ({
+			label: m.bid ? `Bid ₹${m.amount}` : 'No bid',
+			primary: !!m.bid && m.bid === bids.at(-1)?.bid,
+			onclick: () => ui.onmove({ kind: 'bid', bid: m.bid ?? 0 })
+		}))
+	};
+}
+
+/** Knockout, Sudden Death and Survivor: who is out and what comes next. */
+function laps(room: RoomData): Mat {
+	const state = room.variantState!;
+	const out = (state.out ?? []).map((id) => nameOf(room, id));
+	const rules: Record<string, string> = {
+		'knockout-1': 'The lowest hand goes after every lap, until two are left',
+		'sudden-death-1': 'The stake doubles and the lowest hand goes after every lap',
+		'survivor-1': 'No Show: the lowest hand goes after every lap until one is left'
+	};
+	return {
+		layout: 'none',
+		prompt: `${rules[room.rulesVersion] ?? ''}${out.length ? `. <b>Out:</b> ${out.join(', ')}` : ''}`,
+		tray: { title: `Lap ${(state.laps ?? 0) + 1}`, note: `${out.length} knocked out` }
+	};
+}
+
+/** Banko: the dealer is the banker. */
+function banko(room: RoomData): Mat {
+	return {
+		layout: 'none',
+		prompt: `<b>${nameOf(room, room.initiator)}</b> is the banker. Ties go to the banker`,
+		tray: { title: 'Banker', note: nameOf(room, room.initiator) }
 	};
 }

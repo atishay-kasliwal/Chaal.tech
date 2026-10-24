@@ -105,7 +105,7 @@ test('Phase 5 module baselines remain intact except approved room layout and var
 		assert.equal(createHash('sha256').update(bytes).digest('hex'), hash, file);
 	}
 	const roomTypes = await readFile('src/routes/[roomName]/types.d.ts', 'utf8');
-	assert.match(roomTypes, /variantState\?: \{ wildRank: number; indicator: Card \}/);
+	assert.match(roomTypes, /variantState\?: \{ wildRank\?: number; indicator\?: Card; wildRanks\?: number\[\] \}/);
 	const service = await readFile('server/index.mjs', 'utf8');
 	assert.match(service, /'ready'/);
 	assert.match(service, /requireReady: true/);

@@ -87,6 +87,8 @@
 	const mascotSize = $derived(club.settings.mascotSize ?? MASCOT_SIZE.default);
 	const face = $derived(reactions.byPlayer[user.id]?.pose ?? restingFace({ away }));
 	const revealed = $derived(user.cardsInHand.some((card) => card.rank > 0));
+	/** Open-card games: a card lying face up for everyone while the rest stay hidden. */
+	const openAt = (index: number) => user.openCards?.find((open) => open.index === index)?.card;
 	const progress = $derived(total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0);
 	const seconds = $derived(Math.ceil(remaining / 1000));
 	const urgency = $derived(progress > 0.5 ? 'calm' : progress > 0.2 ? 'warn' : 'hurry');
@@ -197,12 +199,13 @@
 				>
 					{#key dealKey}
 						{#each user.cardsInHand as card, index (index)}
+							{@const open = openAt(index)}
 							<TpCard
-								{card}
-								faceUp={revealed}
-								flip={revealed}
+								card={open ?? card}
+								faceUp={revealed || !!open}
+								flip={revealed || !!open}
 								deal={revealed ? -1 : index}
-								dim={user.isPacked && !revealed}
+								dim={user.isPacked && !revealed && !open}
 								highlight={winner && revealed}
 								wild={user.wildCards?.includes(index) ?? false}
 							/>

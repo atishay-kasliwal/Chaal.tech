@@ -499,6 +499,154 @@ function forcedShow(room, variant, reason = 'pot-limit') {
 		handId: room.handId
 	};
 }
+/** Pay several winners from the pot and close the hand; `amounts` are whole rupees summing to the pot. */
+function settleMany(room, winners, reason, revealed) {
+	require(!room.result, 'Hand already settled');
+	const pot = room.pot;
+	recordReal(room, winners);
+	for (const winner of winners)
+		room.players.find((p) => p.id === winner.id).balance += winner.amount;
+	room.pot = 0;
+	room.gameShow = true;
+	room.currentPlayerId = null;
+	room.deadline = null;
+	room.turnMs = null;
+	room.result = {
+		winnerId: winners[0].id,
+		winnerName: winners.map((w) => w.name).join(' & '),
+		amount: pot,
+		reason,
+		revealedPlayerIds: revealed,
+		winners,
+		handId: room.handId
+	};
+}
+/** Split evenly among players, the odd rupees going to the first ones clockwise. */
+const evenShares = (players, total) =>
+	players.map((p, index) => ({
+		id: p.id,
+		name: p.username,
+		amount: Math.floor(total / players.length) + (index < total % players.length ? 1 : 0)
+	}));
+/**
+ * Split Pot: three or more players reached the split amount. Everyone still in shows; the best
+ * hand takes half the pot and the worst hand the other half (the odd rupee goes to the best).
+ * Tied hands share their half. If every hand ties, everyone shares the whole pot.
+ */
+function splitShow(room, variant) {
+	const contenders = active(room);
+	const best = [contenders[0]];
+	const worst = [contenders[0]];
+	for (const player of contenders.slice(1)) {
+		const high = compareFor(variant, room, player, best[0]);
+		if (high > 0) best.splice(0, best.length, player);
+		else if (high === 0) best.push(player);
+		const low = compareFor(variant, room, player, worst[0]);
+		if (low < 0) worst.splice(0, worst.length, player);
+		else if (low === 0) worst.push(player);
+	}
+	const revealed = contenders.map((p) => p.id);
+	const everyone = best.length === contenders.length;
+	const lowHalf = everyone ? 0 : Math.floor(room.pot / 2);
+	const winners = everyone
+		? evenShares(best, room.pot)
+		: [...evenShares(best, room.pot - lowHalf), ...evenShares(worst, lowHalf)];
+	settleMany(room, winners, 'split-pot', revealed);
+}
+/** Chips a table move or hook spends into the pot: [{ id, amount }], capped at what the player holds. */
+function payIn(room, variant, pays) {
+	for (const { id, amount } of pays) {
+		const payer = room.players.find((p) => p.id === id);
+		const paid = Math.min(Math.max(0, Math.floor(amount)), payer?.balance ?? 0);
+		if (!paid) continue;
+		payer.balance -= paid;
+		if (payer.handBet !== undefined) payer.handBet += paid;
+		room.pot += paid;
+	}
+	variant.afterPot?.(room.variantState, room.pot);
+}
+/**
+ * Banko: with three or more players in and the pot at the banko amount, everyone shows. Players
+ * who beat the banker (the dealer) split the pot; if none does, the banker takes it. Ties go to the
+ * banker.
+ */
+function bankoShow(room, variant) {
+	const contenders = active(room);
+	const banker = contenders.find((p) => p.id === room.initiator);
+	const beaters = contenders.filter(
+		(p) => p.id !== banker.id && compareFor(variant, room, p, banker) > 0
+	);
+	const revealed = contenders.map((p) => p.id);
+	if (!beaters.length) settle(room, banker, 'banko-banker', revealed);
+	else settleMany(room, evenShares(beaters, room.pot), 'banko-players', revealed);
+}
+/**
+ * Lap games (Knockout, Sudden Death, Survivor): after every lap of bets (one per player still in)
+ * the stake may double and the lowest hand may be knocked out.
+ */
+function lapEffects(room, variant) {
+	const lap = variant.lap;
+	const state = room.variantState;
+	if (!lap || !state) return;
+	state.lapSize = Math.min(state.lapSize ?? Infinity, active(room).length);
+	state.bets = (state.bets ?? 0) + 1;
+	if (state.bets < state.lapSize) return;
+	state.bets = 0;
+	state.laps = (state.laps ?? 0) + 1;
+	if (lap.double) room.maxStake *= 2;
+	if (lap.keep) eliminateLowest(room, variant, lap.keep);
+	if (playing(room)) state.lapSize = active(room).length;
+}
+/**
+ * Pack the lowest hand (every tied lowest hand), showing it to the table, while more than `keep`
+ * players remain. Nobody goes if everyone ties or if it would leave fewer than `keep`.
+ */
+function eliminateLowest(room, variant, keep) {
+	const live = active(room);
+	if (live.length <= keep) return;
+	const worst = [live[0]];
+	for (const player of live.slice(1)) {
+		const comparison = compareFor(variant, room, player, worst[0]);
+		if (comparison < 0) worst.splice(0, worst.length, player);
+		else if (comparison === 0) worst.push(player);
+	}
+	if (worst.length === live.length || live.length - worst.length < keep) return;
+	for (const player of worst) {
+		player.isPacked = true;
+		room.shownIds = [...new Set([...(room.shownIds ?? []), player.id])];
+		if (Array.isArray(room.variantState.out))
+			room.variantState.out = [...new Set([...room.variantState.out, player.id])];
+	}
+	const left = active(room);
+	if (left.length === 1) settle(room, left[0], 'last-standing', worst.map((p) => p.id));
+}
+/**
+ * Faceoff: on your turn, pay the Show fee and challenge one player. Both hands are shown, the
+ * loser is out (a tie goes against the challenger) and the hand carries on without them.
+ */
+function faceoff(room, variant, player, payload, ctx) {
+	require(room.currentPlayerId === player.id, 'It is not your turn', 'OUT_OF_TURN');
+	require(ctx.now < room.deadline, 'Turn has expired', 'STALE_TURN');
+	const other = active(room).find((p) => p.id === payload.target && p.id !== player.id);
+	require(other, 'Choose a player to face off against');
+	require(player.isBlind || !other.isBlind, 'A seen player cannot challenge a blind player');
+	const fee = limits(room, player).min;
+	require(player.balance >= fee, 'Insufficient chips for a Faceoff');
+	player.balance -= fee;
+	if (player.handBet !== undefined) player.handBet += fee;
+	room.pot += fee;
+	variant.afterPot?.(room.variantState, room.pot);
+	const loser = compareFor(variant, room, player, other) > 0 ? other : player;
+	loser.isPacked = true;
+	room.shownIds = [...new Set([...(room.shownIds ?? []), player.id, other.id])];
+	if (Array.isArray(room.variantState?.faceoffs))
+		room.variantState.faceoffs.push({
+			challenger: player.id,
+			target: other.id,
+			loser: loser.id
+		});
+	afterPack(room, player.seatNumber, ctx);
+}
 /**
  * Games that knock players out (Running's killer suit): seen players who are out are packed and
  * their cards shown. If that would leave nobody, everyone still in shows instead.
@@ -526,6 +674,9 @@ function knockOut(room, variant, ctx) {
 }
 function afterPack(room, seat, ctx) {
 	const candidates = active(room);
+	const variant = getVariant(room.rulesVersion);
+	const moved = variant?.afterPack?.(room.variantState, { players: candidates, boot: bootOf(room) });
+	if (moved?.pays) payIn(room, variant, moved.pays);
 	if (candidates.length === 1) settle(room, candidates[0], 'last-player');
 	else nextTurn(room, seat, ctx);
 }
@@ -945,8 +1096,18 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				player.isBlind = false;
 				knockOut(room, variant, ctx);
 			} else if (action === 'table') {
-				require(variant.tableAction, `${variant.name} has no table moves`);
-				variantMove(() => variant.tableAction(room.variantState, player, payload));
+				if (variant.faceoff && payload?.kind === 'faceoff') variantMove(() => faceoff(room, variant, player, payload, ctx));
+				else {
+					require(variant.tableAction, `${variant.name} has no table moves`);
+					const moved = variantMove(() =>
+						variant.tableAction(room.variantState, player, payload, {
+							deck: room.deck,
+							players: active(room),
+							boot: bootOf(room)
+						})
+					);
+					if (moved?.pays) payIn(room, variant, moved.pays);
+				}
 			} else if (action === 'discard') {
 				require(mustDiscard(variant, player), 'There is nothing to discard');
 				require(Number.isInteger(payload.index) &&
@@ -957,10 +1118,15 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					player.cards[payload.index]
 				), 'Keep your joker');
 				const [thrown] = player.cards.splice(payload.index, 1);
-				// Folding Joker keeps the folded card, last, face down: it is the player's joker.
+				// Retain folded cards outside the played three; publish only the folded rank.
 				if (variant.foldsToEnd) {
 					player.cards.push(thrown);
 					player.folded = true;
+				}
+				if (variant.onDiscard) {
+					// Rooms saved before a variant gained public state can still finish their hand.
+					room.variantState ??= variant.prepareHand({ remainingDeck: room.deck }).state;
+					variant.onDiscard(room.variantState, { card: thrown });
 				}
 			} else {
 				require(room.currentPlayerId === id, 'It is not your turn', 'OUT_OF_TURN');
@@ -985,17 +1151,37 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					room.maxStake = player.isBlind ? payload.amount * 2 : payload.amount;
 					variant.afterPot?.(room.variantState, room.pot);
 					if (room.potLimit && room.pot >= room.potLimit * bootOf(room)) forcedShow(room, variant);
+					else if (
+						variant.splitAt &&
+						active(room).length >= 3 &&
+						room.pot >= variant.splitAt * bootOf(room)
+					)
+						splitShow(room, variant);
+					else if (
+						variant.bankoAt &&
+						active(room).length >= 3 &&
+						active(room).some((p) => p.id === room.initiator) &&
+						room.pot >= variant.bankoAt * bootOf(room)
+					)
+						bankoShow(room, variant);
 					else {
 						variant.afterBet?.(room.variantState, id);
-						nextTurn(room, player.seatNumber, ctx);
-						knockOut(room, variant, ctx);
+						lapEffects(room, variant);
+						if (playing(room)) {
+							nextTurn(room, player.seatNumber, ctx);
+							knockOut(room, variant, ctx);
+						}
 					}
 				} else if (action === 'show') {
 					require(!mustDiscard(variant, player), 'Discard a card before you Show');
 					const blocked = variant.showBlocked?.(room.variantState, id);
 					require(!blocked, blocked);
+					require(!variant.noShow, `${variant.name} has no Show`);
 					const candidates = active(room);
 					require(candidates.length === 2, 'Show requires exactly two active players');
+					const declare = payload.declare;
+					if (variant.declareShow)
+						require(declare === 'high' || declare === 'low', 'Say whether the high or the low hand wins');
 					const other = candidates.find((p) => p.id !== id);
 					require(player.isBlind ||
 						!other.isBlind, 'A seen player cannot request Show against a blind player');
@@ -1006,11 +1192,26 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					room.pot += fee;
 					variant.afterPot?.(room.variantState, room.pot);
 					const override = variant.showOverride?.(room.variantState, player, other);
-					const comparison = override ? 0 : compareFor(variant, room, player, other);
+					let comparison = override ? 0 : compareFor(variant, room, player, other);
+					// High Low: the requester says which end of the two hands wins.
+					if (variant.declareShow && declare === 'low') comparison = -comparison;
+					// Banko: equal hands go to the banker (the dealer), whoever asked.
+					const banker =
+						variant.banker && !override && comparison === 0
+							? [player, other].find((p) => p.id === room.initiator)
+							: undefined;
 					settle(
 						room,
-						override ?? (comparison > 0 ? player : other),
-						override ? 'show' : comparison === 0 ? 'show-tie-requester-loses' : 'show',
+						override ?? banker ?? (comparison > 0 ? player : other),
+						override
+							? 'show'
+							: banker
+								? 'show-banker'
+								: comparison === 0
+								? 'show-tie-requester-loses'
+								: variant.declareShow
+									? `show-${declare}`
+									: 'show',
 						[player.id, other.id]
 					);
 				} else throw new GameError('Unknown action');
@@ -1215,10 +1416,22 @@ export function projection(room, id, connected) {
 					? structuredClone(p.cards)
 					: p.cards.map(() => ({ rank: 0, suit: '' })),
 			// Names and joker positions only for hands this viewer may already see.
+			// Open-card games: the leading cards everyone may see, while the rest stay hidden.
+			...(() => {
+				const open = variant.openCount?.(room.variantState) ?? 0;
+				const seen = (p.id === id && !p.isBlind) || reveal.has(p.id);
+				return open > 0 && !seen && p.cards.length
+					? {
+							openCards: p.cards
+								.slice(0, open)
+								.map((card, index) => ({ index, card: { rank: card.rank, suit: card.suit } }))
+						}
+					: {};
+			})(),
 			...(explain && ((p.id === id && !p.isBlind) || reveal.has(p.id)) && p.cards.length
 				? variant.foldsToEnd && !p.folded && playing(room) && !p.isPacked
 					? // Folding Joker before the fold: no hand yet, the folded card decides the joker.
-						{ handName: 'Fold one card: it becomes your joker', wildCards: [] }
+						{ handName: variant.rulesVersion === 'folding-joker-2' ? 'Fold one card: its rank becomes a joker for everyone' : 'Fold one card: it becomes your joker', wildCards: [] }
 					: playing(room) && !p.isPacked && mustDiscard(variant, p)
 						? // Still throwing cards away: the best cards to keep, with their jokers.
 							describeKeep(variant, p.cards, handStateOf(variant, room, p.id))
@@ -1244,9 +1457,24 @@ export function projection(room, id, connected) {
 						discard: playing(room) && !player.isPacked && mustDiscard(variant, player),
 						// Moves on the table cards: open a mat card, lock a line, make a joker.
 						...(variant.tableOptions && playing(room) && room.variantState
-							? { table: variant.tableOptions(room.variantState, player) }
+							? {
+								table: variant.tableOptions(room.variantState, player, {
+									players: active(room),
+									boot: bootOf(room)
+								})
+							}
 							: {}),
 						addBot: id === room.hostId && !playing(room) && seated(room).length < 6
+					}
+				: {}),
+			...(variant.faceoff
+				? {
+						faceoff:
+							myTurn && player.balance >= limits(room, player).min
+								? active(room)
+										.filter((p) => p.id !== id && (player.isBlind || !p.isBlind))
+										.map((p) => p.id)
+								: []
 					}
 				: {}),
 			pack: myTurn,
@@ -1259,6 +1487,7 @@ export function projection(room, id, connected) {
 				active(room).length === 2 &&
 				(player.isBlind || active(room).every((p) => !p.isBlind)) &&
 				player.balance >= limits(room, player).min &&
+				!variant.noShow &&
 				!variant.showBlocked?.(room.variantState, id)
 		}
 	};
