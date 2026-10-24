@@ -18,7 +18,7 @@ import { currentPoll, pollNights, personalLink } from './availability.mjs';
 import { getVariant } from '../variants/index.mjs';
 
 /** Most games a night's lineup can hold. */
-export const LINEUP_MAX = 30;
+export const LINEUP_MAX = 60;
 /** A lineup slot that draws a surprise game when its turn comes. */
 export const MYSTERY = 'mystery';
 /** Hands each lineup game is played for; 0 means one round (a hand per player at the table). */

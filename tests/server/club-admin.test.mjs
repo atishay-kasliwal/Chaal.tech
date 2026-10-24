@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient } from 'mongodb';
+import { listVariants } from '../../server/variants/index.mjs';
 import { MEMBERS, ensureIndexes, markSeen } from '../../server/club/members.mjs';
 import {
 	DEFAULT_SETTINGS,
@@ -110,6 +111,14 @@ test('owners set the lineup for the night; unknown games are refused', async () 
 	await assert.rejects(saveLineup(db, 'classic-1', 'owner'), /up to/);
 	await saveLineup(db, [], 'owner');
 	assert.deepEqual((await clubSettings(db)).lineup, []);
+});
+
+test('a lineup can hold every game once, with room to spare', async () => {
+	const every = listVariants().map((variant) => variant.rulesVersion);
+	assert.ok(every.length > 30, 'more games than the old limit of 30');
+	assert.deepEqual(await saveLineup(db, every, 'owner'), every);
+	await assert.rejects(saveLineup(db, [...every, ...every], 'owner'), /holds up to 60/);
+	await saveLineup(db, [], 'owner');
 });
 
 test('a lineup can hold Mystery slots and play each game for a few hands', async () => {
