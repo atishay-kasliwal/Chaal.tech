@@ -670,6 +670,39 @@ function resolveSideShow(room, variant, accept, ctx) {
 	return next;
 }
 /**
+ * Who `player` may show their cards to right now: friends who have packed (people, not bots),
+ * not yet shown. You must have looked at your own cards; players still in never see each other's.
+ */
+function shareTargets(room, variant, player) {
+	if (!variant.friendShow || !playing(room)) return [];
+	if (player.departed || player.isBlind || !player.cards.length) return [];
+	const already = room.sharedCards?.[player.id] ?? [];
+	return room.players
+		.filter(
+			(p) =>
+				p.id !== player.id &&
+				p.isPacked &&
+				p.cards.length > 0 &&
+				!p.departed &&
+				!p.bot &&
+				!already.includes(p.id)
+		)
+		.map((p) => p.id);
+}
+/** Show your cards to one friend who has packed. They see them until the hand ends; the table is told. */
+function shareCards(room, variant, player, payload) {
+	require(playing(room), 'The hand is over');
+	require(!player.isBlind, 'Look at your cards first');
+	require(
+		shareTargets(room, variant, player).includes(payload.target),
+		'You can show your cards to a friend who has packed'
+	);
+	room.sharedCards = {
+		...(room.sharedCards ?? {}),
+		[player.id]: [...(room.sharedCards?.[player.id] ?? []), payload.target]
+	};
+}
+/**
  * Faceoff: on your turn, pay the Show fee and challenge one player. Both hands are shown, the
  * loser is out (a tie goes against the challenger) and the hand carries on without them.
  */
@@ -862,6 +895,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			delete room.shownIds;
 			delete room.sideShow;
 			delete room.lastSideShow;
+			delete room.sharedCards;
 			// The pick is used up; the next one goes to whoever sits after this chooser.
 			if (room.chooser) {
 				room.lastChooserId = room.chooser.playerId;
@@ -1130,6 +1164,8 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			if (!playing(room)) player.seatNumber = null;
 			if (room.hostId === id)
 				room.hostId = seated(room).find((p) => !p.departed && !p.bot)?.id ?? null;
+		} else if (action === 'table' && variant.friendShow && payload?.kind === 'share') {
+			variantMove(() => shareCards(room, variant, player, payload));
 		} else if (
 			(action === 'see' || action === 'reveal') &&
 			player.cards.length > 0 &&
@@ -1365,6 +1401,10 @@ export function projection(room, id, connected) {
 	const list = seated(room);
 	// Cards everyone may see: hands compared at a Show, and hands a player chose to show.
 	const reveal = new Set([...(room.result?.revealedPlayerIds || []), ...(room.shownIds || [])]);
+	// Hands this viewer may see: their own once looked at, any shown to the whole table, and any a
+	// friend showed them in private (Side Show 2).
+	const canSee = (p) =>
+		(p.id === id && !p.isBlind) || reveal.has(p.id) || !!room.sharedCards?.[p.id]?.includes(id);
 	const myTurn = playing(room) && room.currentPlayerId === id && !player.isPacked && !room.sideShow;
 	const variant = getVariant(room.rulesVersion);
 	const explain = room.boot !== undefined;
@@ -1444,6 +1484,14 @@ export function projection(room, id, connected) {
 		// A side show waiting for its answer, and how the last one went (cleared with the next hand).
 		...(room.sideShow ? { sideShow: { ...room.sideShow } } : {}),
 		...(room.lastSideShow ? { lastSideShow: { ...room.lastSideShow } } : {}),
+		// Who showed their cards to whom (never the cards themselves, which only the friend sees).
+		...(room.sharedCards
+			? {
+					shares: Object.entries(room.sharedCards).flatMap(([from, tos]) =>
+						tos.map((to) => ({ from, to }))
+					)
+				}
+			: {}),
 		result: room.result
 			? {
 					winnerId: room.result.winnerId,
@@ -1481,14 +1529,14 @@ export function projection(room, id, connected) {
 			hasLeft: p.departed,
 			...(p.folded ? { folded: true } : {}),
 			cardsInHand:
-				(p.id === id && !p.isBlind) || reveal.has(p.id)
+				canSee(p)
 					? structuredClone(p.cards)
 					: p.cards.map(() => ({ rank: 0, suit: '' })),
 			// Names and joker positions only for hands this viewer may already see.
 			// Open-card games: the leading cards everyone may see, while the rest stay hidden.
 			...(() => {
 				const open = variant.openCount?.(room.variantState) ?? 0;
-				const seen = (p.id === id && !p.isBlind) || reveal.has(p.id);
+				const seen = canSee(p);
 				return open > 0 && !seen && p.cards.length
 					? {
 							openCards: p.cards
@@ -1497,7 +1545,7 @@ export function projection(room, id, connected) {
 						}
 					: {};
 			})(),
-			...(explain && ((p.id === id && !p.isBlind) || reveal.has(p.id)) && p.cards.length
+			...(explain && canSee(p) && p.cards.length
 				? variant.foldsToEnd && !p.folded && playing(room) && !p.isPacked
 					? // Folding Joker before the fold: no hand yet, the folded card decides the joker.
 						{ handName: variant.rulesVersion === 'folding-joker-2' ? 'Fold one card: its rank becomes a joker for everyone' : 'Fold one card: it becomes your joker', wildCards: [] }
@@ -1536,6 +1584,7 @@ export function projection(room, id, connected) {
 						addBot: id === room.hostId && !playing(room) && seated(room).length < 6
 					}
 				: {}),
+			...(variant.friendShow ? { share: shareTargets(room, variant, player) } : {}),
 			...(variant.sideShow
 				? {
 						// The player you may ask for a side show now, and a request waiting for your answer.

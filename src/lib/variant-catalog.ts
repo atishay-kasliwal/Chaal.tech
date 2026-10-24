@@ -258,11 +258,11 @@ export const VARIANT_CATALOG = [
 		cardsPerPlayer: 2
 	},
 	{
-		rulesVersion: 'side-show-1',
-		selectionLabel: 'Side Show: compare with the player before you',
-		tableLabel: 'Side Show · ask the player before you to compare hands',
+		rulesVersion: 'side-show-2',
+		selectionLabel: 'Side Show: compare hands, show friends your cards',
+		tableLabel: 'Side Show · compare hands, show your cards to friends who packed',
 		description:
-			'Classic, plus the Side Show: a seen player can ask the player before them to compare hands in private. The weaker hand leaves, and a tie goes against the one who asked.',
+			'Classic, plus the Side Show: ask the player before you to compare hands in private, the weaker hand leaves. And once you have packed, or looked at your own cards, show them to a friend who has packed.',
 		cardsPerPlayer: 3
 	},
 	{

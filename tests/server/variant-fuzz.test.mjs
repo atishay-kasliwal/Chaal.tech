@@ -59,6 +59,10 @@ const GARBAGE = [
 	{ kind: 'bid' },
 	{ kind: 'buy', price: -5 },
 	{ kind: 'buy', decline: 'yes' },
+	{ kind: 'share' },
+	{ kind: 'share', target: 'zz' },
+	{ kind: 'share', target: 'a' },
+	{ kind: 'share', target: ['b'] },
 	{ kind: 'sideshow' },
 	{ kind: 'sideshow', accept: true },
 	{ kind: 'sideshow-answer' },
@@ -129,7 +133,7 @@ function attempt(room, id, action, payload, label) {
 }
 
 /** Versions no longer on offer that saved hands, lineups and replays can still name. */
-const SAVED_VERSIONS = ['buying-joker-1', 'auction-1', 'folding-joker-1'];
+const SAVED_VERSIONS = ['buying-joker-1', 'auction-1', 'folding-joker-1', 'side-show-1'];
 for (const variant of [...listVariants(), ...SAVED_VERSIONS.map((v) => getVariant(v))])
 	test(`Hostile input: ${variant.name} (${variant.rulesVersion}) is refused cleanly`, () => {
 		const rulesVersion = variant.rulesVersion;

@@ -30,10 +30,10 @@ function shuffled(random) {
 }
 
 /** Versions no longer on offer that saved hands, lineups and replays can still name. */
-const SAVED_VERSIONS = ['buying-joker-1', 'auction-1', 'folding-joker-1'];
+const SAVED_VERSIONS = ['buying-joker-1', 'auction-1', 'folding-joker-1', 'side-show-1'];
 const ids = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5'];
 let forcedShows = 0;
-const sideShows = { asked: 0, accepted: 0, declined: 0, timedOut: 0 };
+const sideShows = { asked: 0, accepted: 0, declined: 0, timedOut: 0, shared: 0 };
 
 function assertNoLeaks(room, connected) {
 	// Hands compared at a Show, and hands shown on purpose (or knocked out in Running).
@@ -42,7 +42,10 @@ function assertNoLeaks(room, connected) {
 		const view = projection(room, viewer.id, connected);
 		for (const user of view.usersList) {
 			const owner = room.players.find((p) => p.id === user.id);
-			const visible = (owner.id === viewer.id && !owner.isBlind) || reveal.has(owner.id);
+			const visible =
+				(owner.id === viewer.id && !owner.isBlind) ||
+				reveal.has(owner.id) ||
+				!!room.sharedCards?.[owner.id]?.includes(viewer.id);
 			assert.equal(user.cardsInHand.length, owner.cards.length);
 			if (visible) {
 				assert.deepEqual(user.cardsInHand, owner.cards);
@@ -127,7 +130,12 @@ function assertNoDeepLeaks(room, connected) {
 		const shownState = cardsIn(view.variantState ?? {});
 		const secret = new Set();
 		for (const owner of room.players) {
-			if ((owner.id === viewer.id && !owner.isBlind) || reveal.has(owner.id)) continue;
+			if (
+				(owner.id === viewer.id && !owner.isBlind) ||
+				reveal.has(owner.id) ||
+				room.sharedCards?.[owner.id]?.includes(viewer.id)
+			)
+				continue;
 			owner.cards.forEach((card, index) => {
 				if (index >= open) secret.add(cardKey(card));
 			});
@@ -147,7 +155,10 @@ function assertNoDeepLeaks(room, connected) {
 		// Open cards: exactly the leading cards of a hand that is not otherwise visible.
 		for (const user of view.usersList) {
 			const owner = room.players.find((p) => p.id === user.id);
-			const seen = (owner.id === viewer.id && !owner.isBlind) || reveal.has(owner.id);
+			const seen =
+				(owner.id === viewer.id && !owner.isBlind) ||
+				reveal.has(owner.id) ||
+				!!room.sharedCards?.[owner.id]?.includes(viewer.id);
 			if (user.openCards !== undefined) {
 				assert.ok(!seen, 'open cards are only sent for hands that are not already visible');
 				assert.equal(user.openCards.length, Math.min(open, owner.cards.length));
@@ -173,6 +184,7 @@ function assertAdvertisedMovesWork(room, connected, now, issued) {
 		const legal = projection(room, p.id, connected).legalActions;
 		for (const move of legal.table ?? []) attempts.push([p.id, 'table', move]);
 		if (legal.sideShow) attempts.push([p.id, 'table', { kind: 'sideshow' }]);
+		for (const target of legal.share ?? []) attempts.push([p.id, 'table', { kind: 'share', target }]);
 		if (legal.sideShowAnswer)
 			for (const accept of [true, false])
 				attempts.push([p.id, 'table', { kind: 'sideshow-answer', accept }]);
@@ -222,6 +234,8 @@ function chooseAction(room, connected, random) {
 	// Table moves (open a mat card, lock a line, make a joker) come up often; take most of them.
 	if (legal.table?.length && random() < 0.7) return [actorId, 'table', pick(random, legal.table)];
 	if (legal.sideShow && random() < 0.3) return [actorId, 'table', { kind: 'sideshow' }];
+	if (legal.share?.length && random() < 0.2)
+		return [actorId, 'table', { kind: 'share', target: pick(random, legal.share) }];
 	// Faceoff is an engine move, advertised apart from the table options.
 	if (legal.faceoff?.length && random() < 0.2)
 		return [actorId, 'table', { kind: 'faceoff', target: pick(random, legal.faceoff) }];
@@ -309,6 +323,8 @@ function playSession(game, playerCount, seed, thorough = false) {
 				const legal = projection(room, p.id, connected).legalActions;
 				if (random() < 0.08 && legal.see)
 					room = transition(room, p.id, 'see', {}, { now, turnMs: 60000, connected });
+				else if (legal.share?.length && random() < 0.3)
+					room = transition(room, p.id, 'table', { kind: 'share', target: pick(random, legal.share) }, { now, turnMs: 60000, connected });
 				else if (legal.table?.length && random() < 0.5)
 					room = transition(room, p.id, 'table', pick(random, legal.table), {
 						now,
@@ -320,6 +336,7 @@ function playSession(game, playerCount, seed, thorough = false) {
 			const [actor, action, payload] = chooseAction(room, connected, random);
 			if (action === 'timeout') now = room.deadline;
 			const before = JSON.stringify(room);
+			if (payload?.kind === 'share') sideShows.shared++;
 			if (payload?.kind === 'sideshow') sideShows.asked++;
 			else if (payload?.kind === 'sideshow-answer') sideShows[payload.accept ? 'accepted' : 'declined']++;
 			else if (action === 'timeout' && room.sideShow) sideShows.timedOut++;
@@ -431,6 +448,7 @@ test('The simulation actually asked for, accepted, declined and timed out side s
 	assert.ok(sideShows.accepted > 5, `accepted: ${sideShows.accepted}`);
 	assert.ok(sideShows.declined > 5, `declined: ${sideShows.declined}`);
 	assert.ok(sideShows.timedOut > 0, `timed out: ${sideShows.timedOut}`);
+	assert.ok(sideShows.shared > 10, `cards shown to friends: ${sideShows.shared}`);
 });
 
 test('The simulation actually reached pot limits and forced Shows', () => {

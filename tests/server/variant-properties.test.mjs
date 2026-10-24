@@ -54,7 +54,7 @@ const pick = (random, list) => list[Math.floor(random() * list.length)];
 const sign = (n) => Math.sign(n);
 
 /** Versions no longer on offer that saved hands, lineups and replays can still name. */
-const SAVED_VERSIONS = ['buying-joker-1', 'auction-1', 'folding-joker-1'];
+const SAVED_VERSIONS = ['buying-joker-1', 'auction-1', 'folding-joker-1', 'side-show-1'];
 for (const variant of [...listVariants(), ...SAVED_VERSIONS.map((v) => getVariant(v))])
 	test(`Scoring properties: ${variant.name} (${variant.rulesVersion})`, () => {
 		const random = rng(variant.rulesVersion.length * 7919 + 13);
