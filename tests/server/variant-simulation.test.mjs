@@ -33,6 +33,7 @@ function shuffled(random) {
 const SAVED_VERSIONS = ['buying-joker-1', 'auction-1', 'folding-joker-1'];
 const ids = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5'];
 let forcedShows = 0;
+const sideShows = { asked: 0, accepted: 0, declined: 0, timedOut: 0 };
 
 function assertNoLeaks(room, connected) {
 	// Hands compared at a Show, and hands shown on purpose (or knocked out in Running).
@@ -171,6 +172,10 @@ function assertAdvertisedMovesWork(room, connected, now, issued) {
 	for (const p of room.players.filter((q) => q.seatNumber !== null && !q.departed)) {
 		const legal = projection(room, p.id, connected).legalActions;
 		for (const move of legal.table ?? []) attempts.push([p.id, 'table', move]);
+		if (legal.sideShow) attempts.push([p.id, 'table', { kind: 'sideshow' }]);
+		if (legal.sideShowAnswer)
+			for (const accept of [true, false])
+				attempts.push([p.id, 'table', { kind: 'sideshow-answer', accept }]);
 		for (const target of legal.faceoff ?? [])
 			attempts.push([p.id, 'table', { kind: 'faceoff', target }]);
 		if (legal.show) for (const declare of ['high', 'low']) attempts.push([p.id, 'show', { declare }]);
@@ -205,12 +210,18 @@ function assertAdvertisedMovesWork(room, connected, now, issued) {
 /** Choose what a real player could click right now, using only what the server advertises. */
 function chooseAction(room, connected, random) {
 	const actorId = room.currentPlayerId;
+	// A side show is waiting: the turn is on hold, so the one asked answers or the clock runs out.
+	if (room.sideShow)
+		return random() < 0.1
+			? [actorId, 'timeout', {}]
+			: [room.sideShow.to, 'table', { kind: 'sideshow-answer', accept: random() < 0.5 }];
 	const view = projection(room, actorId, connected);
 	const legal = view.legalActions;
 	const me = view.usersList.find((user) => user.id === actorId);
 	const options = [];
 	// Table moves (open a mat card, lock a line, make a joker) come up often; take most of them.
 	if (legal.table?.length && random() < 0.7) return [actorId, 'table', pick(random, legal.table)];
+	if (legal.sideShow && random() < 0.3) return [actorId, 'table', { kind: 'sideshow' }];
 	// Faceoff is an engine move, advertised apart from the table options.
 	if (legal.faceoff?.length && random() < 0.2)
 		return [actorId, 'table', { kind: 'faceoff', target: pick(random, legal.faceoff) }];
@@ -309,6 +320,9 @@ function playSession(game, playerCount, seed, thorough = false) {
 			const [actor, action, payload] = chooseAction(room, connected, random);
 			if (action === 'timeout') now = room.deadline;
 			const before = JSON.stringify(room);
+			if (payload?.kind === 'sideshow') sideShows.asked++;
+			else if (payload?.kind === 'sideshow-answer') sideShows[payload.accept ? 'accepted' : 'declined']++;
+			else if (action === 'timeout' && room.sideShow) sideShows.timedOut++;
 			room = transition(room, actor, action, payload, { now, turnMs: 60000, connected });
 			assert.notEqual(JSON.stringify(room), before, `${rulesVersion}: ${action} changed nothing`);
 			invariant(room);
@@ -410,6 +424,13 @@ test('Illegal actions are refused without changing the table, in every variant',
 			);
 		assert.equal(JSON.stringify(room), before, variant.rulesVersion);
 	}
+});
+
+test('The simulation actually asked for, accepted, declined and timed out side shows', () => {
+	assert.ok(sideShows.asked > 20, `asked: ${sideShows.asked}`);
+	assert.ok(sideShows.accepted > 5, `accepted: ${sideShows.accepted}`);
+	assert.ok(sideShows.declined > 5, `declined: ${sideShows.declined}`);
+	assert.ok(sideShows.timedOut > 0, `timed out: ${sideShows.timedOut}`);
 });
 
 test('The simulation actually reached pot limits and forced Shows', () => {

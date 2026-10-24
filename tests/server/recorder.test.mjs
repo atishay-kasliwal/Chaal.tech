@@ -86,7 +86,7 @@ function assertRecordedExactly(sim, { expectHands } = {}) {
 
 test('every Teen Patti variant records hands that replay exactly, with humans and bots', () => {
 	const variants = listVariants();
-	assert.equal(variants.length, 48);
+	assert.equal(variants.length, 49);
 	for (const [index, variant] of variants.entries()) {
 		for (const seed of [index * 7 + 1, index * 7 + 2]) {
 			const sim = teenPattiTable({ seed, rulesVersion: variant.rulesVersion, bots: seed % 2 ? ['hard'] : ['easy', 'normal'] });

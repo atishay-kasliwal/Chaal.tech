@@ -59,6 +59,11 @@ const GARBAGE = [
 	{ kind: 'bid' },
 	{ kind: 'buy', price: -5 },
 	{ kind: 'buy', decline: 'yes' },
+	{ kind: 'sideshow' },
+	{ kind: 'sideshow', accept: true },
+	{ kind: 'sideshow-answer' },
+	{ kind: 'sideshow-answer', accept: 'yes' },
+	{ kind: 'sideshow-answer', accept: true },
 	{ kind: 'faceoff' },
 	{ kind: 'faceoff', target: 'zz' },
 	{ kind: 'faceoff', target: ['b'] },
@@ -139,6 +144,11 @@ for (const variant of [...listVariants(), ...SAVED_VERSIONS.map((v) => getVarian
 						const payload = pick(random, GARBAGE);
 						attempt(room, id, action, payload, `${rulesVersion} ${id} ${action} ${JSON.stringify(payload)?.slice(0, 60)}`);
 					}
+				}
+				// A side show that garbage happened to open is answered, so the hand can go on.
+				if (room.sideShow) {
+					room = transition(room, room.sideShow.to, 'table', { kind: 'sideshow-answer', accept: random() < 0.5 }, ctx);
+					continue;
 				}
 				// Then one honest move, so the fuzzing reaches later states of the hand.
 				const actor = room.currentPlayerId;

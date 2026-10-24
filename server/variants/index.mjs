@@ -25,6 +25,7 @@ import { JOKER_BUY_GAMES, LEGACY_JOKER_BUY_GAMES } from './joker-buy-games.mjs';
 import { community } from './community.mjs';
 import { SWAP_GAMES } from './swap-games.mjs';
 import { SHOWDOWN_GAMES } from './showdown-games.mjs';
+import { sideShow } from './side-show.mjs';
 import { OPEN_CARD_GAMES } from './open-cards.mjs';
 import { TABLE_GAMES } from './table-games.mjs';
 
@@ -74,6 +75,7 @@ const variants = Object.freeze([
 	drawTeenPatti,
 	...SWAP_GAMES,
 	...SHOWDOWN_GAMES,
+	sideShow,
 	...JOKER_BUY_GAMES,
 	...ROUND_GAMES,
 	community,

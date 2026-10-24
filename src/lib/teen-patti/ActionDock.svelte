@@ -30,6 +30,8 @@
 		ontrade,
 		onpass,
 		onfaceoff,
+		onsideshow,
+		onsideshowanswer,
 		onpack,
 		onbet,
 		onshow,
@@ -66,6 +68,10 @@
 		onpass?: (index: number) => void;
 		/** Faceoff: challenge one player; both hands are shown and the loser is out. */
 		onfaceoff?: (target: string) => void;
+		/** Side Show: ask the player before you to compare hands. */
+		onsideshow?: () => void;
+		/** Side Show: accept or decline a request to compare hands. */
+		onsideshowanswer?: (accept: boolean) => void;
 		onpack: () => void;
 		onbet: (amount: number) => void;
 		onshow: (declare?: 'high' | 'low') => void;
@@ -119,6 +125,15 @@
 	const nameOfUser = (id: string) => room.usersList.find((user) => user.id === id)?.username ?? 'Someone';
 	/** Short line under the hand: who traded with you, whether the cards were passed. */
 	const swapNote = $derived.by(() => {
+		// Side Show: a request waiting for its answer, then how the last one went.
+		const asked = room.sideShow;
+		if (asked)
+			return `${nameOfUser(asked.from)} asked ${nameOfUser(asked.to)} for a side show`;
+		const last = room.lastSideShow;
+		if (last)
+			return last.accepted
+				? `${nameOfUser(last.loser ?? '')} lost the side show to ${nameOfUser(last.loser === last.from ? last.to : last.from)}`
+				: `${nameOfUser(last.to)} declined ${nameOfUser(last.from)}’s side show`;
 		const state = room.variantState;
 		if (room.rulesVersion === 'trade-one-1') {
 			const from = (state?.trades ?? []).filter((trade) => trade.to === me.id);
@@ -261,7 +276,18 @@
 				{/if}
 			</div>
 			<p class="hand-name">
-				{#if pairing}
+				{#if legal.sideShowAnswer && room.sideShow}
+					<span class="side-ask"
+						>{nameOfUser(room.sideShow.from)} asks for a side show: the weaker hand leaves</span
+					>
+					<button class="throw" onclick={() => onsideshowanswer?.(true)} disabled={!connected}
+						>Accept</button
+					>
+					<button class="after-btn" onclick={() => onsideshowanswer?.(false)} disabled={!connected}
+						>Decline</button
+					>
+					<small class="best-keep">No answer in 15 seconds counts as a decline</small>
+				{:else if pairing}
 					{#if pair.length < 2}
 						Tap two cards to make your joker
 						<button class="after-btn" onclick={() => (skipJoker = true)}>No joker</button>
@@ -448,6 +474,12 @@
 						<Gavel class="h-4 w-4" />
 						<span>Show <small>{money(low)}</small></span>
 						<kbd>W</kbd>
+					</button>
+				{/if}
+				{#if legal.sideShow}
+					<button class="act show" onclick={() => onsideshow?.()} disabled={!connected}>
+						<Gavel class="h-4 w-4" />
+						<span>Side show with {nameOfUser(legal.sideShow)} <small>{money(low)}</small></span>
 					</button>
 				{/if}
 				{#each legal.faceoff ?? [] as target (target)}
@@ -704,6 +736,11 @@
 		cursor: pointer;
 	}
 	/* Before throwing away: the best three you could keep, under the prompt. */
+	.side-ask {
+		display: block;
+		font-weight: 700;
+		margin-bottom: 0.3rem;
+	}
 	.swap-note {
 		display: block;
 		color: #f2dc91;
