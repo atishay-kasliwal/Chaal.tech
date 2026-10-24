@@ -104,8 +104,44 @@ export function matFor(room: RoomData, selfId: string, ui: MatUi): Mat | null {
 		case 'banko-1':
 			return banko(room);
 		default:
-			return state.throws ? thrown(room) : null;
+			return state.throws ? thrown(room) : sharedJokers(room);
 	}
+}
+
+/**
+ * Games with one public joker (Joker, Color Joker and their four-card versions) and Folding
+ * Joker's shared ranks: the joker lies on the table, with plain words on what is wild, so nobody has
+ * to look for it in the top strip. A hidden or missing indicator shows nothing.
+ */
+function sharedJokers(room: RoomData): Mat | null {
+	const state = room.variantState!;
+	const indicator = state.indicator?.rank ? state.indicator : null;
+	if (indicator) {
+		return {
+			layout: 'none',
+			tray: {
+				title: 'Joker',
+				cards: [indicator],
+				ranks: state.wildColor ? undefined : rankText(state.wildRank ?? indicator.rank),
+				note: state.wildColor
+					? `Every ${state.wildColor} card is wild for everyone`
+					: 'Every card of this rank is wild for everyone'
+			}
+		};
+	}
+	if (room.rulesVersion === 'folding-joker-2' && state.wildRanks) {
+		return {
+			layout: 'none',
+			tray: {
+				title: 'Shared jokers',
+				ranks: uniqueRanks(state.wildRanks),
+				note: state.wildRanks.length
+					? 'These ranks are wild for everyone'
+					: 'Fold a card to add a shared joker'
+			}
+		};
+	}
+	return null;
 }
 
 function chatai(room: RoomData, selfId: string, ui: MatUi): Mat | null {

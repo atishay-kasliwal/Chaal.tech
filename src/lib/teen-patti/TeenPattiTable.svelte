@@ -48,7 +48,6 @@
 	import {
 		money,
 		signedMoney,
-		rankLabel,
 		balanceLabel,
 		coversBoot,
 		hasChips,
@@ -798,9 +797,6 @@
 	const tableMove = (move: TableMove) => void send('tableAction', [move]);
 	const makeJoker = (indexes: [number, number]) => tableMove({ kind: 'joker', indexes });
 	const drawCard = (index: number) => tableMove({ kind: 'draw', index });
-	/** Games whose indicator card is shown on the mat, not as a "Wild" chip in the header. */
-	// These show their joker on the felt instead of in the top strip.
-	const NO_WILD_CHIP = new Set(['hukum-1', 'progressive-joker-1', 'joker-4-2', 'color-joker-4-2']);
 	const tradeCard = (index: number, target?: string) => tableMove({ kind: 'trade', index, target });
 	const passCard = (index: number) => tableMove({ kind: 'pass', index });
 	const faceoffWith = (target: string) => tableMove({ kind: 'faceoff', target });
@@ -1080,22 +1076,6 @@
 			{/if}
 			<span class="dot">·</span>
 			<span>Boot {money(boot)}</span>
-			{#if room.variantState?.indicator && !NO_WILD_CHIP.has(room.rulesVersion)}
-				<span class="dot">·</span>
-				<span class="wild" data-testid="joker-indicator"
-					>{room.variantState.wildColor
-						? `Wild: ${room.variantState.wildColor} cards`
-						: `Wild ${rankLabel(room.variantState.wildRank ?? room.variantState.indicator.rank)}`}</span
-				>
-			{/if}
-			{#if room.rulesVersion === 'folding-joker-2' && room.variantState?.wildRanks}
-				<span class="dot">·</span>
-				<span class="wild" data-testid="shared-joker-ranks"
-					>{room.variantState.wildRanks.length
-						? `Jokers for everyone: ${room.variantState.wildRanks.map(rankLabel).join(', ')}`
-						: 'Fold a card to add a shared joker'}</span
-				>
-			{/if}
 		</div>
 		<div class="tools">
 			{@render media()}
@@ -2382,10 +2362,6 @@
 		50% {
 			opacity: 0.3;
 		}
-	}
-	.wild {
-		color: #b5dcff;
-		font-weight: 650;
 	}
 	.dot {
 		opacity: 0.4;

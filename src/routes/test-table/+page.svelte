@@ -166,7 +166,15 @@
 		},
 		[me(['Q♠', '8♥', '8♦'], { handName: 'Trail of 8s (with joker)', wildCards: [0] }), ...others()]
 	);
+	const indicatorScenes: Scene[] = ['joker-1', 'color-joker-1'].map((rulesVersion) => {
+		const preview = room({ rulesVersion, variantState: {
+			indicator: c('Q♦'), wildRank: 12,
+			...(rulesVersion === 'color-joker-1' ? { wildColor: 'red' as const } : {})
+		}}, [me(['Q♠', '8♥', '8♦'], { wildCards: [0] }), ...others()]);
+		return { title: `${rulesVersion}: joker on the table`, game: rulesVersion === 'joker-1' ? 'Joker' : 'Color Joker', room: preview, mat: realMat(preview) };
+	});
 	const scenes: Scene[] = [
+		...indicatorScenes,
 		{
 			title: 'Folding Joker: folded cards lie on the table, with who folded them',
 			game: 'Folding Joker',
