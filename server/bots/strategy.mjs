@@ -1,4 +1,4 @@
-import { freshDeck } from '../classic.mjs';
+import { freshDeck, evaluateHand as evaluateClassic } from '../classic.mjs';
 import { getVariant } from '../variants/index.mjs';
 
 /**
@@ -28,6 +28,10 @@ function score(variant, cards, handState) {
 	}
 	return value;
 }
+
+/** Cards on the table everyone can see (an indicator, open community cards): never in a rival's hand. */
+export const tableKnown = (handState) =>
+	[handState?.indicator, ...(handState?.community ?? [])].filter((card) => card && card.rank > 0);
 
 /** Chance this hand beats one random opponent hand, by sampling the unseen cards. */
 export function winChance(cards, variant, handState, random, known = []) {
@@ -64,10 +68,15 @@ export function bestDiscard(cards, variant, handState) {
 		// Never throw away the joker you made.
 		if (variant.keepsCard?.(handState, cards[index])) continue;
 		const kept = cards.filter((_, i) => i !== index);
-		// Folding Joker scores the kept three with the thrown card last, as the joker.
+		// Preview the candidate's public effect without mutating the live joker pool.
+		let candidateState = handState;
+		if (variant.onDiscard) {
+			candidateState = structuredClone(handState ?? variant.prepareHand().state);
+			variant.onDiscard(candidateState, { card: cards[index] });
+		}
 		const score = variant.evaluateHand(
 			variant.foldsToEnd ? [...kept, cards[index]] : kept,
-			handState
+			candidateState
 		);
 		if (!bestScore || compare(score, bestScore) > 0) {
 			best = index;
@@ -77,9 +86,64 @@ export function bestDiscard(cards, variant, handState) {
 	return best;
 }
 
+/**
+ * Draw Teen Patti: keep a pair or better; otherwise keep the two cards that work together (same
+ * suit or within two ranks) and replace the third, else replace the lowest card.
+ */
+function drawMove(cards) {
+	const standPat = { kind: 'draw', index: -1 };
+	if (cards.length !== 3 || cards.some((card) => !card.rank)) return standPat;
+	if (evaluateClassic(cards)[0] >= 1) return standPat;
+	let best = null;
+	for (let i = 0; i < 3; i++)
+		for (let j = i + 1; j < 3; j++) {
+			const gap = Math.abs(cards[i].rank - cards[j].rank);
+			const ties = cards[i].suit === cards[j].suit ? 1 : 0;
+			const score = (gap <= 2 ? 3 - gap : 0) + ties;
+			if (score > 0 && (!best || score > best.score)) best = { score, keep: [i, j] };
+		}
+	if (best) return { kind: 'draw', index: [0, 1, 2].find((i) => !best.keep.includes(i)) };
+	const lowest = cards.reduce((low, card, i) => (card.rank < cards[low].rank ? i : low), 0);
+	return { kind: 'draw', index: lowest };
+}
+
+const seenCards = (cards) => cards.length === 3 && cards.every((card) => card.rank > 0);
+const lowestIndex = (cards) =>
+	cards.reduce((low, card, i) => (card.rank < cards[low].rank ? i : low), 0);
+
+/** High Low: say "high" with a pair or better or a Queen-high hand, else "low". Blind: a coin flip. */
+export function declareFor(cards, random) {
+	if (!seenCards(cards)) return random() < 0.5 ? 'high' : 'low';
+	const [category, top] = evaluateClassic(cards);
+	return category >= 1 || top >= 12 ? 'high' : 'low';
+}
+
+/**
+ * Trade One: a weak hand (high card only) gives away its lowest card to a random rival; anything
+ * better keeps its hand.
+ */
+function tradeMove(cards, options, random) {
+	const standPat = { kind: 'trade', index: -1 };
+	if (!seenCards(cards) || evaluateClassic(cards)[0] >= 1) return standPat;
+	const index = lowestIndex(cards);
+	const rivals = options.filter((move) => move.index === index);
+	return rivals.length ? rivals[Math.floor(random() * rivals.length)] : standPat;
+}
+
+/** Pass the Card: pass the lowest card of a seen hand, any card of a blind one. */
+function passMove(cards, random) {
+	return {
+		kind: 'pass',
+		index: seenCards(cards) ? lowestIndex(cards) : Math.floor(random() * cards.length)
+	};
+}
+
 /** Pick a table move: a random mat card, the line or joker pair that scores best. */
 export function tableMove(view, me, variant, random) {
 	const options = view.legalActions.table;
+	if (options[0]?.kind === 'draw') return drawMove(me.cardsInHand);
+	if (options[0]?.kind === 'trade') return tradeMove(me.cardsInHand, options, random);
+	if (options[0]?.kind === 'pass') return passMove(me.cardsInHand, random);
 	const seen = me.cardsInHand.every((card) => card.rank > 0);
 	const scored = (payload) => {
 		if (!seen) return null;
@@ -255,7 +319,7 @@ function choose(view, botId, random, styleProfile, extra = {}) {
 			: { ...low, reason: 'blind-hold' };
 	}
 
-	const known = [handState?.indicator].filter(Boolean);
+	const known = tableKnown(handState);
 	const single = winChance(me.cardsInHand, variant, handState, random, known);
 	// Against several live opponents the hand has to beat each of them.
 	let strength = single ** Math.max(1, opponents.length * 0.8);

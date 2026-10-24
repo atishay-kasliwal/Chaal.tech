@@ -12,7 +12,7 @@ import {
 	HANDOVER_CHOOSE_MS,
 	playing
 } from '../../server/engine.mjs';
-import { listVariants } from '../../server/variants/index.mjs';
+import { listVariants, getVariant } from '../../server/variants/index.mjs';
 
 const ids = ['a', 'b', 'c'];
 const connected = new Set([...ids, 'bot-0001']);
@@ -28,7 +28,7 @@ const deal = (room, rulesVersion = room.rulesVersion) =>
 		room,
 		'a',
 		'start',
-		{ cutAt: 0, cardsToDeal: 3, rulesVersion },
+		{ cutAt: 0, cardsToDeal: getVariant(rulesVersion).cardsPerPlayer ?? 3, rulesVersion },
 		{ ...ctx, deck: freshDeck(), handId: `h${room.revision}`, requireReady: true }
 	);
 const finish = (room) => {

@@ -26,10 +26,15 @@ function rng(seed) {
 const ctx = { now: 1000, turnMs: 60000, connected: new Set() };
 const LEVELS = ['easy', 'normal', 'hard'];
 
+// Games added after this corpus was recorded. Append each new game's rulesVersion here so the
+// frozen legacy-bot digest keeps pinning only the games it was recorded with.
+const ADDED_LATER = new Set(['odd-even-1', 'best-of-five-1', 'worst-of-four-1', 'hukum-1', 'red-black-1', 'progressive-joker-1', 'open-card-1', 'one-hidden-1', 'stud-1', 'draw-1', 'trade-one-1', 'pass-the-card-1', 'high-low-1', 'split-pot-1', 'faceoff-1', 'buying-joker-1', 'auction-1', 'knockout-1', 'sudden-death-1', 'survivor-1', 'banko-1', 'community-1']);
+
 export function legacyGolden({ hands = 12, seeds = 4 } = {}) {
 	const digest = createHash('sha256');
 	let decisions = 0;
-	for (const { rulesVersion } of listVariants()) {
+	// This historical corpus pins the original personal-joker rules, not new selections.
+	for (const { rulesVersion } of listVariants().filter((v) => !ADDED_LATER.has(v.rulesVersion)).map((v) => v.rulesVersion === 'folding-joker-2' ? getVariant('folding-joker-1') : v)) {
 		const variant = getVariant(rulesVersion);
 		for (let seed = 1; seed <= seeds; seed++) {
 			const random = rng(seed * 7919 + rulesVersion.length);

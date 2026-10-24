@@ -10,7 +10,8 @@ import { bestWildHand, compareVectors, validateCards, cardKey } from './hand-uti
  * - stateFor(state, playerId): the hand state that player's cards are scored with (their jokers);
  * - publicState(state, viewerId, revealedIds): what a viewer may see of the table cards;
  * - tableOptions(state, player): table moves this player may make now ({ kind, ... } payloads);
- * - tableAction(state, player, payload): make one of those moves (may reorder the player's cards);
+ * - tableAction(state, player, payload, { deck }): make one of those moves (may reorder the player's
+ *   cards, or take cards off the top of the deck);
  * - beforeTurn(state) / afterBet(state, playerId) / afterPot(state, pot) / onPack(state, { cards, deck });
  * - knockedOut(state, player), showBlocked(state, playerId), showOverride(state, requester, other),
  *   keepsCard(handState, card).

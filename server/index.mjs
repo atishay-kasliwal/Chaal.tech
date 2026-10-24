@@ -479,7 +479,7 @@ export function createGameServer({
 					text = args[0] ? 'Player packed' : 'Bet accepted';
 				} else if (event === 'show') {
 					action = 'show';
-					payload = {};
+					payload = { declare: args[1] };
 				} else if (event === 'pokerAction') {
 					if (before.gameType !== 'texas-holdem')
 						throw new GameError('Poker action sent to a Teen Patti room', 'INVALID_ACTION');

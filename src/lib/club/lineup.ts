@@ -21,7 +21,7 @@ export const GAME_FAMILIES = [
 	{
 		id: 'classic',
 		label: 'Classic',
-		games: ['classic-1', 'muflis-1', '999-1', '2-card-1', 'pot-blind-1']
+		games: ['classic-1', 'muflis-1', '999-1', '2-card-1', 'pot-blind-1', 'red-black-1']
 	},
 	{
 		id: 'jokers',
@@ -33,7 +33,12 @@ export const GAME_FAMILIES = [
 			'highest-joker-1',
 			'one-eyed-jack-1',
 			'color-joker-1',
-			'lallan-kallan-1'
+			'lallan-kallan-1',
+			'odd-even-1',
+			'hukum-1',
+			'progressive-joker-1',
+			'buying-joker-1',
+			'auction-1'
 		]
 	},
 	{
@@ -42,20 +47,42 @@ export const GAME_FAMILIES = [
 		games: [
 			'4-card-1',
 			'discard-one-1',
-			'folding-joker-1',
+			'folding-joker-2',
 			'muflis-4-1',
 			'joker-4-1',
 			'lowest-joker-4-1',
 			'highest-joker-4-1',
 			'color-joker-4-1',
+			'best-of-five-1',
+			'worst-of-four-1',
 			'kiss-miss-bliss-1',
 			'kissing-missing-1'
 		]
 	},
 	{
+		id: 'open',
+		label: 'Open cards',
+		games: ['open-card-1', 'one-hidden-1', 'stud-1']
+	},
+	{
+		id: 'swap',
+		label: 'Swap cards',
+		games: ['draw-1', 'trade-one-1', 'pass-the-card-1']
+	},
+	{
+		id: 'showdown',
+		label: 'Showdowns',
+		games: ['high-low-1', 'split-pot-1', 'faceoff-1', 'banko-1']
+	},
+	{
+		id: 'rounds',
+		label: 'Knockouts',
+		games: ['knockout-1', 'sudden-death-1', 'survivor-1']
+	},
+	{
 		id: 'table',
 		label: 'Table cards',
-		games: ['chatai-1', 'running-1', 'rotating-joker-1', 'revolving-joker-1']
+		games: ['chatai-1', 'running-1', 'rotating-joker-1', 'revolving-joker-1', 'community-1']
 	}
 ] as const;
 export const familyOf = (version: string) =>

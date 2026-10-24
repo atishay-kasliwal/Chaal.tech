@@ -85,6 +85,179 @@ export const VARIANT_CATALOG = [
 		cardsPerPlayer: 3
 	},
 	{
+		rulesVersion: 'odd-even-1',
+		selectionLabel: 'Odd/Even: odd rank out is wild',
+		tableLabel: 'Odd/Even · the odd-parity card is wild',
+		description:
+			'Two odd ranks and one even (or the reverse)? The odd-one-out card is your joker. Ace counts as even.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'best-of-five-1',
+		selectionLabel: 'Best of Five: get five, keep the best three',
+		tableLabel: 'Best of Five · throw two, play the best three',
+		description:
+			'Get five cards. After you look, throw two away and play your best three. Stay blind and your first three count.',
+		cardsPerPlayer: 5
+	},
+	{
+		rulesVersion: 'worst-of-four-1',
+		selectionLabel: 'Worst of Four: your lowest three, lowest wins',
+		tableLabel: 'Worst of Four · your lowest three cards play, lowest wins',
+		description:
+			'Four cards, no throwing. Your lowest three-card hand counts automatically, and the lowest hand wins.',
+		cardsPerPlayer: 4
+	},
+	{
+		rulesVersion: 'hukum-1',
+		selectionLabel: 'Hukum: an open card names the trump suit',
+		tableLabel: 'Hukum · more trump cards win within a hand type',
+		description:
+			'An open card names the trump suit. Within the same hand type, more trump cards beat higher ranks.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'red-black-1',
+		selectionLabel: 'Red & Black: all one colour beats a pair',
+		tableLabel: 'Red & Black · three red or three black beats a pair',
+		description:
+			'Three cards all red or all black (not one suit, not a sequence) rank above a Pair and below a Colour.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'progressive-joker-1',
+		selectionLabel: 'Progressive Joker: jokers grow with the pot',
+		tableLabel: 'Progressive Joker · jokers appear at ₹100, ₹200, ₹400',
+		description:
+			'A hidden card turns over as the pot reaches ₹100: its rank is wild. At ₹200 the ranks either side join, and at ₹400 every card of its suit does.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'open-card-1',
+		selectionLabel: 'Open Card: one card face up',
+		tableLabel: 'Open Card · one card lies face up for everyone',
+		description: 'One of your three cards lies face up for everyone. The other two stay hidden.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'one-hidden-1',
+		selectionLabel: 'One Hidden: two cards face up',
+		tableLabel: 'One Hidden · two cards face up, one hidden',
+		description: 'Two of your three cards lie face up for everyone. Only one stays hidden.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'stud-1',
+		selectionLabel: 'Stud: cards turn up as the pot grows',
+		tableLabel: 'Stud · a second card turns up at ₹100',
+		description:
+			'One card is dealt face up. A second turns up when the pot reaches ₹100. The third stays hidden.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'draw-1',
+		selectionLabel: 'Draw: swap one card from the deck',
+		tableLabel: 'Draw · swap one card once per hand',
+		description:
+			'After you look, throw one card away and take a new one from the deck, once per hand. Blind players cannot draw.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'trade-one-1',
+		selectionLabel: 'Trade One: swap a card with a rival',
+		tableLabel: 'Trade One · trade a card with a rival, unseen',
+		description:
+			'After you look, give one card to a rival and take the card in the same place in their hand. Once per hand.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'pass-the-card-1',
+		selectionLabel: 'Pass the Card: everyone passes one',
+		tableLabel: 'Pass the Card · each player passes one card on',
+		description:
+			'Everyone picks a card to pass. When all have picked, each passes it to the next seat. Blind players pass without looking.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'high-low-1',
+		selectionLabel: 'High Low: the Show says high or low',
+		tableLabel: 'High Low · the Show calls high or low',
+		description:
+			'Whoever asks for the Show says whether the high or the low hand wins. Equal hands lose for the asker.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'split-pot-1',
+		selectionLabel: 'Split Pot: best and worst share the pot',
+		tableLabel: 'Split Pot · best and worst hand split a big pot',
+		description:
+			'With three or more players in and a big pot, all show: the best hand takes half and the worst hand the other half.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'faceoff-1',
+		selectionLabel: 'Faceoff: challenge one player',
+		tableLabel: 'Faceoff · challenge a player, the loser is out',
+		description:
+			'On your turn, pay the Show fee and challenge one player. Both hands are shown and the weaker one is out.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'buying-joker-1',
+		selectionLabel: 'Buying Joker: pay to learn a joker',
+		tableLabel: 'Buying Joker · pay 5 boots to learn a hidden joker',
+		description:
+			'A joker rank is hidden. Pay 5 boots into the pot to learn it: that rank is wild in your hand only.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'auction-1',
+		selectionLabel: 'Auction: sealed bids for a joker',
+		tableLabel: 'Auction · highest sealed bid wins a hidden joker',
+		description:
+			'Everyone makes one sealed bid. The highest bidder pays it into the pot and wins the hidden joker.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'knockout-1',
+		selectionLabel: 'Knockout: lowest hand out every lap',
+		tableLabel: 'Knockout · the lowest hand goes after every lap',
+		description:
+			'After every lap of betting the lowest hand is knocked out and shown, until two players are left.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'sudden-death-1',
+		selectionLabel: 'Sudden Death: stakes double every lap',
+		tableLabel: 'Sudden Death · stakes double and the lowest hand goes',
+		description: 'The stake doubles every lap and the lowest hand is knocked out, so hands end fast.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'survivor-1',
+		selectionLabel: 'Survivor: no Show, last one standing',
+		tableLabel: 'Survivor · no Show, the lowest hand goes every lap',
+		description:
+			'No Show. After every lap of betting the lowest hand is knocked out, until one player remains.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'banko-1',
+		selectionLabel: 'Banko: play against the banker',
+		tableLabel: 'Banko · the dealer is the banker',
+		description:
+			'The dealer is the banker. Equal hands go to the banker, and a big pot sends everyone against the banker.',
+		cardsPerPlayer: 3
+	},
+	{
+		rulesVersion: 'community-1',
+		selectionLabel: 'Community: two cards plus shared cards',
+		tableLabel: 'Community · best three of your two and the shared cards',
+		description:
+			'Two cards each plus shared cards in the middle that open as the pot grows. Your hand is the best three.',
+		cardsPerPlayer: 2
+	},
+	{
 		rulesVersion: 'pot-blind-1',
 		selectionLabel: 'Pot Blind: nobody looks',
 		tableLabel: 'Pot Blind · everyone plays blind',
@@ -100,9 +273,9 @@ export const VARIANT_CATALOG = [
 		cardsPerPlayer: 4
 	},
 	{
-		rulesVersion: 'folding-joker-1',
-		selectionLabel: 'Folding Joker: your folded card is the joker',
-		tableLabel: 'Folding Joker · fold one, its rank is wild for you',
+		rulesVersion: 'folding-joker-2',
+		selectionLabel: 'Folding Joker: every folded rank is a shared joker',
+		tableLabel: 'Folding Joker · folded ranks are wild for everyone',
 		description:
 			'Get four cards. Fold one face down: cards of its rank in your hand are wild. Stay blind and your fourth card is the joker.',
 		cardsPerPlayer: 4

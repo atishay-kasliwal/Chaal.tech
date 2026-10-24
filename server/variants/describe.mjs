@@ -12,6 +12,8 @@ export function describeHand(variant, cards, handState) {
 	if (variant.base && variant.played)
 		return describeHand(variant.base, variant.played(cards), handState);
 	try {
+		// A game whose rank vector is not the Classic shape names its own hands.
+		if (variant.describe) return variant.describe(cards, handState);
 		switch (variant.rulesVersion) {
 			case '999-1':
 				return `Scores ${String(variant.evaluateHand(cards)[0]).padStart(3, '0')}`;

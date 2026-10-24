@@ -1,5 +1,5 @@
 import { getVariant } from '../variants/index.mjs';
-import { winChance, bestDiscard, tableMove } from './strategy.mjs';
+import { winChance, bestDiscard, tableMove, tableKnown } from './strategy.mjs';
 
 /**
  * The base brain: Teen Patti skill every character shares. It reads only the bot's own projection
@@ -93,7 +93,7 @@ export function move(sit, name) {
  * probably holding something (public information).
  */
 export function strength(sit, random) {
-	const known = [sit.handState?.indicator].filter(Boolean);
+	const known = tableKnown(sit.handState);
 	const single = winChance(sit.me.cardsInHand, sit.variant, sit.handState, random, known);
 	let multi = single ** Math.max(1, sit.opponents.length * 0.8);
 	if (sit.seenBetters) multi *= 0.92 ** sit.seenBetters;

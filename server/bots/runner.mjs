@@ -2,7 +2,8 @@ import { bot325, observe325 } from './tricks/bot-325.mjs';
 import { botPakad, observePakad } from './tricks/bot-pakad.mjs';
 import { bot29, observe29 } from './tricks/bot-29.mjs';
 import { projection, playing } from '../engine.mjs';
-import { decide } from './strategy.mjs';
+import { decide, declareFor } from './strategy.mjs';
+import { getVariant } from '../variants/index.mjs';
 import { ADAPTIVE_POLICY, adaptiveDecision } from './memory/adaptive.mjs';
 import { deciderFor, MIND_POLICIES, MIND_RULES } from './policies.mjs';
 import { observe } from './observe.mjs';
@@ -154,13 +155,20 @@ export function nextBotMove(
 	random,
 	{ deciderOf = null, minds = null, memoryFor, profileFor } = {}
 ) {
-	const choose = (view, bot) =>
-		(deciderOf ? deciderOf(bot) : seatDecider(bot, { minds, memoryFor, profileFor }))(
+	const choose = (view, bot) => {
+		const move = (deciderOf ? deciderOf(bot) : seatDecider(bot, { minds, memoryFor, profileFor }))(
 			view,
 			bot.id,
 			random,
 			minds?.[bot.id] ?? null
 		);
+		// High Low: a Show also says which end of the two hands wins.
+		if (move?.action === 'show' && getVariant(room.rulesVersion)?.declareShow) {
+			const me = view.usersList.find((user) => user.id === bot.id);
+			return { ...move, payload: { ...move.payload, declare: declareFor(me.cardsInHand, random) } };
+		}
+		return move;
+	};
 	if (TRICK_GAMES.has(room.gameType)) {
 		const current = room.players.find((p) => p.id === room.currentPlayerId);
 		if (!playing(room) || !current?.bot) return null;

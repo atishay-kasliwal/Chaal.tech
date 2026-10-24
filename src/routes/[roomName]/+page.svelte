@@ -493,7 +493,9 @@
 					</p>
 					{#if roomData.variantState?.indicator}
 						<p class="text-primary/70 mt-1 text-xs" data-testid="joker-indicator">
-							Wild rank: {rankLabel(roomData.variantState.wildRank)}
+							Wild rank: {rankLabel(
+								roomData.variantState.wildRank ?? roomData.variantState.indicator.rank
+							)}
 						</p>
 					{/if}
 				{/if}

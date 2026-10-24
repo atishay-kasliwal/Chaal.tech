@@ -162,6 +162,14 @@
 	const resultDetail = $derived.by(() => {
 		if (!result) return '';
 		if (result.reason === 'last-player') return 'Everyone else packed';
+		if (result.reason === 'last-standing') return 'Last one standing';
+		if (result.reason === 'banko-banker')
+			return `Nobody beat the banker${nameOf(winner) ? ` (${nameOf(winner)})` : ''}, who takes the pot`;
+		if (result.reason === 'banko-players')
+			return 'Everyone showed against the banker: the players who beat the banker split the pot';
+		if (result.reason === 'show-banker') return 'Equal hands go to the banker';
+		if (result.reason === 'split-pot')
+			return 'Split pot: the best hand and the worst hand each took half';
 		if (result.reason === 'pot-limit-split')
 			return `Pot limit reached: equal best hands${nameOf(winner) ? ` (${nameOf(winner)})` : ''}, pot split`;
 		if (result.reason === 'pot-limit')
@@ -194,6 +202,10 @@
 		}
 		if (result.reason === 'show-tie-requester-loses')
 			return 'Equal hands, so whoever asked for the Show loses';
+		if (result.reason === 'show-high' && winName && loseName)
+			return `High called: ${winName} beats ${loseName}`;
+		if (result.reason === 'show-low' && winName && loseName)
+			return `Low called: ${winName} is lower than ${loseName}`;
 		if (winName && loseName && winName === loseName)
 			return `Both have ${winName}, won on the higher side card${lowest}`;
 		if (winName && loseName) return `${winName} beats ${loseName}${lowest}`;
@@ -771,6 +783,12 @@
 	// Moves on the table cards: open a mat card, lock a Chatai line, make a joker.
 	const tableMove = (move: TableMove) => void send('tableAction', [move]);
 	const makeJoker = (indexes: [number, number]) => tableMove({ kind: 'joker', indexes });
+	const drawCard = (index: number) => tableMove({ kind: 'draw', index });
+	/** Games whose indicator card is shown on the mat, not as a "Wild" chip in the header. */
+	const NO_WILD_CHIP = new Set(['hukum-1', 'progressive-joker-1']);
+	const tradeCard = (index: number, target?: string) => tableMove({ kind: 'trade', index, target });
+	const passCard = (index: number) => tableMove({ kind: 'pass', index });
+	const faceoffWith = (target: string) => tableMove({ kind: 'faceoff', target });
 	/** The Chatai line being tried before it is locked; cleared every hand. */
 	let previewLine = $state<number | null>(null);
 	$effect(() => {
@@ -787,12 +805,14 @@
 					onlock: (line) => {
 						tableMove({ kind: 'line', line });
 						previewLine = null;
-					}
+					},
+					onmove: (move) => tableMove(move)
 				})
 	);
 	/** Cards on the table this hand: the mat takes the centre and the pot steps aside. */
 	const bet = (amount: number) => room.legalActions.bet && void send('play', [false, amount]);
-	const show = () => room.legalActions.show && void send('show', [room.name]);
+	const show = (declare?: 'high' | 'low') =>
+		room.legalActions.show && void send('show', [room.name, declare]);
 	const sitOut = (value: boolean) => void send('ready', [!value]);
 	const setBalanceHidden = (hidden: boolean) => {
 		rememberHiddenBalance(hidden);
@@ -841,7 +861,7 @@
 		else if (key === 'c' && myTurn) bet(low);
 		else if (key === 'r' && myTurn && high > low) bet(high);
 		else if (key === 'p' && myTurn) pack();
-		else if (key === 'w' && myTurn) show();
+		else if (key === 'w' && myTurn && room.rulesVersion !== 'high-low-1') show();
 		else return;
 		event.preventDefault();
 	}
@@ -1042,12 +1062,20 @@
 			{/if}
 			<span class="dot">·</span>
 			<span>Boot {money(boot)}</span>
-			{#if room.variantState?.indicator}
+			{#if room.variantState?.indicator && !NO_WILD_CHIP.has(room.rulesVersion)}
 				<span class="dot">·</span>
 				<span class="wild" data-testid="joker-indicator"
 					>{room.variantState.wildColor
 						? `Wild: ${room.variantState.wildColor} cards`
-						: `Wild ${rankLabel(room.variantState.wildRank)}`}</span
+						: `Wild ${rankLabel(room.variantState.wildRank ?? room.variantState.indicator.rank)}`}</span
+				>
+			{/if}
+			{#if room.rulesVersion === 'folding-joker-2' && room.variantState?.wildRanks}
+				<span class="dot">·</span>
+				<span class="wild" data-testid="shared-joker-ranks"
+					>{room.variantState.wildRanks.length
+						? `Jokers for everyone: ${room.variantState.wildRanks.map(rankLabel).join(', ')}`
+						: 'Fold a card to add a shared joker'}</span
 				>
 			{/if}
 		</div>
@@ -1542,6 +1570,10 @@
 			onsee={see}
 			ondiscard={discard}
 			onjoker={makeJoker}
+			ondraw={drawCard}
+			ontrade={tradeCard}
+			onpass={passCard}
+			onfaceoff={faceoffWith}
 			onpack={pack}
 			onbet={bet}
 			onshow={show}

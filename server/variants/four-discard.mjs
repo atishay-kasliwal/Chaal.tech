@@ -128,8 +128,50 @@ export const foldingJoker = Object.freeze({
 	getRules: () => foldingRules
 });
 
+
+/**
+ * Folding Joker: every explicitly folded rank joins the public joker pool for all players.
+ * Keep the folded card last so it never plays as part of the three-card hand.
+ */
+const sharedFoldingRules = Object.freeze({
+	cardsPerPlayer: 4,
+	keep: 3,
+	wildSource: 'ranks-folded-by-any-player',
+	wildCards: 'Every rank folded by any player or bot is wild for everyone.',
+	blindPlayers: 'Blind players play their first three with the shared jokers; their fourth card adds no joker until folded.',
+	rankingOrder: CLASSIC_ORDER,
+	suitsBreakTies: false
+});
+const sharedFoldingEvaluate = (cards, handState) => {
+	const keep = played(cards);
+	return bestWildHand(keep, new Set(handState?.wildRanks ?? []), evaluateClassic);
+};
+export const sharedFoldingJoker = Object.freeze({
+	id: 'folding-joker',
+	version: 2,
+	rulesVersion: 'folding-joker-2',
+	name: 'Folding Joker',
+	description:
+		'Get four, fold one. Every folded rank becomes a joker for everyone, including bots.',
+	cardsPerPlayer: 4,
+	discardTo: 3,
+	foldsToEnd: true,
+	prepareHand: () => ({ state: { wildRanks: [] }, cardsConsumed: 0 }),
+	onDiscard: (state, { card }) => {
+		if (!state.wildRanks.includes(card.rank)) state.wildRanks.push(card.rank);
+	},
+	played,
+	evaluateHand: sharedFoldingEvaluate,
+	compareHands: (left, right, state) => compareVectors(sharedFoldingEvaluate(left, state), sharedFoldingEvaluate(right, state)),
+	wildIndexes: (cards, state) => {
+		const ranks = new Set(state?.wildRanks ?? []);
+		return played(cards).flatMap((card, i) => ranks.has(card.rank) ? [i] : []);
+	},
+	getRules: () => sharedFoldingRules
+});
+
 export const FOUR_CARD_VARIANTS = Object.freeze([
-	foldingJoker,
+	sharedFoldingJoker,
 	muflisFour,
 	jokerFour,
 	lowestJokerFour,

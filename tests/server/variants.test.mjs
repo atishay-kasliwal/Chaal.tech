@@ -44,14 +44,36 @@ test('Classic remains the default and every Teen Patti variant has its own regis
 			'one-eyed-jack-1',
 			'color-joker-1',
 			'lallan-kallan-1',
+			'odd-even-1',
+			'best-of-five-1',
+			'worst-of-four-1',
+			'hukum-1',
+			'red-black-1',
+			'progressive-joker-1',
 			'pot-blind-1',
 			'discard-one-1',
-			'folding-joker-1',
+			'folding-joker-2',
 			'muflis-4-1',
 			'joker-4-1',
 			'lowest-joker-4-1',
 			'highest-joker-4-1',
 			'color-joker-4-1',
+			'open-card-1',
+			'one-hidden-1',
+			'stud-1',
+			'draw-1',
+			'trade-one-1',
+			'pass-the-card-1',
+			'high-low-1',
+			'split-pot-1',
+			'faceoff-1',
+			'buying-joker-1',
+			'auction-1',
+			'knockout-1',
+			'sudden-death-1',
+			'survivor-1',
+			'banko-1',
+			'community-1',
 			'chatai-1',
 			'running-1',
 			'rotating-joker-1',
@@ -252,7 +274,7 @@ test('Phase 4 preservation checks account for the additive media and Phase 7 var
 	}
 	const roomTypes = await readFile('src/routes/[roomName]/types.d.ts', 'utf8');
 	assert.match(roomTypes, /handBet: number \| null/);
-	assert.match(roomTypes, /variantState\?: \{ wildRank: number; indicator: Card \}/);
+	assert.match(roomTypes, /variantState\?: \{ wildRank\?: number; indicator\?: Card; wildRanks\?: number\[\] \}/);
 	const service = await readFile('server/index.mjs', 'utf8');
 	assert.match(service, /'ready'/);
 	// The create form lives in the shared start panel (page and pop-up).

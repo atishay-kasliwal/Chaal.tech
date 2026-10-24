@@ -81,7 +81,7 @@ function chooseAction(room, connected, random) {
 		);
 		if (legal.maxBet > legal.minBet) options.push(['bet', { amount: legal.maxBet }]);
 	}
-	if (legal.show) options.push(['show', {}], ['show', {}]);
+	if (legal.show) options.push(['show', { declare: 'high' }], ['show', { declare: 'low' }]);
 	if (legal.pack) options.push(['pack', {}]);
 	if (random() < 0.03) return [actorId, 'timeout', {}];
 	assert.ok(options.length, `${room.rulesVersion}: current player has no legal action`);
@@ -208,7 +208,7 @@ test('Illegal actions are refused without changing the table, in every variant',
 			[room.currentPlayerId, 'bet', { amount: 5 }],
 			[room.currentPlayerId, 'bet', { amount: 21 }],
 			[room.currentPlayerId, 'bet', { amount: 10.5 }],
-			[room.currentPlayerId, 'show', {}],
+			[room.currentPlayerId, 'show', { declare: 'high' }],
 			[room.currentPlayerId, 'discard', { index: 0 }],
 			[room.currentPlayerId, 'timeout', {}],
 			['a', 'start', { cutAt: 0, cardsToDeal: 3 }],

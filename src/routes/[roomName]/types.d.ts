@@ -17,6 +17,8 @@ interface User {
 	seatNumber: number;
 	/** Hidden cards are rank-zero placeholders; no private identities are transmitted. */
 	cardsInHand: Card[];
+	/** Open-card games: cards everyone sees while the rest of the hand stays hidden. */
+	openCards?: { index: number; card: Card }[];
 	/** Server-written name of a hand this viewer may see, e.g. "Pair of 9s". */
 	handName?: string | null;
 	/** Indexes of jokers in a visible hand. */
@@ -61,12 +63,38 @@ interface TableCards {
 	jokers?: Card[] | Record<string, string>;
 	before?: Card[];
 	made?: string[];
+	/** Trade One: who traded and with whom. Pass the Card: who picked and whether the cards moved. */
+	trades?: { from: string; to: string }[];
+	traded?: string[];
+	passed?: string[];
+	done?: boolean;
+	/** Community: the shared cards (closed ones are rank 0). Hukum and Progressive Joker: the indicator card. */
+	community?: Card[];
+	indicator?: Card;
+	stage?: number;
+	wildRanks?: number[];
+	wildSuit?: string | null;
+	/** Buying Joker and Auction: who bought or bid, the price, your joker rank, the winner. */
+	bought?: string[];
+	bid?: string[];
+	price?: number;
+	rank?: number | null;
+	winner?: string | null;
+	amount?: number;
+	/** Knockout games: laps played. */
+	laps?: number;
 }
 /** A move on the table cards. */
 type TableMove =
 	| { kind: 'open'; index: number }
 	| { kind: 'line'; line: number }
-	| { kind: 'joker'; indexes: [number, number] };
+	| { kind: 'joker'; indexes: [number, number] }
+	| { kind: 'draw'; index: number }
+	| { kind: 'trade'; index: number; target?: string }
+	| { kind: 'pass'; index: number }
+	| { kind: 'buy'; price?: number }
+	| { kind: 'bid'; bid?: number; amount?: number }
+	| { kind: 'faceoff'; target: string };
 interface ChipRequest {
 	from: string;
 	to: string;
@@ -132,8 +160,15 @@ interface RoomData {
 	revision: number;
 	handId: string | null;
 	rulesVersion: string;
-	gameType?: 'teen-patti' | 'texas-holdem' | 'blackjack' | 'rummy' | 'three-two-five' | 'ten-pakad' | 'twenty-nine';
-	variantState?: { wildRank: number; indicator: Card } & {
+	gameType?:
+		| 'teen-patti'
+		| 'texas-holdem'
+		| 'blackjack'
+		| 'rummy'
+		| 'three-two-five'
+		| 'ten-pakad'
+		| 'twenty-nine';
+	variantState?: { wildRank?: number; indicator?: Card; wildRanks?: number[] } & {
 		wildColor?: 'red' | 'black';
 	} & TableCards;
 	stage?: string;
@@ -186,6 +221,8 @@ interface RoomData {
 		pack?: boolean;
 		bet?: boolean;
 		show?: boolean;
+		/** Faceoff: players you may challenge this turn. */
+		faceoff?: string[];
 		minBet?: number;
 		maxBet?: number;
 		check?: boolean;
