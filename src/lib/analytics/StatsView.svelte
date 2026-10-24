@@ -845,14 +845,14 @@
 			grid-template-columns: 1fr auto;
 		}
 	}
-	/* Hand detail sheet */
-	:global(.overlay) {
+	/* Hand detail sheet. Prefixed: a bare global .sheet also restyled the start and profile pop-ups. */
+	:global(.stats-overlay) {
 		position: fixed;
 		z-index: 40;
 		inset: 0;
 		background: rgb(0 0 0 / 55%);
 	}
-	:global(.sheet) {
+	:global(.stats-sheet) {
 		position: fixed;
 		z-index: 41;
 		inset: auto 0 0 0;
@@ -868,78 +868,78 @@
 		padding: 1.4rem 1.2rem 2rem;
 		color: #f8f2e5;
 	}
-	:global(.sheet .close) {
+	:global(.stats-sheet .close) {
 		position: absolute;
 		top: 0.6rem;
 		right: 0.9rem;
 		color: #f2dc91;
 		font-size: 1.6rem;
 	}
-	:global(.sheet .cards-row) {
+	:global(.stats-sheet .cards-row) {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 0.4rem;
 	}
-	:global(.sheet .card) {
+	:global(.stats-sheet .card) {
 		border-radius: 0.4rem;
 		background: #f6f0e2;
 		padding: 0.3rem 0.5rem;
 		color: #1b1a17;
 		font-weight: 800;
 	}
-	:global(.sheet .pcard.red) {
+	:global(.stats-sheet .pcard.red) {
 		color: #b8432f;
 	}
-	:global(.sheet .steps-list) {
+	:global(.stats-sheet .steps-list) {
 		display: grid;
 		gap: 0.25rem;
 		margin: 0;
 		padding-left: 1.2rem;
 		font-size: 0.85rem;
 	}
-	:global(.sheet .steps-list .auto) {
+	:global(.stats-sheet .steps-list .auto) {
 		color: #beb5c9;
 		font-style: italic;
 	}
-	:global(.sheet .steps-list .mine) {
+	:global(.stats-sheet .steps-list .mine) {
 		color: #f2dc91;
 	}
-	:global(.sheet .seats tr.you td) {
+	:global(.stats-sheet .seats tr.you td) {
 		color: #f2dc91;
 	}
-	:global(.sheet .muted) {
+	:global(.stats-sheet .muted) {
 		color: #beb5c9;
 	}
-	:global(.sheet .small) {
+	:global(.stats-sheet .small) {
 		font-size: 0.78rem;
 	}
-	:global(.sheet .eyebrow) {
+	:global(.stats-sheet .eyebrow) {
 		color: #d5c39b;
 		font-size: 0.68rem;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
 	}
-	:global(.sheet h3) {
+	:global(.stats-sheet h3) {
 		color: #d5c39b;
 		font-size: 0.72rem;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
-	:global(.sheet table.data-table) {
+	:global(.stats-sheet table.data-table) {
 		width: 100%;
 		border-collapse: collapse;
 		font-size: 0.85rem;
 	}
-	:global(.sheet table.data-table td),
-	:global(.sheet table.data-table th) {
+	:global(.stats-sheet table.data-table td),
+	:global(.stats-sheet table.data-table th) {
 		padding: 0.35rem 0.4rem;
 		text-align: left;
 	}
-	:global(.sheet .up) {
+	:global(.stats-sheet .up) {
 		color: #8fe0ad;
 	}
-	:global(.sheet .down) {
+	:global(.stats-sheet .down) {
 		color: #f0a090;
 	}
 

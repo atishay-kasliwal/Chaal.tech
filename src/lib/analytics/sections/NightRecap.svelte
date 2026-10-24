@@ -38,8 +38,8 @@
 	};
 </script>
 
-<div class="overlay" role="dialog" aria-modal="true" aria-label="Night recap">
-	<div class="sheet">
+<div class="stats-overlay" role="dialog" aria-modal="true" aria-label="Night recap">
+	<div class="stats-sheet">
 		<button class="close" onclick={onClose} aria-label="Close">×</button>
 		{#if error}<p class="notice" role="alert">{error}</p>
 		{:else if !data}<p class="muted">Putting the night together…</p>
@@ -95,7 +95,7 @@
 </div>
 
 <style>
-	.overlay {
+	.stats-overlay {
 		position: fixed;
 		inset: 0;
 		z-index: 50;
@@ -104,7 +104,7 @@
 		background: rgb(0 0 0 / 60%);
 		padding: 1rem;
 	}
-	.sheet {
+	.stats-sheet {
 		position: relative;
 		display: grid;
 		gap: 0.7rem;
