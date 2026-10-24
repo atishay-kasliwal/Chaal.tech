@@ -28,6 +28,20 @@ const active = (room) => {
 	variantFor(room);
 	return seated(room).filter((p) => p.cards.length > 0 && !p.isPacked && !p.departed);
 };
+/** Throw one card from a hand: folded cards stay last in hand, and the variant hears about it. */
+function throwCard(room, variant, player, index) {
+	const [thrown] = player.cards.splice(index, 1);
+	// Retain folded cards outside the played three; publish only what the variant makes public.
+	if (variant.foldsToEnd) {
+		player.cards.push(thrown);
+		player.folded = true;
+	}
+	if (variant.onDiscard) {
+		// Rooms saved before a variant gained public state can still finish their hand.
+		room.variantState ??= variant.prepareHand({ remainingDeck: room.deck }).state;
+		variant.onDiscard(room.variantState, { card: thrown, playerId: player.id });
+	}
+}
 /** A seen player in a discard variant must throw cards away before betting or Show. */
 const mustDiscard = (variant, player) =>
 	Number.isInteger(variant.discardTo) &&
@@ -1214,17 +1228,7 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 					handStateOf(variant, room, id),
 					player.cards[payload.index]
 				), 'Keep your joker');
-				const [thrown] = player.cards.splice(payload.index, 1);
-				// Retain folded cards outside the played three; publish only the folded rank.
-				if (variant.foldsToEnd) {
-					player.cards.push(thrown);
-					player.folded = true;
-				}
-				if (variant.onDiscard) {
-					// Rooms saved before a variant gained public state can still finish their hand.
-					room.variantState ??= variant.prepareHand({ remainingDeck: room.deck }).state;
-					variant.onDiscard(room.variantState, { card: thrown });
-				}
+				throwCard(room, variant, player, payload.index);
 			} else {
 				require(room.currentPlayerId === id, 'It is not your turn', 'OUT_OF_TURN');
 				if (room.sideShow) {
@@ -1237,6 +1241,11 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				variant.beforeTurn?.(room.variantState);
 				if (action === 'pack' || action === 'timeout') {
 					if (action === 'timeout') require(ctx.now >= room.deadline, 'Turn has not expired');
+					// Folding Joker 3: nobody packs without adding a joker to the table.
+					if (variant.foldBeforePack && !player.folded && player.cards.length > variant.discardTo) {
+						require(action === 'timeout' || player.isBlind, 'Fold a card onto the table before you pack');
+						throwCard(room, variant, player, player.cards.length - 1);
+					}
 					player.isPacked = true;
 					variant.onPack?.(room.variantState, { cards: player.cards, deck: room.deck });
 					afterPack(room, player.seatNumber, ctx);
@@ -1548,7 +1557,7 @@ export function projection(room, id, connected) {
 			...(explain && canSee(p) && p.cards.length
 				? variant.foldsToEnd && !p.folded && playing(room) && !p.isPacked
 					? // Folding Joker before the fold: no hand yet, the folded card decides the joker.
-						{ handName: variant.rulesVersion === 'folding-joker-2' ? 'Fold one card: its rank becomes a joker for everyone' : 'Fold one card: it becomes your joker', wildCards: [] }
+						{ handName: variant.rulesVersion === 'folding-joker-1' ? 'Fold one card: it becomes your joker' : 'Fold one card: its rank becomes a joker for everyone', wildCards: [] }
 					: playing(room) && !p.isPacked && mustDiscard(variant, p)
 						? // Still throwing cards away: the best cards to keep, with their jokers.
 							describeKeep(variant, p.cards, handStateOf(variant, room, p.id))
@@ -1602,7 +1611,8 @@ export function projection(room, id, connected) {
 								: []
 					}
 				: {}),
-			pack: myTurn,
+			// Folding Joker 3: a seen player folds onto the table before packing.
+			pack: myTurn && !(variant.foldBeforePack && mustDiscard(variant, player)),
 			bet: myTurn && player.balance >= limits(room, player).min && !mustDiscard(variant, player),
 			minBet: limits(room, player).min,
 			maxBet: Math.min(player.balance, limits(room, player).max),

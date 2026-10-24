@@ -178,6 +178,8 @@ interface RoomData {
 		| 'twenty-nine';
 	variantState?: { wildRank?: number; indicator?: Card; wildRanks?: number[] } & {
 		wildColor?: 'red' | 'black';
+		/** Throw games: every thrown card, face up for everyone, with who threw it. */
+		throws?: { playerId: string; card: Card }[];
 	} & TableCards;
 	stage?: string;
 	board?: Card[];

@@ -8,6 +8,8 @@ export interface HowToPlay {
 	points: string[];
 }
 
+/** The throw games where a thrown card lands face up on the table. */
+const THROWN = 'The card you throw lands face up on the table for everyone.';
 const BEST = 'Best hand wins: Trail, then Pure sequence, Sequence, Colour, Pair, High card.';
 const FOUR = 'You get 4 cards. After you look, throw one away and play the best 3.';
 const BLIND4 = 'Stay blind and your first 3 cards play.';
@@ -94,6 +96,10 @@ export const HOW_TO_PLAY: Record<string, HowToPlay> = {
 		win: 'Best 3 of your 5 cards win.',
 		points: ['You get 5 cards. After you look, throw two away and play the best 3.', BLIND4]
 	},
+	'best-of-five-2': {
+		win: 'Best 3 of your 5 cards win.',
+		points: ['You get 5 cards. After you look, throw two away and play the best 3.', BLIND4, THROWN]
+	},
 	'worst-of-four-1': {
 		win: 'The worst hand wins, with 4 cards.',
 		points: [
@@ -135,10 +141,7 @@ export const HOW_TO_PLAY: Record<string, HowToPlay> = {
 	},
 	'one-hidden-1': {
 		win: 'Best hand wins. Two cards of each hand are face up.',
-		points: [
-			'Your first two cards are dealt face up.',
-			'Only the third stays hidden until a Show.'
-		]
+		points: ['Your first two cards are dealt face up.', 'Only the third stays hidden until a Show.']
 	},
 	'stud-1': {
 		win: 'Best hand wins. Cards turn face up as the pot grows.',
@@ -294,6 +297,10 @@ export const HOW_TO_PLAY: Record<string, HowToPlay> = {
 		win: 'Best 3 of your 4 cards win.',
 		points: [FOUR, BLIND4]
 	},
+	'discard-one-2': {
+		win: 'Best 3 of your 4 cards win.',
+		points: [FOUR, BLIND4, THROWN]
+	},
 	'folding-joker-1': {
 		win: 'Best hand wins. The card you fold becomes your joker.',
 		points: [
@@ -310,25 +317,53 @@ export const HOW_TO_PLAY: Record<string, HowToPlay> = {
 			'Blind players use the shared jokers too. Their fourth card adds no joker until folded.'
 		]
 	},
+	'folding-joker-3': {
+		win: 'Best hand wins. Every folded card becomes a joker for everyone.',
+		points: [
+			'You get 4 cards. After you look, fold one face up onto the table.',
+			'Every rank on the table is wild for the whole table, and each card shows who folded it.',
+			'You fold before you pack. Pack blind and your 4th card is folded for you.'
+		]
+	},
 	'muflis-4-1': {
 		win: 'The worst hand wins, with 4 cards.',
 		points: [FOUR, 'Lowest hand wins, like Muflis.', BLIND4]
+	},
+	'muflis-4-2': {
+		win: 'The worst hand wins, with 4 cards.',
+		points: [FOUR, 'Lowest hand wins, like Muflis.', BLIND4, THROWN]
 	},
 	'joker-4-1': {
 		win: 'Best hand wins, 4 cards, one wild rank.',
 		points: [FOUR, 'A face-up card sets the joker rank for everyone.', BLIND4]
 	},
+	'joker-4-2': {
+		win: 'Best hand wins, 4 cards, one wild rank.',
+		points: [FOUR, 'A face-up card sets the joker rank for everyone.', BLIND4, THROWN]
+	},
 	'lowest-joker-4-1': {
 		win: 'Best hand wins, 4 cards, your lowest is a joker.',
 		points: [FOUR, 'The lowest card in the 3 you keep is a joker.', BLIND4]
+	},
+	'lowest-joker-4-2': {
+		win: 'Best hand wins, 4 cards, your lowest is a joker.',
+		points: [FOUR, 'The lowest card in the 3 you keep is a joker.', BLIND4, THROWN]
 	},
 	'highest-joker-4-1': {
 		win: 'Best hand wins, 4 cards, your highest is a joker.',
 		points: [FOUR, 'The highest card in the 3 you keep is a joker.', BLIND4]
 	},
+	'highest-joker-4-2': {
+		win: 'Best hand wins, 4 cards, your highest is a joker.',
+		points: [FOUR, 'The highest card in the 3 you keep is a joker.', BLIND4, THROWN]
+	},
 	'color-joker-4-1': {
 		win: 'Best hand wins, 4 cards, one colour is wild.',
 		points: [FOUR, 'A face-up card picks red or black; that colour is wild.', BLIND4]
+	},
+	'color-joker-4-2': {
+		win: 'Best hand wins, 4 cards, one colour is wild.',
+		points: [FOUR, 'A face-up card picks red or black; that colour is wild.', BLIND4, THROWN]
 	},
 	'chatai-1': {
 		win: 'Best hand wins. The mat in the middle gives you jokers.',

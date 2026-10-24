@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import TeenPattiTable from '#lib/teen-patti/TeenPattiTable.svelte';
 	import TableMat, { type MatCard, type MatLine } from '#lib/teen-patti/TableMat.svelte';
+	import { matFor } from '#lib/teen-patti/table-cards.js';
 
 	/**
 	 * Design preview for games that put cards on the table (Chatai, Running, Rotating Joker,
@@ -129,7 +130,55 @@
 		room: RoomData;
 		mat: ComponentProps<typeof TableMat>;
 	}
+	/** The real mat for a room, as the table builds it (no moves to send in a preview). */
+	const realMat = (r: RoomData) =>
+		matFor(r, 'me', {
+			previewLine: null,
+			onopen: () => {},
+			onpreview: () => {},
+			onlock: () => {},
+			onmove: () => {}
+		})!;
+	const foldingRoom = room(
+		{
+			rulesVersion: 'folding-joker-3',
+			variantState: {
+				wildRanks: [7, 13],
+				throws: [
+					{ playerId: 'raju', card: c('7♥') },
+					{ playerId: 'pinky', card: c('K♠') }
+				]
+			}
+		},
+		[
+			me(['9♠', '9♥', '7♦', 'K♣'], { handName: 'Trail of 9s (with joker)', wildCards: [2] }),
+			...others()
+		]
+	);
+	const jokerFourRoom = room(
+		{
+			rulesVersion: 'joker-4-2',
+			variantState: {
+				indicator: c('Q♦'),
+				wildRank: 12,
+				throws: [{ playerId: 'tinku', card: c('3♣') }]
+			}
+		},
+		[me(['Q♠', '8♥', '8♦'], { handName: 'Trail of 8s (with joker)', wildCards: [0] }), ...others()]
+	);
 	const scenes: Scene[] = [
+		{
+			title: 'Folding Joker: folded cards lie on the table, with who folded them',
+			game: 'Folding Joker',
+			room: foldingRoom,
+			mat: realMat(foldingRoom)
+		},
+		{
+			title: 'Joker 4: thrown cards and the joker card on the table',
+			game: 'Joker 4',
+			room: jokerFourRoom,
+			mat: realMat(jokerFourRoom)
+		},
 		{
 			title: 'Chatai: your turn to open a card',
 			game: 'Chatai 3×3',
@@ -325,12 +374,32 @@
 			title: 'Waiting room with three characters',
 			game: 'Classic',
 			room: room(
-				{ isStarted: false, pot: 0, handId: null as unknown as string, legalActions: { start: true, bet: false, pack: false, show: false, minBet: 0, maxBet: 0 } },
+				{
+					isStarted: false,
+					pot: 0,
+					handId: null as unknown as string,
+					legalActions: { start: true, bet: false, pack: false, show: false, minBet: 0, maxBet: 0 }
+				},
 				[
 					me([]),
-					user('b1', 1, 'Rohit Sharma', { bot: 'normal', botMascotId: 'bot-rohit-sharma', cardsInHand: [], handBet: 0 }),
-					user('b2', 2, 'Virat Kohli', { bot: 'normal', botMascotId: 'bot-virat-kohli', cardsInHand: [], handBet: 0 }),
-					user('b3', 3, 'MS Dhoni', { bot: 'normal', botMascotId: 'bot-ms-dhoni', cardsInHand: [], handBet: 0 })
+					user('b1', 1, 'Rohit Sharma', {
+						bot: 'normal',
+						botMascotId: 'bot-rohit-sharma',
+						cardsInHand: [],
+						handBet: 0
+					}),
+					user('b2', 2, 'Virat Kohli', {
+						bot: 'normal',
+						botMascotId: 'bot-virat-kohli',
+						cardsInHand: [],
+						handBet: 0
+					}),
+					user('b3', 3, 'MS Dhoni', {
+						bot: 'normal',
+						botMascotId: 'bot-ms-dhoni',
+						cardsInHand: [],
+						handBet: 0
+					})
 				]
 			),
 			mat: { layout: 'grid', prompt: '', cards: [] }

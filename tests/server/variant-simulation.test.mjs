@@ -30,7 +30,20 @@ function shuffled(random) {
 }
 
 /** Versions no longer on offer that saved hands, lineups and replays can still name. */
-const SAVED_VERSIONS = ['buying-joker-1', 'auction-1', 'folding-joker-1', 'side-show-1'];
+const SAVED_VERSIONS = [
+	'buying-joker-1',
+	'auction-1',
+	'folding-joker-1',
+	'side-show-1',
+	'folding-joker-2',
+	'discard-one-1',
+	'best-of-five-1',
+	'muflis-4-1',
+	'joker-4-1',
+	'lowest-joker-4-1',
+	'highest-joker-4-1',
+	'color-joker-4-1'
+];
 const ids = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5'];
 let forcedShows = 0;
 const sideShows = { asked: 0, accepted: 0, declined: 0, timedOut: 0, shared: 0 };
@@ -141,6 +154,10 @@ function assertNoDeepLeaks(room, connected) {
 			});
 		}
 		for (const key of rawState) if (!shownState.has(key)) secret.add(key);
+		// Throw games: a thrown card is face up for everyone, even a folded one still held.
+		for (const entry of room.variantState?.throws ?? []) secret.delete(cardKey(entry.card));
+		if (room.variantState?.throws)
+			assert.deepEqual(view.variantState.throws, room.variantState.throws, 'every throw is public');
 		SECRET_RULES[room.rulesVersion]?.(room.variantState, view.variantState, viewer.id, reveal);
 		const { variantState, ...rest } = view;
 		const found = cardsIn(rest);

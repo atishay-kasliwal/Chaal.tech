@@ -21,7 +21,7 @@ const arg = (name, fallback) => {
 };
 export const NEW_GAMES = [
 	'odd-even-1',
-	'best-of-five-1',
+	'best-of-five-2',
 	'worst-of-four-1',
 	'hukum-1',
 	'red-black-1',

@@ -249,7 +249,7 @@ function playBotTable(version, levels, seed, hands = 8, human = false) {
 					...(legal.discard ? [['discard', { index: 0 }]] : []),
 					...(legal.bet ? [['bet', { amount: legal.minBet }]] : []),
 					...(legal.show ? [['show', { declare: 'high' }]] : []),
-					['pack', {}]
+					...(legal.pack ? [['pack', {}]] : [])
 				];
 				const [action, payload] = options[Math.floor(random() * options.length)];
 				move = { botId: 'host', action, payload };

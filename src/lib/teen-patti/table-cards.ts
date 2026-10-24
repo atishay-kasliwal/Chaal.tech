@@ -104,7 +104,7 @@ export function matFor(room: RoomData, selfId: string, ui: MatUi): Mat | null {
 		case 'banko-1':
 			return banko(room);
 		default:
-			return null;
+			return state.throws ? thrown(room) : null;
 	}
 }
 
@@ -356,7 +356,58 @@ function hukum(room: RoomData): Mat {
 		prompt: indicator?.suit
 			? `<b>${suitName(indicator.suit)}</b> is trump. More trump cards win inside a hand type`
 			: '',
-		tray: { title: 'Trump', cards: indicator?.rank ? [indicator] : [], note: 'more trump wins ties' }
+		tray: {
+			title: 'Trump',
+			cards: indicator?.rank ? [indicator] : [],
+			note: 'more trump wins ties'
+		}
+	};
+}
+
+/** A seat's initials for a card's tag: "Atishay Kasliwal" is AK, "GG" stays GG. */
+export const initials = (name: string) => {
+	const words = name.trim().split(/\s+/).filter(Boolean);
+	return (
+		words.length > 1 ? words[0][0] + words.at(-1)![0] : (words[0] ?? '?').slice(0, 2)
+	).toUpperCase();
+};
+
+/**
+ * Throw games: every thrown card lies face up on the felt, tagged with who threw it. In Folding
+ * Joker each one is a joker for everyone; in Joker 4 and Color Joker 4 the joker card sits beside.
+ */
+function thrown(room: RoomData): Mat {
+	const state = room.variantState!;
+	const throws = state.throws ?? [];
+	const folding = room.rulesVersion.startsWith('folding-joker');
+	const wild = new Set(state.wildRanks ?? []);
+	const indicator = state.indicator?.rank ? state.indicator : null;
+	return {
+		layout: throws.length ? 'row' : 'none',
+		cards: throws.map((entry) => ({
+			card: entry.card,
+			open: true,
+			wild: folding && wild.has(entry.card.rank),
+			tag: initials(nameOf(room, entry.playerId))
+		})),
+		prompt: throws.length
+			? folding
+				? `Jokers for everyone: <b>${uniqueRanks([...wild])}</b>`
+				: `Thrown cards · ${throws.length}`
+			: folding
+				? 'Fold a card onto the table: its rank is wild for everyone'
+				: 'Thrown cards land here, face up for everyone',
+		...(indicator
+			? {
+					tray: {
+						title: 'Joker',
+						cards: [indicator],
+						note: state.wildColor
+							? `every ${state.wildColor} card is wild`
+							: 'its rank is wild for everyone'
+					}
+				}
+			: {})
 	};
 }
 
@@ -393,8 +444,7 @@ function progressive(room: RoomData): Mat {
 function buying(room: RoomData, ui: MatUi): Mat {
 	const state = room.variantState!;
 	const move = (room.legalActions.table ?? []).find((m) => m.kind === 'buy' && !m.decline) as
-		| Extract<TableMove, { kind: 'buy' }>
-		| undefined;
+		Extract<TableMove, { kind: 'buy' }> | undefined;
 	const bought = state.bought ?? [];
 	const mine = state.rank ? rankText(state.rank) : null;
 	return {
