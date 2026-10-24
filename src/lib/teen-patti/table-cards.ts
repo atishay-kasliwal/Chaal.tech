@@ -92,8 +92,10 @@ export function matFor(room: RoomData, selfId: string, ui: MatUi): Mat | null {
 		case 'progressive-joker-1':
 			return progressive(room);
 		case 'buying-joker-1':
+		case 'buying-joker-2':
 			return buying(room, ui);
 		case 'auction-1':
+		case 'auction-2':
 			return auction(room, ui);
 		case 'knockout-1':
 		case 'sudden-death-1':
@@ -390,7 +392,9 @@ function progressive(room: RoomData): Mat {
 /** Buying Joker: pay to learn the hidden joker rank, for your hand only. */
 function buying(room: RoomData, ui: MatUi): Mat {
 	const state = room.variantState!;
-	const move = (room.legalActions.table ?? []).find((m) => m.kind === 'buy');
+	const move = (room.legalActions.table ?? []).find((m) => m.kind === 'buy' && !m.decline) as
+		| Extract<TableMove, { kind: 'buy' }>
+		| undefined;
 	const bought = state.bought ?? [];
 	const mine = state.rank ? rankText(state.rank) : null;
 	return {

@@ -138,12 +138,40 @@ function passMove(cards, random) {
 	};
 }
 
+/**
+ * Buying Joker: a hidden rank helps only when it matches a card in your hand, so the joker is
+ * rarely worth five boots. Buy sometimes with a weak, seen hand and a deep stack; otherwise pass.
+ */
+function buyMove(cards, options, me, random) {
+	const buy = options.find((move) => !move.decline);
+	const pass = options.find((move) => move.decline);
+	if (!pass) return buy;
+	if (!buy || !seenCards(cards)) return pass;
+	const weak = evaluateClassic(cards)[0] === 0;
+	return weak && buy.price * 40 <= (me.balance ?? 0) && random() < 0.25 ? buy : pass;
+}
+
+/**
+ * Auction: the same reasoning, so bids stay small. A seen high-card hand bids one boot about half
+ * the time (when it can afford it); every other hand, and every blind one, bids nothing.
+ */
+function bidMove(cards, options, random) {
+	const sizes = options.map((move) => move.bid ?? 0);
+	const want = seenCards(cards) && evaluateClassic(cards)[0] === 0 && random() < 0.5 ? 1 : 0;
+	const bid = Math.max(...sizes.filter((size) => size <= want));
+	return options.find((move) => (move.bid ?? 0) === bid) ?? options[0];
+}
+
 /** Pick a table move: a random mat card, the line or joker pair that scores best. */
 export function tableMove(view, me, variant, random) {
 	const options = view.legalActions.table;
 	if (options[0]?.kind === 'draw') return drawMove(me.cardsInHand);
 	if (options[0]?.kind === 'trade') return tradeMove(me.cardsInHand, options, random);
 	if (options[0]?.kind === 'pass') return passMove(me.cardsInHand, random);
+	// Buying Joker 1 has no pass, and its bots keep the generic pick (and its random draw) they shipped with.
+	if (options[0]?.kind === 'buy' && options.some((move) => move.decline))
+		return buyMove(me.cardsInHand, options, me, random);
+	if (options[0]?.kind === 'bid' && variant?.smartBids) return bidMove(me.cardsInHand, options, random);
 	const seen = me.cardsInHand.every((card) => card.rank > 0);
 	const scored = (payload) => {
 		if (!seen) return null;

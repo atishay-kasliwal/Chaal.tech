@@ -44,6 +44,7 @@ const drawJoker = ({ remainingDeck }) => {
 /** What buying the joker costs, in boots. */
 export const BUY_BOOTS = 5;
 
+/** Buying Joker 1, exactly as first deployed: buying is the only table move on offer. */
 export const buyingJoker = Object.freeze({
 	...common,
 	id: 'buying-joker',
@@ -83,6 +84,40 @@ export const buyingJoker = Object.freeze({
 		rules({
 			buy: `One card is kept face down. Any player may pay ${BUY_BOOTS} boots into the pot to learn its rank: that rank is wild in their hand only. Everyone can see who bought.`
 		})
+});
+
+/**
+ * Buying Joker 2: buying is optional. { kind: 'buy', decline: true } passes on the joker for the
+ * hand, so a bot can decline instead of being forced to buy. Everything else is as in version 1.
+ */
+export const buyingJoker2 = Object.freeze({
+	...buyingJoker,
+	version: 2,
+	rulesVersion: 'buying-joker-2',
+	prepareHand: ({ remainingDeck }) => ({
+		state: { rank: drawJoker({ remainingDeck }), bought: {}, declined: {} },
+		cardsConsumed: 1
+	}),
+	tableOptions: (state, player, { boot }) =>
+		player.isPacked ||
+		state.bought[player.id] ||
+		state.declined[player.id] ||
+		player.balance < BUY_BOOTS * boot
+			? []
+			: [{ kind: 'buy', price: BUY_BOOTS * boot }, { kind: 'buy', decline: true }],
+	tableAction: (state, player, payload, { boot }) => {
+		if (payload?.kind !== 'buy') throw new Error('Unknown table move');
+		if (state.bought[player.id]) throw new Error('You already bought the joker');
+		if (state.declined[player.id]) throw new Error('You already passed on the joker');
+		if (payload.decline === true) {
+			state.declined[player.id] = true;
+			return null;
+		}
+		const price = BUY_BOOTS * boot;
+		if (player.balance < price) throw new Error('Not enough chips to buy the joker');
+		state.bought[player.id] = true;
+		return { pays: [{ id: player.id, amount: price }] };
+	}
 });
 
 // ——— Auction ———
@@ -156,4 +191,17 @@ export const auction = Object.freeze({
 		})
 });
 
-export const JOKER_BUY_GAMES = Object.freeze([buyingJoker, auction]);
+/**
+ * Auction 2: the same rules as Auction 1. Only the bots differ: they bid small and rarely
+ * (`smartBids`), where Auction 1's bots bid at random up to the largest bid on offer.
+ */
+export const auction2 = Object.freeze({
+	...auction,
+	version: 2,
+	rulesVersion: 'auction-2',
+	smartBids: true
+});
+
+/** The versions on offer; the first versions stay registered for hands already played. */
+export const JOKER_BUY_GAMES = Object.freeze([buyingJoker2, auction2]);
+export const LEGACY_JOKER_BUY_GAMES = Object.freeze([buyingJoker, auction]);

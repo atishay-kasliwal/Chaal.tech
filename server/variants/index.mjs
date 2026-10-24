@@ -21,7 +21,7 @@ import { discardOne } from './discard-one.mjs';
 import { FOUR_CARD_VARIANTS, foldingJoker } from './four-discard.mjs';
 import { drawTeenPatti } from './draw.mjs';
 import { ROUND_GAMES } from './round-games.mjs';
-import { JOKER_BUY_GAMES } from './joker-buy-games.mjs';
+import { JOKER_BUY_GAMES, LEGACY_JOKER_BUY_GAMES } from './joker-buy-games.mjs';
 import { community } from './community.mjs';
 import { SWAP_GAMES } from './swap-games.mjs';
 import { SHOWDOWN_GAMES } from './showdown-games.mjs';
@@ -79,8 +79,10 @@ const variants = Object.freeze([
 	community,
 	...TABLE_GAMES
 ]);
-// Keep original Folding Joker readable for saved hands and immutable replay corpora.
-const registry = new Map([...variants, foldingJoker].map((variant) => [variant.rulesVersion, variant]));
+// Keep original Folding Joker, Buying Joker and Auction readable for saved hands and immutable replay corpora.
+const registry = new Map(
+	[...variants, foldingJoker, ...LEGACY_JOKER_BUY_GAMES].map((variant) => [variant.rulesVersion, variant])
+);
 export const DEFAULT_RULES_VERSION = classic.rulesVersion;
 
 // An unknown saved version never silently falls back to Classic.

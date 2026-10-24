@@ -131,9 +131,10 @@ test('Banko: a big pot sends everyone against the banker', () => {
 	assert.equal(room.result.winnerId, 'a');
 });
 
-test('Buying Joker: paying shows only the buyer the rank, and it is wild in their hand only', () => {
+for (const BUYING of ['buying-joker-1', 'buying-joker-2'])
+test(`Buying Joker (${BUYING}): paying shows only the buyer the rank, and it is wild in their hand only`, () => {
 	const hands = [[c(9, H), c(5, S), c(2, C)], [c(13, D), c(7, S), c(3, C)]];
-	let room = start('buying-joker-1', hands);
+	let room = start(BUYING, hands);
 	const rank = room.variantState.rank;
 	assert.equal(view(room, 'a').variantState.rank, null);
 	const price = view(room, 'a').legalActions.table[0].price;
@@ -152,9 +153,10 @@ test('Buying Joker: paying shows only the buyer the rank, and it is wild in thei
 	invariant(room);
 });
 
-test('Auction: the highest sealed bid pays and wins the joker', () => {
+for (const AUCTION of ['auction-1', 'auction-2'])
+test(`Auction (${AUCTION}): the highest sealed bid pays and wins the joker`, () => {
 	const hands = [[c(9, H), c(5, S), c(2, C)], [c(13, D), c(7, S), c(3, C)], [c(14, H), c(10, S), c(4, D)]];
-	let room = start('auction-1', hands);
+	let room = start(AUCTION, hands);
 	const rank = room.variantState.rank;
 	assert.deepEqual(view(room, 'a').legalActions.table.map((o) => o.bid), [0, 1, 2, 5, 10]);
 	room = transition(room, 'a', 'table', { kind: 'bid', bid: 1 }, ctx);
@@ -174,9 +176,10 @@ test('Auction: the highest sealed bid pays and wins the joker', () => {
 	invariant(room);
 });
 
-test('Auction: a player who packs no longer holds up the sale; no bids means no sale', () => {
+for (const AUCTION of ['auction-1', 'auction-2'])
+test(`Auction (${AUCTION}): a player who packs no longer holds up the sale; no bids means no sale`, () => {
 	const hands = [[c(9, H), c(5, S), c(2, C)], [c(13, D), c(7, S), c(3, C)], [c(14, H), c(10, S), c(4, D)]];
-	let room = start('auction-1', hands);
+	let room = start(AUCTION, hands);
 	room = transition(room, 'a', 'table', { kind: 'bid', bid: 0 }, ctx);
 	room = transition(room, 'b', 'table', { kind: 'bid', bid: 0 }, ctx);
 	for (let i = 0; i < 6 && !view(room, 'a').variantState.done; i++) {
@@ -211,5 +214,29 @@ test('Community: your two cards plus the open community cards, opening as the po
 	assert.deepEqual(shown.community, board);
 	// Now a has 9H 9D 9S on the board: a trail.
 	assert.equal(view(room, 'a').usersList[0].handName, 'Trail of 9s');
+	invariant(room);
+});
+
+test('Buying Joker 2: a player can pass on the joker, once, without paying', () => {
+	const hands = [[c(9, H), c(5, S), c(2, C)], [c(13, D), c(7, S), c(3, C)]];
+	let room = start('buying-joker-2', hands);
+	// Version 1 never offered the pass.
+	assert.deepEqual(
+		view(start('buying-joker-1', hands), 'a').legalActions.table.map((o) => o.decline === true),
+		[false]
+	);
+	const options = view(room, 'a').legalActions.table;
+	assert.deepEqual(options.map((o) => o.decline === true), [false, true]);
+	const before = room.players.find((p) => p.id === 'a').balance;
+	const pot = room.pot;
+	room = transition(room, 'a', 'table', { kind: 'buy', decline: true }, ctx);
+	assert.equal(room.players.find((p) => p.id === 'a').balance, before);
+	assert.equal(room.pot, pot);
+	assert.deepEqual(view(room, 'a').legalActions.table, []);
+	assert.equal(view(room, 'a').variantState.rank, null);
+	assert.throws(() => transition(room, 'a', 'table', { kind: 'buy' }, ctx), /already passed/);
+	// The other player is unaffected and can still buy.
+	room = transition(room, 'b', 'table', { kind: 'buy' }, ctx);
+	assert.deepEqual(view(room, 'b').variantState.bought, ['b']);
 	invariant(room);
 });

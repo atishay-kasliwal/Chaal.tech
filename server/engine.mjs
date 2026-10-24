@@ -701,6 +701,9 @@ export function invariant(room) {
 
 // Synchronous pure transition: no sockets, storage, clock reads or randomness.
 export function transition(snapshot, id, action, payload = {}, ctx) {
+	// A move's payload is always a plain object; anything else is refused before it is read.
+	if (payload === null || typeof payload !== 'object' || Array.isArray(payload))
+		throw new GameError('Invalid move');
 	if (snapshot.gameType && snapshot.gameType !== 'teen-patti') {
 		const game = getGameEngine(snapshot.gameType);
 		require(game, 'Unsupported game type', 'UNSUPPORTED_GAME');
