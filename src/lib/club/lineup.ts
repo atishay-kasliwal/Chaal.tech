@@ -74,7 +74,7 @@ export const GAME_FAMILIES = [
 	{
 		id: 'showdown',
 		label: 'Showdowns',
-		games: ['high-low-1', 'split-pot-1', 'faceoff-1', 'banko-1']
+		games: ['high-low-1', 'split-pot-1', 'faceoff-1', 'banko-1', 'side-show-1']
 	},
 	{
 		id: 'rounds',

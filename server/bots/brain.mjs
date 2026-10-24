@@ -1,5 +1,5 @@
 import { getVariant } from '../variants/index.mjs';
-import { winChance, bestDiscard, tableMove, tableKnown } from './strategy.mjs';
+import { winChance, bestDiscard, tableMove, tableKnown, sideShowReply } from './strategy.mjs';
 
 /**
  * The base brain: Teen Patti skill every character shares. It reads only the bot's own projection
@@ -55,6 +55,7 @@ export function situation(view, botId) {
  */
 export function forcedMove(sit, random) {
 	const { legal, view } = sit;
+	if (legal.sideShowAnswer) return sideShowReply(sit.me.cardsInHand, sit.variant, sit.handState, random);
 	if (legal.table?.length)
 		return {
 			action: 'table',

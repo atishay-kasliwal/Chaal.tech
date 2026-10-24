@@ -258,6 +258,14 @@ export const VARIANT_CATALOG = [
 		cardsPerPlayer: 2
 	},
 	{
+		rulesVersion: 'side-show-1',
+		selectionLabel: 'Side Show: compare with the player before you',
+		tableLabel: 'Side Show · ask the player before you to compare hands',
+		description:
+			'Classic, plus the Side Show: a seen player can ask the player before them to compare hands in private. The weaker hand leaves, and a tie goes against the one who asked.',
+		cardsPerPlayer: 3
+	},
+	{
 		rulesVersion: 'pot-blind-1',
 		selectionLabel: 'Pot Blind: nobody looks',
 		tableLabel: 'Pot Blind · everyone plays blind',

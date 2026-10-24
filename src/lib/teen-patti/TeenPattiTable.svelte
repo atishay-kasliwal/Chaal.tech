@@ -789,6 +789,8 @@
 	const tradeCard = (index: number, target?: string) => tableMove({ kind: 'trade', index, target });
 	const passCard = (index: number) => tableMove({ kind: 'pass', index });
 	const faceoffWith = (target: string) => tableMove({ kind: 'faceoff', target });
+	const askSideShow = () => tableMove({ kind: 'sideshow' });
+	const answerSideShow = (accept: boolean) => tableMove({ kind: 'sideshow-answer', accept });
 	/** The Chatai line being tried before it is locked; cleared every hand. */
 	let previewLine = $state<number | null>(null);
 	$effect(() => {
@@ -1574,6 +1576,8 @@
 			ontrade={tradeCard}
 			onpass={passCard}
 			onfaceoff={faceoffWith}
+			onsideshow={askSideShow}
+			onsideshowanswer={answerSideShow}
 			onpack={pack}
 			onbet={bet}
 			onshow={show}

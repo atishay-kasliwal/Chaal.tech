@@ -94,7 +94,9 @@ type TableMove =
 	| { kind: 'pass'; index: number }
 	| { kind: 'buy'; price?: number; decline?: boolean }
 	| { kind: 'bid'; bid?: number; amount?: number }
-	| { kind: 'faceoff'; target: string };
+	| { kind: 'faceoff'; target: string }
+	| { kind: 'sideshow' }
+	| { kind: 'sideshow-answer'; accept: boolean };
 interface ChipRequest {
 	from: string;
 	to: string;
@@ -102,6 +104,9 @@ interface ChipRequest {
 }
 interface RoomData {
 	name: string;
+	/** Side Show: a request waiting for its answer, and how the last one went. */
+	sideShow?: { from: string; to: string };
+	lastSideShow?: { from: string; to: string; accepted: boolean; loser: string | null };
 	/** Tonight's lineup from the club, in play order (absent when there is none). */
 	lineup?: string[];
 	/** The last pick, which stands for later hands until someone changes it. */
@@ -223,6 +228,9 @@ interface RoomData {
 		show?: boolean;
 		/** Faceoff: players you may challenge this turn. */
 		faceoff?: string[];
+		/** Side Show: the player you may ask now (null when none), and a request waiting for you. */
+		sideShow?: string | null;
+		sideShowAnswer?: boolean;
 		minBet?: number;
 		maxBet?: number;
 		check?: boolean;

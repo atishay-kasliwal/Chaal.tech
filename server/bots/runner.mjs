@@ -100,7 +100,7 @@ export function humansPresent(room, connected) {
 }
 
 /** Off-turn work a bot must do: discard, or a table move (open a mat card, lock a line). */
-const needsMove = (legal) => !!legal.discard || !!legal.table?.length;
+const needsMove = (legal) => !!legal.discard || !!legal.table?.length || !!legal.sideShowAnswer;
 
 /** Which bot (if any) needs to act now, without working out its move. Cheap to call. */
 export function botDue(room, connected) {

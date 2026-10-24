@@ -162,6 +162,16 @@ function bidMove(cards, options, random) {
 	return options.find((move) => (move.bid ?? 0) === bid) ?? options[0];
 }
 
+/**
+ * Asked for a side show: accept with a hand that beats a typical one (the weaker hand leaves, so
+ * an average hand has little to gain), decline otherwise.
+ */
+export function sideShowReply(cards, variant, handState, random) {
+	const known = tableKnown(handState);
+	const accept = seenCards(cards) && winChance(cards, variant, handState, random, known) >= 0.55;
+	return { action: 'table', payload: { kind: 'sideshow-answer', accept }, reason: 'side-show-answer' };
+}
+
 /** Pick a table move: a random mat card, the line or joker pair that scores best. */
 export function tableMove(view, me, variant, random) {
 	const options = view.legalActions.table;
@@ -304,6 +314,8 @@ function choose(view, botId, random, styleProfile, extra = {}) {
 	const high = { action: 'bet', payload: { amount: legal.maxBet } };
 	const canRaise = legal.bet && legal.maxBet > legal.minBet;
 
+	// Asked for a side show: answer first, the table is waiting.
+	if (legal.sideShowAnswer) return sideShowReply(me.cardsInHand, variant, handState, random);
 	// Table moves first: open the mat card it paid for, lock its best line, make a joker.
 	if (legal.table?.length)
 		return { action: 'table', payload: tableMove(view, me, variant, random), reason: 'table-move' };

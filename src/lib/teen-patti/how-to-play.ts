@@ -267,6 +267,15 @@ export const HOW_TO_PLAY: Record<string, HowToPlay> = {
 			'Your hand is the best three of your two and the open shared cards.'
 		]
 	},
+	'side-show-1': {
+		win: 'Best hand wins. A side show can knock out the weaker of two hands.',
+		points: [
+			'Once you have seen your cards, on your turn you can ask the player just before you for a side show, if they have seen their cards too.',
+			'They can accept or decline (no answer in 15 seconds declines). You pay your chaal either way.',
+			'If they accept, the two hands are compared in private: the weaker hand leaves, and a tie goes against the one who asked.',
+			'You need three or more players in. With two left, ask for a Show.'
+		]
+	},
 	'pot-blind-1': {
 		win: 'Best hand wins, but nobody looks.',
 		points: ['Everyone plays blind the whole hand.', 'Cards are only turned over at the Show.']

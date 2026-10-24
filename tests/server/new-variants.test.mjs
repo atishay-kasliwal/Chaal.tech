@@ -285,6 +285,7 @@ test('Every registered variant names hands in plain language', () => {
 			'Pair of 9s',
 			{ community: [c(4, C), c(2, D), c(3, H)], opened: 1 }
 		],
+		'side-show-1': [[c(9, H), c(9, S), c(4, C)], 'Pair of 9s'],
 		'draw-1': [[c(9, H), c(9, S), c(4, C)], 'Pair of 9s'],
 		'odd-even-1': [[c(3, H), c(5, S), c(8, C)], 'Sequence, 5 high (with joker)'],
 		'pot-blind-1': [[c(14, H), c(13, H), c(12, H)], 'Pure sequence, Ace high'],

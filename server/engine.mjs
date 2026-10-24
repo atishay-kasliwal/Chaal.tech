@@ -620,6 +620,55 @@ function eliminateLowest(room, variant, keep) {
 	const left = active(room);
 	if (left.length === 1) settle(room, left[0], 'last-standing', worst.map((p) => p.id));
 }
+/** How long the player asked for a side show has to answer; no answer counts as a decline. */
+export const SIDE_SHOW_MS = 15 * 1000;
+/** The player still in who sits just before this one: the only one a side show may be asked of. */
+function previousInHand(room, player) {
+	const live = active(room);
+	const at = live.findIndex((p) => p.id === player.id);
+	return at < 0 ? null : live[(at - 1 + live.length) % live.length];
+}
+/**
+ * Who `player` may ask for a side show right now, or null. A seen player on their own turn, with
+ * three or more still in (with two it is a Show), asks the previous player, who must have seen
+ * their cards too.
+ */
+function sideShowTarget(room, variant, player) {
+	if (!variant.sideShow || !playing(room) || room.sideShow) return null;
+	if (room.currentPlayerId !== player.id || player.isPacked || player.isBlind) return null;
+	if (active(room).length < 3 || player.balance < limits(room, player).min) return null;
+	const target = previousInHand(room, player);
+	return target && target.id !== player.id && !target.isBlind ? target : null;
+}
+/** Ask the previous player for a side show: the turn waits for the answer (or the clock). */
+function requestSideShow(room, variant, player, ctx) {
+	require(room.currentPlayerId === player.id, 'It is not your turn', 'OUT_OF_TURN');
+	require(ctx.now < room.deadline, 'Turn has expired', 'STALE_TURN');
+	const target = sideShowTarget(room, variant, player);
+	require(target, 'You cannot ask for a side show now');
+	room.sideShow = { from: player.id, to: target.id };
+	room.deadline = ctx.now + SIDE_SHOW_MS;
+}
+/**
+ * The answer is in (or the time ran out, which declines). Accepted: the stronger hand stays, the
+ * weaker leaves, and a tie goes against the one who asked. Either way the asker pays their chaal
+ * and the hand carries on exactly as after any bet. Returns the new table.
+ */
+function resolveSideShow(room, variant, accept, ctx) {
+	const { from, to } = room.sideShow;
+	const asker = room.players.find((p) => p.id === from);
+	const target = room.players.find((p) => p.id === to);
+	const loser = accept ? (compareFor(variant, room, asker, target) > 0 ? target : asker) : null;
+	delete room.sideShow;
+	room.lastSideShow = { from, to, accepted: !!accept, loser: loser?.id ?? null };
+	// A weaker target leaves before the bet, so the turn passes over them.
+	if (loser === target) target.isPacked = true;
+	room.deadline = ctx.now + 1;
+	const next = transition(room, from, 'bet', { amount: limits(room, asker).min }, ctx);
+	// A weaker (or tied) asker has paid and now leaves, unless that bet already ended the hand.
+	if (loser === asker && playing(next)) next.players.find((p) => p.id === from).isPacked = true;
+	return next;
+}
 /**
  * Faceoff: on your turn, pay the Show fee and challenge one player. Both hands are shown, the
  * loser is out (a tie goes against the challenger) and the hand carries on without them.
@@ -811,6 +860,8 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 			room.initiator = id;
 			room.result = null;
 			delete room.shownIds;
+			delete room.sideShow;
+			delete room.lastSideShow;
 			// The pick is used up; the next one goes to whoever sits after this chooser.
 			if (room.chooser) {
 				room.lastChooserId = room.chooser.playerId;
@@ -1099,7 +1150,14 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				player.isBlind = false;
 				knockOut(room, variant, ctx);
 			} else if (action === 'table') {
-				if (variant.faceoff && payload?.kind === 'faceoff') variantMove(() => faceoff(room, variant, player, payload, ctx));
+				if (variant.sideShow && payload?.kind === 'sideshow')
+					variantMove(() => requestSideShow(room, variant, player, ctx));
+				else if (variant.sideShow && payload?.kind === 'sideshow-answer') {
+					require(room.sideShow?.to === id, 'There is no side show for you to answer');
+					require(typeof payload.accept === 'boolean', 'Accept or decline the side show');
+					require(ctx.now < room.deadline, 'The side show request has expired');
+					return variantMove(() => resolveSideShow(room, variant, payload.accept, ctx));
+				} else if (variant.faceoff && payload?.kind === 'faceoff') variantMove(() => faceoff(room, variant, player, payload, ctx));
 				else {
 					require(variant.tableAction, `${variant.name} has no table moves`);
 					const moved = variantMove(() =>
@@ -1133,6 +1191,11 @@ export function transition(snapshot, id, action, payload = {}, ctx) {
 				}
 			} else {
 				require(room.currentPlayerId === id, 'It is not your turn', 'OUT_OF_TURN');
+				if (room.sideShow) {
+					// The turn is on hold until the side show is answered; running out of time declines it.
+					require(action === 'timeout' && ctx.now >= room.deadline, 'Waiting for the side show answer');
+					return resolveSideShow(room, variant, false, ctx);
+				}
 				require(ctx.now < room.deadline || action === 'timeout', 'Turn has expired', 'STALE_TURN');
 				// A card the last player paid to open, but didn't, opens now.
 				variant.beforeTurn?.(room.variantState);
@@ -1302,7 +1365,7 @@ export function projection(room, id, connected) {
 	const list = seated(room);
 	// Cards everyone may see: hands compared at a Show, and hands a player chose to show.
 	const reveal = new Set([...(room.result?.revealedPlayerIds || []), ...(room.shownIds || [])]);
-	const myTurn = playing(room) && room.currentPlayerId === id && !player.isPacked;
+	const myTurn = playing(room) && room.currentPlayerId === id && !player.isPacked && !room.sideShow;
 	const variant = getVariant(room.rulesVersion);
 	const explain = room.boot !== undefined;
 	return {
@@ -1378,6 +1441,9 @@ export function projection(room, id, connected) {
 						: structuredClone(room.variantState)
 				}),
 		deadline: room.deadline,
+		// A side show waiting for its answer, and how the last one went (cleared with the next hand).
+		...(room.sideShow ? { sideShow: { ...room.sideShow } } : {}),
+		...(room.lastSideShow ? { lastSideShow: { ...room.lastSideShow } } : {}),
 		result: room.result
 			? {
 					winnerId: room.result.winnerId,
@@ -1468,6 +1534,13 @@ export function projection(room, id, connected) {
 							}
 							: {}),
 						addBot: id === room.hostId && !playing(room) && seated(room).length < 6
+					}
+				: {}),
+			...(variant.sideShow
+				? {
+						// The player you may ask for a side show now, and a request waiting for your answer.
+						sideShow: sideShowTarget(room, variant, player)?.id ?? null,
+						sideShowAnswer: room.sideShow?.to === id
 					}
 				: {}),
 			...(variant.faceoff

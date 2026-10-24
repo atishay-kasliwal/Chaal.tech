@@ -67,6 +67,7 @@ test('Classic remains the default and every Teen Patti variant has its own regis
 			'high-low-1',
 			'split-pot-1',
 			'faceoff-1',
+			'side-show-1',
 			'buying-joker-2',
 			'auction-2',
 			'knockout-1',
