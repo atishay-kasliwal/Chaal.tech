@@ -93,7 +93,7 @@ export const VARIANT_CATALOG = [
 		cardsPerPlayer: 3
 	},
 	{
-		rulesVersion: 'best-of-five-1',
+		rulesVersion: 'best-of-five-2',
 		selectionLabel: 'Best of Five: get five, keep the best three',
 		tableLabel: 'Best of Five · throw two, play the best three',
 		description:
@@ -230,7 +230,8 @@ export const VARIANT_CATALOG = [
 		rulesVersion: 'sudden-death-1',
 		selectionLabel: 'Sudden Death: stakes double every lap',
 		tableLabel: 'Sudden Death · stakes double and the lowest hand goes',
-		description: 'The stake doubles every lap and the lowest hand is knocked out, so hands end fast.',
+		description:
+			'The stake doubles every lap and the lowest hand is knocked out, so hands end fast.',
 		cardsPerPlayer: 3
 	},
 	{
@@ -273,7 +274,7 @@ export const VARIANT_CATALOG = [
 		cardsPerPlayer: 3
 	},
 	{
-		rulesVersion: 'discard-one-1',
+		rulesVersion: 'discard-one-2',
 		selectionLabel: 'Discard One: get four, throw one',
 		tableLabel: 'Discard One · look, then throw one away',
 		description:
@@ -281,43 +282,43 @@ export const VARIANT_CATALOG = [
 		cardsPerPlayer: 4
 	},
 	{
-		rulesVersion: 'folding-joker-2',
-		selectionLabel: 'Folding Joker: every folded rank is a shared joker',
-		tableLabel: 'Folding Joker · folded ranks are wild for everyone',
+		rulesVersion: 'folding-joker-3',
+		selectionLabel: 'Folding Joker: every folded card is a shared joker',
+		tableLabel: 'Folding Joker · folded cards lie on the table, wild for everyone',
 		description:
-			'Get four cards. Fold one face down: cards of its rank in your hand are wild. Stay blind and your fourth card is the joker.',
+			'Get four cards. Fold one face up onto the table: its rank is wild for everyone. You fold before you pack.',
 		cardsPerPlayer: 4
 	},
 	{
-		rulesVersion: 'muflis-4-1',
+		rulesVersion: 'muflis-4-2',
 		selectionLabel: 'Muflis 4: four cards, lowest wins',
 		tableLabel: 'Muflis 4 · throw one, lowest three wins',
 		description: 'Get four, throw one. The lowest three-card hand wins.',
 		cardsPerPlayer: 4
 	},
 	{
-		rulesVersion: 'joker-4-1',
+		rulesVersion: 'joker-4-2',
 		selectionLabel: 'Joker 4: four cards, common joker',
 		tableLabel: 'Joker 4 · throw one, revealed rank is wild',
 		description: 'Get four, throw one. A revealed card sets the wild rank for everyone.',
 		cardsPerPlayer: 4
 	},
 	{
-		rulesVersion: 'lowest-joker-4-1',
+		rulesVersion: 'lowest-joker-4-2',
 		selectionLabel: 'Lowest Joker 4: four cards, lowest is wild',
 		tableLabel: 'Lowest Joker 4 · throw one, your lowest rank is wild',
 		description: 'Get four, throw one. The lowest rank in the three you keep is wild.',
 		cardsPerPlayer: 4
 	},
 	{
-		rulesVersion: 'highest-joker-4-1',
+		rulesVersion: 'highest-joker-4-2',
 		selectionLabel: 'Highest Joker 4: four cards, highest is wild',
 		tableLabel: 'Highest Joker 4 · throw one, your highest rank is wild',
 		description: 'Get four, throw one. The highest rank in the three you keep is wild.',
 		cardsPerPlayer: 4
 	},
 	{
-		rulesVersion: 'color-joker-4-1',
+		rulesVersion: 'color-joker-4-2',
 		selectionLabel: 'Color Joker 4: four cards, a colour is wild',
 		tableLabel: 'Color Joker 4 · throw one, a colour is wild',
 		description: 'Get four, throw one. An open card picks red or black; that colour is wild.',

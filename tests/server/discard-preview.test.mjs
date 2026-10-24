@@ -48,7 +48,7 @@ function keeps(cards, keep) {
 }
 
 test('Lowest Joker 4: the joker is the lowest of the three you would keep, not of the first three dealt', () => {
-	const variant = listVariants().find((v) => v.rulesVersion === 'lowest-joker-4-1');
+	const variant = listVariants().find((v) => v.rulesVersion === 'lowest-joker-4-2');
 	// First three dealt (K 9 A) would make the 9 the joker for a Sequence. Keeping K A A makes a
 	// Trail of Aces: that is what the table must show.
 	const hand = ['K♠', '9♦', 'A♥', 'A♣'].map(c);

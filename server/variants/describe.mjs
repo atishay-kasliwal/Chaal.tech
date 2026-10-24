@@ -24,6 +24,7 @@ export function describeHand(variant, cards, handState) {
 			case 'muflis-1':
 				return describeClassic(variant.evaluateHand(cards).map((value) => -value));
 			case 'discard-one-1':
+			case 'discard-one-2':
 				return describeClassic(variant.evaluateHand(playedCards(cards)));
 			default: {
 				const name = describeClassic(variant.evaluateHand(cards, handState));

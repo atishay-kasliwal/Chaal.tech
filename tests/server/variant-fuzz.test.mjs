@@ -133,7 +133,20 @@ function attempt(room, id, action, payload, label) {
 }
 
 /** Versions no longer on offer that saved hands, lineups and replays can still name. */
-const SAVED_VERSIONS = ['buying-joker-1', 'auction-1', 'folding-joker-1', 'side-show-1'];
+const SAVED_VERSIONS = [
+	'buying-joker-1',
+	'auction-1',
+	'folding-joker-1',
+	'side-show-1',
+	'folding-joker-2',
+	'discard-one-1',
+	'best-of-five-1',
+	'muflis-4-1',
+	'joker-4-1',
+	'lowest-joker-4-1',
+	'highest-joker-4-1',
+	'color-joker-4-1'
+];
 for (const variant of [...listVariants(), ...SAVED_VERSIONS.map((v) => getVariant(v))])
 	test(`Hostile input: ${variant.name} (${variant.rulesVersion}) is refused cleanly`, () => {
 		const rulesVersion = variant.rulesVersion;
@@ -162,8 +175,20 @@ for (const variant of [...listVariants(), ...SAVED_VERSIONS.map((v) => getVarian
 				if (legal.see) moves.push(['see', {}]);
 				if (legal.bet) moves.push(['bet', { amount: legal.minBet }]);
 				if (legal.pack) moves.push(['pack', {}]);
+				// Folding Joker 3 offers no pack before the fold, so folding is an honest move too.
+				if (legal.discard) moves.push(['discard', { index: 0 }]);
 				const [action, payload] = pick(random, moves);
-				room = transition(room, actor, action, payload, ctx);
+				if (action === 'discard') {
+					// Some games refuse throwing a made joker: throw the first card they accept.
+					const held = room.players.find((p) => p.id === actor).cards.length;
+					for (let index = 0; index < held; index++)
+						try {
+							room = transition(room, actor, 'discard', { index }, ctx);
+							break;
+						} catch (error) {
+							if (!/Keep your joker/.test(error.message)) throw error;
+						}
+				} else room = transition(room, actor, action, payload, ctx);
 			}
 		}
 	});

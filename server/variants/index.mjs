@@ -11,14 +11,13 @@ import { oneEyedJack } from './one-eyed-jack.mjs';
 import { colorJoker } from './color-joker.mjs';
 import { lallanKallan } from './lallan-kallan.mjs';
 import { oddEven } from './odd-even.mjs';
-import { bestOfFive } from './best-of-five.mjs';
 import { worstOfFour } from './worst-of-four.mjs';
 import { hukum } from './hukum.mjs';
 import { redBlack } from './red-black.mjs';
 import { progressiveJoker } from './progressive-joker.mjs';
 import { potBlind } from './pot-blind.mjs';
-import { discardOne } from './discard-one.mjs';
-import { FOUR_CARD_VARIANTS, foldingJoker } from './four-discard.mjs';
+import { foldingJoker } from './four-discard.mjs';
+import { PUBLIC_THROW_GAMES, PRIVATE_THROW_GAMES } from './public-throws.mjs';
 import { drawTeenPatti } from './draw.mjs';
 import { ROUND_GAMES } from './round-games.mjs';
 import { JOKER_BUY_GAMES, LEGACY_JOKER_BUY_GAMES } from './joker-buy-games.mjs';
@@ -64,14 +63,14 @@ const variants = Object.freeze([
 	colorJoker,
 	lallanKallan,
 	oddEven,
-	bestOfFive,
+	PUBLIC_THROW_GAMES.bestOfFive,
 	worstOfFour,
 	hukum,
 	redBlack,
 	progressiveJoker,
 	potBlind,
-	discardOne,
-	...FOUR_CARD_VARIANTS,
+	PUBLIC_THROW_GAMES.discardOne,
+	...PUBLIC_THROW_GAMES.fourCard,
 	...OPEN_CARD_GAMES,
 	drawTeenPatti,
 	...SWAP_GAMES,
@@ -82,9 +81,10 @@ const variants = Object.freeze([
 	community,
 	...TABLE_GAMES
 ]);
-// Keep original Folding Joker, Buying Joker and Auction readable for saved hands and immutable replay corpora.
+// Keep replaced versions (Folding Joker 1, the private-throw games, Buying Joker and Auction 1)
+// readable for saved hands and immutable replay corpora.
 const registry = new Map(
-	[...variants, foldingJoker, ...LEGACY_JOKER_BUY_GAMES, sideShow].map((variant) => [variant.rulesVersion, variant])
+	[...variants, foldingJoker, ...PRIVATE_THROW_GAMES, ...LEGACY_JOKER_BUY_GAMES, sideShow].map((variant) => [variant.rulesVersion, variant])
 );
 export const DEFAULT_RULES_VERSION = classic.rulesVersion;
 

@@ -785,7 +785,8 @@
 	const makeJoker = (indexes: [number, number]) => tableMove({ kind: 'joker', indexes });
 	const drawCard = (index: number) => tableMove({ kind: 'draw', index });
 	/** Games whose indicator card is shown on the mat, not as a "Wild" chip in the header. */
-	const NO_WILD_CHIP = new Set(['hukum-1', 'progressive-joker-1']);
+	// These show their joker on the felt instead of in the top strip.
+	const NO_WILD_CHIP = new Set(['hukum-1', 'progressive-joker-1', 'joker-4-2', 'color-joker-4-2']);
 	const tradeCard = (index: number, target?: string) => tableMove({ kind: 'trade', index, target });
 	const passCard = (index: number) => tableMove({ kind: 'pass', index });
 	const faceoffWith = (target: string) => tableMove({ kind: 'faceoff', target });
