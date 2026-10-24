@@ -2,6 +2,8 @@ import { VARIANT_BY_VERSION, type RulesVersion } from '#lib/variant-catalog.js';
 
 /** A lineup slot that draws a surprise game when its turn comes (same token as the server). */
 export const MYSTERY = 'mystery';
+/** Most games a night's lineup can hold (same limit as the server): every game, with room to repeat. */
+export const LINEUP_MAX = 60;
 /** Hands per lineup game; 0 means one round (a hand for each player at the table). */
 export const LINEUP_HANDS = [1, 2, 3, 0] as const;
 export const handsLabel = (hands: number) =>

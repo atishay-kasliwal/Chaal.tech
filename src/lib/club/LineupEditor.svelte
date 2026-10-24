@@ -4,6 +4,7 @@
 	import {
 		MYSTERY,
 		LINEUP_HANDS,
+		LINEUP_MAX,
 		GAME_FAMILIES,
 		familyOf,
 		handsLabel,
@@ -78,7 +79,7 @@
 		if (where >= 0 && version !== MYSTERY) {
 			draft = draft.filter((_, index) => index !== where);
 			selected = null;
-		} else if (draft.length < 30) draft = [...draft, version];
+		} else if (draft.length < LINEUP_MAX) draft = [...draft, version];
 	}
 	function move(index: number, by: number) {
 		const to = index + by;
@@ -91,6 +92,11 @@
 	function remove(index: number) {
 		draft = draft.filter((_, i) => i !== index);
 		selected = null;
+	}
+	/** Every game once, in a fresh random order (replaces the queue). */
+	function allShuffled() {
+		draft = VARIANT_CATALOG.map((variant) => variant.rulesVersion);
+		shuffle();
 	}
 	function shuffle() {
 		const next = [...draft];
@@ -171,6 +177,7 @@
 				<span class="hands-label">{handsLabel(draftHands)} each</span>
 			</div>
 			<span class="tools">
+				<button onclick={allShuffled}><Shuffle size={14} /> All games, shuffled</button>
 				<button onclick={shuffle} disabled={draft.length < 2}><Shuffle size={14} /> Shuffle</button>
 				<button onclick={() => ((draft = []), (selected = null))} disabled={!draft.length}
 					><Eraser size={14} /> Clear</button
