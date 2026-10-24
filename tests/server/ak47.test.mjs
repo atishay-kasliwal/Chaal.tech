@@ -50,7 +50,7 @@ test('AK47 is registered without changing the Classic default or other variants'
 			'high-low-1',
 			'split-pot-1',
 			'faceoff-1',
-			'side-show-1',
+			'side-show-2',
 			'buying-joker-2',
 			'auction-2',
 			'knockout-1',

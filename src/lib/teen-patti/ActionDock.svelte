@@ -32,6 +32,7 @@
 		onfaceoff,
 		onsideshow,
 		onsideshowanswer,
+		onshare,
 		onpack,
 		onbet,
 		onshow,
@@ -72,6 +73,8 @@
 		onsideshow?: () => void;
 		/** Side Show: accept or decline a request to compare hands. */
 		onsideshowanswer?: (accept: boolean) => void;
+		/** Side Show 2: show your cards, in private, to a friend who has packed. */
+		onshare?: (target: string) => void;
 		onpack: () => void;
 		onbet: (amount: number) => void;
 		onshow: (declare?: 'high' | 'low') => void;
@@ -124,6 +127,16 @@
 	const picking = $derived(discarding || drawing || trading || (passing && revealed));
 	const nameOfUser = (id: string) => room.usersList.find((user) => user.id === id)?.username ?? 'Someone';
 	/** Short line under the hand: who traded with you, whether the cards were passed. */
+	/** Who has shown their cards to whom (the cards themselves only ever reach that friend). */
+	const shareNote = $derived.by(() => {
+		const shares = room.shares ?? [];
+		return shares.length
+			? shares
+					.slice(-2)
+					.map((share) => `${nameOfUser(share.from)} showed their cards to ${nameOfUser(share.to)}`)
+					.join(' · ')
+			: '';
+	});
 	const swapNote = $derived.by(() => {
 		// Side Show: a request waiting for its answer, then how the last one went.
 		const asked = room.sideShow;
@@ -394,6 +407,17 @@
 				{/if}
 			</p>
 			{#if swapNote}<small class="swap-note">{swapNote}</small>{/if}
+			{#if shareNote}<small class="swap-note">{shareNote}</small>{/if}
+			{#if legal.share?.length && onshare}
+				<div class="share-row">
+					<span>Show my cards to</span>
+					{#each legal.share as target (target)}
+						<button class="after-btn" onclick={() => onshare?.(target)} disabled={!connected}
+							>{nameOfUser(target)}</button
+						>
+					{/each}
+				</div>
+			{/if}
 		{:else}
 			<div class="sit-msg">
 				{#if sittingOut}
@@ -736,6 +760,14 @@
 		cursor: pointer;
 	}
 	/* Before throwing away: the best three you could keep, under the prompt. */
+	.share-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		font-size: 0.85rem;
+	}
 	.side-ask {
 		display: block;
 		font-weight: 700;

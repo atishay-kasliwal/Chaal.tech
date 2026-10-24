@@ -26,6 +26,7 @@ import { community } from './community.mjs';
 import { SWAP_GAMES } from './swap-games.mjs';
 import { SHOWDOWN_GAMES } from './showdown-games.mjs';
 import { sideShow } from './side-show.mjs';
+import { sideShow2 } from './side-show-2.mjs';
 import { OPEN_CARD_GAMES } from './open-cards.mjs';
 import { TABLE_GAMES } from './table-games.mjs';
 
@@ -75,7 +76,7 @@ const variants = Object.freeze([
 	drawTeenPatti,
 	...SWAP_GAMES,
 	...SHOWDOWN_GAMES,
-	sideShow,
+	sideShow2,
 	...JOKER_BUY_GAMES,
 	...ROUND_GAMES,
 	community,
@@ -83,7 +84,7 @@ const variants = Object.freeze([
 ]);
 // Keep original Folding Joker, Buying Joker and Auction readable for saved hands and immutable replay corpora.
 const registry = new Map(
-	[...variants, foldingJoker, ...LEGACY_JOKER_BUY_GAMES].map((variant) => [variant.rulesVersion, variant])
+	[...variants, foldingJoker, ...LEGACY_JOKER_BUY_GAMES, sideShow].map((variant) => [variant.rulesVersion, variant])
 );
 export const DEFAULT_RULES_VERSION = classic.rulesVersion;
 

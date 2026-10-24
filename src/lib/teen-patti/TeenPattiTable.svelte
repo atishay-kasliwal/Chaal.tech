@@ -789,6 +789,7 @@
 	const tradeCard = (index: number, target?: string) => tableMove({ kind: 'trade', index, target });
 	const passCard = (index: number) => tableMove({ kind: 'pass', index });
 	const faceoffWith = (target: string) => tableMove({ kind: 'faceoff', target });
+	const shareCards = (target: string) => tableMove({ kind: 'share', target });
 	const askSideShow = () => tableMove({ kind: 'sideshow' });
 	const answerSideShow = (accept: boolean) => tableMove({ kind: 'sideshow-answer', accept });
 	/** The Chatai line being tried before it is locked; cleared every hand. */
@@ -1578,6 +1579,7 @@
 			onfaceoff={faceoffWith}
 			onsideshow={askSideShow}
 			onsideshowanswer={answerSideShow}
+			onshare={shareCards}
 			onpack={pack}
 			onbet={bet}
 			onshow={show}
