@@ -50,8 +50,8 @@
 	};
 </script>
 
-<div class="overlay" role="presentation" onclick={onClose}></div>
-<div class="sheet" role="dialog" aria-modal="true" aria-label="Hand detail">
+<div class="stats-overlay" role="presentation" onclick={onClose}></div>
+<div class="stats-sheet" role="dialog" aria-modal="true" aria-label="Hand detail">
 	<button class="close" onclick={onClose} aria-label="Close">×</button>
 	{#if error}<p class="notice" role="alert">{error}</p>
 	{:else if !hand}<p class="muted">Loading the hand…</p>
