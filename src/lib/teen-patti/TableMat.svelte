@@ -263,8 +263,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.6rem;
-		max-width: 16rem;
+		gap: 0.5rem;
+		max-width: 12rem;
 	}
 	/* No mat (the jokers or the rules are the whole show): the side column takes the centre. */
 	.side.hero {
@@ -272,9 +272,7 @@
 		gap: 0.9rem;
 	}
 	.side.hero .prompt {
-		padding: 0.5rem 1.3rem;
-		font-size: 1.05rem;
-		white-space: nowrap;
+		font-size: 1rem;
 	}
 	.side.hero .tray {
 		--card-h: clamp(4.6rem, 12vh, 8rem);
@@ -327,23 +325,26 @@
 	.side:empty {
 		display: none;
 	}
-	/* A woven chatai laid on the cloth. */
+	/* The cards' well: recessed into the table's leather mat, with a hairline gold edge. */
 	.mat {
-		--card-h: clamp(3.8rem, 10vh, 6.8rem);
+		--card-h: clamp(3.6rem, 9.5vh, 6.4rem);
 		position: relative;
-		border-radius: 0.8rem;
-		background:
-			repeating-linear-gradient(90deg, rgb(70 40 12 / 30%) 0 2px, transparent 2px 7px),
-			repeating-linear-gradient(0deg, rgb(255 236 196 / 16%) 0 2px, transparent 2px 7px),
-			linear-gradient(135deg, #c9a266, #a37843);
+		border-radius: 12px;
+		background: radial-gradient(ellipse at 50% 40%, rgb(255 255 255 / 3%), rgb(0 0 0 / 28%));
 		box-shadow:
-			0 10px 24px rgb(0 0 0 / 50%),
-			inset 0 0 0 2px rgb(80 45 15 / 60%),
-			inset 0 0 0 5px rgb(255 230 180 / 22%);
-		padding: 0.8rem;
+			inset 0 2px 10px rgb(0 0 0 / 55%),
+			inset 0 0 0 1px rgb(242 220 145 / 16%);
+		padding: 0.7rem;
 	}
 	.mat.grid-mat {
-		--card-h: clamp(3.4rem, 9vh, 6.2rem);
+		--card-h: clamp(3.4rem, 8.7vh, 6rem);
+	}
+	/* Beside the cards: the rules and jokers, set off by a hairline. */
+	.spread > .mat + .side:not(:empty) {
+		align-self: stretch;
+		justify-content: center;
+		border-left: 1px solid rgb(242 220 145 / 14%);
+		padding-left: 1.1rem;
 	}
 	.cards {
 		position: relative;
@@ -396,10 +397,9 @@
 	}
 	/* Closed cards you may open: a dark ring then a bright pulsing one, so they stand out on the mat. */
 	.lift.tappable {
-		box-shadow: 0 0 0 2px rgb(40 20 0 / 85%);
-		outline: 3px solid #ffe58a;
+		outline: 2px solid rgb(242 220 145 / 85%);
 		outline-offset: 2px;
-		animation: beckon 1.4s ease-in-out infinite;
+		animation: beckon 1.8s ease-in-out infinite;
 		cursor: pointer;
 	}
 	.lift.killer {
@@ -409,18 +409,21 @@
 	}
 	@keyframes beckon {
 		50% {
-			transform: translateY(-3px);
-			outline-color: #fff6cf;
-			filter: drop-shadow(0 0 12px rgb(255 229 138 / 90%));
+			transform: translateY(-2px);
+			outline-color: #f6e7b4;
+			filter: drop-shadow(0 0 8px rgb(242 220 145 / 45%));
 		}
 	}
 	.tag {
+		border: 1px solid rgb(242 220 145 / 22%);
 		border-radius: 999px;
-		background: rgb(0 0 0 / 55%);
-		padding: 0.1rem 0.55rem;
-		color: #f8f2e5;
-		font-size: 0.82rem;
-		font-weight: 800;
+		background: rgb(0 0 0 / 35%);
+		padding: 0.05rem 0.5rem;
+		color: rgb(248 242 229 / 88%);
+		font-size: 0.7rem;
+		font-variant-numeric: tabular-nums;
+		font-weight: 700;
+		letter-spacing: 0.06em;
 		white-space: nowrap;
 	}
 	.tag.done {
@@ -431,21 +434,20 @@
 	}
 	.pot-progress {
 		display: grid;
-		gap: 0.25rem;
+		gap: 0.35rem;
 		min-width: 10rem;
-		border-radius: 0.5rem;
-		background: rgb(0 0 0 / 50%);
-		padding: 0.3rem 0.6rem 0.4rem;
-		color: #f8f2e5;
-		font-size: 0.85rem;
-		font-weight: 800;
+		color: rgb(248 242 229 / 75%);
+		font-size: 0.78rem;
+		font-variant-numeric: tabular-nums;
+		font-weight: 600;
+		text-align: center;
 	}
 	.meter {
 		display: block;
 		overflow: hidden;
-		height: 6px;
+		height: 3px;
 		border-radius: 999px;
-		background: rgb(0 0 0 / 28%);
+		background: rgb(0 0 0 / 40%);
 	}
 	.meter i {
 		display: block;
@@ -514,18 +516,14 @@
 		--card-h: clamp(3.2rem, 7.5vh, 5rem);
 		display: grid;
 		justify-items: center;
-		gap: 0.4rem;
-		border: 1px solid rgb(242 220 145 / 30%);
-		border-radius: 0.9rem;
-		background: rgb(0 0 0 / 35%);
-		padding: 0.6rem 0.8rem;
+		gap: 0.35rem;
 		min-width: 7rem;
 	}
 	.tray-title {
-		color: #f2dc91;
-		font-size: 0.75rem;
-		font-weight: 800;
-		letter-spacing: 0.16em;
+		color: rgb(242 220 145 / 75%);
+		font-size: 0.66rem;
+		font-weight: 700;
+		letter-spacing: 0.24em;
 		text-transform: uppercase;
 	}
 	.tray-cards {
@@ -534,8 +532,11 @@
 	}
 	.ranks {
 		color: #f2dc91;
-		font-size: 1.5rem;
-		font-weight: 850;
+		font-size: 1.4rem;
+		font-variant-numeric: tabular-nums;
+		font-weight: 750;
+		letter-spacing: 0.04em;
+		text-shadow: 0 1px 0 rgb(0 0 0 / 55%);
 	}
 	.before {
 		--card-h: 2.6rem;
@@ -547,8 +548,8 @@
 		font-size: 0.75rem;
 	}
 	.note {
-		color: rgb(248 242 229 / 70%);
-		font-size: 0.88rem;
+		color: rgb(248 242 229 / 60%);
+		font-size: 0.8rem;
 		line-height: 1.45;
 		text-align: center;
 		max-width: 13rem;
@@ -558,18 +559,31 @@
 		font-size: 0.88rem;
 		font-weight: 800;
 	}
+	/* Printed on the mat, not floating in bubbles. */
 	.prompt,
 	.caption {
-		border: 1px solid rgb(242 220 145 / 50%);
-		border-radius: 1rem;
-		background: rgb(8 14 11 / 85%);
-		padding: 0.3rem 0.9rem;
-		color: #f8f2e5;
-		font-size: 0.92rem;
-		font-weight: 700;
+		color: rgb(248 242 229 / 82%);
+		font-size: 0.86rem;
+		font-weight: 600;
+		line-height: 1.4;
+		letter-spacing: 0.01em;
+		text-wrap: balance;
 	}
 	.prompt {
-		border-radius: 1rem;
+		text-align: center;
+	}
+	/* Beside the cards the column stays narrow, so the cards get the room. */
+	.side .prompt {
+		max-width: 12rem;
+	}
+	.side.hero .prompt {
+		max-width: 24rem;
+	}
+	.caption {
+		max-width: 12rem;
+		color: rgb(248 242 229 / 62%);
+		font-size: 0.78rem;
+		font-variant-numeric: tabular-nums;
 		text-align: center;
 	}
 	.prompt :global(b),
@@ -577,8 +591,7 @@
 		color: #f2dc91;
 	}
 	.prompt.danger {
-		border-color: #e0455a;
-		background: rgb(60 5 12 / 90%);
+		color: #ffb3bd;
 	}
 	.prompt.danger :global(b) {
 		color: #ff8b98;
@@ -613,38 +626,41 @@
 			max-width: 100%;
 			align-items: center;
 		}
-		.mat,
-		.mat.grid-mat {
+		.mat {
 			--card-h: clamp(34px, 6dvh, 48px);
-			padding: 8px;
+			padding: 7px;
 			border-radius: 8px;
 		}
+		/* Chatai's nine cards get the most room: they are the game. */
+		.mat.grid-mat {
+			--card-h: clamp(40px, 7.4dvh, 60px);
+		}
 		.side {
-			gap: 8px;
-			max-width: 160px;
+			gap: 6px;
+			max-width: 118px;
 			min-width: 0;
 		}
 		.prompt,
 		.caption {
 			font-size: 11px;
 			line-height: 1.4;
-			padding: 6px 8px;
-			border-radius: 8px;
 			white-space: normal;
 		}
+		.spread > .mat + .side:not(:empty) {
+			padding-left: 10px;
+		}
 		.tray {
-			padding: 9px;
-			gap: 6px;
+			gap: 5px;
 			max-width: 100%;
 		}
 		.tray-title {
 			font-size: 10px;
 		}
 		.ranks {
-			font-size: 22px;
+			font-size: 17px;
 			line-height: 1.2;
 			letter-spacing: 0;
-			white-space: normal;
+			white-space: nowrap;
 		}
 		.note,
 		.danger-note {
@@ -653,8 +669,6 @@
 		}
 		.side.hero .prompt {
 			font-size: 12px;
-			white-space: normal;
-			padding: 8px 12px;
 		}
 		.side.hero .tray {
 			--card-h: 48px;
@@ -731,6 +745,13 @@
 		}
 		.table-cards[data-layout='row'] .side {
 			max-width: 100%;
+		}
+		/* Stacked under the cards: the hairline runs across the top instead. */
+		.table-cards:is([data-layout='row'], [data-layout='piles']) .spread > .mat + .side:not(:empty) {
+			align-self: center;
+			border-left: 0;
+			border-top: 1px solid rgb(242 220 145 / 14%);
+			padding: 8px 0 0;
 		}
 		.table-cards[data-layout='row'] .tray {
 			--card-h: 36px;
