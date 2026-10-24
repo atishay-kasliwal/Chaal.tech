@@ -693,7 +693,21 @@
 		// Keep the pot's lines clear of your hand, which rises out of the dock below.
 		return Math.min(below + Math.max(0, arenaH - below) / 2, arenaH - (portrait ? 110 : 150));
 	});
-	const potPoint = () => ({ x: 50, y: (centerTop / arenaH) * 100 - 4 });
+	let potEl = $state<HTMLElement>();
+	/** Where chips land: the pot's own chips, measured, since a mat moves the pot off centre. */
+	const potPoint = () => {
+		const chips = potEl?.querySelector('.pot-chips') ?? potEl;
+		if (chips && arena) {
+			const box = chips.getBoundingClientRect();
+			const frame = arena.getBoundingClientRect();
+			if (box.width && frame.width)
+				return {
+					x: ((box.left + box.width / 2 - frame.left) / frame.width) * 100,
+					y: ((box.top + box.height / 2 - frame.top) / frame.height) * 100
+				};
+		}
+		return { x: 50, y: (centerTop / arenaH) * 100 - 4 };
+	};
 	const pointFor = (playerId: string | undefined) => {
 		if (!playerId || playerId === selfId) return SELF_POINT;
 		const index = opponents.findIndex((entry) => entry.user.id === playerId);
@@ -1465,7 +1479,7 @@
 				</div>
 			{:else}
 				{#if tableCards}{@render tableCards()}{:else if mat}<TableMat {...mat} />{/if}
-				<div class="pot" aria-live="polite">
+				<div class="pot" aria-live="polite" bind:this={potEl}>
 					{#if room.pot}
 						<span class="pot-chips">
 							<ChipStack
@@ -2666,13 +2680,36 @@
 		top: 52%;
 		width: min(15rem, 44%);
 	}
-	/* With cards on the table: the pot on the left, the mat and joker tray beside it. */
+	/* With cards on the table: one leather mat on the cloth that holds the pot, the cards and
+	   the jokers together, inlaid with a thin double gold line. */
 	.center.with-mat {
-		width: min(56rem, 80%);
-		translate: -50% calc(-50% - 0.9rem);
+		width: auto;
+		max-width: min(60rem, 86%);
+		translate: -50% calc(-50% - 2.1rem);
 		flex-direction: row-reverse;
+		align-items: stretch;
 		justify-content: center;
-		gap: 1.2rem;
+		gap: 0;
+		border-radius: 22px;
+		background:
+			radial-gradient(ellipse at 50% 0%, rgb(255 236 190 / 7%), transparent 65%),
+			linear-gradient(165deg, #173a30, #0c241d 70%);
+		box-shadow:
+			0 18px 42px rgb(0 0 0 / 45%),
+			0 2px 0 rgb(255 255 255 / 4%) inset,
+			inset 0 0 0 1px rgb(242 220 145 / 30%),
+			inset 0 0 0 6px rgb(0 0 0 / 16%),
+			inset 0 0 0 7px rgb(242 220 145 / 12%);
+		padding: 13px 18px;
+	}
+	/* The pot's own column on the mat, set off from the cards by a hairline. */
+	.center.with-mat > .pot {
+		justify-content: center;
+		border-radius: 0;
+		background: none;
+		border-right: 1px solid rgb(242 220 145 / 14%);
+		margin-right: 16px;
+		padding: 0 16px 0 2px;
 	}
 	/* After a table-card hand: the result sits beside the mat, narrower and shorter. */
 	.center.with-mat .result {
@@ -2703,8 +2740,20 @@
 	}
 	.arena.portrait .center.with-mat {
 		width: 92%;
+		max-width: none;
 		flex-direction: column-reverse;
+		align-items: center;
 		gap: 0.4rem;
+		border-radius: 16px;
+		padding: 10px;
+	}
+	/* Phones: the pot is a row across the top of the mat, ruled off from the cards below. */
+	.arena.portrait .center.with-mat > .pot {
+		align-self: stretch;
+		border-right: 0;
+		border-bottom: 1px solid rgb(242 220 145 / 14%);
+		margin: 0 0 2px;
+		padding: 0 0 6px;
 	}
 	/* The pot sits on the cloth: a stack of chips and the total printed beside it. */
 	.pot {
