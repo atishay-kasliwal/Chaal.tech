@@ -204,7 +204,23 @@ export const HOW_TO_PLAY: Record<string, HowToPlay> = {
 			'Everyone sees who bought, never what the rank is.'
 		]
 	},
+	'buying-joker-2': {
+		win: 'Best hand wins. You can pay to get a joker.',
+		points: [
+			'One joker rank is hidden. Pay 5 boots into the pot to learn it.',
+			'That rank is wild in your hand only.',
+			'Everyone sees who bought, never what the rank is.'
+		]
+	},
 	'auction-1': {
+		win: 'Best hand wins. The highest bidder gets the joker.',
+		points: [
+			'Everyone makes one sealed bid for a hidden joker.',
+			'When all have bid, the highest bid is paid into the pot and wins it.',
+			'The rank is wild in the winner’s hand only. Nobody bidding means no joker.'
+		]
+	},
+	'auction-2': {
 		win: 'Best hand wins. The highest bidder gets the joker.',
 		points: [
 			'Everyone makes one sealed bid for a hidden joker.',

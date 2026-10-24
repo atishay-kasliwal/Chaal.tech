@@ -203,7 +203,7 @@ export const VARIANT_CATALOG = [
 		cardsPerPlayer: 3
 	},
 	{
-		rulesVersion: 'buying-joker-1',
+		rulesVersion: 'buying-joker-2',
 		selectionLabel: 'Buying Joker: pay to learn a joker',
 		tableLabel: 'Buying Joker · pay 5 boots to learn a hidden joker',
 		description:
@@ -211,7 +211,7 @@ export const VARIANT_CATALOG = [
 		cardsPerPlayer: 3
 	},
 	{
-		rulesVersion: 'auction-1',
+		rulesVersion: 'auction-2',
 		selectionLabel: 'Auction: sealed bids for a joker',
 		tableLabel: 'Auction · highest sealed bid wins a hidden joker',
 		description:

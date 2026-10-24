@@ -92,7 +92,7 @@ type TableMove =
 	| { kind: 'draw'; index: number }
 	| { kind: 'trade'; index: number; target?: string }
 	| { kind: 'pass'; index: number }
-	| { kind: 'buy'; price?: number }
+	| { kind: 'buy'; price?: number; decline?: boolean }
 	| { kind: 'bid'; bid?: number; amount?: number }
 	| { kind: 'faceoff'; target: string };
 interface ChipRequest {

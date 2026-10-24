@@ -39,8 +39,8 @@ export const GAME_FAMILIES = [
 			'odd-even-1',
 			'hukum-1',
 			'progressive-joker-1',
-			'buying-joker-1',
-			'auction-1'
+			'buying-joker-2',
+			'auction-2'
 		]
 	},
 	{
