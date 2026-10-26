@@ -1,5 +1,7 @@
 # Chaal.tech
 
+![Chaal.tech gameplay preview](docs/assets/chaal-landing-promo-v2.gif)
+
 What's left and the ideas list: [docs/ROADMAP.md](docs/ROADMAP.md). Older docs are in [docs/archive/](docs/archive/).
 
 ## Cloudflare development
