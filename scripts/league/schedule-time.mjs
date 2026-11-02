@@ -11,5 +11,7 @@ export function newYorkClock(now = new Date()) {
 			.formatToParts(now)
 			.map((p) => [p.type, p.value])
 	);
-	return { day: `${parts.year}${parts.month}${parts.day}`, due: Number(parts.hour) >= 7 };
+	// A new run starts only between 3 and 9 AM, so the Mac is not busy during the day; one still going at 9 finishes.
+	const hour = Number(parts.hour);
+	return { day: `${parts.year}${parts.month}${parts.day}`, due: hour >= 3 && hour < 9 };
 }
