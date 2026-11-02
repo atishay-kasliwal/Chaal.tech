@@ -8,7 +8,6 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const dir = new URL('../../data/league/', import.meta.url);
 await mkdir(dir, { recursive: true });
 const clock = newYorkClock();
-if (!clock.due) process.exit(0);
 const id = `daily-${clock.day}`;
 const marker = new URL(`${id}.published`, dir);
 if (
@@ -32,11 +31,16 @@ let report = await readFile(reportFile, 'utf8').then(JSON.parse, (e) => {
 	if (e.code === 'ENOENT') return null;
 	throw e;
 });
+// Outside the morning window only a finished report's publication is retried.
+if (!report && !clock.due) process.exit(0);
 if (!report) {
 	const code = await new Promise((resolve, reject) => {
+		const run = [process.execPath, 'scripts/league/run.mjs', '--seed', clock.day, '--hands', '1000000'];
+		// caffeinate keeps the Mac from idle-sleeping in the middle of a 3 AM run.
+		const [cmd, ...args] = process.platform === 'darwin' ? ['caffeinate', '-i', ...run] : run;
 		const child = spawn(
-			process.execPath,
-			['scripts/league/run.mjs', '--seed', clock.day, '--hands', '1000000'],
+			cmd,
+			args,
 			{ cwd: root, stdio: 'inherit' }
 		);
 		child.once('error', reject);

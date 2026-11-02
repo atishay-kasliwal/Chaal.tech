@@ -69,15 +69,17 @@ test('uncertain results get a leader but no trophy, and exhibitions never create
 	const report = summarizeCompetition(resultSet(), options);
 	assert.equal(report.gaps[a][b].mean, -report.gaps[b][a].mean);
 });
-test('7am schedule follows New York in winter, summer and both DST transition days', () => {
-	for (const [before, at] of [
-		['2026-01-15T11:59:00Z', '2026-01-15T12:00:00Z'],
-		['2026-07-15T10:59:00Z', '2026-07-15T11:00:00Z'],
-		['2026-03-08T10:59:00Z', '2026-03-08T11:00:00Z'],
-		['2026-11-01T11:59:00Z', '2026-11-01T12:00:00Z']
+test('3-9am schedule follows New York in winter, summer and both DST transition days', () => {
+	for (const [before, at, last, after] of [
+		['2026-01-15T07:59:00Z', '2026-01-15T08:00:00Z', '2026-01-15T13:59:00Z', '2026-01-15T14:00:00Z'],
+		['2026-07-15T06:59:00Z', '2026-07-15T07:00:00Z', '2026-07-15T12:59:00Z', '2026-07-15T13:00:00Z'],
+		['2026-03-08T06:59:00Z', '2026-03-08T07:00:00Z', '2026-03-08T12:59:00Z', '2026-03-08T13:00:00Z'],
+		['2026-11-01T07:59:00Z', '2026-11-01T08:00:00Z', '2026-11-01T13:59:00Z', '2026-11-01T14:00:00Z']
 	]) {
 		assert.equal(newYorkClock(new Date(before)).due, false);
 		assert.equal(newYorkClock(new Date(at)).due, true);
+		assert.equal(newYorkClock(new Date(last)).due, true);
+		assert.equal(newYorkClock(new Date(after)).due, false);
 	}
 	assert.equal(newYorkClock(new Date('2026-10-23T02:00:00Z')).day, '20261022');
 });
